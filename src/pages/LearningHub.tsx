@@ -25,7 +25,7 @@ interface Category {
     name: string;
 }
 
-const CustomAudioPlayer = ({ src, onEnded }: { src: string, onEnded: (duration: number) => void }) => {
+const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string, onEnded: (duration: number) => void, disableSeek?: boolean }) => {
     const audioRef = React.useRef<HTMLAudioElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -48,6 +48,7 @@ const CustomAudioPlayer = ({ src, onEnded }: { src: string, onEnded: (duration: 
     };
 
     const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (disableSeek) return;
         const newTime = Number(e.target.value);
         if (audioRef.current) {
             audioRef.current.currentTime = newTime;
@@ -96,8 +97,9 @@ const CustomAudioPlayer = ({ src, onEnded }: { src: string, onEnded: (duration: 
                     step="0.1"
                     value={currentTime} 
                     onChange={handleSeek}
-                    className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none"
+                    className={`flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none focus:outline-none ${disableSeek ? 'cursor-not-allowed opacity-70 pointer-events-none' : 'cursor-pointer'}`}
                     style={{ accentColor: '#d4af37' }}
+                    readOnly={disableSeek}
                 />
                 <div className="text-[10px] font-bold text-arabian-night/60 shrink-0 w-7 tracking-tighter">
                     {formatTime(duration)}
@@ -115,6 +117,7 @@ const RecordingCard = ({
     handleToggleFavorite, 
     handleToggleLike, 
     handleAudioEnded,
+    disableSeek = false,
     className = ""
 }: any) => {
     const { t } = useTranslation();
@@ -201,6 +204,7 @@ const RecordingCard = ({
                     <CustomAudioPlayer 
                         src={rec.audioUrl} 
                         onEnded={(duration) => handleAudioEnded(rec, duration)} 
+                        disableSeek={disableSeek}
                     />
                 </div>
             </div>
@@ -611,6 +615,7 @@ export default function LearningHub() {
                                                     handleToggleFavorite={handleToggleFavorite}
                                                     handleToggleLike={handleToggleLike}
                                                     handleAudioEnded={handleAudioEnded}
+                                                    disableSeek={!!taskId}
                                                     className="w-full h-full"
                                                 />
                                             </div>
