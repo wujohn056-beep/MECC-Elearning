@@ -56,9 +56,7 @@ export default function Login() {
             </button>
             <div className="relative z-10 max-w-[420px] w-full bg-white/10 backdrop-blur-md rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-6 sm:p-8 border border-white/20 mt-[22vh] sm:mt-[25vh]">
                 <div className="text-center mb-4 sm:mb-6">
-                    <div className="w-12 h-12 mx-auto bg-gradient-to-br from-desert-gold to-yellow-600 rounded-full flex items-center justify-center mb-3 shadow-lg">
-                        <Lock className="text-white h-6 w-6" />
-                    </div>
+                    <img src="/logo.png" alt="ME Cloud Academy" className="h-16 mx-auto mb-4 object-contain drop-shadow-md hover:scale-105 transition-transform duration-300" />
                     <h2 className="text-2xl font-extrabold text-deep-teal mb-1">{t('common.login')}</h2>
                     <p className="text-arabian-night/60 text-sm font-medium">{t('login.subtitle')}</p>
                 </div>

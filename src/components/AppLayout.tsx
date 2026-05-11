@@ -159,9 +159,7 @@ export default function AppLayout() {
                 {/* Navigation Bar */}
             <nav className="glass-panel sticky top-0 z-50 p-4 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white font-bold shadow-md">
-                        M
-                    </div>
+                    <img src="/logo.png" alt="Logo" className="h-8 object-contain drop-shadow-sm" />
                     <h1 className="text-2xl font-extrabold text-gradient-gold tracking-wide hidden sm:block">
                         {t('navbar.title')}
                     </h1>
