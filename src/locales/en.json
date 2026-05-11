@@ -253,7 +253,9 @@
         "deadline_time": "Deadline Time",
         "cancel": "Cancel",
         "confirm": "Assign Task",
+        "manage_tasks": "Task Management",
         "search_recording_placeholder": "Search recording name or ID...",
+        "no_recordings_found": "No recordings found",
         "max_recordings_limit": "You can only assign a maximum of 2 recordings at a time!",
         "unassigned_team": "Unassigned"
     },

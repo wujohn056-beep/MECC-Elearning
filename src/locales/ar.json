@@ -252,7 +252,9 @@
         "deadline_time": "وقت الموعد النهائي",
         "cancel": "إلغاء",
         "confirm": "تعيين المهمة",
+        "manage_tasks": "إدارة المهام",
         "search_recording_placeholder": "ابحث عن اسم التسجيل أو المعرف...",
+        "no_recordings_found": "لم يتم العثور على تسجيلات مطابقة",
         "max_recordings_limit": "يمكنك تعيين بحد أقصى 2 تسجيلات في المرة الواحدة!",
         "unassigned_team": "غير معين"
     },
