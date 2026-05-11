@@ -238,13 +238,24 @@ export default function LearningHub() {
     const [leaderboardTab, setLeaderboardTab] = useState<'favorites' | 'likes'>('favorites');
 
     useEffect(() => {
-        if (taskId) {
+        if (taskId && user) {
             const fetchTaskInfo = async () => {
                 try {
                     const taskDoc = await getDoc(doc(db, 'learning_tasks', taskId));
                     if (taskDoc.exists()) {
-                        setTaskRecordingIds(taskDoc.data().recordingIds || []);
-                        setTaskTitle(taskDoc.data().title || '学习任务');
+                        const data = taskDoc.data();
+                        setTaskRecordingIds(data.recordingIds || []);
+                        setTaskTitle(data.title || '学习任务');
+                        
+                        const myAssigneeData = data.assignees?.[user.uid];
+                        if (myAssigneeData) {
+                            if (myAssigneeData.reflections) {
+                                setReflections(myAssigneeData.reflections);
+                            }
+                            if (myAssigneeData.status === 'completed') {
+                                setCompletedAudioIds(data.recordingIds || []);
+                            }
+                        }
                     }
                 } catch (error) {
                     console.error("Error fetching task", error);
@@ -254,8 +265,9 @@ export default function LearningHub() {
         } else {
             setTaskRecordingIds([]);
             setTaskTitle('');
+            setReflections({});
         }
-    }, [taskId]);
+    }, [taskId, user]);
 
     useEffect(() => {
         const fetchData = async () => {

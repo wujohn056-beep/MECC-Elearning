@@ -8,10 +8,9 @@ import { Link } from 'react-router-dom';
 
 const TaskCard = ({ task }: { task: any }) => {
     const { t } = useTranslation();
-    const [expanded, setExpanded] = useState(false);
     
     return (
-        <div className="bg-white/70 p-5 rounded-2xl border border-transparent hover:border-desert-gold/30 hover:shadow-md transition-all flex flex-col group">
+        <Link to={`/hub?taskId=${task.id}`} className="bg-white/70 p-5 rounded-2xl border border-transparent hover:border-desert-gold/30 hover:shadow-md transition-all flex flex-col group block">
             <div className="flex justify-between items-start mb-2">
                 <div>
                     <h4 className="font-bold text-arabian-night text-base group-hover:text-deep-teal transition-colors">{task.title}</h4>
@@ -28,22 +27,23 @@ const TaskCard = ({ task }: { task: any }) => {
                 </span>
             </div>
             {task.myStatus === 'completed' && task.reflection && (
-                <div className="mt-2 pt-2 border-t border-gray-100/50">
-                    <button 
-                        onClick={() => setExpanded(!expanded)}
-                        className="text-xs font-bold text-desert-gold hover:text-yellow-600 transition-colors flex items-center gap-1 bg-desert-gold/5 px-2 py-1 rounded-md"
-                    >
-                        {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        {expanded ? t('account.hide_reflection') : t('account.view_reflection')}
-                    </button>
-                    {expanded && (
-                        <div className="mt-2 text-xs text-arabian-night/80 bg-white p-4 rounded-xl border border-gray-100 italic leading-relaxed shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
-                            "{task.reflection}"
-                        </div>
-                    )}
+                <div className="mt-2 pt-3 border-t border-gray-100/50">
+                    <p className="text-xs text-arabian-night/80 italic line-clamp-2">
+                        "{task.reflection}"
+                    </p>
+                    <p className="text-[10px] text-desert-gold mt-2 font-bold flex items-center gap-1">
+                        {t('account.view_reflection')} →
+                    </p>
                 </div>
             )}
-        </div>
+            {task.myStatus !== 'completed' && (
+                <div className="mt-2 pt-3 border-t border-gray-100/50">
+                    <p className="text-[11px] text-orange-500 font-bold flex items-center gap-1">
+                        {t('account.pending')} →
+                    </p>
+                </div>
+            )}
+        </Link>
     );
 };
 
