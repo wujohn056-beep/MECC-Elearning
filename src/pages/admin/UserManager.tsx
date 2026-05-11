@@ -5,7 +5,7 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 import { db, firebaseConfig } from '../../services/firebase';
-import { Users, Upload, CheckCircle, AlertTriangle, Edit, Trash2, Key, Search, Plus, X } from 'lucide-react';
+import { Users, Upload, Edit, Trash2, Key, Search, Plus, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 

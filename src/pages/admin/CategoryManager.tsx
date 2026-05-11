@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, query, where, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { db } from '../../services/firebase';
 import { FolderPlus, Edit2, Trash2, Save, X } from 'lucide-react';

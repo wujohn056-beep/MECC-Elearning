@@ -3,7 +3,7 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebas
 import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, Clock, User, Pencil, Trash2, X, Video, Headphones, Download, Search } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search } from 'lucide-react';
 
 interface Recording {
     id: string;
