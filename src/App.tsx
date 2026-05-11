@@ -15,7 +15,7 @@ import UserManager from './pages/admin/UserManager';
 
 import CategoryManager from './pages/admin/CategoryManager';
 
-import { useTranslation } from 'react-i18next';
+
 
 import AdminDashboard from './pages/admin/AdminDashboard';
 function App() {

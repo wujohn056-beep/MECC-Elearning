@@ -5,7 +5,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Download, Calendar, Users, Clock, CheckCircle, BarChart3 } from 'lucide-react';
 import { toPng } from 'html-to-image';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { startOfDay, endOfDay, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 interface UserRecord {
     id: string;
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
         });
     }, [users, profile, isSuperAdmin]);
 
-    const scopeUserIds = useMemo(() => new Set(scopeUsers.map(u => u.id)), [scopeUsers]);
+
 
     // Derived Options based on current filters and scope
     const availableSds = useMemo(() => Array.from(new Set(scopeUsers.map(u => u.sd).filter(Boolean))).sort(), [scopeUsers]);
