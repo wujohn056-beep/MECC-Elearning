@@ -55,10 +55,11 @@ export default function Login() {
                 {t('common.language', 'Language')} ({i18n.language?.toUpperCase() || 'EN'})
             </button>
             <div className="relative z-10 max-w-[420px] w-full bg-white/10 backdrop-blur-md rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-6 sm:p-8 border border-white/20 mt-[22vh] sm:mt-[25vh]">
-                <div className="text-center mb-4 sm:mb-6">
-                    <img src="/logo.png" alt="ME Cloud Academy" className="h-16 mx-auto mb-4 object-contain drop-shadow-md hover:scale-105 transition-transform duration-300" />
-                    <h2 className="text-2xl font-extrabold text-deep-teal mb-1">{t('common.login')}</h2>
-                    <p className="text-arabian-night/60 text-sm font-medium">{t('login.subtitle')}</p>
+                <div className="text-center mb-6 sm:mb-8 relative">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-desert-gold/30 blur-[30px] rounded-full -z-10 pointer-events-none"></div>
+                    <img src="/logo.png" alt="" className="h-20 sm:h-24 mx-auto mb-6 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
+                    <h2 className="text-3xl font-extrabold text-deep-teal mb-2">{t('common.login')}</h2>
+                    <p className="text-arabian-night/60 text-sm font-medium tracking-wide">{t('login.subtitle')}</p>
                 </div>
 
                 {error && (
