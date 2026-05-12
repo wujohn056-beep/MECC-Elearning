@@ -240,6 +240,7 @@ export default function LearningHub() {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [sortType, setSortType] = useState<'latest' | 'popular'>('latest');
+    const [businessType, setBusinessType] = useState<'kid' | 'adult'>('kid');
     const [displayCount, setDisplayCount] = useState(12);
     
     const [searchParams, setSearchParams] = useSearchParams();
@@ -454,6 +455,12 @@ export default function LearningHub() {
         if (targetRecordingId) {
             return rec.id === targetRecordingId;
         }
+        
+        // Filter by businessType (default old recordings to 'kid' as per user request)
+        if ((rec.businessType || 'kid') !== businessType) {
+            return false;
+        }
+
         const matchesTab = activeTab === 'all' || rec.categoryId === activeTab;
         const matchesSearch = searchQuery === '' || 
             (rec.lecturerName && rec.lecturerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -559,19 +566,46 @@ export default function LearningHub() {
                         )}
                     </div>
                     
-                    {/* Search Bar */}
+                    {/* Actions Right Side */}
                     {!taskId && !targetRecordingId && (
-                        <div className="relative w-full md:w-80 lg:w-[420px] shrink-0 group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
-                                <Search className="h-5 w-5 text-arabian-night/40 group-focus-within:text-desert-gold transition-colors" />
+                        <div className="flex flex-col gap-4 w-full md:w-auto items-end">
+                            {/* Business Type Segmented Control */}
+                            <div className="bg-white/60 backdrop-blur-md p-1 rounded-2xl border border-white/50 shadow-sm flex items-center w-full md:w-auto self-start md:self-end">
+                                <button
+                                    onClick={() => setBusinessType('kid')}
+                                    className={`flex-1 md:flex-none px-6 py-2 rounded-xl font-bold text-sm transition-all duration-300 ${
+                                        businessType === 'kid' 
+                                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20' 
+                                            : 'text-arabian-night/50 hover:text-arabian-night'
+                                    }`}
+                                >
+                                    {t('common.type_kid', '青少业务')}
+                                </button>
+                                <button
+                                    onClick={() => setBusinessType('adult')}
+                                    className={`flex-1 md:flex-none px-6 py-2 rounded-xl font-bold text-sm transition-all duration-300 ${
+                                        businessType === 'adult' 
+                                            ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md shadow-purple-500/20' 
+                                            : 'text-arabian-night/50 hover:text-arabian-night'
+                                    }`}
+                                >
+                                    {t('common.type_adult', '成人业务')}
+                                </button>
                             </div>
-                            <input
-                                type="text"
-                                placeholder={t('learning_hub.search_placeholder')}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-5 py-3.5 border border-gray-200/80 rounded-full focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold bg-white/60 backdrop-blur-md hover:bg-white transition-all shadow-[0_2px_10px_rgb(0,0,0,0.02)] text-sm font-semibold outline-none"
-                            />
+
+                            {/* Search Bar */}
+                            <div className="relative w-full md:w-80 lg:w-[420px] shrink-0 group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
+                                    <Search className="h-5 w-5 text-arabian-night/40 group-focus-within:text-desert-gold transition-colors" />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder={t('learning_hub.search_placeholder')}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-12 pr-5 py-3.5 border border-gray-200/80 rounded-full focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold bg-white/60 backdrop-blur-md hover:bg-white transition-all shadow-[0_2px_10px_rgb(0,0,0,0.02)] text-sm font-semibold outline-none"
+                                />
+                            </div>
                         </div>
                     )}
                 </header>

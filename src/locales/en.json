@@ -40,7 +40,11 @@
         "deselect_all": "Deselect Group",
         "name": "Name",
         "no_data": "No Data Available",
-        "playback_speed": "Playback Speed"
+        "playback_speed": "Playback Speed",
+        "business_type": "Business Type",
+        "type_kid": "Kids",
+        "type_adult": "Adults",
+        "select_business_type": "Select Business"
     },
     "navbar": {
         "title": "ME Cloud Academy",

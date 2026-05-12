@@ -40,7 +40,11 @@
         "deselect_all": "取消全选",
         "name": "姓名",
         "no_data": "暂无数据",
-        "playback_speed": "播放速度"
+        "playback_speed": "播放速度",
+        "business_type": "业务线",
+        "type_kid": "青少业务",
+        "type_adult": "成人业务",
+        "select_business_type": "选择业务线"
     },
     "navbar": {
         "title": "ME 云学堂",

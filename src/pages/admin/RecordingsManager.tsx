@@ -16,6 +16,7 @@ interface Recording {
     categoryName?: string;
     createdAt: any;
     displayId?: string;
+    businessType?: 'kid' | 'adult';
 }
 
 interface Category {
@@ -37,6 +38,7 @@ export default function RecordingsManager() {
     const [file, setFile] = useState<File | null>(null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [businessType, setBusinessType] = useState<'kid' | 'adult'>('kid');
     
     // Upload States
     const [uploading, setUploading] = useState(false);
@@ -118,6 +120,7 @@ export default function RecordingsManager() {
         setFile(null);
         setAvatarFile(null);
         setAvatarPreview(null);
+        setBusinessType('kid');
         setProgress(0);
         setUploading(false);
         if (categories.length > 0) {
@@ -138,6 +141,7 @@ export default function RecordingsManager() {
         setLecturerName(rec.lecturerName || '');
         setSelectedCategoryId(rec.categoryId || '');
         setAvatarPreview(rec.avatarUrl || null);
+        setBusinessType(rec.businessType || 'kid');
         setFile(null);
         setAvatarFile(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -296,7 +300,8 @@ export default function RecordingsManager() {
                 audioUrl,
                 avatarUrl,
                 categoryId: category?.id || '',
-                categoryName: category?.name || t('common.uncategorized')
+                categoryName: category?.name || t('common.uncategorized'),
+                businessType
             };
 
             if (editingId) {
@@ -375,6 +380,34 @@ export default function RecordingsManager() {
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                                     ))}
                                 </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-deep-teal mb-1">{t('common.business_type', '业务线')}</label>
+                                <div className="flex items-center gap-6 mt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="businessType"
+                                            value="kid"
+                                            checked={businessType === 'kid'}
+                                            onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult')}
+                                            className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                        />
+                                        <span className="text-sm font-semibold text-arabian-night">{t('common.type_kid', '青少业务')}</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="businessType"
+                                            value="adult"
+                                            checked={businessType === 'adult'}
+                                            onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult')}
+                                            className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                        />
+                                        <span className="text-sm font-semibold text-arabian-night">{t('common.type_adult', '成人业务')}</span>
+                                    </label>
+                                </div>
                             </div>
 
                             <div>
@@ -600,10 +633,19 @@ export default function RecordingsManager() {
                                                 )}
                                             </div>
                                             <div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                                        (rec.businessType || 'kid') === 'kid' 
+                                                            ? 'bg-blue-100 text-blue-700' 
+                                                            : 'bg-purple-100 text-purple-700'
+                                                    }`}>
+                                                        {(rec.businessType || 'kid') === 'kid' ? t('common.type_kid') : t('common.type_adult')}
+                                                    </span>
                                                     <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
                                                         {rec.categoryName || t('common.uncategorized')}
                                                     </span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
                                                     <h3 className="font-bold text-arabian-night">
                                                         {rec.displayId && <span className="text-desert-gold mr-1.5 text-sm">[{rec.displayId}]</span>}
                                                         {rec.title}
