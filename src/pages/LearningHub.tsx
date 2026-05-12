@@ -32,7 +32,7 @@ const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string,
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [playbackRate, setPlaybackRate] = useState(1);
-    const speeds = [0.75, 1, 1.5, 1.75];
+    const speeds = [0.75, 1, 1.5];
 
     const togglePlay = () => {
         if (audioRef.current) {
