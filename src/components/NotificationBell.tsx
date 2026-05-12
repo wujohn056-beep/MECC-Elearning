@@ -239,7 +239,12 @@ export default function NotificationBell() {
                                     onClick={() => {
                                         setShowGlobalModal(false);
                                         setHasSeenGlobalModal(true);
-                                        setIsOpen(true);
+                                        const unreadPending = tasks.filter(t => !t.read && t.status === 'pending');
+                                        if (unreadPending.length === 1) {
+                                            handleTaskClick(unreadPending[0]);
+                                        } else {
+                                            navigate('/account');
+                                        }
                                     }}
                                     className="flex-1 px-4 py-3 bg-deep-teal text-white font-bold rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-deep-teal/30"
                                 >
