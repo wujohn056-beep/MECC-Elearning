@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { LogOut, User, Key, AlertCircle, CheckCircle, ChevronDown, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import { updatePassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { t } = useTranslation();
@@ -116,7 +118,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: ()
 
 export default function AppLayout() {
     const { t, i18n } = useTranslation();
-    const { logout, isSuperAdmin, isLeader, profile } = useAuth();
+    const { logout, isSuperAdmin, isLeader, profile, user } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -137,6 +139,33 @@ export default function AppLayout() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Daily Login Tracking
+    useEffect(() => {
+        const trackDailyLogin = async () => {
+            if (user && profile && profile.role !== 'super_admin') {
+                try {
+                    const today = new Date().toISOString().split('T')[0];
+                    const logRef = doc(db, 'user_activity_logs', `${user.uid}_${today}`);
+                    await setDoc(logRef, {
+                        userId: user.uid,
+                        crmId: profile.crmId || '',
+                        name: (profile as any).name || profile.crmId || '',
+                        role: profile.role || 'user',
+                        sd: profile.sd || '',
+                        sm: profile.sm || '',
+                        tl: profile.tl || '',
+                        team: profile.team || '',
+                        date: today,
+                        lastLoginAt: serverTimestamp()
+                    }, { merge: true });
+                } catch (error) {
+                    console.error("Failed to track login", error);
+                }
+            }
+        };
+        trackDailyLogin();
+    }, [user, profile]);
 
     const getNavLinkClass = (path: string) => {
         const isActive = location.pathname.startsWith(path);
@@ -169,8 +198,8 @@ export default function AppLayout() {
                     {isLeader && (
                         <Link to="/team-tasks" className={getNavLinkClass('/team-tasks')}>{t('navbar.team_tasks')}</Link>
                     )}
-                    {isSuperAdmin && (
-                        <Link to="/admin" className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard')}</Link>
+                    {isLeader && (
+                        <Link to="/admin" className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '数据看板')}</Link>
                     )}
                     <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
                     

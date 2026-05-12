@@ -39,14 +39,26 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin" element={
-            <ProtectedRoute requireAdmin={true}>
+            <ProtectedRoute requireLeader={true}>
               <AdminLayout />
             </ProtectedRoute>
           }>
             <Route index element={<AdminDashboard />} />
-            <Route path="categories" element={<CategoryManager />} />
-            <Route path="recordings" element={<RecordingsManager />} />
-            <Route path="users" element={<UserManager />} />
+            <Route path="categories" element={
+              <ProtectedRoute requireAdmin={true}>
+                <CategoryManager />
+              </ProtectedRoute>
+            } />
+            <Route path="recordings" element={
+              <ProtectedRoute requireAdmin={true}>
+                <RecordingsManager />
+              </ProtectedRoute>
+            } />
+            <Route path="users" element={
+              <ProtectedRoute requireAdmin={true}>
+                <UserManager />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
       </Router>

@@ -23,6 +23,15 @@ interface LearningLog {
     listenedAt: any; // Firestore Timestamp
 }
 
+interface ActivityLog {
+    userId: string;
+    crmId: string;
+    name: string;
+    team: string;
+    date: string;
+    lastLoginAt: any;
+}
+
 interface LearningTask {
     id: string;
     createdAt: any; // Firestore Timestamp
@@ -53,6 +62,7 @@ export default function AdminDashboard() {
     const [users, setUsers] = useState<UserRecord[]>([]);
     const [logs, setLogs] = useState<LearningLog[]>([]);
     const [tasks, setTasks] = useState<LearningTask[]>([]);
+    const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -92,6 +102,14 @@ export default function AdminDashboard() {
                 }
             });
             setTasks(tasksData);
+
+            // Fetch Activity Logs
+            const activitySnap = await getDocs(collection(db, 'user_activity_logs'));
+            const activityData: ActivityLog[] = [];
+            activitySnap.forEach(doc => {
+                activityData.push(doc.data() as ActivityLog);
+            });
+            setActivityLogs(activityData);
         } catch (error) {
             console.error("Error fetching dashboard data", error);
         } finally {
@@ -173,6 +191,14 @@ export default function AdminDashboard() {
             return isWithinInterval(d, { start: startDate, end: endDate });
         });
     }, [tasks, startDate, endDate]);
+
+    const filteredActivities = useMemo(() => {
+        return activityLogs.filter(log => {
+            if (!log.date) return false;
+            const d = new Date(log.date);
+            return isWithinInterval(d, { start: startOfDay(startDate), end: endOfDay(endDate) }) && displayedUserIds.has(log.userId);
+        }).sort((a, b) => b.lastLoginAt?.toDate?.()?.getTime() - a.lastLoginAt?.toDate?.()?.getTime());
+    }, [activityLogs, startDate, endDate, displayedUserIds]);
 
     // 4. Aggregations
     const userStats = useMemo(() => {
@@ -397,6 +423,63 @@ export default function AdminDashboard() {
                     <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform"><CheckCircle className="w-24 h-24" /></div>
                     <p className="text-sm font-semibold text-arabian-night/50 mb-1">{t('dashboard.avg_completion', '平均任务完成率')}</p>
                     <p className="text-3xl font-bold text-deep-teal">{avgCompletionRate}%</p>
+                </div>
+            </div>
+
+            {/* Login & Activity Records Table */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative mt-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold text-deep-teal flex items-center gap-2">
+                        <Users className="w-5 h-5 text-desert-gold" />
+                        {t('dashboard.login_activity_records', '团队活跃与登录记录 (Active Users & Logins)')}
+                    </h2>
+                    <span className="text-sm font-semibold text-arabian-night/60 bg-gray-100 px-3 py-1 rounded-full">
+                        {filteredActivities.length} {t('dashboard.records', '条记录')}
+                    </span>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-gray-50/50 text-arabian-night/60 font-bold border-b border-gray-100">
+                            <tr>
+                                <th className="py-3 px-4 rounded-tl-xl">CRM ID</th>
+                                <th className="py-3 px-4">{t('common.name', '姓名')}</th>
+                                <th className="py-3 px-4">Team</th>
+                                <th className="py-3 px-4">{t('dashboard.date', '日期')}</th>
+                                <th className="py-3 px-4 rounded-tr-xl">{t('dashboard.last_login_time', '最后登录时间')}</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {filteredActivities.slice(0, 100).map((act, i) => (
+                                <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="py-3 px-4 font-semibold">{act.crmId || act.userId}</td>
+                                    <td className="py-3 px-4">{act.name || act.crmId || '-'}</td>
+                                    <td className="py-3 px-4">
+                                        <span className="bg-gray-100 text-arabian-night/70 px-2 py-0.5 rounded text-xs font-semibold">
+                                            {act.team || '-'}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-4 font-bold text-deep-teal">{act.date}</td>
+                                    <td className="py-3 px-4 text-arabian-night/70">
+                                        {act.lastLoginAt ? act.lastLoginAt.toDate().toLocaleString() : '-'}
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredActivities.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="py-8 text-center text-gray-400">
+                                        {t('common.no_data', '暂无数据')}
+                                    </td>
+                                </tr>
+                            )}
+                            {filteredActivities.length > 100 && (
+                                <tr>
+                                    <td colSpan={5} className="py-4 text-center text-sm font-semibold text-desert-gold">
+                                        {t('dashboard.showing_top_100', '仅显示最近 100 条记录')}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
