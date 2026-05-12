@@ -46,6 +46,10 @@ export default function RecordingsManager() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    
+    // Autocomplete for lecturer
+    const [systemUsers, setSystemUsers] = useState<any[]>([]);
+    const [showLecturerDropdown, setShowLecturerDropdown] = useState(false);
 
     const filteredRecordings = recordings.filter(rec => 
         rec.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -78,6 +82,15 @@ export default function RecordingsManager() {
             const recData: Recording[] = [];
             recSnapshot.forEach((doc: any) => recData.push({ id: doc.id, ...doc.data() } as Recording));
             setRecordings(recData);
+
+            // Fetch Users for autocomplete
+            const usersQ = query(collection(db, 'users'));
+            const usersPromise = getDocs(usersQ);
+            const usersSnapshot = (await Promise.race([usersPromise, timeoutPromise])) as any;
+            const usersData: any[] = [];
+            usersSnapshot.forEach((doc: any) => usersData.push({ id: doc.id, ...doc.data() }));
+            setSystemUsers(usersData);
+
             setPageError(null);
         } catch (error: any) {
             console.error("Error fetching data: ", error);
@@ -395,15 +408,55 @@ export default function RecordingsManager() {
                                 )}
                             </div>
 
-                            <div>
+                            <div className="relative">
                                 <label className="block text-sm font-semibold text-deep-teal mb-1">{t('recordings_manager.lecturer_label')}</label>
                                 <input
                                     type="text"
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent"
                                     value={lecturerName}
-                                    onChange={(e) => setLecturerName(e.target.value)}
+                                    onChange={(e) => {
+                                        setLecturerName(e.target.value);
+                                        setShowLecturerDropdown(true);
+                                    }}
+                                    onFocus={() => setShowLecturerDropdown(true)}
+                                    onBlur={() => setTimeout(() => setShowLecturerDropdown(false), 200)}
                                     placeholder={t('recordings_manager.lecturer_placeholder')}
                                 />
+                                {showLecturerDropdown && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                        {systemUsers
+                                            .filter(u => 
+                                                !lecturerName || 
+                                                (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
+                                                (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
+                                            )
+                                            .slice(0, 20)
+                                            .map(u => (
+                                                <div 
+                                                    key={u.id}
+                                                    className="px-4 py-2 hover:bg-desert-gold/10 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
+                                                    onMouseDown={(e) => {
+                                                        // use onMouseDown instead of onClick to prevent onBlur from firing first
+                                                        e.preventDefault();
+                                                        setLecturerName(u.name || u.crmId || '');
+                                                        setShowLecturerDropdown(false);
+                                                    }}
+                                                >
+                                                    <span className="font-semibold text-arabian-night">{u.name || u.crmId}</span>
+                                                    {u.crmId && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{u.crmId}</span>}
+                                                </div>
+                                            ))}
+                                        {systemUsers.filter(u => 
+                                                !lecturerName || 
+                                                (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
+                                                (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
+                                        ).length === 0 && (
+                                            <div className="px-4 py-3 text-xs text-gray-500 italic text-center">
+                                                {t('recordings_manager.custom_lecturer_tip', '未匹配到该用户，将作为自定义讲师保存')}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <div>
