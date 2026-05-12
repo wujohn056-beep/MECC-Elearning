@@ -97,35 +97,63 @@ export default function UserManager() {
             const accountsToCreate = new Map<string, any>();
 
             jsonData.forEach(row => {
-                if (row.SD && row.SD.trim()) {
-                    const sdId = row.SD.trim();
-                    if (!accountsToCreate.has(sdId.toLowerCase())) {
-                        accountsToCreate.set(sdId.toLowerCase(), {
-                            crmId: sdId, role: 'sd', sd: '', sm: '', tl: '', team: ''
+                const sdValue = row.SD ? row.SD.trim() : '';
+                const smValue = row.SM ? row.SM.trim() : '';
+                const tlValue = row.TL ? row.TL.trim() : '';
+                const teamValue = row.Team ? row.Team.trim() : '';
+
+                if (sdValue) {
+                    const sdId = sdValue.toLowerCase();
+                    if (!accountsToCreate.has(sdId)) {
+                        accountsToCreate.set(sdId, {
+                            crmId: sdValue, role: 'sd', sd: '', sm: '', tl: '', team: ''
                         });
                     }
                 }
-                if (row.SM && row.SM.trim()) {
-                    const smId = row.SM.trim();
-                    if (!accountsToCreate.has(smId.toLowerCase())) {
-                        accountsToCreate.set(smId.toLowerCase(), {
-                            crmId: smId, role: 'sm', sd: row.SD ? row.SD.trim() : '', sm: '', tl: '', team: ''
+                
+                if (smValue) {
+                    const smId = smValue.toLowerCase();
+                    if (!accountsToCreate.has(smId)) {
+                        accountsToCreate.set(smId, {
+                            crmId: smValue, role: 'sm', sd: sdValue, sm: '', tl: '', team: ''
                         });
+                    } else {
+                        const existing = accountsToCreate.get(smId);
+                        if (!existing.sd && sdValue) existing.sd = sdValue;
                     }
                 }
+
+                if (tlValue) {
+                    const tlId = tlValue.toLowerCase();
+                    if (!accountsToCreate.has(tlId)) {
+                        accountsToCreate.set(tlId, {
+                            crmId: tlValue, role: 'tl', sd: sdValue, sm: smValue, tl: '', team: ''
+                        });
+                    } else {
+                        const existing = accountsToCreate.get(tlId);
+                        if (!existing.sd && sdValue) existing.sd = sdValue;
+                        if (!existing.sm && smValue) existing.sm = smValue;
+                    }
+                }
+
                 if (row.CRM && row.CRM.trim()) {
                     const crmId = row.CRM.trim();
+                    const crmIdLower = crmId.toLowerCase();
+                    
                     let role = 'user';
                     if (row.Position?.toUpperCase() === 'TL') role = 'tl';
                     if (row.Position?.toUpperCase() === 'SM') role = 'sm';
+                    if (row.Position?.toUpperCase() === 'SD') role = 'sd';
 
-                    accountsToCreate.set(crmId.toLowerCase(), {
-                        crmId: crmId,
-                        role: role,
-                        sd: row.SD ? row.SD.trim() : '',
-                        sm: row.SM ? row.SM.trim() : '',
-                        tl: row.TL ? row.TL.trim() : '',
-                        team: row.Team ? row.Team.trim() : ''
+                    const existing = accountsToCreate.get(crmIdLower);
+                    
+                    accountsToCreate.set(crmIdLower, {
+                        crmId: existing?.crmId || crmId,
+                        role: role !== 'user' ? role : (existing?.role && existing.role !== 'user' ? existing.role : 'user'),
+                        sd: sdValue || existing?.sd || '',
+                        sm: smValue || existing?.sm || '',
+                        tl: tlValue || existing?.tl || '',
+                        team: teamValue || existing?.team || ''
                     });
                 }
             });
