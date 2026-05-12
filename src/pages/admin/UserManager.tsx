@@ -92,7 +92,15 @@ export default function UserManager() {
             const workbook = xlsx.read(data, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            const jsonData = xlsx.utils.sheet_to_json<ExcelRow>(worksheet);
+            const rawJsonData = xlsx.utils.sheet_to_json<any>(worksheet);
+            
+            const jsonData = rawJsonData.map(row => {
+                const normalized: any = {};
+                for (const key in row) {
+                    normalized[key.trim()] = row[key];
+                }
+                return normalized as ExcelRow;
+            });
 
             const accountsToCreate = new Map<string, any>();
 
@@ -177,14 +185,14 @@ export default function UserManager() {
 
                     let role = row.role;
 
-                    const existingUser = users.find(u => u.crmId.toLowerCase() === crmId.toLowerCase());
+                    const existingUser = users.find(u => u.crmId.trim().toLowerCase() === crmId.trim().toLowerCase());
                     if (existingUser) {
                         await updateDoc(doc(db, 'users', existingUser.id), {
-                            role: role,
-                            sd: row.sd,
-                            sm: row.sm,
-                            tl: row.tl,
-                            team: row.team
+                            role: role !== 'user' ? role : (existingUser.role && existingUser.role !== 'user' ? existingUser.role : 'user'),
+                            sd: row.sd || existingUser.sd || '',
+                            sm: row.sm || existingUser.sm || '',
+                            tl: row.tl || existingUser.tl || '',
+                            team: row.team || existingUser.team || ''
                         });
                         successCount++;
                         setStatusLog(prev => [{msg: `[更新] ${crmId} 架构已更新`, type: 'success'}, ...prev]);
