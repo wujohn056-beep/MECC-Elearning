@@ -97,18 +97,22 @@ export default function UserManager() {
             const jsonData = rawJsonData.map(row => {
                 const normalized: any = {};
                 for (const key in row) {
-                    normalized[key.trim()] = row[key];
+                    if (key && typeof key === 'string') {
+                        normalized[key.trim().toUpperCase()] = row[key];
+                    }
                 }
-                return normalized as ExcelRow;
+                return normalized;
             });
 
             const accountsToCreate = new Map<string, any>();
 
             jsonData.forEach(row => {
-                const sdValue = row.SD ? row.SD.trim() : '';
-                const smValue = row.SM ? row.SM.trim() : '';
-                const tlValue = row.TL ? row.TL.trim() : '';
-                const teamValue = row.Team ? row.Team.trim() : '';
+                const sdValue = row.SD ? String(row.SD).trim() : '';
+                const smValue = row.SM ? String(row.SM).trim() : '';
+                const tlValue = row.TL ? String(row.TL).trim() : '';
+                const teamValue = row.TEAM ? String(row.TEAM).trim() : (row.Team ? String(row.Team).trim() : '');
+                const positionValue = row.POSITION ? String(row.POSITION).toUpperCase() : (row.Position ? String(row.Position).toUpperCase() : '');
+                const crmValue = row.CRM ? String(row.CRM).trim() : '';
 
                 if (sdValue) {
                     const sdId = sdValue.toLowerCase();
@@ -144,14 +148,14 @@ export default function UserManager() {
                     }
                 }
 
-                if (row.CRM && row.CRM.trim()) {
-                    const crmId = row.CRM.trim();
+                if (crmValue) {
+                    const crmId = crmValue;
                     const crmIdLower = crmId.toLowerCase();
                     
                     let role = 'user';
-                    if (row.Position?.toUpperCase() === 'TL') role = 'tl';
-                    if (row.Position?.toUpperCase() === 'SM') role = 'sm';
-                    if (row.Position?.toUpperCase() === 'SD') role = 'sd';
+                    if (positionValue === 'TL') role = 'tl';
+                    if (positionValue === 'SM') role = 'sm';
+                    if (positionValue === 'SD') role = 'sd';
 
                     const existing = accountsToCreate.get(crmIdLower);
                     
@@ -185,7 +189,7 @@ export default function UserManager() {
 
                     let role = row.role;
 
-                    const existingUser = users.find(u => u.crmId.trim().toLowerCase() === crmId.trim().toLowerCase());
+                    const existingUser = users.find(u => u.crmId && u.crmId.trim().toLowerCase() === crmId.trim().toLowerCase());
                     if (existingUser) {
                         await updateDoc(doc(db, 'users', existingUser.id), {
                             role: role !== 'user' ? role : (existingUser.role && existingUser.role !== 'user' ? existingUser.role : 'user'),
