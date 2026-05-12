@@ -844,14 +844,14 @@ export default function AdminDashboard() {
             <div className="pt-6 border-t border-gray-100">
                 <h2 className="text-2xl font-bold text-deep-teal mb-6 flex items-center gap-2">
                     <span className="bg-desert-gold p-1.5 rounded-lg text-white">🎤</span>
-                    {t('dashboard.contribution_rankings', '录音贡献排行榜 (Recording Contributions)')}
+                    {t('dashboard.contribution_rankings', '录音贡献排行榜')}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* SD Contribution */}
                     {isSuperAdmin && (
                         <div id="chart-sd-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.sd_contribution', 'SD 贡献榜')}</h3>
+                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.sd_contribution', '大区贡献榜')}</h3>
                                 <button onClick={() => handleDownload('chart-sd-contribution', 'SD_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
                                     <Download className="w-4 h-4" />
                                 </button>
@@ -880,7 +880,7 @@ export default function AdminDashboard() {
                     {(isSuperAdmin || profile?.role === 'sd') && (
                         <div id="chart-sm-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.sm_contribution', '大组 (SM) 贡献榜')}</h3>
+                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.sm_contribution', '大组贡献榜')}</h3>
                                 <button onClick={() => handleDownload('chart-sm-contribution', 'SM_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
                                     <Download className="w-4 h-4" />
                                 </button>
@@ -909,7 +909,7 @@ export default function AdminDashboard() {
                     {(isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm') && (
                         <div id="chart-team-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.team_contribution', '小组 (TL) 贡献榜')}</h3>
+                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.team_contribution', '小组贡献榜')}</h3>
                                 <button onClick={() => handleDownload('chart-team-contribution', 'Team_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
                                     <Download className="w-4 h-4" />
                                 </button>
@@ -937,7 +937,7 @@ export default function AdminDashboard() {
                     {/* Individual Contribution */}
                     <div id="chart-cc-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-base font-bold text-deep-teal">{t('dashboard.cc_contribution', '个人 (CC) 贡献榜')}</h3>
+                            <h3 className="text-base font-bold text-deep-teal">{t('dashboard.cc_contribution', '个人贡献榜')}</h3>
                             <button onClick={() => handleDownload('chart-cc-contribution', 'CC_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
                                 <Download className="w-4 h-4" />
                             </button>

@@ -281,7 +281,7 @@
         "hours": "hours",
         "team_duration_ranking": "Total Learning Duration by Team",
         "team_avg_ranking": "Average Learning Duration by Team",
-        "user_duration_ranking": "Individual Learning Duration Ranking (Top 50)",
+        "user_duration_ranking": "Individual Learning Duration Ranking",
         "total_duration": "Total Duration",
         "completion_rate": "Completion Rate",
         "sd_duration_ranking": "SD Level Learning Duration Ranking",
@@ -296,6 +296,11 @@
         "records": "records",
         "date": "Date",
         "last_login_time": "Last Login Time",
-        "showing_top_100": "Showing top 100 records only"
+        "showing_top_100": "Showing top 100 records only",
+        "contribution_rankings": "Recording Contribution Rankings",
+        "sd_contribution": "Region Contribution Ranking",
+        "sm_contribution": "Group Contribution Ranking",
+        "team_contribution": "Team Contribution Ranking",
+        "cc_contribution": "Individual Contribution Ranking"
     }
 }

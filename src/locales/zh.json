@@ -295,6 +295,11 @@
         "records": "条记录",
         "date": "日期",
         "last_login_time": "最后登录时间",
-        "showing_top_100": "仅显示最近 100 条记录"
+        "showing_top_100": "仅显示最近 100 条记录",
+        "contribution_rankings": "录音贡献排行榜",
+        "sd_contribution": "大区贡献榜",
+        "sm_contribution": "大组贡献榜",
+        "team_contribution": "小组贡献榜",
+        "cc_contribution": "个人贡献榜"
     }
 }
