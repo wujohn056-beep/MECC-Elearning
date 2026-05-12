@@ -4,7 +4,6 @@ import { collection, getDocs, addDoc, serverTimestamp, query, where, orderBy, Ti
 import { db } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
 import { Users, FileAudio, Calendar, CheckCircle, Clock, AlertCircle, Search, LayoutDashboard, ClipboardList } from 'lucide-react';
-import AdminDashboard from './admin/AdminDashboard';
 
 interface UserRecord {
     id: string;
@@ -60,8 +59,6 @@ export default function TeamTasks() {
     const [deadlineTime, setDeadlineTime] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [recordingSearchQuery, setRecordingSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'tasks'>('dashboard');
-    const currentTab = isSuperAdmin ? 'tasks' : activeTab;
 
     useEffect(() => {
         fetchTasks();
@@ -226,51 +223,16 @@ export default function TeamTasks() {
                         <p className="text-arabian-night/60 mt-1">{t('team_tasks.desc', '指派学习任务并追踪团队成员进度')}</p>
                     </div>
                     
-                    {currentTab === 'tasks' && (
-                        <button 
-                            onClick={() => setShowCreateModal(true)}
-                            className="bg-desert-gold text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-yellow-600 transition-colors"
-                        >
-                            + {t('team_tasks.new_task', '新建任务')}
-                        </button>
-                    )}
+                    <button 
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-desert-gold text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-yellow-600 transition-colors"
+                    >
+                        + {t('team_tasks.new_task', '新建任务')}
+                    </button>
                 </div>
-
-                {!isSuperAdmin && (
-                    <div className="flex items-center gap-8 border-b border-gray-200 px-2">
-                        <button
-                            onClick={() => setActiveTab('dashboard')}
-                            className={`flex items-center gap-2 pb-3 text-base font-bold border-b-4 transition-colors ${
-                                currentTab === 'dashboard' 
-                                    ? 'border-deep-teal text-deep-teal' 
-                                    : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300'
-                            }`}
-                        >
-                            <LayoutDashboard className="w-5 h-5" />
-                            {t('dashboard.title', '仪表盘总览')}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('tasks')}
-                            className={`flex items-center gap-2 pb-3 text-base font-bold border-b-4 transition-colors ${
-                                currentTab === 'tasks' 
-                                    ? 'border-deep-teal text-deep-teal' 
-                                    : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300'
-                            }`}
-                        >
-                            <ClipboardList className="w-5 h-5" />
-                            {t('team_tasks.manage_tasks', '任务管理')}
-                        </button>
-                    </div>
-                )}
             </div>
 
-            {currentTab === 'dashboard' ? (
-                <div className="bg-white/30 p-2 rounded-2xl">
-                    <AdminDashboard />
-                </div>
-            ) : (
-                <>
-                    {loadingTasks ? (
+            {loadingTasks ? (
                         <div className="flex justify-center p-12">
                             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-desert-gold"></div>
                         </div>
@@ -364,8 +326,6 @@ export default function TeamTasks() {
                         );
                     })}
                 </div>
-            )}
-            </>
             )}
 
             {/* Create Task Modal */}
