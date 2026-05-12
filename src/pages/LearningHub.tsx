@@ -484,28 +484,34 @@ export default function LearningHub() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-12 overflow-x-hidden">
             {/* Control Center Card */}
-            <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 sm:p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-desert-gold/5 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_40px_rgb(0,0,0,0.04)] border border-white p-6 sm:p-8 md:p-10 relative overflow-hidden">
+                {/* Premium Decorative Background Elements */}
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/10 via-teal-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-deep-teal/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
                 
-                <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 relative z-10">
+                <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-10">
                     <div>
                         {taskId ? (
                             <>
-                                <h2 className="text-3xl font-bold text-deep-teal">{t('learning_hub.task_exclusive')}</h2>
-                                <p className="text-arabian-night/60 mt-1">{t('learning_hub.task_need_listen')} <span className="font-bold text-arabian-night">{taskTitle}</span></p>
-                                <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-2 hover:underline">{t('learning_hub.back_to_courses')}</button>
+                                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.task_exclusive')}</h2>
+                                <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.task_need_listen')} <span className="font-bold text-arabian-night">{taskTitle}</span></p>
+                                <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
+                                    <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
+                                </button>
                             </>
                         ) : targetRecordingId ? (
                             <>
-                                <h2 className="text-3xl font-bold text-deep-teal">{t('learning_hub.my_favorite_learning')}</h2>
-                                <p className="text-arabian-night/60 mt-1">{t('learning_hub.play_favorites_desc')}</p>
-                                <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-2 hover:underline">{t('learning_hub.back_to_courses')}</button>
+                                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.my_favorite_learning')}</h2>
+                                <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.play_favorites_desc')}</p>
+                                <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
+                                    <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
+                                </button>
                             </>
                         ) : (
                             <div className="flex flex-col">
-                                <h2 className="text-3xl font-bold text-deep-teal">{t('learning_hub.explore')}</h2>
-                                <div className="mt-2.5 flex items-center gap-3">
-                                    <span className="w-8 h-0.5 bg-gradient-to-r from-desert-gold to-desert-gold/20 rounded-full"></span>
+                                <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight">{t('learning_hub.explore')}</h2>
+                                <div className="mt-3 flex items-center gap-3">
+                                    <span className="w-10 h-1 bg-gradient-to-r from-desert-gold to-yellow-500 rounded-full shadow-sm"></span>
                                     <p className="text-base font-extrabold text-desert-gold tracking-wide italic bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-yellow-600">
                                         "{t('learning_hub.slogan')}"
                                     </p>
@@ -516,34 +522,34 @@ export default function LearningHub() {
                     
                     {/* Search Bar */}
                     {!taskId && !targetRecordingId && (
-                        <div className="relative w-full md:w-80 lg:w-96 shrink-0">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search className="h-4 w-4 text-arabian-night/40" />
+                        <div className="relative w-full md:w-80 lg:w-[420px] shrink-0 group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
+                                <Search className="h-5 w-5 text-arabian-night/40 group-focus-within:text-desert-gold transition-colors" />
                             </div>
                             <input
                                 type="text"
                                 placeholder={t('learning_hub.search_placeholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-full focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-gray-50/50 hover:bg-white transition-colors shadow-sm"
+                                className="w-full pl-12 pr-5 py-3.5 border border-gray-200/80 rounded-full focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold bg-white/60 backdrop-blur-md hover:bg-white transition-all shadow-[0_2px_10px_rgb(0,0,0,0.02)] text-sm font-semibold outline-none"
                             />
                         </div>
                     )}
                 </header>
 
                 {taskId && (
-                    <div className="bg-gray-50/80 rounded-2xl p-5 border border-gray-100 mt-6 relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                    <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 mt-8 relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 shadow-sm">
                         <div>
-                            <h3 className="text-lg font-bold text-deep-teal mb-1">{t('learning_hub.task_submission', '提交学习任务')}</h3>
-                            <p className="text-sm text-arabian-night/60">{t('learning_hub.task_submission_desc', '请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。')}</p>
+                            <h3 className="text-lg font-extrabold text-deep-teal mb-1">{t('learning_hub.task_submission', '提交学习任务')}</h3>
+                            <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_submission_desc', '请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。')}</p>
                         </div>
                         <button
                             onClick={handleSubmitTask}
                             disabled={!canSubmit || isSubmittingTask}
-                            className="bg-deep-teal text-white px-6 py-2.5 rounded-lg font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 shrink-0 shadow-sm"
+                            className="bg-gradient-to-r from-deep-teal to-teal-700 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 shrink-0 border border-transparent disabled:hover:shadow-none hover:-translate-y-0.5"
                         >
                             {isSubmittingTask ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                             ) : null}
                             {!canSubmit ? t('learning_hub.complete_all_requirements', '请完成所有要求') : t('learning_hub.submit_task')}
                         </button>
@@ -552,14 +558,14 @@ export default function LearningHub() {
 
                 {/* Category Tabs */}
                 {!taskId && !targetRecordingId && (
-                    <div className="mt-8 pt-5 border-t border-gray-100 relative z-10">
-                        <div className="flex overflow-x-auto hide-scrollbar gap-2 py-1">
+                    <div className="mt-10 pt-6 border-t border-gray-100/60 relative z-10">
+                        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-2 pb-3">
                             <button
                                 onClick={() => setActiveTab('all')}
-                                className={`px-5 py-2 rounded-full font-semibold transition-all whitespace-nowrap border ${
+                                className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
                                     activeTab === 'all' 
-                                        ? 'bg-deep-teal text-white border-deep-teal shadow-md' 
-                                        : 'bg-white text-arabian-night/60 border-gray-200 hover:border-desert-gold/50 hover:text-desert-gold'
+                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
+                                        : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
                                 }`}
                             >
                                 {t('learning_hub.all_content')}
@@ -568,10 +574,10 @@ export default function LearningHub() {
                                 <button
                                     key={cat.id}
                                     onClick={() => setActiveTab(cat.id)}
-                                    className={`px-5 py-2 rounded-full font-semibold transition-all whitespace-nowrap border ${
+                                    className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
                                         activeTab === cat.id 
-                                            ? 'bg-deep-teal text-white border-deep-teal shadow-md' 
-                                            : 'bg-white text-arabian-night/60 border-gray-200 hover:border-desert-gold/50 hover:text-desert-gold'
+                                            ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
+                                            : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
                                     }`}
                                 >
                                     {cat.name}
@@ -583,29 +589,31 @@ export default function LearningHub() {
 
                 {/* Lecturers Filter */}
                 {!taskId && !targetRecordingId && sortedLecturers.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100/50 relative z-10 animate-in fade-in duration-500">
-                        <h4 className="text-sm font-bold text-deep-teal mb-3 flex items-center gap-2">
-                            <User className="w-4 h-4 text-desert-gold" />
+                    <div className="mt-2 pt-5 border-t border-gray-100/60 relative z-10 animate-in fade-in duration-700">
+                        <h4 className="text-sm font-extrabold text-deep-teal mb-4 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-md bg-desert-gold/10 flex items-center justify-center">
+                                <User className="w-4 h-4 text-desert-gold" />
+                            </span>
                             {t('learning_hub.popular_lecturers', 'Top Lecturers')}
                         </h4>
-                        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-1">
+                        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-2 pb-4">
                             {sortedLecturers.map(lecturer => (
                                 <button
                                     key={lecturer}
                                     onClick={() => setSelectedLecturer(selectedLecturer === lecturer ? '' : lecturer)}
-                                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-semibold transition-all whitespace-nowrap border shadow-sm ${
+                                    className={`flex items-center gap-2.5 px-5 py-2 rounded-full font-bold transition-all duration-300 whitespace-nowrap group ${
                                         selectedLecturer === lecturer 
-                                            ? 'bg-desert-gold text-white border-desert-gold scale-105 shadow-md' 
-                                            : 'bg-white text-arabian-night/70 border-gray-200 hover:border-desert-gold/50 hover:bg-desert-gold/5 hover:-translate-y-0.5'
+                                            ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white scale-105 shadow-lg shadow-yellow-600/20 border-transparent' 
+                                            : 'bg-white/60 backdrop-blur-sm text-arabian-night/70 border border-gray-200/80 hover:border-desert-gold/50 hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
                                     }`}
                                 >
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                                        selectedLecturer === lecturer ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-500'
+                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors duration-300 shadow-inner ${
+                                        selectedLecturer === lecturer ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-desert-gold/10 group-hover:text-desert-gold'
                                     }`}>
                                         {lecturer.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="text-sm">{lecturer}</span>
-                                    {selectedLecturer === lecturer && <span className="ml-1 text-[10px] bg-white/30 px-1.5 py-0.5 rounded-md">{lecturerCounts[lecturer]}</span>}
+                                    <span className="text-sm tracking-wide">{lecturer}</span>
+                                    {selectedLecturer === lecturer && <span className="ml-1 text-[10px] bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-sm">{lecturerCounts[lecturer]}</span>}
                                 </button>
                             ))}
                         </div>
