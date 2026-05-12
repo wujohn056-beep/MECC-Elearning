@@ -99,7 +99,11 @@
         "submit_fail": "提交失败，请重试。",
         "task_submission": "提交学习任务",
         "task_submission_desc": "请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。",
-        "complete_all_requirements": "请完成所有要求"
+        "complete_all_requirements": "请完成所有要求",
+        "task_completed_title": "任务已完成",
+        "task_completed_desc": "您已经完成了该任务的所有学习内容并提交了心得。",
+        "no_recordings_for_task": "该任务没有关联录音",
+        "recording_deleted": "录音可能已被删除"
     },
     "category_manager": {
         "title": "目录分类管理",

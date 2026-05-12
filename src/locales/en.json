@@ -100,7 +100,11 @@
         "submit_fail": "Submission failed, please try again.",
         "task_submission": "Submit Learning Task",
         "task_submission_desc": "Please listen to all assigned recordings and write a reflection for each recording before submitting the task.",
-        "complete_all_requirements": "Complete all requirements"
+        "complete_all_requirements": "Complete all requirements",
+        "task_completed_title": "Task Completed",
+        "task_completed_desc": "You have completed all learning content for this task and submitted your reflection.",
+        "no_recordings_for_task": "No recordings are associated with this task",
+        "recording_deleted": "This recording may have been deleted"
     },
     "category_manager": {
         "title": "Category Management",

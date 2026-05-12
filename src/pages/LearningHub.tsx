@@ -231,6 +231,7 @@ export default function LearningHub() {
     const [completedAudioIds, setCompletedAudioIds] = useState<string[]>([]);
     const [reflections, setReflections] = useState<Record<string, string>>({});
     const [isSubmittingTask, setIsSubmittingTask] = useState(false);
+    const [isTaskCompleted, setIsTaskCompleted] = useState(false);
     const [favorites, setFavorites] = useState<string[]>([]);
     const [selectedLecturer, setSelectedLecturer] = useState<string>('');
     
@@ -255,7 +256,12 @@ export default function LearningHub() {
                             }
                             if (myAssigneeData.status === 'completed') {
                                 setCompletedAudioIds(data.recordingIds || []);
+                                setIsTaskCompleted(true);
+                            } else {
+                                setIsTaskCompleted(false);
                             }
+                        } else {
+                            setIsTaskCompleted(false);
                         }
                     }
                 } catch (error) {
@@ -267,6 +273,7 @@ export default function LearningHub() {
             setTaskRecordingIds([]);
             setTaskTitle('');
             setReflections({});
+            setIsTaskCompleted(false);
         }
     }, [taskId, user]);
 
@@ -539,20 +546,34 @@ export default function LearningHub() {
 
                 {taskId && (
                     <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 mt-8 relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 shadow-sm">
-                        <div>
-                            <h3 className="text-lg font-extrabold text-deep-teal mb-1">{t('learning_hub.task_submission', '提交学习任务')}</h3>
-                            <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_submission_desc', '请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。')}</p>
-                        </div>
-                        <button
-                            onClick={handleSubmitTask}
-                            disabled={!canSubmit || isSubmittingTask}
-                            className="bg-gradient-to-r from-deep-teal to-teal-700 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 shrink-0 border border-transparent disabled:hover:shadow-none hover:-translate-y-0.5"
-                        >
-                            {isSubmittingTask ? (
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                            ) : null}
-                            {!canSubmit ? t('learning_hub.complete_all_requirements', '请完成所有要求') : t('learning_hub.submit_task')}
-                        </button>
+                        {isTaskCompleted ? (
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                    <Trophy className="w-6 h-6 text-green-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-extrabold text-green-700 mb-1">{t('learning_hub.task_completed_title', '任务已完成')}</h3>
+                                    <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_completed_desc', '您已经完成了该任务的所有学习内容并提交了心得。')}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div>
+                                    <h3 className="text-lg font-extrabold text-deep-teal mb-1">{t('learning_hub.task_submission', '提交学习任务')}</h3>
+                                    <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_submission_desc', '请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。')}</p>
+                                </div>
+                                <button
+                                    onClick={handleSubmitTask}
+                                    disabled={!canSubmit || isSubmittingTask}
+                                    className="bg-gradient-to-r from-deep-teal to-teal-700 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 shrink-0 border border-transparent disabled:hover:shadow-none hover:-translate-y-0.5"
+                                >
+                                    {isSubmittingTask ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    ) : null}
+                                    {!canSubmit ? t('learning_hub.complete_all_requirements', '请完成所有要求') : t('learning_hub.submit_task')}
+                                </button>
+                            </>
+                        )}
                     </div>
                 )}
 
@@ -625,7 +646,7 @@ export default function LearningHub() {
                 <div className="flex justify-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-desert-gold"></div>
                 </div>
-            ) : filteredRecordings.length === 0 ? (
+            ) : filteredRecordings.length === 0 && !taskId ? (
                 <div className="text-center py-20 glass-panel rounded-2xl border border-white">
                     <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <PlayCircle className="text-gray-400 h-8 w-8" />
@@ -668,48 +689,68 @@ export default function LearningHub() {
                                 </div>
                             )}
                             <div className={taskId ? "flex flex-col gap-6" : "grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] 2xl:grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6"}>
-                                {displayedRecordings.map(rec => (
-                                    taskId ? (
-                                        <div key={rec.id} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm">
-                                            <div className="w-full lg:w-[340px] shrink-0">
-                                                <RecordingCard 
-                                                    rec={rec} 
-                                                    user={user} 
-                                                    favorites={favorites}
-                                                    handleToggleFavorite={handleToggleFavorite}
-                                                    handleToggleLike={handleToggleLike}
-                                                    handleAudioEnded={handleAudioEnded}
-                                                    disableSeek={!!taskId}
-                                                    className="w-full h-full"
-                                                />
-                                            </div>
-                                            <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-desert-gold/30 flex flex-col relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-desert-gold/10 to-transparent rounded-bl-full pointer-events-none"></div>
-                                                <h4 className="text-lg font-extrabold text-deep-teal mb-4 flex items-center justify-between relative z-10">
-                                                    <span className="flex items-center gap-2">
-                                                        <span className="w-1.5 h-5 bg-desert-gold rounded-full inline-block"></span>
-                                                        {t('learning_hub.learning_reflection')}
-                                                    </span>
-                                                    <span className={`text-xs px-3 py-1.5 rounded-full shadow-sm border ${completedAudioIds.includes(rec.id) ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
-                                                        {completedAudioIds.includes(rec.id) ? t('learning_hub.listened', '已完整听完') : t('learning_hub.listen_first')}
-                                                    </span>
-                                                </h4>
-                                                <textarea
-                                                    value={reflections[rec.id] || ''}
-                                                    onChange={(e) => setReflections(prev => ({...prev, [rec.id]: e.target.value}))}
-                                                    placeholder={t('learning_hub.reflection_placeholder')}
-                                                    className="flex-1 w-full p-5 border border-gray-100 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none resize-y min-h-[160px] text-base bg-gray-50/50 relative z-10 transition-all hover:bg-white"
-                                                />
-                                                <div className="flex justify-end items-center mt-4 relative z-10">
-                                                    <span className={`text-sm font-bold bg-white px-3 py-1 rounded-lg shadow-sm border ${
-                                                        (reflections[rec.id]?.length || 0) < 100 ? 'text-red-500 border-red-100' : 'text-green-500 border-green-100'
-                                                    }`}>
-                                                        {t('learning_hub.current_words')} <span className="text-lg mx-1">{reflections[rec.id]?.length || 0}</span> {(reflections[rec.id]?.length || 0) < 100 ? t('learning_hub.words_needed', { count: 100 - (reflections[rec.id]?.length || 0) }) : ''}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                {taskId ? (
+                                    taskRecordingIds.length === 0 ? (
+                                        <div className="text-center py-10 text-arabian-night/50 font-bold">{t('learning_hub.no_recordings_for_task', '该任务没有关联录音')}</div>
                                     ) : (
+                                        taskRecordingIds.map(recId => {
+                                            const rec = recordings.find(r => r.id === recId);
+                                            return (
+                                                <div key={recId} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm">
+                                                    <div className="w-full lg:w-[340px] shrink-0">
+                                                        {rec ? (
+                                                            <RecordingCard 
+                                                                rec={rec} 
+                                                                user={user} 
+                                                                favorites={favorites}
+                                                                handleToggleFavorite={handleToggleFavorite}
+                                                                handleToggleLike={handleToggleLike}
+                                                                handleAudioEnded={handleAudioEnded}
+                                                                disableSeek={!isTaskCompleted}
+                                                                className="w-full h-full"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full glass-panel rounded-xl flex items-center justify-center p-6 text-center text-arabian-night/50 border border-white/60">
+                                                                {t('learning_hub.recording_deleted', '录音可能已被删除')}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-desert-gold/30 flex flex-col relative overflow-hidden">
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-desert-gold/10 to-transparent rounded-bl-full pointer-events-none"></div>
+                                                        <h4 className="text-lg font-extrabold text-deep-teal mb-4 flex items-center justify-between relative z-10">
+                                                            <span className="flex items-center gap-2">
+                                                                <span className="w-1.5 h-5 bg-desert-gold rounded-full inline-block"></span>
+                                                                {t('learning_hub.learning_reflection')}
+                                                            </span>
+                                                            {!isTaskCompleted && (
+                                                                <span className={`text-xs px-3 py-1.5 rounded-full shadow-sm border ${completedAudioIds.includes(recId) ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                                                                    {completedAudioIds.includes(recId) ? t('learning_hub.listened', '已完整听完') : t('learning_hub.listen_first')}
+                                                                </span>
+                                                            )}
+                                                        </h4>
+                                                        <textarea
+                                                            value={reflections[recId] || ''}
+                                                            onChange={(e) => setReflections(prev => ({...prev, [recId]: e.target.value}))}
+                                                            placeholder={isTaskCompleted ? '' : t('learning_hub.reflection_placeholder')}
+                                                            readOnly={isTaskCompleted}
+                                                            className={`flex-1 w-full p-5 border border-gray-100 rounded-xl outline-none resize-y min-h-[160px] text-base relative z-10 transition-all ${isTaskCompleted ? 'bg-transparent border-none text-arabian-night/80 italic shadow-inner' : 'focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-gray-50/50 hover:bg-white'}`}
+                                                        />
+                                                        {!isTaskCompleted && (
+                                                            <div className="flex justify-end items-center mt-4 relative z-10">
+                                                                <span className={`text-sm font-bold bg-white px-3 py-1 rounded-lg shadow-sm border ${
+                                                                    (reflections[recId]?.length || 0) < 100 ? 'text-red-500 border-red-100' : 'text-green-500 border-green-100'
+                                                                }`}>
+                                                                    {t('learning_hub.current_words')} <span className="text-lg mx-1">{reflections[recId]?.length || 0}</span> {(reflections[recId]?.length || 0) < 100 ? t('learning_hub.words_needed', { count: 100 - (reflections[recId]?.length || 0) }) : ''}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )
+                                ) : (
+                                    displayedRecordings.map(rec => (
                                         <div key={rec.id} className="flex flex-col gap-3">
                                             <RecordingCard 
                                                 rec={rec} 
@@ -721,8 +762,8 @@ export default function LearningHub() {
                                                 className="w-full h-full"
                                             />
                                         </div>
-                                    )
-                                ))}
+                                    ))
+                                )}
                             </div>
                             
                             {displayCount < sortedRecordings.length && (
