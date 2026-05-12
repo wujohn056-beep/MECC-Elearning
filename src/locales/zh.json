@@ -37,7 +37,9 @@
         "times": "次",
         "mins": "分钟",
         "select_all": "全选本组",
-        "deselect_all": "取消全选"
+        "deselect_all": "取消全选",
+        "name": "姓名",
+        "no_data": "暂无数据"
     },
     "navbar": {
         "title": "ME 云学堂",
@@ -283,6 +285,11 @@
         "sm_avg_ranking": "各大组人均学习时长排行",
         "sm_completion_ranking": "各大组平均任务完成率排行",
         "team_completion_ranking": "各小组平均任务完成率排行",
-        "export_failed": "导出失败，请重试。"
+        "export_failed": "导出失败，请重试。",
+        "login_activity_records": "团队活跃与登录记录 (Active Users & Logins)",
+        "records": "条记录",
+        "date": "日期",
+        "last_login_time": "最后登录时间",
+        "showing_top_100": "仅显示最近 100 条记录"
     }
 }

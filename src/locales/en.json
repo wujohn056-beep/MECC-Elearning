@@ -37,7 +37,9 @@
         "times": " plays",
         "mins": "mins",
         "select_all": "Select Group",
-        "deselect_all": "Deselect Group"
+        "deselect_all": "Deselect Group",
+        "name": "Name",
+        "no_data": "No Data Available"
     },
     "navbar": {
         "title": "ME Cloud Academy",
@@ -283,9 +285,12 @@
         "sm_duration_ranking": "SM Level Learning Duration Ranking",
         "sm_avg_ranking": "SM Level Avg. Duration Ranking",
         "sm_completion_ranking": "SM Level Avg. Completion Rate Ranking",
-        "team_duration_ranking": "Team Level Learning Duration Ranking",
-        "team_avg_ranking": "Team Level Avg. Duration Ranking",
-        "team_completion_ranking": "Team Level Avg. Completion Rate Ranking",
-        "export_failed": "Export failed, please try again."
+        "team_completion_ranking": "Team Level Average Task Completion Rate",
+        "export_failed": "Export failed, please try again.",
+        "login_activity_records": "Active Users & Logins",
+        "records": "records",
+        "date": "Date",
+        "last_login_time": "Last Login Time",
+        "showing_top_100": "Showing top 100 records only"
     }
 }

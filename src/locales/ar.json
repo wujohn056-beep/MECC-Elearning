@@ -37,7 +37,9 @@
         "times": " مرات",
         "mins": "دقيقة",
         "select_all": "تحديد المجموعة",
-        "deselect_all": "إلغاء تحديد المجموعة"
+        "deselect_all": "إلغاء تحديد المجموعة",
+        "name": "الاسم",
+        "no_data": "لا توجد بيانات متاحة"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",
@@ -271,8 +273,8 @@
         "avg_hours": "متوسط الساعات لكل مستخدم",
         "avg_completion": "متوسط معدل إنجاز المهام",
         "hours": "ساعات",
-        "team_duration_ranking": "إجمالي مدة التعلم حسب الفريق",
-        "team_avg_ranking": "متوسط مدة التعلم حسب الفريق",
+        "team_duration_ranking": "ترتيب مدة التعلم على مستوى الفريق",
+        "team_avg_ranking": "ترتيب متوسط مدة التعلم على مستوى الفريق",
         "user_duration_ranking": "ترتيب مدة التعلم الفردية (أفضل 50)",
         "total_duration": "المدة الإجمالية",
         "completion_rate": "معدل الإنجاز",
@@ -282,9 +284,12 @@
         "sm_duration_ranking": "ترتيب مدة التعلم على مستوى SM",
         "sm_avg_ranking": "ترتيب متوسط مدة التعلم على مستوى SM",
         "sm_completion_ranking": "ترتيب متوسط معدل الإنجاز على مستوى SM",
-        "team_duration_ranking": "ترتيب مدة التعلم على مستوى الفريق",
-        "team_avg_ranking": "ترتيب متوسط مدة التعلم على مستوى الفريق",
-        "team_completion_ranking": "ترتيب متوسط معدل الإنجاز على مستوى الفريق",
-        "export_failed": "فشل التصدير، يرجى المحاولة مرة أخرى."
+        "team_completion_ranking": "متوسط معدل إنجاز المهام حسب الفريق",
+        "export_failed": "فشل التصدير، يرجى المحاولة مرة أخرى.",
+        "login_activity_records": "سجلات تسجيل الدخول والنشاط",
+        "records": "سجلات",
+        "date": "التاريخ",
+        "last_login_time": "وقت آخر تسجيل دخول",
+        "showing_top_100": "عرض أحدث 100 سجل فقط"
     }
 }
