@@ -198,8 +198,11 @@ export default function AppLayout() {
                     {isLeader && (
                         <Link to="/team-tasks" className={getNavLinkClass('/team-tasks')}>{t('navbar.team_tasks')}</Link>
                     )}
-                    {isLeader && (
-                        <Link to="/admin" className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '数据看板')}</Link>
+                    {isLeader && !isSuperAdmin && (
+                        <Link to="/dashboard" className={getNavLinkClass('/dashboard')}>{t('navbar.admin_dashboard', '数据看板')}</Link>
+                    )}
+                    {isSuperAdmin && (
+                        <Link to="/admin" className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '管理后台')}</Link>
                     )}
                     <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
                     
