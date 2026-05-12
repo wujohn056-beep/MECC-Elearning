@@ -39,7 +39,8 @@
         "select_all": "Select Group",
         "deselect_all": "Deselect Group",
         "name": "Name",
-        "no_data": "No Data Available"
+        "no_data": "No Data Available",
+        "playback_speed": "Playback Speed"
     },
     "navbar": {
         "title": "ME Cloud Academy",

@@ -26,10 +26,13 @@ interface Category {
 }
 
 const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string, onEnded: (duration: number) => void, disableSeek?: boolean }) => {
+    const { t } = useTranslation();
     const audioRef = React.useRef<HTMLAudioElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [playbackRate, setPlaybackRate] = useState(1);
+    const speeds = [0.75, 1, 1.5, 1.75];
 
     const togglePlay = () => {
         if (audioRef.current) {
@@ -41,6 +44,15 @@ const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string,
 
     const handleTimeUpdate = () => {
         if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+    };
+
+    const cycleSpeed = () => {
+        const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
+        const newRate = speeds[nextIdx];
+        setPlaybackRate(newRate);
+        if (audioRef.current) {
+            audioRef.current.playbackRate = newRate;
+        }
     };
 
     const handleLoadedMetadata = () => {
@@ -104,6 +116,13 @@ const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string,
                 <div className="text-[10px] font-bold text-arabian-night/60 shrink-0 w-7 tracking-tighter">
                     {formatTime(duration)}
                 </div>
+                <button 
+                    onClick={cycleSpeed}
+                    title={t('common.playback_speed', 'Playback Speed')}
+                    className="shrink-0 text-[10px] font-extrabold text-desert-gold bg-desert-gold/10 hover:bg-desert-gold/20 border border-desert-gold/30 rounded-md px-1.5 py-0.5 transition-colors ml-1 focus:outline-none"
+                >
+                    {playbackRate}x
+                </button>
             </div>
         </div>
     );

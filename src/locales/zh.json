@@ -39,7 +39,8 @@
         "select_all": "全选本组",
         "deselect_all": "取消全选",
         "name": "姓名",
-        "no_data": "暂无数据"
+        "no_data": "暂无数据",
+        "playback_speed": "播放速度"
     },
     "navbar": {
         "title": "ME 云学堂",
