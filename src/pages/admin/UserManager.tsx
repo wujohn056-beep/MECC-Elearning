@@ -90,9 +90,12 @@ export default function UserManager() {
         try {
             const data = await file.arrayBuffer();
             const workbook = xlsx.read(data, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const rawJsonData = xlsx.utils.sheet_to_json<any>(worksheet);
+            let rawJsonData: any[] = [];
+            workbook.SheetNames.forEach(sheetName => {
+                const worksheet = workbook.Sheets[sheetName];
+                const sheetData = xlsx.utils.sheet_to_json<any>(worksheet);
+                rawJsonData = rawJsonData.concat(sheetData);
+            });
             
             const jsonData = rawJsonData.map(row => {
                 const normalized: any = {};
