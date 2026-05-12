@@ -419,9 +419,11 @@ export default function LearningHub() {
         }
     };
 
+    const validTaskRecordingIds = taskRecordingIds.filter(id => recordings.some(r => r.id === id));
+
     const canSubmit = taskId && 
-        taskRecordingIds.length > 0 &&
-        taskRecordingIds.every(id => completedAudioIds.includes(id) && (reflections[id]?.length || 0) >= 100);
+        validTaskRecordingIds.length > 0 &&
+        validTaskRecordingIds.every(id => completedAudioIds.includes(id) && (reflections[id]?.length || 0) >= 100);
 
     const handleSubmitTask = async () => {
         if (!user || !taskId || !canSubmit) return;
@@ -724,30 +726,25 @@ export default function LearningHub() {
                             )}
                             <div className={taskId ? "flex flex-col gap-6" : "grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] 2xl:grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6"}>
                                 {taskId ? (
-                                    taskRecordingIds.length === 0 ? (
-                                        <div className="text-center py-10 text-arabian-night/50 font-bold">{t('learning_hub.no_recordings_for_task', '该任务没有关联录音')}</div>
+                                    validTaskRecordingIds.length === 0 ? (
+                                        <div className="text-center py-10 text-arabian-night/50 font-bold col-span-full">{t('learning_hub.no_recordings_for_task', '该任务没有关联录音，或录音已被管理员删除')}</div>
                                     ) : (
-                                        taskRecordingIds.map(recId => {
+                                        validTaskRecordingIds.map(recId => {
                                             const rec = recordings.find(r => r.id === recId);
+                                            if (!rec) return null;
                                             return (
-                                                <div key={recId} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm">
+                                                <div key={recId} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm col-span-full">
                                                     <div className="w-full lg:w-[340px] shrink-0">
-                                                        {rec ? (
-                                                            <RecordingCard 
-                                                                rec={rec} 
-                                                                user={user} 
-                                                                favorites={favorites}
-                                                                handleToggleFavorite={handleToggleFavorite}
-                                                                handleToggleLike={handleToggleLike}
-                                                                handleAudioEnded={handleAudioEnded}
-                                                                disableSeek={!isTaskCompleted}
-                                                                className="w-full h-full"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full glass-panel rounded-xl flex items-center justify-center p-6 text-center text-arabian-night/50 border border-white/60">
-                                                                {t('learning_hub.recording_deleted', '录音可能已被删除')}
-                                                            </div>
-                                                        )}
+                                                        <RecordingCard 
+                                                            rec={rec} 
+                                                            user={user} 
+                                                            favorites={favorites}
+                                                            handleToggleFavorite={handleToggleFavorite}
+                                                            handleToggleLike={handleToggleLike}
+                                                            handleAudioEnded={handleAudioEnded}
+                                                            disableSeek={!isTaskCompleted}
+                                                            className="w-full h-full"
+                                                        />
                                                     </div>
                                                     <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-desert-gold/30 flex flex-col relative overflow-hidden">
                                                         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-desert-gold/10 to-transparent rounded-bl-full pointer-events-none"></div>
