@@ -232,6 +232,7 @@ export default function LearningHub() {
     const [reflections, setReflections] = useState<Record<string, string>>({});
     const [isSubmittingTask, setIsSubmittingTask] = useState(false);
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [selectedLecturer, setSelectedLecturer] = useState<string>('');
     
     // Leaderboard state
     const [allFavoritesCount, setAllFavoritesCount] = useState<Record<string, number>>({});
@@ -426,13 +427,25 @@ export default function LearningHub() {
             return rec.id === targetRecordingId;
         }
         const matchesTab = activeTab === 'all' || rec.categoryId === activeTab;
+        const matchesLecturer = selectedLecturer === '' || rec.lecturerName === selectedLecturer;
         const matchesSearch = searchQuery === '' || 
             (rec.lecturerName && rec.lecturerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
             rec.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (rec.displayId && rec.displayId.toLowerCase().includes(searchQuery.toLowerCase())) ||
             rec.id.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesTab && matchesSearch;
+        return matchesTab && matchesSearch && matchesLecturer;
     });
+
+    // Derive Top Lecturers from recordings
+    const lecturerCounts = recordings.reduce((acc, rec) => {
+        if (rec.lecturerName) {
+            acc[rec.lecturerName] = (acc[rec.lecturerName] || 0) + 1;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+    const sortedLecturers = Object.entries(lecturerCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(entry => entry[0]);
 
     // Sort the filtered recordings based on sortType
     const sortedRecordings = [...filteredRecordings].sort((a, b) => {
@@ -562,6 +575,37 @@ export default function LearningHub() {
                                     }`}
                                 >
                                     {cat.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Lecturers Filter */}
+                {!taskId && !targetRecordingId && sortedLecturers.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100/50 relative z-10 animate-in fade-in duration-500">
+                        <h4 className="text-sm font-bold text-deep-teal mb-3 flex items-center gap-2">
+                            <User className="w-4 h-4 text-desert-gold" />
+                            {t('learning_hub.popular_lecturers', 'Top Lecturers')}
+                        </h4>
+                        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-1">
+                            {sortedLecturers.map(lecturer => (
+                                <button
+                                    key={lecturer}
+                                    onClick={() => setSelectedLecturer(selectedLecturer === lecturer ? '' : lecturer)}
+                                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-semibold transition-all whitespace-nowrap border shadow-sm ${
+                                        selectedLecturer === lecturer 
+                                            ? 'bg-desert-gold text-white border-desert-gold scale-105 shadow-md' 
+                                            : 'bg-white text-arabian-night/70 border-gray-200 hover:border-desert-gold/50 hover:bg-desert-gold/5 hover:-translate-y-0.5'
+                                    }`}
+                                >
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                                        selectedLecturer === lecturer ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-500'
+                                    }`}>
+                                        {lecturer.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span className="text-sm">{lecturer}</span>
+                                    {selectedLecturer === lecturer && <span className="ml-1 text-[10px] bg-white/30 px-1.5 py-0.5 rounded-md">{lecturerCounts[lecturer]}</span>}
                                 </button>
                             ))}
                         </div>
