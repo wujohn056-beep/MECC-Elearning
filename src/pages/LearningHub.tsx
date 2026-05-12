@@ -425,8 +425,8 @@ export default function LearningHub() {
         }
     };
 
-    // Filter recordings based on active tab and search query
-    const filteredRecordings = recordings.filter(rec => {
+    // Filter recordings based on active tab and search query (excluding lecturer filter for top list calculation)
+    const categoryFilteredRecordings = recordings.filter(rec => {
         if (taskId && taskRecordingIds.length > 0) {
             return taskRecordingIds.includes(rec.id);
         }
@@ -434,17 +434,21 @@ export default function LearningHub() {
             return rec.id === targetRecordingId;
         }
         const matchesTab = activeTab === 'all' || rec.categoryId === activeTab;
-        const matchesLecturer = selectedLecturer === '' || rec.lecturerName === selectedLecturer;
         const matchesSearch = searchQuery === '' || 
             (rec.lecturerName && rec.lecturerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
             rec.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (rec.displayId && rec.displayId.toLowerCase().includes(searchQuery.toLowerCase())) ||
             rec.id.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesTab && matchesSearch && matchesLecturer;
+        return matchesTab && matchesSearch;
     });
 
-    // Derive Top Lecturers from recordings
-    const lecturerCounts = recordings.reduce((acc, rec) => {
+    // Final filtered list including the selected lecturer
+    const filteredRecordings = categoryFilteredRecordings.filter(rec => {
+        return selectedLecturer === '' || rec.lecturerName === selectedLecturer;
+    });
+
+    // Derive Top Lecturers from categoryFilteredRecordings
+    const lecturerCounts = categoryFilteredRecordings.reduce((acc, rec) => {
         if (rec.lecturerName) {
             acc[rec.lecturerName] = (acc[rec.lecturerName] || 0) + 1;
         }
@@ -454,7 +458,7 @@ export default function LearningHub() {
         .sort((a, b) => b[1] - a[1])
         .map(entry => entry[0]);
 
-    const lecturerAvatars = recordings.reduce((acc, rec) => {
+    const lecturerAvatars = categoryFilteredRecordings.reduce((acc, rec) => {
         if (rec.lecturerName && rec.avatarUrl && !acc[rec.lecturerName]) {
             acc[rec.lecturerName] = rec.avatarUrl;
         }
@@ -589,7 +593,7 @@ export default function LearningHub() {
                     <div className="mt-10 pt-6 border-t border-gray-100/60 relative z-10">
                         <div className="flex overflow-x-auto hide-scrollbar gap-3 py-2 pb-3">
                             <button
-                                onClick={() => setActiveTab('all')}
+                                onClick={() => { setActiveTab('all'); setSelectedLecturer(''); }}
                                 className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
                                     activeTab === 'all' 
                                         ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
@@ -601,7 +605,7 @@ export default function LearningHub() {
                             {categories.map(cat => (
                                 <button
                                     key={cat.id}
-                                    onClick={() => setActiveTab(cat.id)}
+                                    onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); }}
                                     className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
                                         activeTab === cat.id 
                                             ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
