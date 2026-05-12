@@ -39,6 +39,13 @@ interface LearningTask {
     assignees: Record<string, { status: string }>;
 }
 
+interface Recording {
+    id: string;
+    createdAt: any;
+    lecturerName?: string;
+    title?: string;
+}
+
 export default function AdminDashboard() {
     const { t } = useTranslation();
     const { profile, isSuperAdmin } = useAuth();
@@ -63,6 +70,7 @@ export default function AdminDashboard() {
     const [logs, setLogs] = useState<LearningLog[]>([]);
     const [tasks, setTasks] = useState<LearningTask[]>([]);
     const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+    const [recordings, setRecordings] = useState<Recording[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -110,6 +118,14 @@ export default function AdminDashboard() {
                 activityData.push(doc.data() as ActivityLog);
             });
             setActivityLogs(activityData);
+
+            // Fetch Recordings for Contribution Rankings
+            const recSnap = await getDocs(collection(db, 'recordings'));
+            const recData: Recording[] = [];
+            recSnap.forEach(doc => {
+                recData.push({ id: doc.id, ...doc.data() } as Recording);
+            });
+            setRecordings(recData);
         } catch (error) {
             console.error("Error fetching dashboard data", error);
         } finally {
@@ -200,6 +216,14 @@ export default function AdminDashboard() {
         }).sort((a, b) => b.lastLoginAt?.toDate?.()?.getTime() - a.lastLoginAt?.toDate?.()?.getTime());
     }, [activityLogs, startDate, endDate, displayedUserIds]);
 
+    const filteredRecordings = useMemo(() => {
+        return recordings.filter(rec => {
+            if (!rec.createdAt) return false;
+            const d = rec.createdAt.toDate();
+            return isWithinInterval(d, { start: startDate, end: endDate });
+        });
+    }, [recordings, startDate, endDate]);
+
     // 4. Aggregations
     const userStats = useMemo(() => {
         const stats: Record<string, { duration: number; tasksAssigned: number; tasksCompleted: number }> = {};
@@ -274,6 +298,47 @@ export default function AdminDashboard() {
     const teamRankings = useMemo(() => aggregateByField('team').sort((a,b) => b.totalDuration - a.totalDuration), [userRankings]);
     const smRankings = useMemo(() => aggregateByField('sm').sort((a,b) => b.totalDuration - a.totalDuration), [userRankings]);
     const sdRankings = useMemo(() => aggregateByField('sd').sort((a,b) => b.totalDuration - a.totalDuration), [userRankings]);
+
+    // Contribution Rankings (Uploads)
+    const contributionRankings = useMemo(() => {
+        const userMap = new Map<string, UserRecord>();
+        users.forEach(u => {
+            if (u.crmId) userMap.set(u.crmId.toUpperCase(), u);
+            userMap.set(u.id, u);
+        });
+
+        const ccCounts: Record<string, number> = {};
+        const teamCounts: Record<string, number> = {};
+        const smCounts: Record<string, number> = {};
+        const sdCounts: Record<string, number> = {};
+
+        filteredRecordings.forEach(rec => {
+            if (!rec.lecturerName) return;
+            const ccName = rec.lecturerName.toUpperCase();
+            const user = userMap.get(ccName);
+            
+            // CC Ranking
+            ccCounts[rec.lecturerName] = (ccCounts[rec.lecturerName] || 0) + 1; // Preserve original casing
+            
+            // Org Ranking
+            if (user) {
+                if (user.team) teamCounts[user.team] = (teamCounts[user.team] || 0) + 1;
+                if (user.sm) smCounts[user.sm] = (smCounts[user.sm] || 0) + 1;
+                if (user.sd) sdCounts[user.sd] = (sdCounts[user.sd] || 0) + 1;
+            }
+        });
+
+        const sortCounts = (counts: Record<string, number>) => Object.entries(counts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+
+        return {
+            cc: sortCounts(ccCounts),
+            team: sortCounts(teamCounts),
+            sm: sortCounts(smCounts),
+            sd: sortCounts(sdCounts)
+        };
+    }, [filteredRecordings, users]);
 
     const handleDownload = async (elementId: string, reportName: string) => {
         const el = document.getElementById(elementId);
@@ -772,6 +837,129 @@ export default function AdminDashboard() {
                             )}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Recording Contribution Rankings Section */}
+            <div className="pt-6 border-t border-gray-100">
+                <h2 className="text-2xl font-bold text-deep-teal mb-6 flex items-center gap-2">
+                    <span className="bg-desert-gold p-1.5 rounded-lg text-white">🎤</span>
+                    {t('dashboard.contribution_rankings', '录音贡献排行榜 (Recording Contributions)')}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* SD Contribution */}
+                    {isSuperAdmin && (
+                        <div id="chart-sd-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.sd_contribution', 'SD 贡献榜')}</h3>
+                                <button onClick={() => handleDownload('chart-sd-contribution', 'SD_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
+                                    <Download className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {contributionRankings.sd.map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-purple-600 font-bold">{rank.count}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${Math.min((rank.count / Math.max(contributionRankings.sd[0]?.count || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {contributionRankings.sd.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SM Contribution */}
+                    {(isSuperAdmin || profile?.role === 'sd') && (
+                        <div id="chart-sm-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.sm_contribution', '大组 (SM) 贡献榜')}</h3>
+                                <button onClick={() => handleDownload('chart-sm-contribution', 'SM_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
+                                    <Download className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {contributionRankings.sm.map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-blue-600 font-bold">{rank.count}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min((rank.count / Math.max(contributionRankings.sm[0]?.count || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {contributionRankings.sm.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Team Contribution */}
+                    {(isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm') && (
+                        <div id="chart-team-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-base font-bold text-deep-teal">{t('dashboard.team_contribution', '小组 (TL) 贡献榜')}</h3>
+                                <button onClick={() => handleDownload('chart-team-contribution', 'Team_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
+                                    <Download className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {contributionRankings.team.map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-orange-500 font-bold">{rank.count}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: `${Math.min((rank.count / Math.max(contributionRankings.team[0]?.count || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {contributionRankings.team.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Individual Contribution */}
+                    <div id="chart-cc-contribution" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-base font-bold text-deep-teal">{t('dashboard.cc_contribution', '个人 (CC) 贡献榜')}</h3>
+                            <button onClick={() => handleDownload('chart-cc-contribution', 'CC_Contribution')} className="export-ignore p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-desert-gold">
+                                <Download className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                            {contributionRankings.cc.map((rank, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-semibold">{rank.name}</span>
+                                            <span className="text-desert-gold font-bold">{rank.count}</span>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                            <div className="bg-desert-gold h-1.5 rounded-full" style={{ width: `${Math.min((rank.count / Math.max(contributionRankings.cc[0]?.count || 1, 1)) * 100, 100)}%` }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {contributionRankings.cc.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                        </div>
+                    </div>
                 </div>
             </div>
 
