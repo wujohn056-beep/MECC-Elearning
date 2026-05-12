@@ -298,9 +298,9 @@
         "last_login_time": "Last Login Time",
         "showing_top_100": "Showing top 100 records only",
         "contribution_rankings": "Recording Contribution Rankings",
-        "sd_contribution": "Region Contribution Ranking",
-        "sm_contribution": "Group Contribution Ranking",
-        "team_contribution": "Team Contribution Ranking",
-        "cc_contribution": "Individual Contribution Ranking"
+        "sd_contribution": "SD Contribution Ranking",
+        "sm_contribution": "SM Contribution Ranking",
+        "team_contribution": "TL Contribution Ranking",
+        "cc_contribution": "CC Contribution Ranking"
     }
 }
