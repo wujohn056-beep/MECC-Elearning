@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
-import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle } from 'lucide-react';
+import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const TaskCard = ({ task }: { task: any }) => {
@@ -193,6 +193,21 @@ export default function Account() {
         fetchFavorites();
     }, [user]);
 
+    const handleUnfavorite = async (e: React.MouseEvent, recordingId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!user) return;
+        try {
+            const favRef = doc(db, 'user_favorites', user.uid);
+            await updateDoc(favRef, {
+                recordingIds: arrayRemove(recordingId)
+            });
+            setFavRecordings(prev => prev.filter(rec => rec.id !== recordingId));
+        } catch (error) {
+            console.error("Error removing favorite", error);
+        }
+    };
+
     return (
         <div className="animate-in fade-in duration-500 space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
             <div>
@@ -290,8 +305,17 @@ export default function Account() {
                                         <h4 className="font-bold text-arabian-night text-base group-hover:text-red-500 transition-colors truncate">{rec.title}</h4>
                                         <p className="text-xs font-semibold text-arabian-night/50 mt-1 truncate">{rec.description}</p>
                                     </div>
-                                    <div className="shrink-0 w-8 h-8 rounded-full bg-red-50 group-hover:bg-red-500 flex items-center justify-center transition-colors">
-                                        <PlayCircle className="w-4 h-4 text-red-500 group-hover:text-white" />
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={(e) => handleUnfavorite(e, rec.id)}
+                                            className="shrink-0 w-8 h-8 rounded-full bg-red-50 hover:bg-red-500 flex items-center justify-center transition-colors text-red-500 hover:text-white"
+                                            title="Remove favorite"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        <div className="shrink-0 w-8 h-8 rounded-full bg-red-50 group-hover:bg-red-500 flex items-center justify-center transition-colors">
+                                            <PlayCircle className="w-4 h-4 text-red-500 group-hover:text-white" />
+                                        </div>
                                     </div>
                                 </Link>
                             ))}
