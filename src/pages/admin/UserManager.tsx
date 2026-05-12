@@ -193,6 +193,16 @@ export default function UserManager() {
                     let role = row.role;
 
                     const existingUser = users.find(u => u.crmId && u.crmId.trim().toLowerCase() === crmId.trim().toLowerCase());
+                    
+                    if (crmId.toLowerCase().includes('ahmadshahin') || crmId.toLowerCase().includes('baha')) {
+                        console.log(`[DEBUG] Processing: ${crmId}`);
+                        console.log(`[DEBUG] row.sd: "${row.sd}", row.sm: "${row.sm}"`);
+                        console.log(`[DEBUG] existingUser found? ${!!existingUser}`);
+                        if (existingUser) {
+                            console.log(`[DEBUG] existingUser.sd: "${existingUser.sd}", existingUser.sm: "${existingUser.sm}"`);
+                        }
+                    }
+
                     if (existingUser) {
                         await updateDoc(doc(db, 'users', existingUser.id), {
                             role: role !== 'user' ? role : (existingUser.role && existingUser.role !== 'user' ? existingUser.role : 'user'),

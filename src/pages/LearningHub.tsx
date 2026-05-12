@@ -454,6 +454,13 @@ export default function LearningHub() {
         .sort((a, b) => b[1] - a[1])
         .map(entry => entry[0]);
 
+    const lecturerAvatars = recordings.reduce((acc, rec) => {
+        if (rec.lecturerName && rec.avatarUrl && !acc[rec.lecturerName]) {
+            acc[rec.lecturerName] = rec.avatarUrl;
+        }
+        return acc;
+    }, {} as Record<string, string>);
+
     // Sort the filtered recordings based on sortType
     const sortedRecordings = [...filteredRecordings].sort((a, b) => {
         if (sortType === 'latest') {
@@ -617,24 +624,28 @@ export default function LearningHub() {
                             </span>
                             {t('learning_hub.popular_lecturers', 'Top Lecturers')}
                         </h4>
-                        <div className="flex overflow-x-auto hide-scrollbar gap-3 py-2 pb-4">
+                        <div className="flex flex-wrap gap-3 py-2 pb-4">
                             {sortedLecturers.map(lecturer => (
                                 <button
                                     key={lecturer}
                                     onClick={() => setSelectedLecturer(selectedLecturer === lecturer ? '' : lecturer)}
-                                    className={`flex items-center gap-2.5 px-5 py-2 rounded-full font-bold transition-all duration-300 whitespace-nowrap group ${
+                                    className={`flex items-center gap-2 pr-5 pl-1.5 py-1.5 rounded-full font-bold transition-all duration-300 group ${
                                         selectedLecturer === lecturer 
-                                            ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white scale-105 shadow-lg shadow-yellow-600/20 border-transparent' 
-                                            : 'bg-white/60 backdrop-blur-sm text-arabian-night/70 border border-gray-200/80 hover:border-desert-gold/50 hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
+                                            ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white scale-105 shadow-lg shadow-yellow-600/20 border-transparent ring-2 ring-yellow-400/30 ring-offset-1' 
+                                            : 'bg-white/80 backdrop-blur-sm text-arabian-night/80 border border-gray-200/80 hover:border-desert-gold/50 hover:bg-white hover:-translate-y-1 hover:shadow-md'
                                     }`}
                                 >
-                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors duration-300 shadow-inner ${
-                                        selectedLecturer === lecturer ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-desert-gold/10 group-hover:text-desert-gold'
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all duration-300 shadow-sm overflow-hidden border-2 ${
+                                        selectedLecturer === lecturer ? 'border-white/40 bg-white/20 text-white' : 'border-transparent bg-gray-100 text-gray-500 group-hover:border-desert-gold/30 group-hover:bg-desert-gold/5'
                                     }`}>
-                                        {lecturer.charAt(0).toUpperCase()}
+                                        {lecturerAvatars[lecturer] ? (
+                                            <img src={lecturerAvatars[lecturer]} alt={lecturer} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="font-extrabold">{lecturer.charAt(0).toUpperCase()}</span>
+                                        )}
                                     </div>
                                     <span className="text-sm tracking-wide">{lecturer}</span>
-                                    {selectedLecturer === lecturer && <span className="ml-1 text-[10px] bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-sm">{lecturerCounts[lecturer]}</span>}
+                                    {selectedLecturer === lecturer && <span className="ml-1 text-[10px] bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-sm shadow-sm">{lecturerCounts[lecturer]}</span>}
                                 </button>
                             ))}
                         </div>
