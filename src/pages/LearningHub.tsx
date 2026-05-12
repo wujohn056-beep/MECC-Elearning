@@ -570,23 +570,23 @@ export default function LearningHub() {
                     {!taskId && !targetRecordingId && (
                         <div className="flex flex-col gap-4 w-full md:w-auto items-end">
                             {/* Business Type Segmented Control */}
-                            <div className="bg-white/60 backdrop-blur-md p-1 rounded-2xl border border-white/50 shadow-sm flex items-center w-full md:w-auto self-start md:self-end">
+                            <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
                                 <button
                                     onClick={() => setBusinessType('kid')}
-                                    className={`flex-1 md:flex-none px-6 py-2 rounded-xl font-bold text-sm transition-all duration-300 ${
+                                    className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
                                         businessType === 'kid' 
-                                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20' 
-                                            : 'text-arabian-night/50 hover:text-arabian-night'
+                                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' 
+                                            : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
                                     }`}
                                 >
                                     {t('common.type_kid', '青少业务')}
                                 </button>
                                 <button
                                     onClick={() => setBusinessType('adult')}
-                                    className={`flex-1 md:flex-none px-6 py-2 rounded-xl font-bold text-sm transition-all duration-300 ${
+                                    className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
                                         businessType === 'adult' 
-                                            ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md shadow-purple-500/20' 
-                                            : 'text-arabian-night/50 hover:text-arabian-night'
+                                            ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105' 
+                                            : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
                                     }`}
                                 >
                                     {t('common.type_adult', '成人业务')}
