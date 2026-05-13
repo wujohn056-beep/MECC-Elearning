@@ -148,36 +148,36 @@ export default function AdminDashboard() {
 
 
     // Derived Options based on current filters and scope
-    const availableSds = useMemo(() => Array.from(new Set(scopeUsers.map(u => u.sd).filter(Boolean))).sort(), [scopeUsers]);
+    const availableSds = useMemo(() => Array.from(new Set(scopeUsers.map(u => u.sd?.toUpperCase()).filter(Boolean))).sort(), [scopeUsers]);
     
     const availableSms = useMemo(() => {
         let pool = scopeUsers;
-        if (filterSd !== 'all') pool = pool.filter(u => u.sd === filterSd);
-        return Array.from(new Set(pool.map(u => u.sm).filter(Boolean))).sort();
+        if (filterSd !== 'all') pool = pool.filter(u => u.sd?.toUpperCase() === filterSd.toUpperCase());
+        return Array.from(new Set(pool.map(u => u.sm?.toUpperCase()).filter(Boolean))).sort();
     }, [scopeUsers, filterSd]);
 
     const availableTeams = useMemo(() => {
         let pool = scopeUsers;
-        if (filterSd !== 'all') pool = pool.filter(u => u.sd === filterSd);
-        if (filterSm !== 'all') pool = pool.filter(u => u.sm === filterSm);
-        return Array.from(new Set(pool.map(u => u.team).filter(Boolean))).sort();
+        if (filterSd !== 'all') pool = pool.filter(u => u.sd?.toUpperCase() === filterSd.toUpperCase());
+        if (filterSm !== 'all') pool = pool.filter(u => u.sm?.toUpperCase() === filterSm.toUpperCase());
+        return Array.from(new Set(pool.map(u => u.team?.toUpperCase()).filter(Boolean))).sort();
     }, [scopeUsers, filterSd, filterSm]);
 
     const availableCcs = useMemo(() => {
         let pool = scopeUsers;
-        if (filterSd !== 'all') pool = pool.filter(u => u.sd === filterSd);
-        if (filterSm !== 'all') pool = pool.filter(u => u.sm === filterSm);
-        if (filterTeam !== 'all') pool = pool.filter(u => u.team === filterTeam);
-        return Array.from(new Set(pool.map(u => u.crmId).filter(Boolean))).sort();
+        if (filterSd !== 'all') pool = pool.filter(u => u.sd?.toUpperCase() === filterSd.toUpperCase());
+        if (filterSm !== 'all') pool = pool.filter(u => u.sm?.toUpperCase() === filterSm.toUpperCase());
+        if (filterTeam !== 'all') pool = pool.filter(u => u.team?.toUpperCase() === filterTeam.toUpperCase());
+        return Array.from(new Set(pool.map(u => u.crmId?.toUpperCase()).filter(Boolean))).sort();
     }, [scopeUsers, filterSd, filterSm, filterTeam]);
 
     // Apply all filters to get the final displayed users
     const displayedUsers = useMemo(() => {
         return scopeUsers.filter(u => {
-            if (filterSd !== 'all' && u.sd !== filterSd) return false;
-            if (filterSm !== 'all' && u.sm !== filterSm) return false;
-            if (filterTeam !== 'all' && u.team !== filterTeam) return false;
-            if (filterCc !== 'all' && u.crmId !== filterCc) return false;
+            if (filterSd !== 'all' && u.sd?.toUpperCase() !== filterSd.toUpperCase()) return false;
+            if (filterSm !== 'all' && u.sm?.toUpperCase() !== filterSm.toUpperCase()) return false;
+            if (filterTeam !== 'all' && u.team?.toUpperCase() !== filterTeam.toUpperCase()) return false;
+            if (filterCc !== 'all' && u.crmId?.toUpperCase() !== filterCc.toUpperCase()) return false;
             return true;
         });
     }, [scopeUsers, filterSd, filterSm, filterTeam, filterCc]);
@@ -277,8 +277,9 @@ export default function AdminDashboard() {
     const aggregateByField = (field: 'team' | 'sm' | 'sd') => {
         const groups: Record<string, { count: number; duration: number; assigned: number; completed: number }> = {};
         userRankings.forEach(u => {
-            const key = u[field];
+            let key = u[field];
             if (!key) return;
+            key = key.toUpperCase(); // Normalize keys for aggregation
             if (!groups[key]) groups[key] = { count: 0, duration: 0, assigned: 0, completed: 0 };
             groups[key].count += 1;
             groups[key].duration += u.duration;
