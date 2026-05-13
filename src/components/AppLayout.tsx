@@ -201,10 +201,10 @@ export default function AppLayout() {
                     {isLeader && !isSuperAdmin && (
                         <Link to="/dashboard" className={getNavLinkClass('/dashboard')}>{t('navbar.dashboard', '数据看板')}</Link>
                     )}
+                    <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
                     {isSuperAdmin && (
                         <Link to="/admin" className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '管理后台')}</Link>
                     )}
-                    <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
                     
                     <NotificationBell />
                     
