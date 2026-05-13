@@ -857,7 +857,7 @@ export default function AdminDashboard() {
                 </h2>
 
                 <h3 className="text-lg font-bold text-arabian-night mb-4">{t('dashboard.total_published', '总发布任务量排行')}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {/* SD Total Published */}
                     {isSuperAdmin && (
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
@@ -930,27 +930,6 @@ export default function AdminDashboard() {
                         </div>
                     )}
 
-                    {/* CC Individual Total Published */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
-                        <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.cc_published', '个人任务发布榜')}</h3>
-                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                            {[...userRankings].sort((a,b) => b.tasksPublished - a.tasksPublished).slice(0, 50).map((rank, i, arr) => (
-                                <div key={i} className="flex items-center gap-3">
-                                    <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span className="font-semibold truncate max-w-[120px]">{rank.crmId}</span>
-                                            <span className="text-desert-gold font-bold">{rank.tasksPublished}</span>
-                                        </div>
-                                        <div className="w-full bg-gray-100 rounded-full h-1.5">
-                                            <div className="bg-desert-gold h-1.5 rounded-full" style={{ width: `${Math.min((rank.tasksPublished / Math.max(arr[0]?.tasksPublished || 1, 1)) * 100, 100)}%` }}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {userRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
-                        </div>
-                    </div>
                 </div>
 
                 <h3 className="text-lg font-bold text-arabian-night mb-4">{t('dashboard.avg_published', '人均发布任务量排行')}</h3>
