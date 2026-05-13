@@ -363,48 +363,79 @@ export default function TeamTasks() {
                                 <div className="mt-auto space-y-2">
                                     <p className="text-xs font-bold text-arabian-night/50 border-b border-black/5 pb-1">{t('team_tasks.member_status')}</p>
                                     <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                                        {Object.entries(task.assignees).map(([uid, a]) => (
-                                            <div key={uid} className="flex flex-col text-sm p-2 hover:bg-white/50 bg-white/20 rounded-lg border border-transparent hover:border-gray-100 transition-colors">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="font-medium text-arabian-night flex items-center gap-2">
-                                                        {a.status === 'completed' ? <CheckCircle className="w-4 h-4 text-green-500" /> : 
-                                                        a.read ? <Clock className="w-4 h-4 text-blue-400" /> : <AlertCircle className="w-4 h-4 text-gray-300" />}
-                                                        {a.crmId}
-                                                    </span>
-                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                                        a.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-200' : 
-                                                        (isExpired ? 'bg-red-50 text-red-600 border border-red-200' :
-                                                        (a.read ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-500 border border-gray-200'))
-                                                    }`}>
-                                                        {a.status === 'completed' 
-                                                            ? t('team_tasks.status_completed') 
-                                                            : (isExpired 
-                                                                ? t('team_tasks.status_uncompleted', 'Uncompleted') 
-                                                                : (a.read ? t('team_tasks.status_pending') : t('team_tasks.status_unread')))}
-                                                    </span>
-                                                </div>
-                                                {/* Legacy string reflection */}
-                                                {a.reflection && !a.reflections && (
-                                                    <div className="mt-2 text-xs text-arabian-night/80 bg-white p-2.5 rounded border border-gray-100 italic relative">
-                                                        <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-desert-gold font-bold">{t('team_tasks.reflection')}</span>
-                                                        {a.reflection}
-                                                    </div>
-                                                )}
-                                                
-                                                {/* New per-recording reflections */}
-                                                {a.reflections && Object.entries(a.reflections).map(([recId, text]) => {
-                                                    const recTitle = allRecordings.find(r => r.id === recId)?.title || recId;
-                                                    return (
-                                                        <div key={recId} className="mt-3 text-xs text-arabian-night/80 bg-white p-2.5 rounded border border-gray-100 italic relative">
-                                                            <span className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-desert-gold font-bold flex items-center gap-1 max-w-[80%] truncate">
-                                                                {t('team_tasks.reflection')} <span className="text-gray-400 font-normal truncate">- {recTitle}</span>
-                                                            </span>
-                                                            {String(text)}
+                                        {/* Compact tags for members */}
+                                        <div className="space-y-3">
+                                            {(() => {
+                                                const completedAssignees = Object.entries(task.assignees).filter(([_, a]) => a.status === 'completed');
+                                                if (completedAssignees.length === 0) return null;
+                                                return (
+                                                    <div>
+                                                        <span className="text-[10px] font-bold text-green-600 mb-1.5 block">✅ {t('team_tasks.status_completed')} ({completedAssignees.length})</span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {completedAssignees.map(([uid, a]) => (
+                                                                <span key={uid} className="bg-green-50 text-green-700 text-[10px] font-medium px-2 py-0.5 rounded border border-green-100" title={a.crmId}>
+                                                                    {a.crmId}
+                                                                </span>
+                                                            ))}
                                                         </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ))}
+                                                    </div>
+                                                );
+                                            })()}
+                                            
+                                            {(() => {
+                                                const uncompletedAssignees = Object.entries(task.assignees).filter(([_, a]) => a.status !== 'completed');
+                                                if (uncompletedAssignees.length === 0) return null;
+                                                return (
+                                                    <div>
+                                                        <span className="text-[10px] font-bold text-gray-500 mb-1.5 block">⏳ {isExpired ? t('team_tasks.status_uncompleted', 'Uncompleted') : t('team_tasks.status_pending')} ({uncompletedAssignees.length})</span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {uncompletedAssignees.map(([uid, a]) => (
+                                                                <span key={uid} className={`text-[10px] font-medium px-2 py-0.5 rounded border ${isExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-200'}`} title={a.crmId}>
+                                                                    {a.crmId}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* Reflections Section */}
+                                        {(() => {
+                                            const usersWithReflections = Object.entries(task.assignees).filter(([_, a]) => a.reflection || a.reflections);
+                                            if (usersWithReflections.length === 0) return null;
+                                            return (
+                                                <div className="pt-3 mt-3 border-t border-gray-100 space-y-2">
+                                                    <span className="text-[10px] font-bold text-desert-gold block">📝 {t('team_tasks.reflection')}</span>
+                                                    {usersWithReflections.map(([uid, a]) => (
+                                                        <div key={uid} className="bg-white/50 p-2.5 rounded border border-gray-100 space-y-2">
+                                                            <span className="font-bold text-xs text-deep-teal flex items-center gap-1">
+                                                                {a.status === 'completed' ? <CheckCircle className="w-3 h-3 text-green-500" /> : <AlertCircle className="w-3 h-3 text-red-400" />}
+                                                                {a.crmId}
+                                                            </span>
+                                                            
+                                                            {/* Legacy string reflection */}
+                                                            {a.reflection && !a.reflections && (
+                                                                <div className="text-xs text-arabian-night/80 italic">
+                                                                    {a.reflection}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {/* New per-recording reflections */}
+                                                            {a.reflections && Object.entries(a.reflections).map(([recId, text]) => {
+                                                                const recTitle = allRecordings.find(r => r.id === recId)?.title || recId;
+                                                                return (
+                                                                    <div key={recId} className="text-xs text-arabian-night/80 italic relative pl-2 border-l-2 border-desert-gold/30">
+                                                                        <span className="text-[10px] text-gray-400 block mb-0.5 truncate">{recTitle}</span>
+                                                                        {String(text)}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
