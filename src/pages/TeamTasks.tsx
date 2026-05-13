@@ -51,6 +51,10 @@ export default function TeamTasks() {
     const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
     const [allRecordings, setAllRecordings] = useState<RecordingInfo[]>([]);
     
+    // Tabs state
+    const [activeTab, setActiveTab] = useState<'in_progress' | 'expired'>('in_progress');
+    const [activeSubTab, setActiveSubTab] = useState<'uncompleted' | 'completed'>('uncompleted');
+    
     // Form state
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -232,6 +236,57 @@ export default function TeamTasks() {
                 </div>
             </div>
 
+            {/* Tabs */}
+            {!loadingTasks && tasks.length > 0 && (
+                <div className="flex flex-col gap-3 mb-6">
+                    <div className="flex gap-2 bg-gray-50/50 p-1 rounded-xl w-fit">
+                        <button 
+                            onClick={() => setActiveTab('in_progress')}
+                            className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'in_progress' ? 'bg-white shadow text-deep-teal' : 'text-gray-500 hover:bg-gray-100'}`}
+                        >
+                            {t('team_tasks.tab_in_progress', 'In Progress')} ({tasks.filter(t => t.deadline?.toDate() >= new Date()).length})
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('expired')}
+                            className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'expired' ? 'bg-white shadow text-red-500' : 'text-gray-500 hover:bg-gray-100'}`}
+                        >
+                            {t('team_tasks.tab_expired', 'Expired')} ({tasks.filter(t => t.deadline?.toDate() < new Date()).length})
+                        </button>
+                    </div>
+
+                    {activeTab === 'expired' && (
+                        <div className="flex gap-2 ml-1">
+                            <button 
+                                onClick={() => setActiveSubTab('uncompleted')}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'uncompleted' ? 'bg-red-50 text-red-600 border border-red-200' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
+                            >
+                                {t('team_tasks.tab_uncompleted', 'Uncompleted')} ({
+                                    tasks.filter(t => {
+                                        if (t.deadline?.toDate() >= new Date()) return false;
+                                        const total = t.assigneeIds.length;
+                                        const completed = Object.values(t.assignees).filter(a => a.status === 'completed').length;
+                                        return total === 0 || completed < total;
+                                    }).length
+                                })
+                            </button>
+                            <button 
+                                onClick={() => setActiveSubTab('completed')}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'completed' ? 'bg-green-50 text-green-600 border border-green-200' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
+                            >
+                                {t('team_tasks.tab_completed', 'Completed')} ({
+                                    tasks.filter(t => {
+                                        if (t.deadline?.toDate() >= new Date()) return false;
+                                        const total = t.assigneeIds.length;
+                                        const completed = Object.values(t.assignees).filter(a => a.status === 'completed').length;
+                                        return total > 0 && completed === total;
+                                    }).length
+                                })
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {loadingTasks ? (
                         <div className="flex justify-center p-12">
                             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-desert-gold"></div>
@@ -241,9 +296,34 @@ export default function TeamTasks() {
                             <Calendar className="w-16 h-16 mx-auto mb-4 opacity-20" />
                             <p className="text-lg">{t('team_tasks.empty_state')}</p>
                         </div>
-                    ) : (
+                    ) : (() => {
+                        const now = new Date();
+                        const displayedTasks = tasks.filter(task => {
+                            const isExpired = task.deadline?.toDate() < now;
+                            if (activeTab === 'in_progress') return !isExpired;
+                            
+                            if (activeTab === 'expired') {
+                                if (!isExpired) return false;
+                                const total = task.assigneeIds.length;
+                                const completed = Object.values(task.assignees).filter(a => a.status === 'completed').length;
+                                const isFullyCompleted = total > 0 && completed === total;
+                                if (activeSubTab === 'completed') return isFullyCompleted;
+                                return !isFullyCompleted;
+                            }
+                            return true;
+                        });
+
+                        if (displayedTasks.length === 0) {
+                            return (
+                                <div className="glass-panel rounded-2xl p-12 text-center text-arabian-night/40 border border-white">
+                                    <p className="text-lg">{t('common.no_data', 'No Data Available')}</p>
+                                </div>
+                            );
+                        }
+
+                        return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {tasks.map(task => {
+                    {displayedTasks.map(task => {
                         const total = task.assigneeIds.length;
                         const completed = Object.values(task.assignees).filter(a => a.status === 'completed').length;
                         const isExpired = task.deadline?.toDate() < new Date();
@@ -326,7 +406,7 @@ export default function TeamTasks() {
                         );
                     })}
                 </div>
-            )}
+            )})}
 
             {/* Create Task Modal */}
             {showCreateModal && (

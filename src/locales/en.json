@@ -242,6 +242,10 @@
     "team_tasks": {
         "title": "Team Tasks",
         "desc": "Assign learning tasks and track team progress",
+        "tab_in_progress": "In Progress",
+        "tab_expired": "Expired",
+        "tab_uncompleted": "Uncompleted",
+        "tab_completed": "Completed",
         "new_task": "+ New Task",
         "empty_state": "You haven't assigned any tasks yet. Click the button to create one!",
         "expired": "Expired",

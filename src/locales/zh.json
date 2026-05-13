@@ -241,6 +241,10 @@
     "team_tasks": {
         "title": "团队任务",
         "desc": "指派学习任务并追踪团队成员进度",
+        "tab_in_progress": "进行中",
+        "tab_expired": "已截止",
+        "tab_uncompleted": "未完成",
+        "tab_completed": "已完成",
         "new_task": "+ 新建指派任务",
         "empty_state": "您还没有指派过任何任务，点击右上角新建一个吧！",
         "expired": "已截止",
