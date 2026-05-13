@@ -198,7 +198,8 @@
         "label_permissions": "平台使用权限",
         "perm_manage_categories": "目录管理",
         "perm_manage_recordings": "资料管理",
-        "perm_manage_users": "用户管理"
+        "perm_manage_users": "用户管理",
+        "perm_manage_dashboard": "仪表盘访问"
     },
     "account": {
         "title": "个人学习中心",

@@ -49,7 +49,8 @@ interface Recording {
 
 export default function AdminDashboard() {
     const { t } = useTranslation();
-    const { profile, isSuperAdmin } = useAuth();
+    const { profile, hasPermission } = useAuth();
+    const isSuperAdmin = hasPermission('manageDashboard');
     const dashboardRef = useRef<HTMLDivElement>(null);
 
     const [loading, setLoading] = useState(true);

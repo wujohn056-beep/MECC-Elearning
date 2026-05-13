@@ -199,7 +199,8 @@
         "label_permissions": "Platform Permissions",
         "perm_manage_categories": "Category Management",
         "perm_manage_recordings": "Resource Management",
-        "perm_manage_users": "User Management"
+        "perm_manage_users": "User Management",
+        "perm_manage_dashboard": "Dashboard Access"
     },
     "account": {
         "title": "Personal Learning Center",

@@ -37,7 +37,9 @@ export default function AdminLayout() {
                     <h2 className="text-xl font-bold tracking-wide">{t('admin_menu.title')}</h2>
                 </div>
                 <nav className="flex-1 p-4 flex flex-col gap-2">
-                    <Link to="/admin" className={getLinkClass('/admin', true)}>{t('admin_menu.dashboard')}</Link>
+                    {hasPermission('manageDashboard') && (
+                        <Link to="/admin" className={getLinkClass('/admin', true)}>{t('admin_menu.dashboard')}</Link>
+                    )}
                     {hasPermission('manageCategories') && (
                         <Link to="/admin/categories" className={getLinkClass('/admin/categories')}>{t('admin_menu.categories')}</Link>
                     )}

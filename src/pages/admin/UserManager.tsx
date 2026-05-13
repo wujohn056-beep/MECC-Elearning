@@ -30,6 +30,7 @@ interface UserRecord {
         manageCategories?: boolean;
         manageRecordings?: boolean;
         manageUsers?: boolean;
+        manageDashboard?: boolean;
     };
 }
 
@@ -49,7 +50,7 @@ export default function UserManager() {
     const [selectedUserId, setSelectedUserId] = useState('');
     const [formData, setFormData] = useState({ 
         crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '',
-        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false }
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false }
     });
 
     useEffect(() => {
@@ -333,7 +334,8 @@ export default function UserManager() {
             permissions: {
                 manageCategories: !!u.permissions?.manageCategories,
                 manageRecordings: !!u.permissions?.manageRecordings,
-                manageUsers: !!u.permissions?.manageUsers
+                manageUsers: !!u.permissions?.manageUsers,
+                manageDashboard: !!u.permissions?.manageDashboard
             }
         });
         setSelectedUserId(u.id);
@@ -401,7 +403,7 @@ export default function UserManager() {
                                 setEditMode(false); 
                                 setFormData({ 
                                     crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', 
-                                    permissions: { manageCategories: false, manageRecordings: false, manageUsers: false }
+                                    permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false }
                                 }); 
                                 setShowModal(true); 
                             }} 
@@ -643,6 +645,15 @@ export default function UserManager() {
                                                 onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageUsers: e.target.checked}})}
                                             />
                                             {t('user_manager.perm_manage_users', '用户管理')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageDashboard}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageDashboard: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_dashboard', '仪表盘访问')}
                                         </label>
                                     </div>
                                 </div>

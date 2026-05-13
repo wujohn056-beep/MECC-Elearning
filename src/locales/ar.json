@@ -193,7 +193,8 @@
         "label_permissions": "صلاحيات المنصة",
         "perm_manage_categories": "إدارة الدلائل",
         "perm_manage_recordings": "إدارة المواد",
-        "perm_manage_users": "إدارة المستخدمين"
+        "perm_manage_users": "إدارة المستخدمين",
+        "perm_manage_dashboard": "الوصول إلى لوحة القيادة"
     },
     "account": {
         "title": "مركز التعلم الشخصي",

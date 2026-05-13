@@ -7,6 +7,7 @@ export interface UserPermissions {
     manageCategories?: boolean;
     manageRecordings?: boolean;
     manageUsers?: boolean;
+    manageDashboard?: boolean;
 }
 
 export interface UserProfile {
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hasPermission = (permission: keyof UserPermissions) => {
         return isSuperAdmin || !!profile?.permissions?.[permission];
     };
-    const hasAnyAdminPermission = isSuperAdmin || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers;
+    const hasAnyAdminPermission = isSuperAdmin || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard;
 
     // Leaders (who can assign tasks) include TL, SM, SD, and super_admin
     const isLeader = profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm' || profile?.role === 'tl';
