@@ -239,9 +239,10 @@ export default function NotificationBell() {
                                     onClick={() => {
                                         setShowGlobalModal(false);
                                         setHasSeenGlobalModal(true);
-                                        const unreadPending = tasks.filter(t => !t.read && t.status === 'pending');
-                                        if (unreadPending.length === 1) {
-                                            handleTaskClick(unreadPending[0]);
+                                        const pendingTasks = tasks.filter(t => t.status === 'pending');
+                                        if (pendingTasks.length > 0) {
+                                            // Always navigate to the first pending task (which is sorted by urgency/deadline)
+                                            handleTaskClick(pendingTasks[0]);
                                         } else {
                                             navigate('/account');
                                         }
