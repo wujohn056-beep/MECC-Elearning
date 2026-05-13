@@ -124,6 +124,7 @@ export default function Account() {
 
     const [myTasks, setMyTasks] = useState<any[]>([]);
     const [tasksLoading, setTasksLoading] = useState(true);
+    const [activeTaskTab, setActiveTaskTab] = useState<'pending' | 'completed'>('pending');
 
     useEffect(() => {
         if (!user) return;
@@ -144,16 +145,18 @@ export default function Account() {
                             title: data.title,
                             assignerName: data.assignerName,
                             deadline: data.deadline,
+                            createdAt: data.createdAt,
                             myStatus: myInfo.status,
                             reflection: myInfo.reflection,
                             completedAt: myInfo.completedAt
                         });
                     }
                 });
-                // Sort: pending first, then by deadline
+                // Sort by time from newest to oldest
                 tasksData.sort((a, b) => {
-                    if (a.myStatus !== b.myStatus) return a.myStatus === 'pending' ? -1 : 1;
-                    return (a.deadline?.toDate().getTime() || 0) - (b.deadline?.toDate().getTime() || 0);
+                    const timeA = a.createdAt?.toDate().getTime() || a.deadline?.toDate().getTime() || 0;
+                    const timeB = b.createdAt?.toDate().getTime() || b.deadline?.toDate().getTime() || 0;
+                    return timeB - timeA;
                 });
                 setMyTasks(tasksData);
             } catch (error) {
@@ -372,18 +375,33 @@ export default function Account() {
 
                 {/* My Tasks Panel */}
                 <div className="glass-panel rounded-3xl p-6 border border-white h-[600px] flex flex-col shadow-sm">
-                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
                         <div className="w-10 h-10 rounded-full bg-deep-teal/10 flex items-center justify-center">
                             <Target className="w-5 h-5 text-deep-teal" />
                         </div>
                         <h3 className="text-xl font-extrabold text-deep-teal">{t('account.my_tasks')}</h3>
                     </div>
 
+                    <div className="flex gap-2 mb-4 bg-gray-50/50 p-1 rounded-xl">
+                        <button 
+                            onClick={() => setActiveTaskTab('pending')}
+                            className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${activeTaskTab === 'pending' ? 'bg-white shadow text-deep-teal' : 'text-gray-500 hover:bg-gray-100'}`}
+                        >
+                            {t('account.pending')} ({myTasks.filter(t => t.myStatus === 'pending').length})
+                        </button>
+                        <button 
+                            onClick={() => setActiveTaskTab('completed')}
+                            className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${activeTaskTab === 'completed' ? 'bg-white shadow text-green-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                        >
+                            {t('account.completed')} ({myTasks.filter(t => t.myStatus === 'completed').length})
+                        </button>
+                    </div>
+
                     {tasksLoading ? (
                         <div className="flex-1 flex justify-center items-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-desert-gold"></div>
                         </div>
-                    ) : myTasks.length === 0 ? (
+                    ) : myTasks.filter(t => t.myStatus === activeTaskTab).length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center text-arabian-night/40">
                             <Target className="w-16 h-16 mb-4 opacity-20" />
                             <p className="text-lg font-semibold">{t('account.empty_tasks_title')}</p>
@@ -391,8 +409,10 @@ export default function Account() {
                         </div>
                     ) : (
                         <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                            {myTasks.map((task) => (
-                                <TaskCard key={task.id} task={task} />
+                            {myTasks
+                                .filter(t => t.myStatus === activeTaskTab)
+                                .map((task) => (
+                                    <TaskCard key={task.id} task={task} />
                             ))}
                         </div>
                     )}
