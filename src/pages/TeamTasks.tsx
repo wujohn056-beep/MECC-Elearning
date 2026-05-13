@@ -373,9 +373,14 @@ export default function TeamTasks() {
                                                     </span>
                                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                                                         a.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-200' : 
-                                                        a.read ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
+                                                        (isExpired ? 'bg-red-50 text-red-600 border border-red-200' :
+                                                        (a.read ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-500 border border-gray-200'))
                                                     }`}>
-                                                        {a.status === 'completed' ? t('team_tasks.status_completed') : a.read ? t('team_tasks.status_pending') : t('team_tasks.status_unread')}
+                                                        {a.status === 'completed' 
+                                                            ? t('team_tasks.status_completed') 
+                                                            : (isExpired 
+                                                                ? t('team_tasks.status_uncompleted', 'Uncompleted') 
+                                                                : (a.read ? t('team_tasks.status_pending') : t('team_tasks.status_unread')))}
                                                     </span>
                                                 </div>
                                                 {/* Legacy string reflection */}

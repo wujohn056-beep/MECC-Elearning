@@ -258,6 +258,7 @@
         "status_completed": "Completed",
         "status_pending": "In Progress",
         "status_unread": "Unread",
+        "status_uncompleted": "Uncompleted",
         "modal_title": "New Learning Task",
         "task_title_label": "Task Title",
         "task_title_placeholder": "e.g., Required recordings for this week",
