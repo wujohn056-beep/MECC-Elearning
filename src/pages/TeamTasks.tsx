@@ -406,7 +406,8 @@ export default function TeamTasks() {
                         );
                     })}
                 </div>
-            )})}
+            );
+        })()}
 
             {/* Create Task Modal */}
             {showCreateModal && (
