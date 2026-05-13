@@ -579,6 +579,9 @@ export default function RecordingsManager() {
                             <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
                                 <FileText className="text-desert-gold h-5 w-5" />
                                 {t('recordings_manager.uploaded_resources')}
+                                <span className="text-sm font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full ml-1">
+                                    {filteredRecordings.length}
+                                </span>
                             </h2>
                             <div className="flex items-center gap-3 w-full md:w-auto">
                                 <div className="relative flex-1 md:w-64">
