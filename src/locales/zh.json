@@ -194,7 +194,11 @@
         "delete_success": "账号已删除！",
         "reset_success": "密码已重置！",
         "backend_error": "服务端操作失败，请检查服务配置",
-        "label_tl": "Team Leader (TL)"
+        "label_tl": "Team Leader (TL)",
+        "label_permissions": "平台使用权限",
+        "perm_manage_categories": "目录管理",
+        "perm_manage_recordings": "资料管理",
+        "perm_manage_users": "用户管理"
     },
     "account": {
         "title": "个人学习中心",

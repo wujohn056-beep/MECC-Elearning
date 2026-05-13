@@ -195,7 +195,11 @@
         "delete_success": "Account deleted!",
         "reset_success": "Password reset successfully!",
         "backend_error": "Backend operation failed, please check configuration",
-        "label_tl": "Team Leader (TL)"
+        "label_tl": "Team Leader (TL)",
+        "label_permissions": "Platform Permissions",
+        "perm_manage_categories": "Category Management",
+        "perm_manage_recordings": "Resource Management",
+        "perm_manage_users": "User Management"
     },
     "account": {
         "title": "Personal Learning Center",

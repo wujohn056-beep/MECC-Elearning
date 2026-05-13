@@ -118,7 +118,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: ()
 
 export default function AppLayout() {
     const { t, i18n } = useTranslation();
-    const { logout, isSuperAdmin, isLeader, profile, user } = useAuth();
+    const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -202,7 +202,7 @@ export default function AppLayout() {
                         <Link to="/dashboard" className={getNavLinkClass('/dashboard')}>{t('navbar.dashboard', '数据看板')}</Link>
                     )}
                     <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
-                    {isSuperAdmin && (
+                    {(isSuperAdmin || hasAnyAdminPermission) && (
                         <Link to="/admin" className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '管理后台')}</Link>
                     )}
                     

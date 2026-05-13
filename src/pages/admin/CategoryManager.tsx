@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, doc, query, where, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../services/firebase';
 import { FolderPlus, Edit2, Trash2, Save, X } from 'lucide-react';
 
@@ -19,6 +21,11 @@ export default function CategoryManager() {
     const [editName, setEditName] = useState('');
     const [pageError, setPageError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const { hasPermission } = useAuth();
+    
+    if (!hasPermission('manageCategories')) {
+        return <Navigate to="/admin" replace />;
+    }
 
     const fetchCategories = async () => {
         setLoading(true);

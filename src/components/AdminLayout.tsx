@@ -5,7 +5,7 @@ import { LogOut } from 'lucide-react';
 
 export default function AdminLayout() {
     const { t } = useTranslation();
-    const { logout, isSuperAdmin } = useAuth();
+    const { logout, hasPermission, hasAnyAdminPermission } = useAuth();
     const location = useLocation();
 
     const getLinkClass = (path: string, exact: boolean = false) => {
@@ -16,6 +16,10 @@ export default function AdminLayout() {
                 : 'border-transparent hover:bg-white/10 hover:border-desert-gold/50 text-white/80 hover:text-white'
         }`;
     };
+
+    if (!hasAnyAdminPermission) {
+        return null;
+    }
 
     return (
         <div 
@@ -34,12 +38,14 @@ export default function AdminLayout() {
                 </div>
                 <nav className="flex-1 p-4 flex flex-col gap-2">
                     <Link to="/admin" className={getLinkClass('/admin', true)}>{t('admin_menu.dashboard')}</Link>
-                    {isSuperAdmin && (
-                        <>
-                            <Link to="/admin/categories" className={getLinkClass('/admin/categories')}>{t('admin_menu.categories')}</Link>
-                            <Link to="/admin/recordings" className={getLinkClass('/admin/recordings')}>{t('admin_menu.uploads')}</Link>
-                            <Link to="/admin/users" className={getLinkClass('/admin/users')}>{t('admin_menu.users')}</Link>
-                        </>
+                    {hasPermission('manageCategories') && (
+                        <Link to="/admin/categories" className={getLinkClass('/admin/categories')}>{t('admin_menu.categories')}</Link>
+                    )}
+                    {hasPermission('manageRecordings') && (
+                        <Link to="/admin/recordings" className={getLinkClass('/admin/recordings')}>{t('admin_menu.uploads')}</Link>
+                    )}
+                    {hasPermission('manageUsers') && (
+                        <Link to="/admin/users" className={getLinkClass('/admin/users')}>{t('admin_menu.users')}</Link>
                     )}
                 </nav>
                 <div className="p-4 border-t border-white/10 space-y-2">

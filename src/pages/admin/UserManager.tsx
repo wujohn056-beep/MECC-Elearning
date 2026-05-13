@@ -26,11 +26,17 @@ interface UserRecord {
     sm?: string;
     tl?: string;
     team?: string;
+    permissions?: {
+        manageCategories?: boolean;
+        manageRecordings?: boolean;
+        manageUsers?: boolean;
+    };
 }
 
 export default function UserManager() {
     const { t } = useTranslation();
-    const { isSuperAdmin } = useAuth();
+    const { hasPermission } = useAuth();
+    const canManageUsers = hasPermission('manageUsers');
     const [users, setUsers] = useState<UserRecord[]>([]);
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -41,13 +47,16 @@ export default function UserManager() {
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState('');
-    const [formData, setFormData] = useState({ crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '' });
+    const [formData, setFormData] = useState({ 
+        crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '',
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false }
+    });
 
     useEffect(() => {
-        if (isSuperAdmin) {
+        if (canManageUsers) {
             fetchUsers();
         }
-    }, [isSuperAdmin]);
+    }, [canManageUsers]);
 
     const fetchUsers = async () => {
         try {
@@ -62,7 +71,7 @@ export default function UserManager() {
         }
     };
 
-    if (!isSuperAdmin) {
+    if (!canManageUsers) {
         return <Navigate to="/admin" replace />;
     }
 
@@ -320,7 +329,12 @@ export default function UserManager() {
             sd: u.sd || '',
             sm: u.sm || '',
             tl: u.tl || '',
-            team: u.team || ''
+            team: u.team || '',
+            permissions: {
+                manageCategories: !!u.permissions?.manageCategories,
+                manageRecordings: !!u.permissions?.manageRecordings,
+                manageUsers: !!u.permissions?.manageUsers
+            }
         });
         setSelectedUserId(u.id);
         setEditMode(true);
@@ -335,7 +349,8 @@ export default function UserManager() {
                     sd: formData.sd,
                     sm: formData.sm,
                     tl: formData.tl,
-                    team: formData.team
+                    team: formData.team,
+                    permissions: formData.permissions
                 });
                 fetchUsers();
                 setShowModal(false);
@@ -353,6 +368,7 @@ export default function UserManager() {
                     sm: formData.sm,
                     tl: formData.tl,
                     team: formData.team,
+                    permissions: formData.permissions,
                     createdAt: serverTimestamp()
                 });
                 await deleteApp(secondaryApp);
@@ -381,7 +397,14 @@ export default function UserManager() {
                             {t('user_manager.upload_excel')}
                         </h2>
                         <button 
-                            onClick={() => { setEditMode(false); setFormData({ crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '' }); setShowModal(true); }} 
+                            onClick={() => { 
+                                setEditMode(false); 
+                                setFormData({ 
+                                    crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', 
+                                    permissions: { manageCategories: false, manageRecordings: false, manageUsers: false }
+                                }); 
+                                setShowModal(true); 
+                            }} 
                             className="text-sm bg-desert-gold text-white px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-yellow-600 transition-colors"
                         >
                             <Plus className="w-4 h-4" /> {t('user_manager.add_account', '新增账号')}
@@ -587,6 +610,41 @@ export default function UserManager() {
                                     <datalist id="team-options">
                                         {uniqueTeams.map(team => <option key={team} value={team} />)}
                                     </datalist>
+                                </div>
+                            )}
+
+                            {formData.role !== 'super_admin' && (
+                                <div className="pt-4 mt-4 border-t border-gray-100">
+                                    <label className="block text-sm font-bold text-arabian-night/80 mb-3">{t('user_manager.label_permissions', '平台使用权限')}</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageCategories}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageCategories: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_categories', '目录管理')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageRecordings}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageRecordings: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_recordings', '资料管理')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageUsers}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageUsers: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_users', '用户管理')}
+                                        </label>
+                                    </div>
                                 </div>
                             )}
                         </div>

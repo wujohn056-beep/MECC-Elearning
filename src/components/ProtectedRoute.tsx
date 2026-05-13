@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requireAdmin = false, requireLeader = false }: ProtectedRouteProps) {
-    const { user, loading, isSuperAdmin, isLeader } = useAuth();
+    const { user, loading, hasAnyAdminPermission, isLeader } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (requireAdmin && !isSuperAdmin) {
+    if (requireAdmin && !hasAnyAdminPermission) {
         // Redirect non-admins to home or a specific "unauthorized" page
         return <Navigate to="/" replace />;
     }

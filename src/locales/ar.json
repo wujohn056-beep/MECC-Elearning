@@ -189,7 +189,11 @@
         "delete_success": "تم حذف الحساب!",
         "reset_success": "تمت إعادة تعيين كلمة المرور بنجاح!",
         "backend_error": "فشلت عملية الخادم، يرجى التحقق من التكوين",
-        "label_tl": "قائد الفريق (TL)"
+        "label_tl": "قائد الفريق (TL)",
+        "label_permissions": "صلاحيات المنصة",
+        "perm_manage_categories": "إدارة الدلائل",
+        "perm_manage_recordings": "إدارة المواد",
+        "perm_manage_users": "إدارة المستخدمين"
     },
     "account": {
         "title": "مركز التعلم الشخصي",

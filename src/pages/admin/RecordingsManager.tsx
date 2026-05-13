@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
 import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search } from 'lucide-react';
 
@@ -28,6 +30,11 @@ export default function RecordingsManager() {
     const { t } = useTranslation();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const { hasPermission } = useAuth();
+
+    if (!hasPermission('manageRecordings')) {
+        return <Navigate to="/admin" replace />;
+    }
     
     // Form States
     const [editingId, setEditingId] = useState<string | null>(null);
