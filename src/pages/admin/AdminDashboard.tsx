@@ -37,6 +37,7 @@ interface LearningTask {
     createdAt: any; // Firestore Timestamp
     assigneeIds: string[];
     assignees: Record<string, { status: string }>;
+    assignerId?: string;
 }
 
 interface Recording {
@@ -106,7 +107,7 @@ export default function AdminDashboard() {
             tasksSnap.forEach(doc => {
                 const data = doc.data();
                 if (data.createdAt) {
-                    tasksData.push({ id: doc.id, createdAt: data.createdAt, assigneeIds: data.assigneeIds || [], assignees: data.assignees || {} });
+                    tasksData.push({ id: doc.id, createdAt: data.createdAt, assigneeIds: data.assigneeIds || [], assignees: data.assignees || {}, assignerId: data.assignerId });
                 }
             });
             setTasks(tasksData);
@@ -226,8 +227,8 @@ export default function AdminDashboard() {
 
     // 4. Aggregations
     const userStats = useMemo(() => {
-        const stats: Record<string, { duration: number; tasksAssigned: number; tasksCompleted: number }> = {};
-        displayedUsers.forEach(u => stats[u.id] = { duration: 0, tasksAssigned: 0, tasksCompleted: 0 });
+        const stats: Record<string, { duration: number; tasksAssigned: number; tasksCompleted: number; tasksPublished: number }> = {};
+        displayedUsers.forEach(u => stats[u.id] = { duration: 0, tasksAssigned: 0, tasksCompleted: 0, tasksPublished: 0 });
 
         filteredLogs.forEach(log => {
             if (stats[log.userId]) {
@@ -236,6 +237,9 @@ export default function AdminDashboard() {
         });
 
         filteredTasks.forEach(task => {
+            if (task.assignerId && stats[task.assignerId]) {
+                stats[task.assignerId].tasksPublished += 1;
+            }
             task.assigneeIds.forEach(uid => {
                 if (stats[uid]) {
                     stats[uid].tasksAssigned += 1;
@@ -269,22 +273,24 @@ export default function AdminDashboard() {
             duration: userStats[u.id]?.duration || 0,
             completionRate: userStats[u.id]?.tasksAssigned > 0 
                 ? Math.round((userStats[u.id].tasksCompleted / userStats[u.id].tasksAssigned) * 100) 
-                : 0
+                : 0,
+            tasksPublished: userStats[u.id]?.tasksPublished || 0
         })).sort((a, b) => b.duration - a.duration);
     }, [displayedUsers, userStats]);
 
     // Group Aggregations (Team, SM, SD)
     const aggregateByField = (field: 'team' | 'sm' | 'sd') => {
-        const groups: Record<string, { count: number; duration: number; assigned: number; completed: number }> = {};
+        const groups: Record<string, { count: number; duration: number; assigned: number; completed: number; published: number }> = {};
         userRankings.forEach(u => {
             let key = u[field];
             if (!key) return;
             key = key.toUpperCase(); // Normalize keys for aggregation
-            if (!groups[key]) groups[key] = { count: 0, duration: 0, assigned: 0, completed: 0 };
+            if (!groups[key]) groups[key] = { count: 0, duration: 0, assigned: 0, completed: 0, published: 0 };
             groups[key].count += 1;
             groups[key].duration += u.duration;
             groups[key].assigned += userStats[u.id]?.tasksAssigned || 0;
             groups[key].completed += userStats[u.id]?.tasksCompleted || 0;
+            groups[key].published += userStats[u.id]?.tasksPublished || 0;
         });
 
         return Object.entries(groups).map(([name, data]) => ({
@@ -292,7 +298,9 @@ export default function AdminDashboard() {
             totalDuration: data.duration,
             avgDuration: data.count > 0 ? data.duration / data.count : 0,
             completionRate: data.assigned > 0 ? Math.round((data.completed / data.assigned) * 100) : 0,
-            userCount: data.count
+            userCount: data.count,
+            totalPublished: data.published,
+            avgPublished: data.count > 0 ? data.published / data.count : 0
         }));
     };
 
@@ -838,6 +846,186 @@ export default function AdminDashboard() {
                             )}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Task Publishing Rankings Section */}
+            <div className="pt-6 border-t border-gray-100">
+                <h2 className="text-2xl font-bold text-deep-teal mb-6 flex items-center gap-2">
+                    <span className="bg-desert-gold p-1.5 rounded-lg text-white">📋</span>
+                    {t('dashboard.task_publishing_rankings', '任务发布排行榜')}
+                </h2>
+
+                <h3 className="text-lg font-bold text-arabian-night mb-4">{t('dashboard.total_published', '总发布任务量排行')}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {/* SD Total Published */}
+                    {isSuperAdmin && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.sd_published', '大区任务发布榜')}</h3>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {[...sdRankings].sort((a,b) => b.totalPublished - a.totalPublished).map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-deep-teal font-bold">{rank.totalPublished}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-deep-teal h-1.5 rounded-full" style={{ width: `${Math.min((rank.totalPublished / Math.max(Math.max(...sdRankings.map(r=>r.totalPublished)) || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {sdRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SM Total Published */}
+                    {(isSuperAdmin || profile?.role === 'sd') && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.sm_published', '大组任务发布榜')}</h3>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {[...smRankings].sort((a,b) => b.totalPublished - a.totalPublished).map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-blue-600 font-bold">{rank.totalPublished}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min((rank.totalPublished / Math.max(Math.max(...smRankings.map(r=>r.totalPublished)) || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {smRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Team Total Published */}
+                    {(isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm') && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.team_published', '小组任务发布榜')}</h3>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {[...teamRankings].sort((a,b) => b.totalPublished - a.totalPublished).map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-orange-500 font-bold">{rank.totalPublished}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: `${Math.min((rank.totalPublished / Math.max(Math.max(...teamRankings.map(r=>r.totalPublished)) || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {teamRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CC Individual Total Published */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                        <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.cc_published', '个人任务发布榜')}</h3>
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                            {[...userRankings].sort((a,b) => b.tasksPublished - a.tasksPublished).slice(0, 50).map((rank, i, arr) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-semibold truncate max-w-[120px]">{rank.crmId}</span>
+                                            <span className="text-desert-gold font-bold">{rank.tasksPublished}</span>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                            <div className="bg-desert-gold h-1.5 rounded-full" style={{ width: `${Math.min((rank.tasksPublished / Math.max(arr[0]?.tasksPublished || 1, 1)) * 100, 100)}%` }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {userRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                        </div>
+                    </div>
+                </div>
+
+                <h3 className="text-lg font-bold text-arabian-night mb-4">{t('dashboard.avg_published', '人均发布任务量排行')}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {/* SD Avg Published */}
+                    {isSuperAdmin && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.sd_avg_published', '大区人均发布榜')}</h3>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {[...sdRankings].sort((a,b) => b.avgPublished - a.avgPublished).map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-deep-teal font-bold">{rank.avgPublished.toFixed(2)}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-deep-teal h-1.5 rounded-full" style={{ width: `${Math.min((rank.avgPublished / Math.max(Math.max(...sdRankings.map(r=>r.avgPublished)) || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {sdRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SM Avg Published */}
+                    {(isSuperAdmin || profile?.role === 'sd') && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.sm_avg_published', '大组人均发布榜')}</h3>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {[...smRankings].sort((a,b) => b.avgPublished - a.avgPublished).map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-blue-600 font-bold">{rank.avgPublished.toFixed(2)}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min((rank.avgPublished / Math.max(Math.max(...smRankings.map(r=>r.avgPublished)) || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {smRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Team Avg Published */}
+                    {(isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm') && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                            <h3 className="text-base font-bold text-deep-teal mb-4">{t('dashboard.team_avg_published', '小组人均发布榜')}</h3>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                                {[...teamRankings].sort((a,b) => b.avgPublished - a.avgPublished).map((rank, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 text-center text-xs font-bold text-gray-400">{i + 1}</div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-semibold">{rank.name}</span>
+                                                <span className="text-orange-500 font-bold">{rank.avgPublished.toFixed(2)}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: `${Math.min((rank.avgPublished / Math.max(Math.max(...teamRankings.map(r=>r.avgPublished)) || 1, 1)) * 100, 100)}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {teamRankings.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No data</p>}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

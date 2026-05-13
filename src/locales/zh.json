@@ -310,6 +310,16 @@
         "sd_contribution": "大区贡献榜",
         "sm_contribution": "大组贡献榜",
         "team_contribution": "小组贡献榜",
-        "cc_contribution": "个人贡献榜"
+        "cc_contribution": "个人贡献榜",
+        "task_publishing_rankings": "任务发布排行榜",
+        "total_published": "总发布任务量排行",
+        "sd_published": "大区任务发布榜",
+        "sm_published": "大组任务发布榜",
+        "team_published": "小组任务发布榜",
+        "cc_published": "个人任务发布榜",
+        "avg_published": "人均发布任务量排行",
+        "sd_avg_published": "大区人均发布榜",
+        "sm_avg_published": "大组人均发布榜",
+        "team_avg_published": "小组人均发布榜"
     }
 }

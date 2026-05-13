@@ -311,6 +311,16 @@
         "sd_contribution": "SD Contribution Ranking",
         "sm_contribution": "SM Contribution Ranking",
         "team_contribution": "TL Contribution Ranking",
-        "cc_contribution": "CC Contribution Ranking"
+        "cc_contribution": "CC Contribution Ranking",
+        "task_publishing_rankings": "Task Publishing Rankings",
+        "total_published": "Total Tasks Published Ranking",
+        "sd_published": "SD Total Published Ranking",
+        "sm_published": "SM Total Published Ranking",
+        "team_published": "Team Total Published Ranking",
+        "cc_published": "Individual Total Published Ranking",
+        "avg_published": "Avg Tasks Published Per User Ranking",
+        "sd_avg_published": "SD Avg Published Ranking",
+        "sm_avg_published": "SM Avg Published Ranking",
+        "team_avg_published": "Team Avg Published Ranking"
     }
 }
