@@ -5,10 +5,12 @@ interface ProtectedRouteProps {
     children: React.ReactNode;
     requireAdmin?: boolean;
     requireLeader?: boolean;
+    requireTaskAccess?: boolean;
+    requireDashboardAccess?: boolean;
 }
 
-export default function ProtectedRoute({ children, requireAdmin = false, requireLeader = false }: ProtectedRouteProps) {
-    const { user, loading, hasAnyAdminPermission, isLeader } = useAuth();
+export default function ProtectedRoute({ children, requireAdmin = false, requireLeader = false, requireTaskAccess = false, requireDashboardAccess = false }: ProtectedRouteProps) {
+    const { user, loading, hasAnyAdminPermission, isLeader, canAccessTasks, canAccessDashboard } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -29,6 +31,14 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
     }
     
     if (requireLeader && !isLeader) {
+        return <Navigate to="/" replace />;
+    }
+
+    if (requireTaskAccess && !canAccessTasks) {
+        return <Navigate to="/" replace />;
+    }
+
+    if (requireDashboardAccess && !canAccessDashboard) {
         return <Navigate to="/" replace />;
     }
 

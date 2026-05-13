@@ -166,7 +166,7 @@
         "desc": "Super Admin Only: Batch import organization structure and accounts",
         "upload_excel": "Batch Upload Structure (Excel)",
         "format_req": "Required Format (Column names must match):",
-        "format_tip": "The system will automatically generate password `123456` for CRM accounts and set TL permission based on Position.",
+        "format_tip": "Supports [Sales Import] (needs SD/SM/TL/CRM/Team columns) & [Functional Import] (needs Username/Department columns). Default password is 123456.",
         "click_to_upload": "Click or drag Excel file to upload",
         "import_progress": "Import Progress",
         "parse_error": "Error occurred while parsing Excel file.",
@@ -200,7 +200,8 @@
         "perm_manage_categories": "Category Management",
         "perm_manage_recordings": "Resource Management",
         "perm_manage_users": "User Management",
-        "perm_manage_dashboard": "Dashboard Access"
+        "perm_manage_dashboard": "Dashboard Access",
+        "perm_manage_tasks": "Task Center Access"
     },
     "account": {
         "title": "Personal Learning Center",

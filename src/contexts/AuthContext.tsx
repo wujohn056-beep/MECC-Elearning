@@ -8,6 +8,7 @@ export interface UserPermissions {
     manageRecordings?: boolean;
     manageUsers?: boolean;
     manageDashboard?: boolean;
+    manageTasks?: boolean;
 }
 
 export interface UserProfile {
@@ -30,6 +31,8 @@ interface AuthContextType {
     isLeader: boolean;
     hasAnyAdminPermission: boolean;
     hasPermission: (permission: keyof UserPermissions) => boolean;
+    canAccessTasks: boolean;
+    canAccessDashboard: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,10 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hasPermission = (permission: keyof UserPermissions) => {
         return isSuperAdmin || !!profile?.permissions?.[permission];
     };
-    const hasAnyAdminPermission = isSuperAdmin || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard;
+    const hasAnyAdminPermission = isSuperAdmin || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks;
 
     // Leaders (who can assign tasks) include TL, SM, SD, and super_admin
     const isLeader = profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm' || profile?.role === 'tl';
+    
+    const canAccessTasks = isLeader || hasPermission('manageTasks');
+    const canAccessDashboard = isLeader || hasPermission('manageDashboard');
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -102,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin,
         isLeader,
         hasAnyAdminPermission,
-        hasPermission
+        hasPermission,
+        canAccessTasks,
+        canAccessDashboard
     };
 
     return (

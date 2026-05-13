@@ -34,9 +34,13 @@ function App() {
             <Route path="/" element={<Navigate to="/hub" replace />} />
             <Route path="/hub" element={<LearningHub />} />
             <Route path="/account" element={<Account />} />
-            <Route path="/team-tasks" element={<TeamTasks />} />
+            <Route path="/team-tasks" element={
+              <ProtectedRoute requireTaskAccess={true}>
+                <TeamTasks />
+              </ProtectedRoute>
+            } />
             <Route path="/dashboard" element={
-              <ProtectedRoute requireLeader={true}>
+              <ProtectedRoute requireDashboardAccess={true}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
                   <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 p-6 md:p-8">
                     <AdminDashboard />

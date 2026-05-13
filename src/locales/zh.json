@@ -165,7 +165,7 @@
         "desc": "超级管理员专属：批量导入组织架构与账号",
         "upload_excel": "批量上传架构表 (Excel)",
         "format_req": "要求格式（列名需一致）：",
-        "format_tip": "系统将自动为 CRM 账号生成密码 `123456`，并根据 Position 设置 TL 权限。",
+        "format_tip": "支持【销售导入】(需SD/SM/TL/CRM/Team列) 及【职能部门导入】(需Username/Department列)。将自动生成默认密码 123456。",
         "click_to_upload": "点击或拖拽 Excel 文件上传",
         "import_progress": "导入进度",
         "parse_error": "解析 Excel 文件时发生错误。",
@@ -199,7 +199,8 @@
         "perm_manage_categories": "目录管理",
         "perm_manage_recordings": "资料管理",
         "perm_manage_users": "用户管理",
-        "perm_manage_dashboard": "仪表盘访问"
+        "perm_manage_dashboard": "仪表盘访问",
+        "perm_manage_tasks": "任务中心访问"
     },
     "account": {
         "title": "个人学习中心",

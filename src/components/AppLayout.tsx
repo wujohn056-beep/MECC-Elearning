@@ -118,7 +118,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: ()
 
 export default function AppLayout() {
     const { t, i18n } = useTranslation();
-    const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission } = useAuth();
+    const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission, canAccessTasks, canAccessDashboard } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -195,10 +195,10 @@ export default function AppLayout() {
                 </div>
                 <div className="flex gap-4 sm:gap-6 items-center pt-1">
                     <Link to="/hub" className={getNavLinkClass('/hub')}>{t('navbar.learning_hub')}</Link>
-                    {isLeader && (
+                    {canAccessTasks && (
                         <Link to="/team-tasks" className={getNavLinkClass('/team-tasks')}>{t('navbar.team_tasks')}</Link>
                     )}
-                    {isLeader && !isSuperAdmin && (
+                    {(canAccessDashboard && !isSuperAdmin) && (
                         <Link to="/dashboard" className={getNavLinkClass('/dashboard')}>{t('navbar.dashboard', '数据看板')}</Link>
                     )}
                     <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>

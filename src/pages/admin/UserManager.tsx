@@ -31,6 +31,7 @@ interface UserRecord {
         manageRecordings?: boolean;
         manageUsers?: boolean;
         manageDashboard?: boolean;
+        manageTasks?: boolean;
     };
 }
 
@@ -50,7 +51,7 @@ export default function UserManager() {
     const [selectedUserId, setSelectedUserId] = useState('');
     const [formData, setFormData] = useState({ 
         crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '',
-        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false }
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
     });
 
     useEffect(() => {
@@ -123,9 +124,9 @@ export default function UserManager() {
                 const sdValue = row.SD ? String(row.SD).trim() : '';
                 const smValue = row.SM ? String(row.SM).trim() : '';
                 const tlValue = row.TL ? String(row.TL).trim() : '';
-                const teamValue = row.TEAM ? String(row.TEAM).trim() : (row.Team ? String(row.Team).trim() : '');
+                const teamValue = row.TEAM ? String(row.TEAM).trim() : (row.Team ? String(row.Team).trim() : (row.DEPARTMENT ? String(row.DEPARTMENT).trim() : (row.Department ? String(row.Department).trim() : '')));
                 const positionValue = row.POSITION ? String(row.POSITION).toUpperCase() : (row.Position ? String(row.Position).toUpperCase() : '');
-                const crmValue = row.CRM ? String(row.CRM).trim() : '';
+                const crmValue = row.CRM ? String(row.CRM).trim() : (row.USERNAME ? String(row.USERNAME).trim() : (row.Username ? String(row.Username).trim() : ''));
 
                 if (sdValue) {
                     const sdId = sdValue.toLowerCase();
@@ -335,7 +336,8 @@ export default function UserManager() {
                 manageCategories: !!u.permissions?.manageCategories,
                 manageRecordings: !!u.permissions?.manageRecordings,
                 manageUsers: !!u.permissions?.manageUsers,
-                manageDashboard: !!u.permissions?.manageDashboard
+                manageDashboard: !!u.permissions?.manageDashboard,
+                manageTasks: !!u.permissions?.manageTasks
             }
         });
         setSelectedUserId(u.id);
@@ -403,7 +405,7 @@ export default function UserManager() {
                                 setEditMode(false); 
                                 setFormData({ 
                                     crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', 
-                                    permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false }
+                                    permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
                                 }); 
                                 setShowModal(true); 
                             }} 
@@ -654,6 +656,15 @@ export default function UserManager() {
                                                 onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageDashboard: e.target.checked}})}
                                             />
                                             {t('user_manager.perm_manage_dashboard', '仪表盘访问')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageTasks}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageTasks: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_tasks', '任务中心访问')}
                                         </label>
                                     </div>
                                 </div>
