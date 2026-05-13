@@ -625,7 +625,7 @@ export default function RecordingsManager() {
                                 <p>{t('recordings_manager.no_resources')}</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                                 {filteredRecordings.map((rec) => (
                                     <div key={rec.id} className={`bg-white/60 p-4 rounded-xl flex items-center justify-between hover:bg-white transition-colors border ${editingId === rec.id ? 'border-desert-gold shadow-md' : 'border-transparent hover:border-desert-gold/30'} group`}>
                                         <div className="flex items-start gap-4">
