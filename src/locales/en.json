@@ -110,7 +110,9 @@
         "task_completed_desc": "You have completed all learning content for this task and submitted your reflection.",
         "no_recordings_for_task": "No recordings are associated with this task",
         "recording_deleted": "This recording may have been deleted",
-        "video_tag": "Video"
+        "video_tag": "Video",
+        "see_more": "See More",
+        "see_less": "See Less"
     },
     "category_manager": {
         "title": "Category Management",

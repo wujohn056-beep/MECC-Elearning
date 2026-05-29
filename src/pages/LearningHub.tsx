@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Recording {
@@ -373,6 +373,7 @@ export default function LearningHub() {
     const [isTaskCompleted, setIsTaskCompleted] = useState(false);
     const [favorites, setFavorites] = useState<string[]>([]);
     const [selectedLecturer, setSelectedLecturer] = useState<string>('');
+    const [showAllLecturers, setShowAllLecturers] = useState(false);
     
     // Leaderboard state
     const [allFavoritesCount, setAllFavoritesCount] = useState<Record<string, number>>({});
@@ -807,7 +808,7 @@ export default function LearningHub() {
                             {t('learning_hub.popular_lecturers', 'Top Lecturers')}
                         </h4>
                         <div className="flex flex-wrap gap-3 py-2 pb-4">
-                            {sortedLecturers.map(lecturer => (
+                            {(showAllLecturers ? sortedLecturers : sortedLecturers.slice(0, 10)).map(lecturer => (
                                 <button
                                     key={lecturer}
                                     onClick={() => setSelectedLecturer(selectedLecturer === lecturer ? '' : lecturer)}
@@ -830,6 +831,29 @@ export default function LearningHub() {
                                     {selectedLecturer === lecturer && <span className="ml-1 text-[10px] bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-sm shadow-sm">{lecturerCounts[lecturer]}</span>}
                                 </button>
                             ))}
+
+                            {sortedLecturers.length > 10 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAllLecturers(!showAllLecturers)}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-full font-extrabold text-sm transition-all duration-300 bg-white/80 backdrop-blur-sm text-desert-gold border border-gray-200/80 hover:border-desert-gold/50 hover:bg-white hover:-translate-y-1 hover:shadow-md cursor-pointer group shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                                >
+                                    {showAllLecturers ? (
+                                        <>
+                                            <span>{t('learning_hub.see_less', 'See Less')}</span>
+                                            <ChevronUp className="w-4 h-4 text-desert-gold transition-transform duration-300 group-hover:-translate-y-0.5" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>{t('learning_hub.see_more', 'See More')}</span>
+                                            <span className="text-xs bg-desert-gold/15 text-desert-gold px-2 py-0.5 rounded-full border border-desert-gold/30 font-black tracking-wider">
+                                                +{sortedLecturers.length - 10}
+                                            </span>
+                                            <ChevronDown className="w-4 h-4 text-desert-gold transition-transform duration-300 group-hover:translate-y-0.5" />
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}

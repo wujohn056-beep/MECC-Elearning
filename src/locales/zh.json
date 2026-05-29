@@ -109,7 +109,9 @@
         "task_completed_desc": "您已经完成了该任务的所有学习内容并提交了心得。",
         "no_recordings_for_task": "该任务没有关联录音",
         "recording_deleted": "录音可能已被删除",
-        "video_tag": "视频"
+        "video_tag": "视频",
+        "see_more": "展开更多",
+        "see_less": "收起"
     },
     "category_manager": {
         "title": "目录分类管理",

@@ -104,7 +104,9 @@
         "task_completed_desc": "لقد أكملت جميع المحتويات التعليمية لهذه المهمة وقدمت تأملك.",
         "no_recordings_for_task": "لا توجد تسجيلات مرتبطة بهذه المهمة",
         "recording_deleted": "ربما تم حذف هذا التسجيل",
-        "video_tag": "فيديو"
+        "video_tag": "فيديو",
+        "see_more": "عرض المزيد",
+        "see_less": "عرض أقل"
     },
     "category_manager": {
         "title": "إدارة التصنيفات",
