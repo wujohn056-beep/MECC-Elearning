@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as xlsx from 'xlsx';
 import { collection, getDocs, doc, setDoc, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 import { db, firebaseConfig } from '../../services/firebase';
 import { Users, Upload, Edit, Trash2, Key, Search, Plus, X } from 'lucide-react';
@@ -232,16 +232,27 @@ export default function UserManager() {
                         await new Promise(resolve => setTimeout(resolve, 2000));
                     }
 
-                    let userCredential;
+                    let uid = '';
                     let retryCount = 3;
                     let backoff = 3000;
                     
                     while (retryCount > 0) {
                         try {
-                            userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                            const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                            uid = userCredential.user.uid;
                             break;
                         } catch (error: any) {
-                            if (error.code === 'auth/too-many-requests' && retryCount > 1) {
+                            if (error.code === 'auth/email-already-in-use') {
+                                // If the auth account already exists but there is no Firestore profile,
+                                // we try to sign in using default password to retrieve uid and restore profile!
+                                try {
+                                    const signInCred = await signInWithEmailAndPassword(secondaryAuth, email, password);
+                                    uid = signInCred.user.uid;
+                                    break;
+                                } catch (signInErr) {
+                                    throw error; // Throw original email-already-in-use error if sign in fails
+                                }
+                            } else if (error.code === 'auth/too-many-requests' && retryCount > 1) {
                                 setStatusLog(prev => [{msg: `[Rate Limit] 触发频率限制，等待 ${backoff/1000} 秒后重试 ${crmId}...`, type: 'error'}, ...prev]);
                                 await new Promise(resolve => setTimeout(resolve, backoff));
                                 backoff *= 2;
@@ -252,9 +263,7 @@ export default function UserManager() {
                         }
                     }
 
-                    if (!userCredential) throw new Error("Creation failed after retries");
-
-                    const uid = userCredential.user.uid;
+                    if (!uid) throw new Error("Creation/Recovery failed after retries");
 
                     await setDoc(doc(db, 'users', uid), {
                         crmId: crmId,
@@ -407,8 +416,26 @@ export default function UserManager() {
                 const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp" + Date.now());
                 const secondaryAuth = getAuth(secondaryApp);
                 const email = `${formData.crmId.trim().replace(/\s+/g, '')}@mecc.com`.toLowerCase();
-                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, '123456');
-                await setDoc(doc(db, 'users', userCredential.user.uid), {
+                
+                let uid = '';
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, '123456');
+                    uid = userCredential.user.uid;
+                } catch (err: any) {
+                    if (err.code === 'auth/email-already-in-use') {
+                        // The Auth account already exists! Let's try to sign in to retrieve the uid
+                        try {
+                            const signInCred = await signInWithEmailAndPassword(secondaryAuth, email, '123456');
+                            uid = signInCred.user.uid;
+                        } catch (signInErr: any) {
+                            throw new Error(`该账号的登录身份已存在，但无法被系统接管(可能已修改过默认密码)。\n请联系管理员重置后端密码，或在 Netlify 中正确配置管理员凭证后再试。`);
+                        }
+                    } else {
+                        throw err;
+                    }
+                }
+
+                await setDoc(doc(db, 'users', uid), {
                     crmId: formData.crmId.trim(),
                     role: formData.role,
                     sd: formData.sd,
