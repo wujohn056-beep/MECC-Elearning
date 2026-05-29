@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,14 @@ export default function Login() {
     const { t, i18n } = useTranslation();
 
     const from = (location.state as any)?.from?.pathname || '/';
+
+    useEffect(() => {
+        const reason = sessionStorage.getItem('auth_blocked_reason');
+        if (reason) {
+            setError(t('login.account_blocked', '您的账号已被禁用或删除，请联系管理员。'));
+            sessionStorage.removeItem('auth_blocked_reason');
+        }
+    }, [t]);
 
     const toggleLanguage = () => {
         const nextLang = i18n.language === 'en' ? 'zh' : i18n.language === 'zh' ? 'ar' : 'en';

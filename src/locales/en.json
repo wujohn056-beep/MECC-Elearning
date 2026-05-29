@@ -66,6 +66,7 @@
         "email_label": "CRM Account",
         "email_placeholder": "e.g. JOCC-ahmadalkhatib",
         "login_fail": "Login failed, please check your account and password.",
+        "account_blocked": "Your account has been disabled or deleted. Please contact an administrator.",
         "password_placeholder": "Enter password",
         "subtitle": "ME Cloud Academy"
     },

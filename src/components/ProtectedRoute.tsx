@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requireAdmin = false, requireLeader = false, requireTaskAccess = false, requireDashboardAccess = false }: ProtectedRouteProps) {
-    const { user, loading, hasAnyAdminPermission, isLeader, canAccessTasks, canAccessDashboard } = useAuth();
+    const { user, profile, loading, hasAnyAdminPermission, isLeader, canAccessTasks, canAccessDashboard } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -21,7 +21,7 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
         );
     }
 
-    if (!user) {
+    if (!user || profile?.role === 'blocked') {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 

@@ -66,6 +66,7 @@
         "email_label": "CRM 账号",
         "email_placeholder": "例如: JOCC-ahmadalkhatib",
         "login_fail": "登录失败，请检查账号和密码是否正确。",
+        "account_blocked": "您的账号已被禁用或删除，请联系管理员。",
         "subtitle": "ME 云学堂"
     },
     "learning_hub": {

@@ -76,11 +76,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         if (userDoc.exists()) {
                             setProfile(userDoc.data() as UserProfile);
                         } else {
-                            // Default to basic user if no profile found
+                            // Account is deleted or disabled in Firestore database
+                            console.warn("User has Auth account but no Firestore profile. Force logging out.");
+                            sessionStorage.setItem('auth_blocked_reason', 'deleted');
                             setProfile({
-                                crmId: currentUser.email?.split('@')[0] || 'unknown',
-                                role: 'user'
-                            });
+                                crmId: 'blocked',
+                                role: 'blocked'
+                            } as any);
+                            await firebaseSignOut(auth);
                         }
                     } catch (error) {
                         console.error("Error fetching user profile:", error);

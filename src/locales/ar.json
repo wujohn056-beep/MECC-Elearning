@@ -61,6 +61,7 @@
         "email_label": "حساب CRM",
         "email_placeholder": "مثال: JOCC-ahmadalkhatib",
         "login_fail": "فشل تسجيل الدخول، يرجى التحقق من الحساب وكلمة المرور.",
+        "account_blocked": "تم تعطيل حسابك أو حذفه. يرجى الاتصال بالمسؤول.",
         "subtitle": "أكاديمية ME السحابية"
     },
     "learning_hub": {
