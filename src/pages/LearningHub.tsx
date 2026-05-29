@@ -128,6 +128,18 @@ const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string,
     );
 };
 
+const isVideoUrl = (url: string) => {
+    if (!url) return false;
+    const cleanUrl = url.split('?')[0].toLowerCase();
+    return cleanUrl.endsWith('.mp4') || 
+           cleanUrl.endsWith('.webm') || 
+           cleanUrl.endsWith('.mov') || 
+           cleanUrl.endsWith('.m4v') ||
+           cleanUrl.endsWith('.ogg') ||
+           cleanUrl.endsWith('.avi') ||
+           cleanUrl.endsWith('.mkv');
+};
+
 // Recording Card Component
 const RecordingCard = ({ 
     rec, 
@@ -142,16 +154,47 @@ const RecordingCard = ({
     const { t } = useTranslation();
     const isLiked = rec.likes?.includes(user?.uid || '');
     const isFav = favorites.includes(rec.id);
+    const isVideo = isVideoUrl(rec.audioUrl);
+
+    // Video references for handling seek block
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const lastTimeRef = React.useRef(0);
+
+    const handleVideoTimeUpdate = () => {
+        if (disableSeek && videoRef.current) {
+            if (videoRef.current.currentTime > lastTimeRef.current + 1.5) {
+                videoRef.current.currentTime = lastTimeRef.current;
+            } else {
+                lastTimeRef.current = videoRef.current.currentTime;
+            }
+        }
+    };
 
     return (
         <div className={`glass-panel rounded-xl hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group flex flex-col border border-white/60 overflow-hidden relative ${className}`}>
-            {/* Decorative Background Top */}
-            <div className="h-14 w-full bg-gradient-to-br from-light-teal to-deep-teal absolute top-0 left-0 z-0">
-                <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
-            </div>
+            {isVideo ? (
+                /* Video Player at the top of the card */
+                <div className="w-full aspect-video bg-black relative border-b border-gray-100">
+                    <video
+                        ref={videoRef}
+                        src={rec.audioUrl}
+                        className="w-full h-full object-contain"
+                        controls
+                        controlsList={disableSeek ? "nodownload nofullscreen noremoteplayback" : "nodownload"}
+                        onTimeUpdate={handleVideoTimeUpdate}
+                        onEnded={() => handleAudioEnded(rec, videoRef.current?.duration || 0)}
+                        preload="metadata"
+                    />
+                </div>
+            ) : (
+                /* Decorative Background Top for Audio */
+                <div className="h-14 w-full bg-gradient-to-br from-light-teal to-deep-teal absolute top-0 left-0 z-0">
+                    <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
+                </div>
+            )}
 
             {/* Card Content with Restored Avatar */}
-            <div className="relative z-10 p-4 pt-5 flex flex-col flex-1">
+            <div className={`relative z-10 p-4 flex flex-col flex-1 ${!isVideo ? 'pt-5' : 'pt-3'}`}>
                 {/* Circular Avatar & Category */}
                 <div className="relative mb-2 flex items-end justify-between">
                     <div className="w-12 h-12 rounded-full border-[3px] border-white shadow-sm bg-white flex items-center justify-center overflow-hidden">
@@ -220,11 +263,13 @@ const RecordingCard = ({
                         </div>
                     </div>
                     
-                    <CustomAudioPlayer 
-                        src={rec.audioUrl} 
-                        onEnded={(duration) => handleAudioEnded(rec, duration)} 
-                        disableSeek={disableSeek}
-                    />
+                    {!isVideo && (
+                        <CustomAudioPlayer 
+                            src={rec.audioUrl} 
+                            onEnded={(duration) => handleAudioEnded(rec, duration)} 
+                            disableSeek={disableSeek}
+                        />
+                    )}
                 </div>
             </div>
         </div>

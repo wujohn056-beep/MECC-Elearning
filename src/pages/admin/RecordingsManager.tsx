@@ -765,10 +765,14 @@ export default function RecordingsManager() {
                                             </div>
                                             {(() => {
                                                 const url = rec.audioUrl?.toLowerCase() || '';
-                                                if (url.includes('.mp4?') || url.includes('.webm?') || url.includes('.mov?')) {
+                                                const cleanUrl = url.split('?')[0];
+                                                const isVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.m4v') || cleanUrl.endsWith('.avi') || cleanUrl.endsWith('.mkv');
+                                                const isAudio = cleanUrl.endsWith('.mp3') || cleanUrl.endsWith('.wav') || cleanUrl.endsWith('.m4a') || cleanUrl.endsWith('.ogg') || cleanUrl.endsWith('.aac') || cleanUrl.endsWith('.flac');
+                                                
+                                                if (isVideo) {
                                                     return <video src={rec.audioUrl} controls className="h-10 w-48 mt-1 rounded bg-black" />;
                                                 }
-                                                if (url.includes('.mp3?') || url.includes('.wav?') || url.includes('.m4a?') || url.includes('.ogg?')) {
+                                                if (isAudio) {
                                                     return <audio src={rec.audioUrl} controls className="h-8 w-48 opacity-50 group-hover:opacity-100 transition-opacity mt-1" />;
                                                 }
                                                 return (
