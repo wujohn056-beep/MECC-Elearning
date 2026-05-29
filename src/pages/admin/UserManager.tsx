@@ -297,15 +297,38 @@ export default function UserManager() {
         try {
             const res = await fetch('/api/manageUser', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'delete', uid })
             });
-            if (!res.ok) throw new Error('Backend failed');
+            
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Backend failed');
+            }
+
             await deleteDoc(doc(db, 'users', uid));
             fetchUsers();
             alert(t('user_manager.delete_success', '已删除！'));
-        } catch(err) {
-            alert(t('user_manager.backend_error', '操作失败，请检查配置'));
+        } catch(err: any) {
             console.error(err);
+            if (err.message && (err.message.includes('FIREBASE_SERVICE_ACCOUNT') || err.message.includes('Admin not initialized'))) {
+                const confirmDbOnly = window.confirm(
+                    t('user_manager.backend_config_missing_confirm', 
+                      '检测到 Netlify 后端未正确配置 FIREBASE_SERVICE_ACCOUNT 环境变量。\n\n由于缺少后端凭证，无法从 Auth 系统删除此登录账号，但您可以先将其从本页面的数据库列表中删除。\n\n是否立即仅从数据库中删除该用户档案以清理列表？'
+                    )
+                );
+                if (confirmDbOnly) {
+                    try {
+                        await deleteDoc(doc(db, 'users', uid));
+                        fetchUsers();
+                        alert(t('user_manager.delete_db_only_success', '已从数据库中删除该用户档案！'));
+                    } catch (dbErr) {
+                        alert(t('user_manager.db_delete_failed', '从数据库删除失败，请检查您的网络或权限。'));
+                    }
+                }
+            } else {
+                alert(`${t('user_manager.backend_error', '操作失败，请检查服务配置')}: ${err.message || err}`);
+            }
         }
     };
 
@@ -314,13 +337,27 @@ export default function UserManager() {
         try {
             const res = await fetch('/api/manageUser', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'resetPassword', uid })
             });
-            if (!res.ok) throw new Error('Backend failed');
+            
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Backend failed');
+            }
+
             alert(t('user_manager.reset_success', '密码重置成功！'));
-        } catch(err) {
-            alert(t('user_manager.backend_error', '操作失败，请检查配置'));
+        } catch(err: any) {
             console.error(err);
+            if (err.message && (err.message.includes('FIREBASE_SERVICE_ACCOUNT') || err.message.includes('Admin not initialized'))) {
+                alert(
+                    t('user_manager.reset_config_missing', 
+                      '密码重置失败：检测到 Netlify 后端未正确配置 FIREBASE_SERVICE_ACCOUNT 环境变量，请在 Netlify 控制台中配置您的 Firebase Service Account 私钥后再试。'
+                    )
+                );
+            } else {
+                alert(`${t('user_manager.backend_error', '操作失败，请检查服务配置')}: ${err.message || err}`);
+            }
         }
     };
 
