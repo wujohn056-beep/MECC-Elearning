@@ -512,15 +512,15 @@ export default function AdminDashboard() {
                         {filteredActivities.length} {t('dashboard.records', '条记录')}
                     </span>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
                     <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-gray-50/50 text-arabian-night/60 font-bold border-b border-gray-100">
+                        <thead className="sticky top-0 bg-white/95 backdrop-blur-sm text-arabian-night/60 font-bold border-b border-gray-100 z-10 shadow-sm">
                             <tr>
-                                <th className="py-3 px-4 rounded-tl-xl">CRM ID</th>
-                                <th className="py-3 px-4">{t('common.name', '姓名')}</th>
-                                <th className="py-3 px-4">Team</th>
-                                <th className="py-3 px-4">{t('dashboard.date', '日期')}</th>
-                                <th className="py-3 px-4 rounded-tr-xl">{t('dashboard.last_login_time', '最后登录时间')}</th>
+                                <th className="py-3 px-4 rounded-tl-xl bg-white/95 backdrop-blur-sm">CRM ID</th>
+                                <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('common.name', '姓名')}</th>
+                                <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">Team</th>
+                                <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('dashboard.date', '日期')}</th>
+                                <th className="py-3 px-4 rounded-tr-xl bg-white/95 backdrop-blur-sm">{t('dashboard.last_login_time', '最后登录时间')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
