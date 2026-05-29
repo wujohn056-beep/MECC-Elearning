@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Recording {
@@ -148,6 +148,7 @@ const RecordingCard = ({
     handleToggleFavorite, 
     handleToggleLike, 
     handleAudioEnded,
+    onPlayVideo,
     disableSeek = false,
     className = ""
 }: any) => {
@@ -156,35 +157,26 @@ const RecordingCard = ({
     const isFav = favorites.includes(rec.id);
     const isVideo = isVideoUrl(rec.audioUrl);
 
-    // Video references for handling seek block
-    const videoRef = React.useRef<HTMLVideoElement>(null);
-    const lastTimeRef = React.useRef(0);
-
-    const handleVideoTimeUpdate = () => {
-        if (disableSeek && videoRef.current) {
-            if (videoRef.current.currentTime > lastTimeRef.current + 1.5) {
-                videoRef.current.currentTime = lastTimeRef.current;
-            } else {
-                lastTimeRef.current = videoRef.current.currentTime;
-            }
-        }
-    };
-
     return (
         <div className={`glass-panel rounded-xl hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group flex flex-col border border-white/60 overflow-hidden relative ${className}`}>
             {isVideo ? (
-                /* Video Player at the top of the card */
-                <div className="w-full aspect-video bg-black relative border-b border-gray-100">
-                    <video
-                        ref={videoRef}
-                        src={rec.audioUrl}
-                        className="w-full h-full object-contain"
-                        controls
-                        controlsList={disableSeek ? "nodownload nofullscreen noremoteplayback" : "nodownload"}
-                        onTimeUpdate={handleVideoTimeUpdate}
-                        onEnded={() => handleAudioEnded(rec, videoRef.current?.duration || 0)}
-                        preload="metadata"
-                    />
+                /* Beautiful Video Thumbnail/Cover in the list card */
+                <div 
+                    onClick={() => onPlayVideo(rec, disableSeek)}
+                    className="w-full aspect-video bg-gradient-to-br from-light-teal to-deep-teal relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-gray-100 group/video shrink-0 animate-in fade-in"
+                >
+                    <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
+                    <div className="absolute inset-0 bg-black/10 group-hover/video:bg-black/30 transition-colors duration-300 z-10"></div>
+                    
+                    {/* Centered Glassmorphic Play Button */}
+                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-lg transform group-hover/video:scale-110 group-hover/video:bg-desert-gold group-hover/video:border-desert-gold/50 transition-all duration-300 z-20">
+                        <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                    </div>
+                    
+                    {/* Video Badge Tag */}
+                    <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none">
+                        🎥 {t('learning_hub.video_tag', '视频')}
+                    </span>
                 </div>
             ) : (
                 /* Decorative Background Top for Audio */
@@ -276,6 +268,88 @@ const RecordingCard = ({
     );
 };
 
+const VideoPlayerModal = ({ rec, disableSeek, onClose, onEnded }: any) => {
+    const { t } = useTranslation();
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const lastTimeRef = React.useRef(0);
+
+    const handleTimeUpdate = () => {
+        if (disableSeek && videoRef.current) {
+            if (videoRef.current.currentTime > lastTimeRef.current + 1.5) {
+                videoRef.current.currentTime = lastTimeRef.current;
+            } else {
+                lastTimeRef.current = videoRef.current.currentTime;
+            }
+        }
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-300">
+            {/* Modal Container */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 max-h-[90vh] relative">
+                {/* Modal Header */}
+                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] bg-desert-gold/10 text-yellow-800 border border-desert-gold/20 px-2 py-0.5 rounded-full font-bold">
+                            🎥 {rec.categoryName || t('common.uncategorized')}
+                        </span>
+                        {rec.displayId && <span className="text-desert-gold text-xs font-extrabold">[{rec.displayId}]</span>}
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-700 outline-none"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Video Playback viewport */}
+                <div className="bg-black flex-1 flex items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-[400px]">
+                    <video
+                        ref={videoRef}
+                        src={rec.audioUrl}
+                        className="w-full max-h-[60vh] object-contain"
+                        controls
+                        autoPlay
+                        controlsList={disableSeek ? "nodownload nofullscreen noremoteplayback" : "nodownload"}
+                        onTimeUpdate={handleTimeUpdate}
+                        onEnded={() => {
+                            onEnded(videoRef.current?.duration || 0);
+                        }}
+                        preload="metadata"
+                    />
+                </div>
+
+                {/* Details view */}
+                <div className="p-6 bg-white overflow-y-auto">
+                    <h3 className="text-lg font-extrabold text-arabian-night mb-2">
+                        {rec.title}
+                    </h3>
+                    
+                    {rec.lecturerName && (
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-desert-gold mb-3">
+                            <User className="h-4 w-4" />
+                            <span>{rec.lecturerName}</span>
+                        </div>
+                    )}
+                    
+                    <p className="text-sm text-arabian-night/70 leading-relaxed border-t border-gray-100 pt-3">
+                        {rec.description}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function LearningHub() {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -303,6 +377,10 @@ export default function LearningHub() {
     // Leaderboard state
     const [allFavoritesCount, setAllFavoritesCount] = useState<Record<string, number>>({});
     const [leaderboardTab, setLeaderboardTab] = useState<'favorites' | 'likes'>('favorites');
+    
+    // Video Modal States
+    const [activeVideoRecording, setActiveVideoRecording] = useState<Recording | null>(null);
+    const [activeVideoDisableSeek, setActiveVideoDisableSeek] = useState(false);
 
     useEffect(() => {
         if (taskId && user) {
@@ -821,6 +899,10 @@ export default function LearningHub() {
                                                             handleToggleFavorite={handleToggleFavorite}
                                                             handleToggleLike={handleToggleLike}
                                                             handleAudioEnded={handleAudioEnded}
+                                                            onPlayVideo={(videoRec: Recording, isSeekDisabled: boolean) => {
+                                                                setActiveVideoRecording(videoRec);
+                                                                setActiveVideoDisableSeek(isSeekDisabled);
+                                                            }}
                                                             disableSeek={!isTaskCompleted}
                                                             className="w-full h-full"
                                                         />
@@ -869,6 +951,10 @@ export default function LearningHub() {
                                                 handleToggleFavorite={handleToggleFavorite}
                                                 handleToggleLike={handleToggleLike}
                                                 handleAudioEnded={handleAudioEnded}
+                                                onPlayVideo={(videoRec: Recording, isSeekDisabled: boolean) => {
+                                                    setActiveVideoRecording(videoRec);
+                                                    setActiveVideoDisableSeek(isSeekDisabled);
+                                                }}
                                                 className="w-full h-full"
                                             />
                                         </div>
@@ -946,6 +1032,16 @@ export default function LearningHub() {
                         )}
                     </div>
                 </div>
+            )}
+            {activeVideoRecording && (
+                <VideoPlayerModal
+                    rec={activeVideoRecording}
+                    disableSeek={activeVideoDisableSeek}
+                    onClose={() => setActiveVideoRecording(null)}
+                    onEnded={(duration) => {
+                        handleAudioEnded(activeVideoRecording, duration);
+                    }}
+                />
             )}
         </div>
     );
