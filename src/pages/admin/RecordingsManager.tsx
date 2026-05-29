@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users } from 'lucide-react';
 
 interface Recording {
     id: string;
@@ -41,6 +41,7 @@ export default function RecordingsManager() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [lecturerName, setLecturerName] = useState('');
+    const [lecturerMode, setLecturerMode] = useState<'select' | 'custom'>('select');
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -124,6 +125,7 @@ export default function RecordingsManager() {
         setTitle('');
         setDescription('');
         setLecturerName('');
+        setLecturerMode('select');
         setFile(null);
         setAvatarFile(null);
         setAvatarPreview(null);
@@ -145,7 +147,20 @@ export default function RecordingsManager() {
         setEditingId(rec.id);
         setTitle(rec.title);
         setDescription(rec.description);
-        setLecturerName(rec.lecturerName || '');
+        const name = rec.lecturerName || '';
+        setLecturerName(name);
+        
+        // Determine lecturerMode based on whether the name exists in systemUsers
+        const matchesUser = systemUsers.some(u => 
+            (u.name && u.name === name) || 
+            (u.crmId && u.crmId === name)
+        );
+        if (name && !matchesUser) {
+            setLecturerMode('custom');
+        } else {
+            setLecturerMode('select');
+        }
+        
         setSelectedCategoryId(rec.categoryId || '');
         setAvatarPreview(rec.avatarUrl || null);
         setBusinessType(rec.businessType || 'kid');
@@ -448,53 +463,123 @@ export default function RecordingsManager() {
                                 )}
                             </div>
 
-                            <div className="relative">
-                                <label className="block text-sm font-semibold text-deep-teal mb-1">{t('recordings_manager.lecturer_label')}</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent"
-                                    value={lecturerName}
-                                    onChange={(e) => {
-                                        setLecturerName(e.target.value);
-                                        setShowLecturerDropdown(true);
-                                    }}
-                                    onFocus={() => setShowLecturerDropdown(true)}
-                                    onBlur={() => setTimeout(() => setShowLecturerDropdown(false), 200)}
-                                    placeholder={t('recordings_manager.lecturer_placeholder')}
-                                />
-                                {showLecturerDropdown && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                        {systemUsers
-                                            .filter(u => 
-                                                !lecturerName || 
-                                                (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
-                                                (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
-                                            )
-                                            .slice(0, 20)
-                                            .map(u => (
-                                                <div 
-                                                    key={u.id}
-                                                    className="px-4 py-2 hover:bg-desert-gold/10 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0"
-                                                    onMouseDown={(e) => {
-                                                        // use onMouseDown instead of onClick to prevent onBlur from firing first
-                                                        e.preventDefault();
-                                                        setLecturerName(u.name || u.crmId || '');
-                                                        setShowLecturerDropdown(false);
-                                                    }}
-                                                >
-                                                    <span className="font-semibold text-arabian-night">{u.name || u.crmId}</span>
-                                                    {u.crmId && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{u.crmId}</span>}
-                                                </div>
-                                            ))}
-                                        {systemUsers.filter(u => 
-                                                !lecturerName || 
-                                                (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
-                                                (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
-                                        ).length === 0 && (
-                                            <div className="px-4 py-3 text-xs text-gray-500 italic text-center">
-                                                {t('recordings_manager.custom_lecturer_tip', '未匹配到该用户，将作为自定义讲师保存')}
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-semibold text-deep-teal">
+                                        {t('recordings_manager.lecturer_label')}
+                                    </label>
+                                    <div className="flex bg-gray-100 p-0.5 rounded-lg text-xs font-semibold border border-gray-200">
+                                        <button
+                                            type="button"
+                                            onClick={() => setLecturerMode('select')}
+                                            className={`px-3 py-1 rounded-md transition-all duration-200 ${
+                                                lecturerMode === 'select'
+                                                    ? 'bg-white text-deep-teal shadow-sm border-gray-200/50'
+                                                    : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                        >
+                                            {t('recordings_manager.mode_select', '系统成员')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setLecturerMode('custom')}
+                                            className={`px-3 py-1 rounded-md transition-all duration-200 ${
+                                                lecturerMode === 'custom'
+                                                    ? 'bg-white text-deep-teal shadow-sm border-gray-200/50'
+                                                    : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                        >
+                                            {t('recordings_manager.mode_custom', '手动输入')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {lecturerMode === 'select' ? (
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent pr-10"
+                                            value={lecturerName}
+                                            onChange={(e) => {
+                                                setLecturerName(e.target.value);
+                                                setShowLecturerDropdown(true);
+                                            }}
+                                            onFocus={() => setShowLecturerDropdown(true)}
+                                            onBlur={() => setTimeout(() => setShowLecturerDropdown(false), 200)}
+                                            placeholder={t('recordings_manager.lecturer_placeholder')}
+                                        />
+                                        <div className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
+                                            <Users className="w-4 h-4" />
+                                        </div>
+                                        {showLecturerDropdown && (
+                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto scrollbar-thin">
+                                                {systemUsers
+                                                    .filter(u => 
+                                                        !lecturerName || 
+                                                        (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
+                                                        (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
+                                                    )
+                                                    .slice(0, 20)
+                                                    .map(u => (
+                                                        <div 
+                                                            key={u.id}
+                                                            className="px-4 py-2.5 hover:bg-desert-gold/10 cursor-pointer flex justify-between items-center border-b border-gray-50 last:border-0 transition-colors"
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault();
+                                                                setLecturerName(u.name || u.crmId || '');
+                                                                setShowLecturerDropdown(false);
+                                                            }}
+                                                        >
+                                                            <span className="font-semibold text-arabian-night">{u.name || u.crmId}</span>
+                                                            {u.crmId && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{u.crmId}</span>}
+                                                        </div>
+                                                    ))}
+                                                {systemUsers.filter(u => 
+                                                        !lecturerName || 
+                                                        (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
+                                                        (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
+                                                ).length === 0 && (
+                                                    <div className="px-4 py-4 text-center">
+                                                        <p className="text-xs text-gray-400 mb-2">
+                                                            {t('recordings_manager.no_matching_users', '未找到匹配的系统成员')}
+                                                        </p>
+                                                        <button
+                                                            type="button"
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault();
+                                                                setLecturerMode('custom');
+                                                            }}
+                                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-700 bg-desert-gold/10 hover:bg-desert-gold/20 px-3 py-1.5 rounded-full transition-colors"
+                                                        >
+                                                            🎨 {t('recordings_manager.switch_to_custom', '使用自定义姓名：“')}{lecturerName}{t('recordings_manager.switch_to_custom_end', '”')}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            💡 {t('recordings_manager.lecturer_select_tip', '提示：可模糊搜索系统成员姓名或 CRM 账号，也可以点击右上角切换为“手动输入”直接填入全新讲师。')}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent pr-28 font-semibold text-deep-teal"
+                                                value={lecturerName}
+                                                onChange={(e) => setLecturerName(e.target.value)}
+                                                placeholder={t('recordings_manager.lecturer_placeholder')}
+                                            />
+                                            <div className="absolute right-3 top-2 flex items-center shadow-sm">
+                                                <span className="bg-desert-gold/10 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded-md border border-desert-gold/20 flex items-center gap-1 select-none">
+                                                    🎨 {t('recordings_manager.custom_tag', '自定义讲师')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-yellow-700/80 mt-1">
+                                            💡 {t('recordings_manager.lecturer_custom_tip', '提示：当前为自定义模式，将直接保存填写的文本（适合外部嘉宾、临时讲师等非系统内账号）。')}
+                                        </p>
                                     </div>
                                 )}
                             </div>
