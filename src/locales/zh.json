@@ -206,7 +206,7 @@
         "delete_success": "账号已删除！",
         "reset_success": "密码已重置！",
         "backend_error": "服务端操作失败，请检查服务配置",
-        "backend_config_missing_confirm": "检测到 Netlify 后端服务未正确配置或运行异常。\n\n由于无法连接到后端，暂时不能从 Auth 系统完全清除此登录账号，但您可以先将其从本页面的数据库列表中删除。\n\n是否立即仅从数据库中删除该用户档案以清理列表？",
+        "backend_config_missing_confirm": "由于后端服务异常，无法从系统完全删除该账号。\n\n是否仍仅从数据库中删除该用户档案以清理列表？",
         "delete_db_only_success": "已从数据库中删除该用户档案！",
         "db_delete_failed": "从数据库删除失败，请检查您的网络或权限。",
         "reset_config_missing": "密码重置失败：检测到 Netlify 后端未正确配置或运行异常，请在 Netlify 控制台中配置您的 Firebase Service Account 私钥后再试。",

@@ -207,7 +207,7 @@
         "delete_success": "Account deleted!",
         "reset_success": "Password reset successfully!",
         "backend_error": "Backend operation failed, please check configuration",
-        "backend_config_missing_confirm": "We detected that Netlify's backend service is not configured correctly or is down.\n\nWithout valid backend access, we cannot delete this user login account from Firebase Auth. However, you can still remove their user profile from this screen's database list.\n\nWould you like to delete this user profile from the database only for now to clean up the list?",
+        "backend_config_missing_confirm": "Unable to delete account from system due to backend service exception.\n\nWould you like to delete this user profile from the database only to clean up the list?",
         "delete_db_only_success": "User profile deleted from database!",
         "db_delete_failed": "Failed to delete from database, please check your network or permissions.",
         "reset_config_missing": "Failed to reset password: We detected that Netlify's backend is not configured correctly or is down. Please configure your Firebase Service Account private key in Netlify console first.",
