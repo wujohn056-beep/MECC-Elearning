@@ -514,6 +514,7 @@ exports.handler = async (event, context) => {
             let sentSuccess = false;
             let mockPayload = null;
             let dingtalkApiResponse = [];
+            let errorMessage = null;
 
             if (!isMockDingTalk && agentId && (recipientsZh.length > 0 || recipientsEn.length > 0)) {
                 try {
@@ -524,7 +525,7 @@ exports.handler = async (event, context) => {
                         const token = tokenData.access_token;
                         
                         const sendNotification = async (recipientsList, lang) => {
-                            if (recipientsList.length === 0) return true;
+                            if (recipientsList.length === 0) return { success: true };
                             
                             const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
                             const notifyRes = await fetch(notifyUrl, {
@@ -544,32 +545,51 @@ exports.handler = async (event, context) => {
                             });
                             const notifyData = await notifyRes.json();
                             dingtalkApiResponse.push({ lang, data: notifyData });
-                            return notifyData.errcode === 0;
+                            
+                            if (notifyData.errcode === 0) {
+                                return { success: true };
+                            } else {
+                                return { success: false, error: `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}` };
+                            }
                         };
 
-                        const enSuccess = await sendNotification(recipientsEn, 'en');
-                        const zhSuccess = await sendNotification(recipientsZh, 'zh');
-                        sentSuccess = enSuccess && zhSuccess;
+                        const enResult = await sendNotification(recipientsEn, 'en');
+                        const zhResult = await sendNotification(recipientsZh, 'zh');
+                        
+                        sentSuccess = enResult.success && zhResult.success;
+                        if (!sentSuccess) {
+                            errorMessage = [
+                                !enResult.success ? `English Push: ${enResult.error}` : null,
+                                !zhResult.success ? `Chinese Push: ${zhResult.error}` : null
+                            ].filter(Boolean).join(" | ");
+                        }
                     } else {
+                        errorMessage = `DingTalk Token exchange failed: [${tokenData.errcode}] ${tokenData.errmsg}`;
                         dingtalkApiResponse.push({ error: "Token fail", detail: tokenData });
                     }
                 } catch (notifyErr) {
                     console.error("DingTalk Notification connection error:", notifyErr);
+                    errorMessage = `Connection to DingTalk failed: ${notifyErr.message}`;
                     dingtalkApiResponse.push({ error: notifyErr.message });
                 }
             } else {
-                // Mock Mode: Print and return mock payload
-                sentSuccess = true;
-                mockPayload = {
-                    recipientsZh,
-                    recipientsEn,
-                    markdownZh: getMsgMarkdown('zh'),
-                    markdownEn: getMsgMarkdown('en'),
-                    note: "System is running in Mock Mode. Message simulated successfully.",
-                    isMockDingTalk,
-                    hasAgentId: !!agentId
-                };
-                console.log("[Mock Notification sent]", mockPayload);
+                if (isMockDingTalk) {
+                    sentSuccess = true;
+                    mockPayload = {
+                        recipientsZh,
+                        recipientsEn,
+                        markdownZh: getMsgMarkdown('zh'),
+                        markdownEn: getMsgMarkdown('en'),
+                        note: "System is running in Mock Mode. Message simulated successfully.",
+                        isMockDingTalk,
+                        hasAgentId: !!agentId
+                    };
+                    console.log("[Mock Notification sent]", mockPayload);
+                } else if (!agentId) {
+                    errorMessage = "DingTalk Agent ID (DINGTALK_AGENT_ID) is not configured in Netlify environment variables.";
+                } else if (recipientsZh.length === 0 && recipientsEn.length === 0) {
+                    errorMessage = "未找到任何匹配且关联了钉钉账号的指派学员。请确保目标学员在用户管理中已同步钉钉，或管理员已手动绑定其工号。 / No matched assignees with bound DingTalk accounts found. Please ensure target users have synced their DingTalk profiles or their UserID is manually bound.";
+                }
             }
 
             return {
@@ -577,6 +597,7 @@ exports.handler = async (event, context) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     success: sentSuccess,
+                    error: errorMessage,
                     recipientsZhCount: recipientsZh.length,
                     recipientsEnCount: recipientsEn.length,
                     mockPayload: mockPayload,
@@ -618,35 +639,51 @@ exports.handler = async (event, context) => {
             let sentSuccess = false;
             let pushType = 'none';
             let mockPayload = null;
+            let errorMessage = null;
 
             const isPushToGroup = !targetType || targetType === 'group';
 
-            if (isPushToGroup && webhookUrl && !webhookUrl.includes('your_')) {
+            if (isPushToGroup) {
                 // Group Webhook push (Plan C custom bot)
-                try {
-                    pushType = 'webhook';
-                    const webhookRes = await fetch(webhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            msgtype: "actionCard",
-                            actionCard: {
-                                title: "🔥 ME 云学堂精品录音发布 / ME Cloud Academy - New Premium Recording Released",
-                                text: markdownBilingual,
-                                btnOrientation: "0",
-                                btns: [
-                                    {
-                                        title: "🎧 立即收听 / Listen Now",
-                                        actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
-                                    }
-                                ]
-                            }
-                        })
-                    });
-                    const resText = await webhookRes.text();
-                    sentSuccess = resText.includes('"errcode":0') || webhookRes.ok;
-                } catch (webErr) {
-                    console.error("DingTalk Webhook Push Error:", webErr);
+                if (webhookUrl && !webhookUrl.includes('your_')) {
+                    try {
+                        pushType = 'webhook';
+                        const webhookRes = await fetch(webhookUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                msgtype: "actionCard",
+                                actionCard: {
+                                    title: "🔥 ME 云学堂精品录音发布 / ME Cloud Academy - New Premium Recording Released",
+                                    text: markdownBilingual,
+                                    btnOrientation: "0",
+                                    btns: [
+                                        {
+                                            title: "🎧 立即收听 / Listen Now",
+                                            actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
+                                        }
+                                    ]
+                                }
+                            })
+                        });
+                        const resText = await webhookRes.text();
+                        let parsed;
+                        try {
+                            parsed = JSON.parse(resText);
+                        } catch (pe) {
+                            parsed = { errcode: webhookRes.ok ? 0 : -1, errmsg: resText };
+                        }
+                        if (parsed.errcode === 0) {
+                            sentSuccess = true;
+                        } else {
+                            errorMessage = `DingTalk Webhook Bot returned errcode ${parsed.errcode}: ${parsed.errmsg || resText}`;
+                        }
+                    } catch (webErr) {
+                        console.error("DingTalk Webhook Push Error:", webErr);
+                        errorMessage = `Webhook connection error: ${webErr.message}`;
+                    }
+                } else {
+                    errorMessage = "DingTalk Group Webhook URL (DINGTALK_WEBHOOK_URL) is not configured in Netlify environment variables.";
                 }
             } else {
                 // Broadcast/Targeted Push via Work Notification partitioned by language
@@ -706,7 +743,7 @@ exports.handler = async (event, context) => {
                             const token = tokenData.access_token;
                             
                             const sendNotification = async (recipientsList, lang) => {
-                                if (recipientsList.length === 0) return true;
+                                if (recipientsList.length === 0) return { success: true };
                                 
                                 const notifyRes = await fetch(`https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`, {
                                     method: 'POST',
@@ -731,28 +768,48 @@ exports.handler = async (event, context) => {
                                     })
                                 });
                                 const notifyData = await notifyRes.json();
-                                return notifyData.errcode === 0;
+                                if (notifyData.errcode === 0) {
+                                    return { success: true };
+                                } else {
+                                    return { success: false, error: `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}` };
+                                }
                             };
 
-                            const enSuccess = await sendNotification(recipientsEn, 'en');
-                            const zhSuccess = await sendNotification(recipientsZh, 'zh');
-                            sentSuccess = enSuccess && zhSuccess;
+                            const enResult = await sendNotification(recipientsEn, 'en');
+                            const zhResult = await sendNotification(recipientsZh, 'zh');
+                            
+                            sentSuccess = enResult.success && zhResult.success;
+                            if (!sentSuccess) {
+                                errorMessage = [
+                                    !enResult.success ? `English Push: ${enResult.error}` : null,
+                                    !zhResult.success ? `Chinese Push: ${zhResult.error}` : null
+                                ].filter(Boolean).join(" | ");
+                            }
+                        } else {
+                            errorMessage = `DingTalk Token exchange failed: [${tokenData.errcode}] ${tokenData.errmsg}`;
                         }
                     } catch (broadcastErr) {
                         console.error("DingTalk broadcast error:", broadcastErr);
+                        errorMessage = `DingTalk Broadcast connection failed: ${broadcastErr.message}`;
                     }
                 } else {
-                    sentSuccess = true;
-                    mockPayload = {
-                        recipientsZh,
-                        recipientsEn,
-                        pushType: pushType,
-                        markdownZh: getMsgMarkdown('zh'),
-                        markdownEn: getMsgMarkdown('en'),
-                        actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`,
-                        queryLogs: queryLogs
-                    };
-                    console.log("[Mock Material Push sent]", mockPayload);
+                    if (isMockDingTalk) {
+                        sentSuccess = true;
+                        mockPayload = {
+                            recipientsZh,
+                            recipientsEn,
+                            pushType: pushType,
+                            markdownZh: getMsgMarkdown('zh'),
+                            markdownEn: getMsgMarkdown('en'),
+                            actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`,
+                            queryLogs: queryLogs
+                        };
+                        console.log("[Mock Material Push sent]", mockPayload);
+                    } else if (!agentId) {
+                        errorMessage = "DingTalk Agent ID (DINGTALK_AGENT_ID) is not configured in Netlify environment variables.";
+                    } else if (recipientsZh.length === 0 && recipientsEn.length === 0) {
+                        errorMessage = "您选择的接收部门（按 SD 维度）中，没有任何成员关联了钉钉账号。请确保团队成员已完成账号同步，或管理员已手动绑定其工号。 / No team members in the selected teams have bound their DingTalk accounts. Please ensure members have synced their profiles or their UserID is manually bound.";
+                    }
                 }
             }
 
@@ -761,6 +818,7 @@ exports.handler = async (event, context) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     success: sentSuccess,
+                    error: errorMessage,
                     pushType: pushType,
                     mockPayload: mockPayload
                 })
