@@ -697,13 +697,16 @@ exports.handler = async (event, context) => {
                 }
                 const token = tokenData.access_token;
 
+                const parsedAgentId = agentId ? parseInt(agentId.trim()) : null;
+                const parsedTaskId = typeof taskId === 'number' ? taskId : parseInt(String(taskId).trim());
+
                 // 1. Get Progress
                 const progressRes = await fetch(`https://oapi.dingtalk.com/topapi/message/corpconversation/getsendprogress?access_token=${token}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        agent_id: parseInt(agentId),
-                        task_id: parseInt(taskId)
+                        agent_id: parsedAgentId,
+                        task_id: parsedTaskId
                     })
                 });
                 const progressData = await progressRes.json();
@@ -713,8 +716,8 @@ exports.handler = async (event, context) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        agent_id: parseInt(agentId),
-                        task_id: parseInt(taskId)
+                        agent_id: parsedAgentId,
+                        task_id: parsedTaskId
                     })
                 });
                 const resultData = await resultRes.json();
@@ -724,6 +727,14 @@ exports.handler = async (event, context) => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         success: true,
+                        debug: {
+                            agentIdRaw: agentId,
+                            agentIdParsed: parsedAgentId,
+                            taskIdRaw: taskId,
+                            taskIdParsed: parsedTaskId,
+                            isMockDingTalk: isMockDingTalk,
+                            isMockFirebase: isMockFirebase
+                        },
                         progress: progressData,
                         result: resultData
                     })
