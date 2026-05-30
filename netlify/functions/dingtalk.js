@@ -29,7 +29,7 @@ function getDingTalkEmail(crmId) {
     return `${key}@51talk.com`;
 }
 
-async function searchDingTalkUser(accessToken, queryWord) {
+async function searchDingTalkUser(accessToken, queryWord, logs) {
     try {
         const res = await fetch(`https://api.dingtalk.com/v1.0/contact/users/search`, {
             method: 'POST',
@@ -44,12 +44,17 @@ async function searchDingTalkUser(accessToken, queryWord) {
             })
         });
         const data = await res.json();
+        if (data && data.code) {
+            logs.push({ msg: `⚠️ [检索接口异常] 搜索词 [${queryWord}] 接口返回错误: [${data.code}] ${data.message}。请前往钉钉开发者后台->权限管理->通讯录管理中，申请并开通【搜索企业通讯录的权限】！`, type: 'error' });
+            return [];
+        }
         if (data && Array.isArray(data.list)) {
             return data.list;
         }
         return [];
     } catch (err) {
         console.error(`Search failed for query "${queryWord}":`, err);
+        logs.push({ msg: `⚠️ [检索网络异常] 搜索词 [${queryWord}] 接口请求失败: ${err.message}`, type: 'error' });
         return [];
     }
 }
@@ -143,7 +148,7 @@ exports.handler = async (event, context) => {
 
             for (const user of targetUsers) {
                 const crmId = user.crmId || user.id;
-                const email = getDingTalkEmail(crmId).toLowerCase();
+                const email = (user.email || getDingTalkEmail(crmId)).trim().toLowerCase();
                 let ddUserId = null;
                 let alreadyLinked = !!user.dingtalkUserId;
 
@@ -166,7 +171,7 @@ exports.handler = async (event, context) => {
                         for (const term of searchTerms) {
                             if (matched) break;
                             
-                            const foundUserIds = await searchDingTalkUser(accessToken, term);
+                            const foundUserIds = await searchDingTalkUser(accessToken, term, logs);
                             for (const uid of foundUserIds) {
                                 const details = await getDingTalkUserDetails(accessToken, uid);
                                 if (details) {
@@ -181,6 +186,8 @@ exports.handler = async (event, context) => {
                                         matched = true;
                                         logs.push({ msg: `✅ [匹配成功] 成功在通讯录中精准识别到销售 [${crmId}] 关联的钉钉用户 [${details.name}]，匹配工号: ${ddUserId}`, type: 'success' });
                                         break;
+                                    } else {
+                                        logs.push({ msg: `ℹ️ [特征比对] 找到同名/工号匹配候选人 [${details.name}] (工号: ${details.userid})，但其钉钉绑定邮箱为 [主: ${details.email || '未公开/未配置'}] / [企业: ${details.org_email || '未公开/未配置'}]，与目标 [${email}] 不一致，匹配失败。`, type: 'error' });
                                     }
                                 }
                             }
