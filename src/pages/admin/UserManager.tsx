@@ -100,6 +100,7 @@ export default function UserManager() {
             // Apply hierarchy filters for non-super-admins
             const loggedInRole = String(profile.role).trim().toLowerCase();
             const loggedInCrmId = (profile.crmId || '').trim().toLowerCase();
+            const loggedInTeam = (profile.team || '').trim().toLowerCase();
             const uCrmIdLower = (u.crmId || '').trim().toLowerCase();
 
             if (loggedInRole === 'sd') {
@@ -112,8 +113,9 @@ export default function UserManager() {
                 if (!matchesSm && !isSelf) return false;
             } else if (loggedInRole === 'tl') {
                 const matchesTl = (u.tl || '').trim().toLowerCase() === loggedInCrmId;
+                const matchesTeam = (u.team || '').trim().toLowerCase() === loggedInTeam;
                 const isSelf = uCrmIdLower === loggedInCrmId;
-                if (!matchesTl && !isSelf) return false;
+                if (!matchesTl && !matchesTeam && !isSelf) return false;
             } else {
                 // Safeguard: unrecognized roles (e.g. general users) cannot view any profiles by default
                 return false;
