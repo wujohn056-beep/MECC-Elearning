@@ -57,6 +57,7 @@ export default function UserManager() {
     const [selectedUserId, setSelectedUserId] = useState('');
     const [formData, setFormData] = useState({ 
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
+        dingtalkUserId: '',
         permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
     });
 
@@ -511,6 +512,7 @@ export default function UserManager() {
             tl: u.tl || '',
             team: u.team || '',
             dep: u.dep || 'CC',
+            dingtalkUserId: u.dingtalkUserId || '',
             permissions: {
                 manageCategories: !!u.permissions?.manageCategories,
                 manageRecordings: !!u.permissions?.manageRecordings,
@@ -540,6 +542,7 @@ export default function UserManager() {
                     tl: formData.tl,
                     team: formData.team,
                     dep: formData.dep || 'CC',
+                    dingtalkUserId: formData.dingtalkUserId.trim() || null,
                     permissions: formData.permissions
                 });
                 fetchUsers();
@@ -578,6 +581,7 @@ export default function UserManager() {
                     tl: formData.tl,
                     team: formData.team,
                     dep: formData.dep || 'CC',
+                    dingtalkUserId: formData.dingtalkUserId.trim() || null,
                     permissions: formData.permissions,
                     createdAt: serverTimestamp()
                 });
@@ -611,6 +615,7 @@ export default function UserManager() {
                                 setEditMode(false); 
                                 setFormData({ 
                                     crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
+                                    dingtalkUserId: '',
                                     permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
                                 }); 
                                 setShowModal(true); 
@@ -784,6 +789,16 @@ export default function UserManager() {
                                     placeholder="example@51talk.com"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
                                     required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_dingtalk_userid', '钉钉用户ID (选填)')}</label>
+                                <input 
+                                    type="text" 
+                                    value={formData.dingtalkUserId} 
+                                    onChange={e => setFormData({...formData, dingtalkUserId: e.target.value})}
+                                    placeholder={t('user_manager.placeholder_dingtalk_userid', '若自动同步失败，可在此手动填入进行强制绑定')}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
                                 />
                             </div>
                             <div>

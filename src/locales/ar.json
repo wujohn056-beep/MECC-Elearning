@@ -228,6 +228,8 @@
         "edit_modal_title": "تعديل معلومات الحساب",
         "label_crm": "معرف CRM (أحرف صغيرة)",
         "label_email": "البريد الإلكتروني لـ DingTalk (مطلوب)",
+        "label_dingtalk_userid": "معرف المستخدم في DingTalk (اختياري)",
+        "placeholder_dingtalk_userid": "املأ هذا يدويًا لفرض الربط إذا فشلت المزامنة التلقائية",
         "label_role": "دور النظام",
         "label_sd": "مدير المبيعات (SD)",
         "label_sm": "مدير المبيعات (SM)",

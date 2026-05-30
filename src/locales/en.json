@@ -229,6 +229,8 @@
         "edit_modal_title": "Edit Account Info",
         "label_crm": "CRM ID (lowercase)",
         "label_email": "DingTalk Email (Required)",
+        "label_dingtalk_userid": "DingTalk User ID (Optional)",
+        "placeholder_dingtalk_userid": "Fill this manually to force bind if auto sync fails",
         "label_role": "System Role",
         "label_sd": "Sales Director (SD)",
         "label_sm": "Sales Manager (SM)",
