@@ -49,7 +49,8 @@
         "type_functional": "职能部门",
         "select_business_type": "选择业务线",
         "share": "分享",
-        "cancel": "取消"
+        "cancel": "取消",
+        "download": "下载文件"
     },
     "navbar": {
         "title": "ME 云学堂",
