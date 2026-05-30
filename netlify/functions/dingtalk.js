@@ -56,6 +56,21 @@ function getDingTalkEmail(crmId) {
     return `${key}@51talk.com`;
 }
 
+function isUserChineseSpeaker(userData) {
+    if (!userData) return false;
+    const role = String(userData.role || '').trim().toLowerCase();
+    const crmId = String(userData.crmId || '').trim().toLowerCase();
+    
+    // "SD职级以上全部中文" (SD rank and above all in Chinese)
+    // SD levels and above include 'sd', 'admin', 'super_admin'
+    const isSdOrAbove = role === 'sd' || role === 'admin' || role === 'super_admin';
+    
+    // Also crmId === 'wuchuan' who is a Chinese tester/manager
+    const isWuchuan = crmId === 'wuchuan';
+    
+    return isSdOrAbove || isWuchuan;
+}
+
 async function searchDingTalkUser(accessToken, queryWord, logs) {
     try {
         const res = await fetch(`https://api.dingtalk.com/v1.0/contact/users/search`, {
@@ -454,8 +469,7 @@ exports.handler = async (event, context) => {
                         if (doc.exists) {
                             const data = doc.data();
                             if (data.dingtalkUserId) {
-                                const crmIdLower = String(data.crmId || '').trim().toLowerCase();
-                                const isEnglishSpeaker = crmIdLower.startsWith('jocc-') || crmIdLower.startsWith('egcc-');
+                                const isEnglishSpeaker = !isUserChineseSpeaker(data);
                                 if (isEnglishSpeaker) {
                                     recipientsEn.push(data.dingtalkUserId);
                                 } else {
@@ -648,8 +662,7 @@ exports.handler = async (event, context) => {
                         snapshot.forEach(doc => {
                             const data = doc.data();
                             if (data.dingtalkUserId) {
-                                const crmIdLower = String(data.crmId || '').trim().toLowerCase();
-                                const isEnglishSpeaker = crmIdLower.startsWith('jocc-') || crmIdLower.startsWith('egcc-');
+                                const isEnglishSpeaker = !isUserChineseSpeaker(data);
                                 
                                 if (targetType === 'individuals' && Array.isArray(selectedSds)) {
                                     // Segmented push strictly by selected SDs (case insensitive comparison)
