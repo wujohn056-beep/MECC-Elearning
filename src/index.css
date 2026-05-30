@@ -20,7 +20,7 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+    @apply bg-white/85 backdrop-blur-lg border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(26,43,60,0.08)] transition-all duration-300;
   }
   
   .text-gradient-gold {

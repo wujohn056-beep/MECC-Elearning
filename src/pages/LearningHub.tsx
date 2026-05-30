@@ -109,10 +109,10 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
                 }}
                 className="hidden"
             />
-            <div className="flex items-center gap-2 w-full px-1">
+            <div className="flex items-center gap-2.5 w-full px-1">
                 <button 
                     onClick={togglePlay}
-                    className="shrink-0 w-7 h-7 flex items-center justify-center bg-deep-teal text-white rounded-full hover:bg-teal-700 transition-colors shadow-sm focus:outline-none"
+                    className="shrink-0 w-8 h-8 flex items-center justify-center bg-gradient-to-tr from-deep-teal to-teal-600 text-white rounded-full hover:shadow-md hover:scale-105 active:scale-95 transition-all shadow-sm focus:outline-none cursor-pointer border border-white/20"
                 >
                     {isPlaying ? (
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
@@ -120,7 +120,7 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
                         <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     )}
                 </button>
-                <div className="text-[10px] font-bold text-arabian-night/60 shrink-0 w-7 text-right tracking-tighter">
+                <div className="text-[10px] font-bold text-arabian-night/50 shrink-0 w-7 text-right tracking-tighter">
                     {formatTime(currentTime)}
                 </div>
                 <input 
@@ -130,17 +130,17 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
                     step="0.1"
                     value={currentTime} 
                     onChange={handleSeek}
-                    className={`flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none focus:outline-none ${disableSeek ? 'cursor-not-allowed opacity-70 pointer-events-none' : 'cursor-pointer'}`}
+                    className={`flex-1 h-1 bg-gray-200/80 rounded-lg appearance-none focus:outline-none ${disableSeek ? 'cursor-not-allowed opacity-70 pointer-events-none' : 'cursor-pointer hover:h-1.5 transition-all duration-200'}`}
                     style={{ accentColor: '#d4af37' }}
                     readOnly={disableSeek}
                 />
-                <div className="text-[10px] font-bold text-arabian-night/60 shrink-0 w-7 tracking-tighter">
+                <div className="text-[10px] font-bold text-arabian-night/50 shrink-0 w-7 tracking-tighter">
                     {formatTime(duration)}
                 </div>
                 <button 
                     onClick={cycleSpeed}
                     title={t('common.playback_speed', 'Playback Speed')}
-                    className="shrink-0 text-[10px] font-extrabold text-desert-gold bg-desert-gold/10 hover:bg-desert-gold/20 border border-desert-gold/30 rounded-md px-1.5 py-0.5 transition-colors ml-1 focus:outline-none"
+                    className="shrink-0 text-[10px] font-extrabold text-[#c59e2b] bg-desert-gold/8 hover:bg-desert-gold/15 border border-desert-gold/20 rounded-md px-1.5 py-0.5 transition-all focus:outline-none active:scale-90 cursor-pointer"
                 >
                     {playbackRate}x
                 </button>
@@ -202,14 +202,14 @@ const RecordingCard = ({
                   rec.categoryName?.toLowerCase() === 'document';
 
     return (
-        <div className={`glass-panel rounded-xl hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group flex flex-col border border-white/60 overflow-hidden relative ${className}`}>
+        <div className={`glass-panel rounded-2xl hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,109,119,0.1)] transition-all duration-500 ease-out group flex flex-col border border-white/80 overflow-hidden relative ${className}`}>
             {isDoc ? (
                 /* Beautiful Document Cover in the list card */
                 <a 
                     href={rec.audioUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-24 bg-gradient-to-br from-amber-500 via-orange-600 to-amber-700 relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-gray-100 group/doc shrink-0 animate-in fade-in"
+                    className="w-full h-24 bg-gradient-to-br from-amber-600 via-orange-600 to-red-700 relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-white/20 group/doc shrink-0 animate-in fade-in"
                 >
                     <div className="absolute inset-0 opacity-25 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
                     <div className="absolute inset-0 bg-black/10 group-hover/doc:bg-black/35 transition-colors duration-300 z-10"></div>
@@ -238,13 +238,13 @@ const RecordingCard = ({
                 /* Beautiful Video Thumbnail/Cover in the list card */
                 <div 
                     onClick={() => onPlayVideo(rec, disableSeek)}
-                    className="w-full aspect-video bg-gradient-to-br from-light-teal to-deep-teal relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-gray-100 group/video shrink-0 animate-in fade-in"
+                    className="w-full aspect-video bg-gradient-to-br from-[#005f66] via-deep-teal to-[#124d52] relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-white/20 group/video shrink-0 animate-in fade-in"
                 >
                     <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
                     <div className="absolute inset-0 bg-black/10 group-hover/video:bg-black/30 transition-colors duration-300 z-10"></div>
                     
                     {/* Centered Glassmorphic Play Button */}
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-lg transform group-hover/video:scale-110 group-hover/video:bg-desert-gold group-hover/video:border-desert-gold/50 transition-all duration-300 z-20">
+                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-lg transform group-hover/video:scale-110 group-hover/video:bg-desert-gold group-hover/video:border-desert-gold/50 group-hover/video:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300 z-20">
                         <Play className="w-5 h-5 text-white fill-white ml-0.5" />
                     </div>
                     
@@ -259,35 +259,40 @@ const RecordingCard = ({
                     )}
                 </div>
             ) : (
-                /* Decorative Background Top for Audio */
+                /* Decorative Background Top for Audio - Deep Premium Mesh with accent divider */
                 <div 
                     onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
-                    className="h-14 w-full bg-gradient-to-br from-light-teal to-deep-teal absolute top-0 left-0 z-0 cursor-pointer"
+                    className="h-14 w-full bg-gradient-to-r from-[#005f66] via-deep-teal to-[#164e52] absolute top-0 left-0 z-0 cursor-pointer shadow-inner"
                 >
-                    <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
+                    <div className="absolute inset-0 opacity-15 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
+                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-desert-gold/40 to-transparent"></div>
                 </div>
             )}
 
             {/* Card Content with Restored Avatar */}
-            <div className={`relative z-10 p-4 flex flex-col flex-1 ${(!isVideo && !isDoc) ? 'pt-5' : 'pt-3'}`}>
+            <div className={`relative z-10 p-4.5 flex flex-col flex-1 ${(!isVideo && !isDoc) ? 'pt-5' : 'pt-3.5'}`}>
                 {/* Circular Avatar & Category */}
-                <div className="relative mb-2 flex items-end justify-between">
-                    <div className="w-12 h-12 rounded-full border-[3px] border-white shadow-sm bg-white flex items-center justify-center overflow-hidden">
+                <div className="relative mb-3 flex items-end justify-between">
+                    <div className="w-12 h-12 rounded-full border-2 border-white shadow-md bg-white flex items-center justify-center overflow-hidden ring-2 ring-deep-teal/10 group-hover:ring-desert-gold/30 transition-all duration-500">
                         {rec.avatarUrl ? (
-                            <img src={rec.avatarUrl} alt="Instructor" className="w-full h-full object-cover" />
+                            <img src={rec.avatarUrl} alt="Instructor" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center">
+                            <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
                                 <User className="h-6 w-6 text-white/80" />
                             </div>
                         )}
                     </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className="text-[10px] bg-white text-desert-gold border border-desert-gold/30 px-2 py-0.5 rounded-full font-bold shadow-sm">
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className="text-[10px] bg-white/95 text-[#a88216] border border-desert-gold/30 px-2.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide transition-all duration-300 group-hover:border-desert-gold group-hover:bg-desert-gold group-hover:text-white">
                             {rec.categoryName || t('common.uncategorized')}
                         </span>
                         {rec.transcript && (
-                            <span className="text-[9px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-0.5 shrink-0 select-none">
-                                📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
+                            <span className="text-[9.5px] bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 rounded-full font-extrabold shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-sm transition-all duration-300">
+                                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                </span>
+                                <span>{t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}</span>
                             </span>
                         )}
                     </div>
@@ -296,41 +301,41 @@ const RecordingCard = ({
                 <div className="flex-1">
                     <h4 
                         onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
-                        className={`font-bold text-base mb-0.5 group-hover:text-desert-gold transition-colors line-clamp-1 text-arabian-night ${!isDoc ? 'cursor-pointer' : ''}`}
+                        className={`font-extrabold text-base mb-1.5 group-hover:text-[#005f66] transition-colors line-clamp-1 text-arabian-night ${!isDoc ? 'cursor-pointer' : ''}`}
                     >
-                        {rec.displayId && <span className="text-desert-gold mr-1 text-xs font-bold">[{rec.displayId}]</span>}
+                        {rec.displayId && <span className="bg-desert-gold/10 text-[#a88216] border border-desert-gold/25 px-1.5 py-0.5 rounded text-[10px] font-bold mr-1.5 uppercase select-none tracking-wider">[{rec.displayId}]</span>}
                         {rec.title}
                     </h4>
                     {rec.lecturerName && (
                         <div 
                             onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
-                            className={`flex items-center gap-1 text-[11px] font-semibold text-desert-gold mb-1 ${!isDoc ? 'cursor-pointer hover:underline' : ''}`}
+                            className={`flex items-center gap-1.5 text-[11.5px] font-bold text-desert-gold/90 hover:text-desert-gold mb-1.5 transition-colors ${!isDoc ? 'cursor-pointer hover:underline' : ''}`}
                         >
-                            <User className="h-3 w-3" />
+                            <User className="h-3.5 w-3.5" />
                             <span>{rec.lecturerName}</span>
                         </div>
                     )}
-                    <p className="text-xs text-arabian-night/60 mb-2 line-clamp-2">
+                    <p className="text-xs text-arabian-night/60 mb-3.5 line-clamp-2 leading-relaxed">
                         {rec.description}
                     </p>
                 </div>
 
-                <div className="mt-auto pt-2.5 border-t border-arabian-night/10">
-                    <div className="flex justify-between items-center mb-2.5 text-[11px] font-semibold text-deep-teal">
+                <div className="mt-auto pt-3 border-t border-arabian-night/5">
+                    <div className="flex justify-between items-center mb-3 text-[11px] font-semibold text-deep-teal">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
+                            <div className="flex items-center gap-1 text-arabian-night/50 hover:text-arabian-night/70 transition-colors cursor-default">
+                                <Clock className="h-3.5 w-3.5" />
                                 <span>{rec.createdAt?.toDate().toLocaleDateString() || t('common.just_now')}</span>
                             </div>
                             {rec.playCount !== undefined && (
-                                <div className="flex items-center gap-1 text-desert-gold">
-                                    <Headphones className="h-3 w-3" />
+                                <div className="flex items-center gap-1 text-desert-gold/80 hover:text-desert-gold transition-colors cursor-default">
+                                    <Headphones className="h-3.5 w-3.5" />
                                     <span>{rec.playCount}{t('common.times')}</span>
                                 </div>
                             )}
                             {commentCount > 0 && (
-                                <div className="flex items-center gap-1 text-deep-teal font-extrabold animate-in fade-in">
-                                    <MessageSquare className="h-3 w-3 text-desert-gold" />
+                                <div className="flex items-center gap-1 text-deep-teal/80 hover:text-deep-teal transition-colors cursor-default font-extrabold animate-in fade-in">
+                                    <MessageSquare className="h-3.5 w-3.5 text-desert-gold" />
                                     <span>{commentCount}{t('learning_hub.comments_count_label', '条讨论')}</span>
                                 </div>
                             )}
@@ -339,59 +344,61 @@ const RecordingCard = ({
                         <div className="flex items-center gap-2">
                             <button 
                                 onClick={() => handleToggleFavorite(rec.id)}
-                                className="flex items-center gap-1 transition-all outline-none bg-white p-1.5 rounded-full border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 active:scale-95"
+                                className="flex items-center justify-center transition-all outline-none bg-white/95 backdrop-blur-sm p-1.5 rounded-full border border-gray-100 shadow-sm hover:shadow hover:border-red-200 active:scale-90 hover:scale-105 hover:bg-red-50/20 cursor-pointer"
                                 title={t('common.favorite', '收藏')}
                             >
-                                <Heart className={`h-4 w-4 transition-all duration-300 ${isFav ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-300 hover:text-red-400'}`} />
+                                <Heart className={`h-3.5 w-3.5 transition-all duration-300 ${isFav ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-300 hover:text-red-400'}`} />
                             </button>
                             
                             <button 
                                 onClick={() => handleToggleLike(rec.id, rec.likes)}
-                                className="flex items-center gap-1 transition-all outline-none bg-white px-2 py-0.5 rounded-full border border-gray-100 shadow-sm hover:shadow-md hover:border-desert-gold/30 active:scale-95"
+                                className="flex items-center gap-1 transition-all outline-none bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full border border-gray-100 shadow-sm hover:shadow hover:border-desert-gold/30 active:scale-90 hover:scale-105 hover:bg-desert-gold/5 cursor-pointer"
                             >
-                                <Moon className={`h-3.5 w-3.5 transition-all duration-300 ${isLiked ? 'fill-desert-gold text-desert-gold scale-110' : 'text-arabian-night/40 group-hover/btn:text-desert-gold'}`} />
-                                <span className={`${isLiked ? 'text-desert-gold' : 'text-arabian-night/50'} font-bold text-xs`}>
+                                <Moon className={`h-3.5 w-3.5 transition-all duration-300 ${isLiked ? 'fill-desert-gold text-desert-gold scale-110' : 'text-arabian-night/30 group-hover/btn:text-desert-gold'}`} />
+                                <span className={`${isLiked ? 'text-desert-gold font-black' : 'text-arabian-night/40 font-bold'} text-[11px]`}>
                                     {rec.likes?.length || 0}
                                 </span>
                             </button>
  
                             <button 
                                 onClick={() => onShare && onShare(rec)}
-                                className="flex items-center gap-1 transition-all outline-none bg-white p-1.5 rounded-full border border-gray-100 shadow-sm hover:shadow-md hover:border-desert-gold/30 active:scale-95"
+                                className="flex items-center justify-center transition-all outline-none bg-white/95 backdrop-blur-sm p-1.5 rounded-full border border-gray-100 shadow-sm hover:shadow hover:border-deep-teal/30 active:scale-90 hover:scale-105 hover:bg-deep-teal/5 cursor-pointer"
                                 title={t('common.share', '分享')}
                             >
-                                <Share2 className="h-4 w-4 text-arabian-night/40 hover:text-desert-gold transition-all" />
+                                <Share2 className="h-3.5 w-3.5 text-arabian-night/30 hover:text-deep-teal transition-all" />
                             </button>
                         </div>
                     </div>
                     
                     {!isVideo && !isDoc && (
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 pt-1">
                             <CustomAudioPlayer 
                                 src={rec.audioUrl} 
                                 onEnded={(duration) => handleAudioEnded(rec, duration)} 
                                 onUnlock={() => handleAudioEnded(rec, 0)}
                                 disableSeek={disableSeek}
                             />
+                            
                             <button 
                                 onClick={() => onPlayVideo(rec, disableSeek)}
-                                className="mt-1 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20 hover:shadow-md"
+                                className="mt-1 w-full bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_4px_15px_rgba(0,109,119,0.25)] text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20"
                             >
-                                <MessageSquare className="w-3.5 h-3.5 text-desert-gold" />
+                                <MessageSquare className="w-3.5 h-3.5 text-desert-gold fill-desert-gold/20" />
                                 <span>{t('learning_hub.comments_btn', '参与互动交流与问答')}</span>
                                 {commentCount > 0 && (
-                                    <span className="bg-desert-gold text-deep-teal text-[10px] font-black px-2 py-0.5 rounded-full shadow-inner animate-pulse shrink-0 ml-1 border border-white/10">
+                                    <span className="bg-desert-gold text-arabian-night text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-inner shrink-0 ml-1.5">
                                         {commentCount}
                                     </span>
                                 )}
                             </button>
+                            
                             {rec.transcript && (
                                 <button 
                                     onClick={() => onPlayVideo(rec, disableSeek)}
-                                    className="mt-1 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20 hover:shadow-md"
+                                    className="mt-1 w-full bg-white/80 hover:bg-deep-teal/5 border border-deep-teal/20 text-deep-teal hover:border-deep-teal/40 hover:shadow-sm text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer"
                                 >
                                     <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
-                                    {t('learning_hub.view_transcript_unlocked_btn', '查看阿语逐字稿')}
+                                    <span>{t('learning_hub.view_transcript_unlocked_btn', '查看阿语逐字稿')}</span>
                                 </button>
                             )}
                         </div>
@@ -402,7 +409,7 @@ const RecordingCard = ({
                             href={rec.audioUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-2.5 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
+                            className="mt-2.5 w-full bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_4px_15px_rgba(0,109,119,0.25)] text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
                         >
                             <BookOpen className="w-4 h-4" />
                             {t('learning_hub.open_document_btn', '打开并阅读文档')}
