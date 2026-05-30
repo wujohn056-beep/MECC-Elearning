@@ -703,9 +703,42 @@ export default function LearningHub() {
                         <div className="flex flex-col gap-4 w-full md:w-auto items-end">
                             {/* Business Type Header for SS / Segmented Control for CC */}
                             {profile?.dep === 'SS' ? (
-                                <div className="bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-3 rounded-full font-extrabold text-base shadow-lg shadow-orange-500/20 flex items-center gap-2 select-none self-start md:self-end">
+                                <div className="bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-3 rounded-full font-extrabold text-base shadow-lg shadow-orange-500/20 flex items-center gap-2 select-none self-start md:self-end animate-pulse">
                                     <span>✨</span>
                                     <span>{t('common.type_ss', 'SS 业务')}</span>
+                                </div>
+                            ) : profile?.role === 'super_admin' ? (
+                                <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
+                                    <button
+                                        onClick={() => setBusinessType('kid')}
+                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
+                                            businessType === 'kid' 
+                                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' 
+                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        {t('common.type_kid', '青少业务')}
+                                    </button>
+                                    <button
+                                        onClick={() => setBusinessType('adult')}
+                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
+                                            businessType === 'adult' 
+                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105' 
+                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        {t('common.type_adult', '成人业务')}
+                                    </button>
+                                    <button
+                                        onClick={() => setBusinessType('ss')}
+                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
+                                            businessType === 'ss' 
+                                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-105' 
+                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        {t('common.type_ss', 'SS 业务')}
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
