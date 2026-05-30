@@ -798,9 +798,9 @@ export default function UserManager() {
                                 <input 
                                     type="text" 
                                     value={formData.crmId} 
-                                    onChange={e => setFormData({...formData, crmId: e.target.value.toLowerCase()})}
-                                    disabled={editMode}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold disabled:bg-gray-100"
+                                    disabled={true}
+                                    placeholder={t('user_manager.crm_auto_placeholder', '通过输入邮箱自动生成')}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-100 text-gray-500 font-medium select-none cursor-not-allowed"
                                 />
                             </div>
                             <div>
@@ -808,7 +808,15 @@ export default function UserManager() {
                                 <input 
                                     type="email" 
                                     value={formData.email} 
-                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                    onChange={e => {
+                                        const emailVal = e.target.value;
+                                        const derivedCrmId = emailVal.split('@')[0].toLowerCase().trim().replace(/\s+/g, '');
+                                        setFormData({
+                                            ...formData,
+                                            email: emailVal,
+                                            crmId: editMode ? formData.crmId : derivedCrmId
+                                        });
+                                    }}
                                     placeholder="example@51talk.com"
                                     className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
                                     required
