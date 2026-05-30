@@ -128,7 +128,17 @@
         "download_poster": "下载分享海报",
         "download_poster_success": "海报下载成功！",
         "download_poster_fail": "海报生成失败，请重试。",
+        "copy_poster": "复制海报图片",
+        "copy_poster_success": "海报图片已成功复制到剪贴板！",
+        "copy_poster_fail": "复制海报失败，请直接下载海报。",
+        "preparing_poster": "正在生成海报...",
+        "share_synergy_tip_title": "如何完美分享给团队？",
+        "share_synergy_tip_desc": "复制直达链接后，点击“复制海报图片”按钮。在微信/工作群聊天框中，先粘贴发送链接，再直接粘贴发送海报图片，即可完美呈现！",
+        "shared_recording_title": "推荐学习素材",
+        "shared_recording_desc": "正在播放为您推荐的精品销售实战录音，助推专业成长！",
         "poster_badge": "精品销售实战录音",
+        "poster_default_desc": "优秀录音复盘，助推专业成长！",
+        "poster_branding": "ME 云学堂 · 荣誉出品",
         "scan_to_learn": "扫描二维码或使用链接立即学习"
     },
     "category_manager": {

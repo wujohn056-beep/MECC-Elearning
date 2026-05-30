@@ -15,7 +15,9 @@ export default function Login() {
     const location = useLocation();
     const { t, i18n } = useTranslation();
 
-    const from = (location.state as any)?.from?.pathname || '/';
+    const fromPath = (location.state as any)?.from?.pathname || '/';
+    const fromSearch = (location.state as any)?.from?.search || '';
+    const from = `${fromPath}${fromSearch}`;
 
     useEffect(() => {
         const reason = sessionStorage.getItem('auth_blocked_reason');

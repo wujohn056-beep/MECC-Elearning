@@ -129,7 +129,17 @@
         "download_poster": "Download Share Poster",
         "download_poster_success": "Poster downloaded successfully!",
         "download_poster_fail": "Failed to generate poster, please try again.",
+        "copy_poster": "Copy Poster Image",
+        "copy_poster_success": "Poster image copied to clipboard successfully!",
+        "copy_poster_fail": "Failed to copy poster, please download it directly.",
+        "preparing_poster": "Preparing poster...",
+        "share_synergy_tip_title": "How to share perfectly with your team?",
+        "share_synergy_tip_desc": "After copying the link, click 'Copy Poster Image'. In your work chat, paste the link first, then paste the poster image to present both beautifully!",
+        "shared_recording_title": "Recommended Learning Material",
+        "shared_recording_desc": "Playing the premium sales recording recommended for you to support your professional growth!",
         "poster_badge": "Premium Sales Recording",
+        "poster_default_desc": "Premium recording review, boosting professional growth!",
+        "poster_branding": "ME Cloud Academy · Proudly Presented",
         "scan_to_learn": "Scan QR code or use link to learn immediately"
     },
     "category_manager": {

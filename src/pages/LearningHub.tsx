@@ -364,6 +364,11 @@ const SharePosterModal = ({ rec, onClose }: any) => {
     const posterRef = React.useRef<HTMLDivElement>(null);
     const [isCopying, setIsCopying] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isCopyingImage, setIsCopyingImage] = useState(false);
+
+    const [avatarDataUrl, setAvatarDataUrl] = useState<string>('');
+    const [qrDataUrl, setQrDataUrl] = useState<string>('');
+    const [loadingResources, setLoadingResources] = useState(true);
 
     const shareUrl = `${window.location.origin}${window.location.pathname}?recordingId=${rec.id}`;
 
@@ -401,6 +406,83 @@ const SharePosterModal = ({ rec, onClose }: any) => {
         }
     };
 
+    const handleCopyPoster = async () => {
+        if (!posterRef.current) return;
+        setIsCopyingImage(true);
+        try {
+            const { toBlob } = await import('html-to-image');
+            const blob = await toBlob(posterRef.current, {
+                quality: 0.95,
+                pixelRatio: 2,
+                cacheBust: true,
+            });
+            if (blob) {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+                alert(t('learning_hub.copy_poster_success', '海报图片已成功复制到剪贴板！'));
+            }
+        } catch (error) {
+            console.error("Error copying poster image", error);
+            alert(t('learning_hub.copy_poster_fail', '复制海报失败，请直接下载海报。'));
+        } finally {
+            setIsCopyingImage(false);
+        }
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchResources = async () => {
+            if (isMounted) setLoadingResources(true);
+            
+            // 1. Generate QR Code locally as a Base64 Data URL (CORS-free, 100% resilient)
+            try {
+                const QRCode = (await import('qrcode')).default;
+                const base64 = await QRCode.toDataURL(shareUrl, {
+                    width: 150,
+                    margin: 1,
+                    color: {
+                        dark: '#000000',
+                        light: '#ffffff',
+                    }
+                });
+                if (isMounted) setQrDataUrl(base64);
+            } catch (e) {
+                console.error("Failed to generate local QR code:", e);
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+                if (isMounted) setQrDataUrl(qrUrl);
+            }
+
+            // 2. Fetch Avatar and convert to Base64 (CORS resilient fallback)
+            if (rec.avatarUrl) {
+                try {
+                    const res = await fetch(rec.avatarUrl, { mode: 'cors' });
+                    if (!res.ok) throw new Error('Avatar fetch failed');
+                    const blob = await res.blob();
+                    const reader = new FileReader();
+                    const p = new Promise<string>((resolve) => {
+                        reader.onloadend = () => resolve(reader.result as string);
+                    });
+                    reader.readAsDataURL(blob);
+                    const base64 = await p;
+                    if (isMounted) setAvatarDataUrl(base64);
+                } catch (e) {
+                    console.error("Failed to pre-fetch avatar base64 due to CORS or network:", e);
+                    if (isMounted) setAvatarDataUrl('');
+                }
+            } else {
+                if (isMounted) setAvatarDataUrl('');
+            }
+            
+            if (isMounted) setLoadingResources(false);
+        };
+
+        fetchResources();
+        return () => {
+            isMounted = false;
+        };
+    }, [rec.avatarUrl, shareUrl]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -421,6 +503,16 @@ const SharePosterModal = ({ rec, onClose }: any) => {
                         ref={posterRef}
                         className="w-[320px] h-[480px] bg-gradient-to-br from-[#064e3b] via-[#022c22] to-[#0f172a] border border-desert-gold/30 rounded-2xl p-6 flex flex-col relative shadow-xl shrink-0 text-white overflow-hidden select-none font-sans"
                     >
+                        {/* Shimmer loading overlay */}
+                        {loadingResources && (
+                            <div className="absolute inset-0 bg-black/45 backdrop-blur-sm flex flex-col items-center justify-center z-20 animate-pulse">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-desert-gold mb-2"></div>
+                                <span className="text-[10px] text-desert-gold font-bold tracking-widest uppercase">
+                                    {t('learning_hub.preparing_poster', '正在生成海报...')}
+                                </span>
+                            </div>
+                        )}
+
                         {/* Golden Decorative Background Light */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-desert-gold/15 to-transparent rounded-bl-full pointer-events-none blur-xl"></div>
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-light-teal/20 to-transparent rounded-tr-full pointer-events-none blur-xl"></div>
@@ -439,8 +531,8 @@ const SharePosterModal = ({ rec, onClose }: any) => {
                         <div className="flex-1 flex flex-col justify-center items-center text-center mt-3 relative z-10">
                             {/* Lecturer Avatar */}
                             <div className="w-16 h-16 rounded-full border-3 border-white shadow-md overflow-hidden bg-white/10 flex items-center justify-center mb-2.5">
-                                {rec.avatarUrl ? (
-                                    <img src={rec.avatarUrl} alt="Lecturer" className="w-full h-full object-cover" />
+                                {avatarDataUrl ? (
+                                    <img src={avatarDataUrl} alt="Lecturer" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xl font-bold">
                                         {rec.lecturerName ? rec.lecturerName.charAt(0).toUpperCase() : 'U'}
@@ -469,7 +561,7 @@ const SharePosterModal = ({ rec, onClose }: any) => {
 
                             {/* Short Description */}
                             <p className="text-white/60 text-[11px] leading-relaxed mt-2.5 px-4 line-clamp-2 italic">
-                                {rec.description || '优秀录音复盘，助推专业成长！'}
+                                {rec.description || t('learning_hub.poster_default_desc', '优秀录音复盘，助推专业成长！')}
                             </p>
                         </div>
 
@@ -477,26 +569,29 @@ const SharePosterModal = ({ rec, onClose }: any) => {
                         <div className="border-t border-white/10 pt-3.5 mt-auto w-full flex items-center justify-between relative z-10">
                             <div className="flex-1 min-w-0 pr-2">
                                 <h4 className="text-[11px] font-black text-desert-gold tracking-wide">
-                                    ME 云学堂 · 荣誉出品
+                                    {t('learning_hub.poster_branding', 'ME 云学堂 · 荣誉出品')}
                                 </h4>
                                 <p className="text-[9px] text-white/40 mt-0.5 leading-snug">
                                     {t('learning_hub.scan_to_learn', '扫描二维码或使用链接立即学习')}
                                 </p>
                             </div>
                             <div className="w-16 h-16 bg-white p-1 rounded-xl shadow-lg flex items-center justify-center overflow-hidden shrink-0 border border-white/20">
-                                <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`} 
-                                    alt="QR Code" 
-                                    className="w-full h-full object-contain"
-                                    crossOrigin="anonymous"
-                                />
+                                {qrDataUrl ? (
+                                    <img 
+                                        src={qrDataUrl} 
+                                        alt="QR Code" 
+                                        className="w-full h-full object-contain"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center"></div>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Side: Options and Actions */}
-                <div className="p-8 flex-1 flex flex-col justify-between max-h-[40vh] md:max-h-none">
+                <div className="p-8 flex-1 flex flex-col justify-between max-h-[50vh] md:max-h-none overflow-y-auto">
                     {/* Header */}
                     <div>
                         <div className="flex justify-between items-start mb-4">
@@ -517,7 +612,7 @@ const SharePosterModal = ({ rec, onClose }: any) => {
                         </div>
 
                         {/* Link Display Box */}
-                        <div className="bg-gray-50 border border-gray-200/60 rounded-2xl p-4 mt-6">
+                        <div className="bg-gray-50 border border-gray-200/60 rounded-2xl p-4 mt-4">
                             <h4 className="text-xs font-extrabold text-deep-teal mb-2">
                                 🔗 {t('learning_hub.exclusive_link', '专属学习链接')}
                             </h4>
@@ -536,20 +631,45 @@ const SharePosterModal = ({ rec, onClose }: any) => {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Share Synergy Tip Banner */}
+                        <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex gap-3 items-start select-none">
+                            <span className="text-amber-600 text-sm leading-none mt-0.5">💡</span>
+                            <div className="flex-1">
+                                <h5 className="text-xs font-black text-amber-700 mb-1">
+                                    {t('learning_hub.share_synergy_tip_title', '如何完美分享给团队？')}
+                                </h5>
+                                <p className="text-[11px] text-amber-900/70 font-medium leading-relaxed">
+                                    {t('learning_hub.share_synergy_tip_desc', '复制直达链接后，点击“复制海报图片”按钮。在微信/工作群聊天框中，先粘贴发送链接，再直接粘贴发送海报图片，即可完美呈现！')}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="mt-8 flex flex-col gap-2.5">
+                    <div className="mt-6 flex flex-col gap-2.5">
                         <button
                             onClick={handleDownloadPoster}
-                            disabled={isDownloading}
+                            disabled={isDownloading || loadingResources}
                             className="bg-gradient-to-r from-desert-gold to-yellow-600 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg shadow-yellow-600/10 hover:shadow-yellow-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isDownloading ? (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                             ) : '💾'}
-                            {t('learning_hub.download_poster', '下载分享海报')}
+                            {loadingResources ? t('learning_hub.preparing_poster', '正在生成海报...') : t('learning_hub.download_poster', '下载分享海报')}
                         </button>
+
+                        <button
+                            onClick={handleCopyPoster}
+                            disabled={isCopyingImage || loadingResources}
+                            className="bg-deep-teal hover:bg-teal-700 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg shadow-teal-700/10 hover:shadow-teal-700/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isCopyingImage ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : '✨'}
+                            {loadingResources ? t('learning_hub.preparing_poster', '正在生成海报...') : t('learning_hub.copy_poster', '复制海报图片')}
+                        </button>
+
                         <button
                             onClick={onClose}
                             className="bg-gray-100 hover:bg-gray-200 text-arabian-night/80 font-bold text-sm py-3 rounded-2xl transition-all cursor-pointer text-center"
@@ -968,8 +1088,8 @@ export default function LearningHub() {
                             </>
                         ) : targetRecordingId ? (
                             <>
-                                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.my_favorite_learning')}</h2>
-                                <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.play_favorites_desc')}</p>
+                                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.shared_recording_title', '推荐学习素材')}</h2>
+                                <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.shared_recording_desc', '正在播放为您推荐的精品销售实战录音，助推专业成长！')}</p>
                                 <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
                                     <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
                                 </button>
