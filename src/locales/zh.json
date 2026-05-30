@@ -408,7 +408,8 @@
         "search_recording_placeholder": "搜索录音名称或ID...",
         "no_recordings_found": "未找到匹配的录音",
         "max_recordings_limit": "一次最多只能同时指派2个录音！",
-        "unassigned_team": "未分组"
+        "unassigned_team": "未分组",
+        "management_staff": "管理层"
     },
     "dashboard": {
         "title": "仪表盘总览",

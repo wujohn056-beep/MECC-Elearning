@@ -403,7 +403,8 @@
         "search_recording_placeholder": "ابحث عن اسم التسجيل أو المعرف...",
         "no_recordings_found": "لم يتم العثور على تسجيلات مطابقة",
         "max_recordings_limit": "يمكنك تعيين بحد أقصى 2 تسجيلات في المرة الواحدة!",
-        "unassigned_team": "غير معين"
+        "unassigned_team": "غير معين",
+        "management_staff": "الإدارة"
     },
     "dashboard": {
         "title": "نظرة عامة على لوحة القيادة",

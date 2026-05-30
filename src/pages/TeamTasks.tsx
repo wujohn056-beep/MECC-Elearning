@@ -125,27 +125,35 @@ export default function TeamTasks() {
             
             // Filter users based on leader's scope
             const filteredUsers = usersData.filter(u => {
-                const uTeam = (u.team || '').trim();
-                // Never show users without a team in task assignment to prevent "Unassigned" block
-                if (!uTeam) return false;
-
-                if (isSuperAdmin) return true;
-
                 const loggedInRole = String(profile?.role).trim().toLowerCase();
                 const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
                 const loggedInTeam = (profile?.team || '').trim().toLowerCase();
 
+                const uTeam = (u.team || '').trim();
+                const uTeamLower = uTeam.toLowerCase();
+                const uCrmId = (u.crmId || '').trim().toLowerCase();
+
                 const uSd = (u.sd || '').trim().toLowerCase();
                 const uSm = (u.sm || '').trim().toLowerCase();
                 const uTl = (u.tl || '').trim().toLowerCase();
-                const uTeamLower = uTeam.toLowerCase();
 
+                // 1. Super Admin: Show all users (excluding themselves)
+                if (loggedInRole === 'super_admin' || isSuperAdmin) {
+                    return uCrmId !== loggedInCrmId;
+                }
+
+                // 2. SD (Sales Director): Show users under their hierarchy, including SMs (excluding themselves)
                 if (loggedInRole === 'sd') {
-                    return uSd === loggedInCrmId;
-                } else if (loggedInRole === 'sm') {
-                    return uSm === loggedInCrmId;
+                    return uSd === loggedInCrmId && uCrmId !== loggedInCrmId;
+                }
+
+                // 3. For other roles (SM, TL, etc.), require an active team
+                if (!uTeam) return false;
+
+                if (loggedInRole === 'sm') {
+                    return uSm === loggedInCrmId && uCrmId !== loggedInCrmId;
                 } else if (loggedInRole === 'tl') {
-                    return uTeamLower === loggedInTeam || uTl === loggedInCrmId;
+                    return (uTeamLower === loggedInTeam || uTl === loggedInCrmId) && uCrmId !== loggedInCrmId;
                 }
                 return false;
             });
@@ -255,7 +263,15 @@ export default function TeamTasks() {
     const groupedUsers = React.useMemo(() => {
         const groups: Record<string, UserRecord[]> = {};
         allUsers.forEach(u => {
-            const teamName = u.team || t('team_tasks.unassigned_team', '未分组');
+            let teamName = u.team || '';
+            if (!teamName) {
+                const uRole = String(u.role || '').trim().toLowerCase();
+                if (['sd', 'sm', 'super_admin'].includes(uRole)) {
+                    teamName = t('team_tasks.management_staff', '管理层');
+                } else {
+                    teamName = t('team_tasks.unassigned_team', '未分组');
+                }
+            }
             if (!groups[teamName]) groups[teamName] = [];
             groups[teamName].push(u);
         });
