@@ -89,15 +89,17 @@ export default function UserManager() {
     }
 
     const filteredUsers = users.filter(u => {
-        const isAbsoluteSuperAdmin = profile?.role === 'super_admin';
+        if (!profile || !profile.role) return false;
+        
+        const isAbsoluteSuperAdmin = profile.role === 'super_admin';
         if (!isAbsoluteSuperAdmin) {
-            const adminDep = profile?.dep || 'CC';
+            const adminDep = profile.dep || 'CC';
             const userDep = u.dep || 'CC';
             if (adminDep !== userDep) return false;
 
             // Apply hierarchy filters for non-super-admins
-            const loggedInRole = profile?.role;
-            const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
+            const loggedInRole = String(profile.role).trim().toLowerCase();
+            const loggedInCrmId = (profile.crmId || '').trim().toLowerCase();
             const uCrmIdLower = (u.crmId || '').trim().toLowerCase();
 
             if (loggedInRole === 'sd') {
@@ -112,6 +114,9 @@ export default function UserManager() {
                 const matchesTl = (u.tl || '').trim().toLowerCase() === loggedInCrmId;
                 const isSelf = uCrmIdLower === loggedInCrmId;
                 if (!matchesTl && !isSelf) return false;
+            } else {
+                // Safeguard: unrecognized roles (e.g. general users) cannot view any profiles by default
+                return false;
             }
         }
 
@@ -791,7 +796,7 @@ export default function UserManager() {
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
                             <Users className="text-desert-gold" />
-                            {t('user_manager.current_accounts')} ({users.length})
+                            {t('user_manager.current_accounts')} ({filteredUsers.length})
                         </h2>
                         <div className="flex items-center gap-2">
                             {profile?.role !== 'super_admin' && (

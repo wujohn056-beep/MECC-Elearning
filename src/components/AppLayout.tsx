@@ -209,7 +209,7 @@ export default function AppLayout() {
                     )}
                     <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
                     {(isSuperAdmin || hasAnyAdminPermission) && (
-                        <Link to="/admin" className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '管理后台')}</Link>
+                        <Link to={isSuperAdmin ? "/admin" : "/admin/users"} className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '管理后台')}</Link>
                     )}
                     
                     <NotificationBell />

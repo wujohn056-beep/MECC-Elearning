@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
 
 export default function AdminLayout() {
     const { t, i18n } = useTranslation();
-    const { logout, hasPermission, hasAnyAdminPermission } = useAuth();
+    const { logout, hasPermission, hasAnyAdminPermission, isLeader, isSuperAdmin } = useAuth();
     const location = useLocation();
 
     // Dynamically update document title based on selected language
@@ -28,6 +28,10 @@ export default function AdminLayout() {
         return null;
     }
 
+    if (!isSuperAdmin && (location.pathname === '/admin' || location.pathname === '/admin/')) {
+        return <Navigate to="/admin/users" replace />;
+    }
+
     return (
         <div 
             className="h-screen flex overflow-hidden font-sans text-arabian-night bg-cover bg-center bg-fixed"
@@ -44,7 +48,7 @@ export default function AdminLayout() {
                     <h2 className="text-xl font-bold tracking-wide">{t('admin_menu.title')}</h2>
                 </div>
                 <nav className="flex-1 p-4 flex flex-col gap-2">
-                    {hasPermission('manageDashboard') && (
+                    {isSuperAdmin && (
                         <Link to="/admin" className={getLinkClass('/admin', true)}>{t('admin_menu.dashboard')}</Link>
                     )}
                     {hasPermission('manageCategories') && (
