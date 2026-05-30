@@ -453,11 +453,13 @@ const SharePosterModal = ({ rec, onClose }: any) => {
                 if (isMounted) setQrDataUrl(qrUrl);
             }
 
-            // 2. Fetch Avatar and convert to Base64 (CORS resilient fallback)
+            // 2. Fetch Avatar and convert to Base64 (CORS proxy fallback chain)
             if (rec.avatarUrl) {
                 try {
-                    const res = await fetch(rec.avatarUrl, { mode: 'cors' });
-                    if (!res.ok) throw new Error('Avatar fetch failed');
+                    // Try fetching through stable weserv.nl CORS proxy first to bypass Firebase Storage CORS block
+                    const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(rec.avatarUrl)}`;
+                    const res = await fetch(proxyUrl);
+                    if (!res.ok) throw new Error('Proxy fetch failed');
                     const blob = await res.blob();
                     const reader = new FileReader();
                     const p = new Promise<string>((resolve) => {
@@ -467,8 +469,22 @@ const SharePosterModal = ({ rec, onClose }: any) => {
                     const base64 = await p;
                     if (isMounted) setAvatarDataUrl(base64);
                 } catch (e) {
-                    console.error("Failed to pre-fetch avatar base64 due to CORS or network:", e);
-                    if (isMounted) setAvatarDataUrl('');
+                    console.warn("Failed to fetch avatar via proxy, trying direct fetch:", e);
+                    try {
+                        const res = await fetch(rec.avatarUrl, { mode: 'cors' });
+                        if (!res.ok) throw new Error('Direct fetch failed');
+                        const blob = await res.blob();
+                        const reader = new FileReader();
+                        const p = new Promise<string>((resolve) => {
+                            reader.onloadend = () => resolve(reader.result as string);
+                        });
+                        reader.readAsDataURL(blob);
+                        const base64 = await p;
+                        if (isMounted) setAvatarDataUrl(base64);
+                    } catch (err) {
+                        console.error("All avatar fetches failed due to CORS or network:", err);
+                        if (isMounted) setAvatarDataUrl('');
+                    }
                 }
             } else {
                 if (isMounted) setAvatarDataUrl('');
