@@ -382,7 +382,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [actualListenedSeconds, setActualListenedSeconds] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
-    const isVideo = isVideoUrl(rec.audioUrl);
+    const isVideo = false; // Always treat as audio in the player modal to show the premium vinyl record animation
 
     const handleTimeUpdate = () => {
         if (mediaRef.current) {
