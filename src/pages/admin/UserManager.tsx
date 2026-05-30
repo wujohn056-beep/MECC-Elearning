@@ -377,7 +377,7 @@ export default function UserManager() {
         setProgress(0);
         setTotal(unlinkedUsers.length);
 
-        const BATCH_SIZE = 5;
+        const BATCH_SIZE = 2;
         let linkedCount = 0;
 
         try {

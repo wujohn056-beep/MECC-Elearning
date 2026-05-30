@@ -175,17 +175,15 @@ exports.handler = async (event, context) => {
                         const emailPrefix = email.split('@')[0];
                         const nameSegment = crmId.split('-').pop();
                         
-                        // Generate highly inclusive search terms to cover all spelling variations of foreign names
+                        // Generate specific search terms to avoid short generic prefixes matching massive lists
                         const searchTerms = Array.from(new Set([
                             crmId,
                             emailPrefix,
                             nameSegment,
-                            emailPrefix.length >= 3 ? emailPrefix.substring(0, 3) : null,
-                            emailPrefix.length >= 4 ? emailPrefix.substring(0, 4) : null,
-                            nameSegment.length >= 3 ? nameSegment.substring(0, 3) : null,
+                            emailPrefix.length >= 5 ? emailPrefix.substring(0, 5) : null,
+                            nameSegment.length >= 5 ? nameSegment.substring(0, 5) : null,
                             emailPrefix.toLowerCase().startsWith('moh') ? 'mohammad' : null,
-                            emailPrefix.toLowerCase().startsWith('moh') ? 'mohammed' : null,
-                            emailPrefix.toLowerCase().startsWith('moh') ? 'moh' : null
+                            emailPrefix.toLowerCase().startsWith('moh') ? 'mohammed' : null
                         ])).filter(Boolean);
                         
                         logs.push({ msg: `🔍 [精准匹配] 正在针对销售 [${crmId}] (${email}) 的个人特征，启动多重通讯录定向检索...`, type: 'success' });
@@ -195,22 +193,28 @@ exports.handler = async (event, context) => {
                             if (matched) break;
                             
                             const foundUserIds = await searchDingTalkUser(accessToken, term, logs);
-                            for (const uid of foundUserIds) {
-                                const details = await getDingTalkUserDetails(accessToken, uid);
-                                if (details) {
-                                    const ddEmail = (details.email || '').trim().toLowerCase();
-                                    const ddOrgEmail = (details.org_email || '').trim().toLowerCase();
-                                    const ddName = (details.name || '').trim().toLowerCase();
-                                    const ddUserid = (details.userid || '').trim().toLowerCase();
-                                    
-                                    // Match by email or org_email or name / userid
-                                    if (ddEmail === email || ddOrgEmail === email || ddName === crmId.toLowerCase() || ddUserid === emailPrefix) {
-                                        ddUserId = details.userid;
-                                        matched = true;
-                                        logs.push({ msg: `✅ [匹配成功] 成功在通讯录中精准识别到销售 [${crmId}] 关联的钉钉用户 [${details.name}]，匹配工号: ${ddUserId}`, type: 'success' });
-                                        break;
-                                    } else {
-                                        logs.push({ msg: `ℹ️ [特征比对] 找到同名/工号匹配候选人 [${details.name}] (工号: ${details.userid})，但其钉钉绑定邮箱为 [主: ${details.email || '未公开/未配置'}] / [企业: ${details.org_email || '未公开/未配置'}]，与目标 [${email}] 不一致，匹配失败。`, type: 'error' });
+                            if (foundUserIds && foundUserIds.length > 0) {
+                                // Query all candidate details in parallel to completely eliminate N+1 latency spikes!
+                                const detailsList = await Promise.all(
+                                    foundUserIds.map(uid => getDingTalkUserDetails(accessToken, uid))
+                                );
+                                
+                                for (const details of detailsList) {
+                                    if (details) {
+                                        const ddEmail = (details.email || '').trim().toLowerCase();
+                                        const ddOrgEmail = (details.org_email || '').trim().toLowerCase();
+                                        const ddName = (details.name || '').trim().toLowerCase();
+                                        const ddUserid = (details.userid || '').trim().toLowerCase();
+                                        
+                                        // Match by email or org_email or name / userid
+                                        if (ddEmail === email || ddOrgEmail === email || ddName === crmId.toLowerCase() || ddUserid === emailPrefix) {
+                                            ddUserId = details.userid;
+                                            matched = true;
+                                            logs.push({ msg: `✅ [匹配成功] 成功在通讯录中精准识别到销售 [${crmId}] 关联的钉钉用户 [${details.name}]，匹配工号: ${ddUserId}`, type: 'success' });
+                                            break;
+                                        } else {
+                                            logs.push({ msg: `ℹ️ [特征比对] 找到同名/工号匹配候选人 [${details.name}] (工号: ${details.userid})，但其钉钉绑定邮箱为 [主: ${details.email || '未公开/未配置'}] / [企业: ${details.org_email || '未公开/未配置'}]，与目标 [${email}] 不一致，匹配失败。`, type: 'error' });
+                                        }
                                     }
                                 }
                             }
