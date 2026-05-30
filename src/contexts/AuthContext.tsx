@@ -18,6 +18,7 @@ export interface UserProfile {
     sm?: string;
     team?: string;
     position?: string;
+    dep?: 'CC' | 'SS' | 'functional';
     permissions?: UserPermissions;
 }
 

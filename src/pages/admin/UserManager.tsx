@@ -26,6 +26,7 @@ interface UserRecord {
     sm?: string;
     tl?: string;
     team?: string;
+    dep?: 'CC' | 'SS' | 'functional';
     permissions?: {
         manageCategories?: boolean;
         manageRecordings?: boolean;
@@ -50,7 +51,7 @@ export default function UserManager() {
     const [editMode, setEditMode] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState('');
     const [formData, setFormData] = useState({ 
-        crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '',
+        crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: 'CC' as 'CC' | 'SS' | 'functional',
         permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
     });
 
@@ -127,12 +128,32 @@ export default function UserManager() {
                 const teamValue = row.TEAM ? String(row.TEAM).trim() : (row.Team ? String(row.Team).trim() : (row.DEPARTMENT ? String(row.DEPARTMENT).trim() : (row.Department ? String(row.Department).trim() : '')));
                 const positionValue = row.POSITION ? String(row.POSITION).toUpperCase() : (row.Position ? String(row.Position).toUpperCase() : '');
                 const crmValue = row.CRM ? String(row.CRM).trim() : (row.USERNAME ? String(row.USERNAME).trim() : (row.Username ? String(row.Username).trim() : ''));
+                
+                // Read DEP / DEPARTMENT column
+                const depRaw = row.DEP ? String(row.DEP).trim() : (row.DEPARTMENT ? String(row.DEPARTMENT).trim() : (row.Department ? String(row.Department).trim() : ''));
+                
+                let depValue: 'CC' | 'SS' | 'functional' = 'CC';
+                if (depRaw.toUpperCase() === 'SS') {
+                    depValue = 'SS';
+                } else if (depRaw.toUpperCase() === 'CC') {
+                    depValue = 'CC';
+                } else if (depRaw.toUpperCase() === 'FUNCTIONAL' || depRaw.toLowerCase().includes('职能') || depRaw.toLowerCase().includes('functional')) {
+                    depValue = 'functional';
+                } else {
+                    if (sdValue || smValue || tlValue) {
+                        depValue = 'CC';
+                    } else if (depRaw) {
+                        depValue = 'functional';
+                    } else {
+                        depValue = 'CC';
+                    }
+                }
 
                 if (sdValue) {
                     const sdId = sdValue.toLowerCase();
                     if (!accountsToCreate.has(sdId)) {
                         accountsToCreate.set(sdId, {
-                            crmId: sdValue, role: 'sd', sd: '', sm: '', tl: '', team: ''
+                            crmId: sdValue, role: 'sd', sd: '', sm: '', tl: '', team: '', dep: depValue
                         });
                     }
                 }
@@ -141,11 +162,12 @@ export default function UserManager() {
                     const smId = smValue.toLowerCase();
                     if (!accountsToCreate.has(smId)) {
                         accountsToCreate.set(smId, {
-                            crmId: smValue, role: 'sm', sd: sdValue, sm: '', tl: '', team: ''
+                            crmId: smValue, role: 'sm', sd: sdValue, sm: '', tl: '', team: '', dep: depValue
                         });
                     } else {
                         const existing = accountsToCreate.get(smId);
                         if (!existing.sd && sdValue) existing.sd = sdValue;
+                        if (!existing.dep) existing.dep = depValue;
                     }
                 }
 
@@ -153,12 +175,13 @@ export default function UserManager() {
                     const tlId = tlValue.toLowerCase();
                     if (!accountsToCreate.has(tlId)) {
                         accountsToCreate.set(tlId, {
-                            crmId: tlValue, role: 'tl', sd: sdValue, sm: smValue, tl: '', team: ''
+                            crmId: tlValue, role: 'tl', sd: sdValue, sm: smValue, tl: '', team: '', dep: depValue
                         });
                     } else {
                         const existing = accountsToCreate.get(tlId);
                         if (!existing.sd && sdValue) existing.sd = sdValue;
                         if (!existing.sm && smValue) existing.sm = smValue;
+                        if (!existing.dep) existing.dep = depValue;
                     }
                 }
 
@@ -179,7 +202,8 @@ export default function UserManager() {
                         sd: sdValue || existing?.sd || '',
                         sm: smValue || existing?.sm || '',
                         tl: tlValue || existing?.tl || '',
-                        team: teamValue || existing?.team || ''
+                        team: teamValue || existing?.team || '',
+                        dep: depValue || existing?.dep || 'CC'
                     });
                 }
             });
@@ -220,7 +244,8 @@ export default function UserManager() {
                             sd: row.sd || existingUser.sd || '',
                             sm: row.sm || existingUser.sm || '',
                             tl: row.tl || existingUser.tl || '',
-                            team: row.team || existingUser.team || ''
+                            team: row.team || existingUser.team || '',
+                            dep: row.dep || existingUser.dep || 'CC'
                         });
                         successCount++;
                         setStatusLog(prev => [{msg: `[更新] ${crmId} 架构已更新`, type: 'success'}, ...prev]);
@@ -272,6 +297,7 @@ export default function UserManager() {
                         sm: row.sm,
                         tl: row.tl,
                         team: row.team,
+                        dep: row.dep || 'CC',
                         createdAt: serverTimestamp()
                     });
 
@@ -384,6 +410,7 @@ export default function UserManager() {
             sm: u.sm || '',
             tl: u.tl || '',
             team: u.team || '',
+            dep: u.dep || 'CC',
             permissions: {
                 manageCategories: !!u.permissions?.manageCategories,
                 manageRecordings: !!u.permissions?.manageRecordings,
@@ -406,6 +433,7 @@ export default function UserManager() {
                     sm: formData.sm,
                     tl: formData.tl,
                     team: formData.team,
+                    dep: formData.dep || 'CC',
                     permissions: formData.permissions
                 });
                 fetchUsers();
@@ -442,6 +470,7 @@ export default function UserManager() {
                     sm: formData.sm,
                     tl: formData.tl,
                     team: formData.team,
+                    dep: formData.dep || 'CC',
                     permissions: formData.permissions,
                     createdAt: serverTimestamp()
                 });
@@ -474,7 +503,7 @@ export default function UserManager() {
                             onClick={() => { 
                                 setEditMode(false); 
                                 setFormData({ 
-                                    crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', 
+                                    crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: 'CC',
                                     permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
                                 }); 
                                 setShowModal(true); 
@@ -552,12 +581,21 @@ export default function UserManager() {
                         {filteredUsers.map(u => (
                             <div key={u.id} className="bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group">
                                 <div>
-                                    <h3 className="font-bold text-arabian-night flex items-center gap-2">
+                                    <h3 className="font-bold text-arabian-night flex flex-wrap items-center gap-2">
                                         {u.crmId}
                                         {u.role === 'super_admin' && <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Super Admin</span>}
                                         {u.role === 'sd' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">SD</span>}
                                         {u.role === 'sm' && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">SM</span>}
                                         {u.role === 'tl' && <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">TL</span>}
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm ${
+                                            (u.dep || 'CC') === 'SS'
+                                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-orange-400'
+                                                : (u.dep || 'CC') === 'CC'
+                                                    ? 'bg-teal-100 text-teal-800 border border-teal-200'
+                                                    : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                        }`}>
+                                            {(u.dep || 'CC') === 'SS' ? t('common.type_ss') : (u.dep || 'CC') === 'CC' ? t('common.type_cc') : t('common.type_functional')}
+                                        </span>
                                     </h3>
                                     <div className="text-xs text-arabian-night/60 mt-1 flex gap-3">
                                         <span>SD: {u.sd || '-'}</span>
@@ -616,6 +654,18 @@ export default function UserManager() {
                                     <option value="sm">Sales Manager (SM)</option>
                                     <option value="sd">Sales Director (SD)</option>
                                     <option value="super_admin">Super Admin</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_dep', 'Department')}</label>
+                                <select 
+                                    value={formData.dep || 'CC'} 
+                                    onChange={e => setFormData({...formData, dep: e.target.value as 'CC' | 'SS' | 'functional'})}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                >
+                                    <option value="CC">{t('common.type_cc')}</option>
+                                    <option value="SS">{t('common.type_ss')}</option>
+                                    <option value="functional">{t('common.type_functional')}</option>
                                 </select>
                             </div>
                             

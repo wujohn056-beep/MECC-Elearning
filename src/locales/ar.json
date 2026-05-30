@@ -39,7 +39,15 @@
         "select_all": "تحديد المجموعة",
         "deselect_all": "إلغاء تحديد المجموعة",
         "name": "الاسم",
-        "no_data": "لا توجد بيانات متاحة"
+        "no_data": "لا توجد بيانات متاحة",
+        "playback_speed": "سرعة التشغيل",
+        "business_type": "نوع العمل",
+        "type_kid": "أطفال",
+        "type_adult": "كبار",
+        "type_ss": "SS مبيعات",
+        "type_cc": "CC مبيعات",
+        "type_functional": "القسم الوظيفي",
+        "select_business_type": "اختر العمل"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",
@@ -206,6 +214,7 @@
         "db_delete_failed": "فشل الحذف من قاعدة البيانات، يرجى التحقق من الشبكة أو الصلاحيات.",
         "reset_config_missing": "فشلت إعادة تعيين كلمة المرور: لقد اكتشفنا أن خدمة Netlify الخلفية لم يتم تكوينها بشكل صحيح أو أنها متوقفة. يرجى تكوين مفتاح حساب الخدمة الخاص بـ Firebase في لوحة تحكم Netlify أولاً.",
         "label_tl": "قائد الفريق (TL)",
+        "label_dep": "القسم (Department)",
         "label_permissions": "صلاحيات المنصة",
         "perm_manage_categories": "إدارة الدلائل",
         "perm_manage_recordings": "إدارة المواد",

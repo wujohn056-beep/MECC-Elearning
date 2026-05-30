@@ -44,6 +44,9 @@
         "business_type": "业务线",
         "type_kid": "青少业务",
         "type_adult": "成人业务",
+        "type_ss": "SS 业务",
+        "type_cc": "CC 业务",
+        "type_functional": "职能部门",
         "select_business_type": "选择业务线"
     },
     "navbar": {
@@ -211,6 +214,7 @@
         "db_delete_failed": "从数据库删除失败，请检查您的网络或权限。",
         "reset_config_missing": "密码重置失败：检测到 Netlify 后端未正确配置或运行异常，请在 Netlify 控制台中配置您的 Firebase Service Account 私钥后再试。",
         "label_tl": "Team Leader (TL)",
+        "label_dep": "部门 (Department)",
         "label_permissions": "平台使用权限",
         "perm_manage_categories": "目录管理",
         "perm_manage_recordings": "资料管理",

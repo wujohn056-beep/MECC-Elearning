@@ -44,6 +44,9 @@
         "business_type": "Business Type",
         "type_kid": "Kids",
         "type_adult": "Adults",
+        "type_ss": "SS Sales",
+        "type_cc": "CC Sales",
+        "type_functional": "Functional Dept",
         "select_business_type": "Select Business"
     },
     "navbar": {
@@ -212,6 +215,7 @@
         "db_delete_failed": "Failed to delete from database, please check your network or permissions.",
         "reset_config_missing": "Failed to reset password: We detected that Netlify's backend is not configured correctly or is down. Please configure your Firebase Service Account private key in Netlify console first.",
         "label_tl": "Team Leader (TL)",
+        "label_dep": "Department",
         "label_permissions": "Platform Permissions",
         "perm_manage_categories": "Category Management",
         "perm_manage_recordings": "Resource Management",
