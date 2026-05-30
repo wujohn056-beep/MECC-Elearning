@@ -51,6 +51,10 @@ export default function UserManager() {
 
     const defaultDep = profile?.role === 'super_admin' ? 'CC' : (profile?.dep || 'CC');
 
+    const isSdDisabled = profile?.role !== 'super_admin';
+    const isSmDisabled = profile?.role === 'tl' || profile?.role === 'sm';
+    const isTlDisabled = profile?.role === 'tl';
+
     const [searchQuery, setSearchQuery] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -90,6 +94,25 @@ export default function UserManager() {
             const adminDep = profile?.dep || 'CC';
             const userDep = u.dep || 'CC';
             if (adminDep !== userDep) return false;
+
+            // Apply hierarchy filters for non-super-admins
+            const loggedInRole = profile?.role;
+            const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
+            const uCrmIdLower = (u.crmId || '').trim().toLowerCase();
+
+            if (loggedInRole === 'sd') {
+                const matchesSd = (u.sd || '').trim().toLowerCase() === loggedInCrmId;
+                const isSelf = uCrmIdLower === loggedInCrmId;
+                if (!matchesSd && !isSelf) return false;
+            } else if (loggedInRole === 'sm') {
+                const matchesSm = (u.sm || '').trim().toLowerCase() === loggedInCrmId;
+                const isSelf = uCrmIdLower === loggedInCrmId;
+                if (!matchesSm && !isSelf) return false;
+            } else if (loggedInRole === 'tl') {
+                const matchesTl = (u.tl || '').trim().toLowerCase() === loggedInCrmId;
+                const isSelf = uCrmIdLower === loggedInCrmId;
+                if (!matchesTl && !isSelf) return false;
+            }
         }
 
         if (!searchQuery) return true;
@@ -378,7 +401,28 @@ export default function UserManager() {
         setStatusLog([{ msg: t('user_manager.syncing_dingtalk', '正在与钉钉同步账号信息，请稍候...'), type: 'success' }]);
 
         // Filter out super admins and already linked users to sync only what is needed!
-        const unlinkedUsers = users.filter(u => u.role !== 'super_admin' && !u.dingtalkUserId);
+        const loggedInRole = profile?.role;
+        const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
+
+        const unlinkedUsers = users.filter(u => {
+            if (u.role === 'super_admin' || u.dingtalkUserId) return false;
+            
+            // Apply hierarchy filters for non-super-admins
+            if (loggedInRole === 'sd') {
+                const matchesSd = (u.sd || '').trim().toLowerCase() === loggedInCrmId;
+                const isSelf = u.crmId.trim().toLowerCase() === loggedInCrmId;
+                return matchesSd || isSelf;
+            } else if (loggedInRole === 'sm') {
+                const matchesSm = (u.sm || '').trim().toLowerCase() === loggedInCrmId;
+                const isSelf = u.crmId.trim().toLowerCase() === loggedInCrmId;
+                return matchesSm || isSelf;
+            } else if (loggedInRole === 'tl') {
+                const matchesTl = (u.tl || '').trim().toLowerCase() === loggedInCrmId;
+                const isSelf = u.crmId.trim().toLowerCase() === loggedInCrmId;
+                return matchesTl || isSelf;
+            }
+            return true; // super_admin
+        });
 
         if (unlinkedUsers.length === 0) {
             setStatusLog(prev => [{ msg: t('user_manager.all_synced', '所有销售账号均已关联钉钉，无需同步。'), type: 'success' }, ...prev]);
@@ -568,17 +612,47 @@ export default function UserManager() {
                 return;
             }
 
+            // Enforce hierarchy constraints for non-super-admins
+            let finalSd = formData.sd;
+            let finalSm = formData.sm;
+            let finalTl = formData.tl;
+            let finalDep = formData.dep;
+
+            if (profile?.role !== 'super_admin') {
+                finalDep = profile?.dep || 'CC';
+                
+                if (profile?.role === 'sd') {
+                    finalSd = profile.crmId;
+                } else if (profile?.role === 'sm') {
+                    finalSd = profile.sd || '';
+                    finalSm = profile.crmId;
+                } else if (profile?.role === 'tl') {
+                    finalSd = profile.sd || '';
+                    finalSm = profile.sm || '';
+                    finalTl = profile.crmId;
+                }
+            }
+
             if (editMode && selectedUserId) {
+                const existingUser = users.find(u => u.id === selectedUserId);
+                const preservedPermissions = profile?.role === 'super_admin' ? formData.permissions : (existingUser?.permissions || {
+                    manageCategories: false,
+                    manageRecordings: false,
+                    manageUsers: false,
+                    manageDashboard: false,
+                    manageTasks: false
+                });
+
                 await updateDoc(doc(db, 'users', selectedUserId), {
                     email: formData.email.trim(),
                     role: formData.role,
-                    sd: formData.sd,
-                    sm: formData.sm,
-                    tl: formData.tl,
+                    sd: finalSd,
+                    sm: finalSm,
+                    tl: finalTl,
                     team: formData.team,
-                    dep: formData.dep || 'CC',
+                    dep: finalDep || 'CC',
                     dingtalkUserId: formData.dingtalkUserId.trim() || null,
-                    permissions: formData.permissions
+                    permissions: preservedPermissions
                 });
                 fetchUsers();
                 setShowModal(false);
@@ -611,13 +685,19 @@ export default function UserManager() {
                     crmId: formData.crmId.trim(),
                     email: formData.email.trim(),
                     role: formData.role,
-                    sd: formData.sd,
-                    sm: formData.sm,
-                    tl: formData.tl,
+                    sd: finalSd,
+                    sm: finalSm,
+                    tl: finalTl,
                     team: formData.team,
-                    dep: formData.dep || 'CC',
+                    dep: finalDep || 'CC',
                     dingtalkUserId: formData.dingtalkUserId.trim() || null,
-                    permissions: formData.permissions,
+                    permissions: profile?.role === 'super_admin' ? formData.permissions : {
+                        manageCategories: false,
+                        manageRecordings: false,
+                        manageUsers: false,
+                        manageDashboard: false,
+                        manageTasks: false
+                    },
                     createdAt: serverTimestamp()
                 });
                 await deleteApp(secondaryApp);
@@ -637,72 +717,74 @@ export default function UserManager() {
                 <p className="text-arabian-night/60 mt-1">{t('user_manager.desc')}</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className={profile?.role === 'super_admin' ? "grid grid-cols-1 lg:grid-cols-2 gap-8" : "w-full"}>
                 {/* Upload Section */}
-                <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20 h-fit">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
-                            <Upload className="text-desert-gold" />
-                            {t('user_manager.upload_excel')}
-                        </h2>
-                        <button 
-                            onClick={() => { 
-                                setEditMode(false); 
-                                setFormData({ 
-                                    crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
-                                    dingtalkUserId: '',
-                                    permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
-                                }); 
-                                setShowModal(true); 
-                            }} 
-                            className="text-sm bg-desert-gold text-white px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-yellow-600 transition-colors"
-                        >
-                            <Plus className="w-4 h-4" /> {t('user_manager.add_account', '新增账号')}
-                        </button>
-                    </div>
-                    
-                    <div className="mb-6 bg-white/50 p-4 rounded-xl text-sm text-arabian-night/70">
-                        <p className="font-bold text-deep-teal mb-2">{t('user_manager.format_req')}</p>
-                        <p>SD | SM | TL | CRM | Team | Position</p>
-                        <p className="mt-2 text-xs opacity-70">{t('user_manager.format_tip')}</p>
-                    </div>
-
-                    <div className="relative">
-                        <input
-                            type="file"
-                            accept=".xlsx, .xls, .csv"
-                            onChange={handleFileUpload}
-                            disabled={loading}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                        />
-                        <div className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors ${loading ? 'border-gray-300 bg-gray-50' : 'border-desert-gold/50 bg-desert-gold/5 hover:bg-desert-gold/10'}`}>
-                            <Upload className={`h-10 w-10 mb-3 ${loading ? 'text-gray-400' : 'text-desert-gold'}`} />
-                            <p className="font-bold text-deep-teal">{loading ? t('common.processing') : t('user_manager.click_to_upload')}</p>
+                {profile?.role === 'super_admin' && (
+                    <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20 h-fit">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
+                                <Upload className="text-desert-gold" />
+                                {t('user_manager.upload_excel')}
+                            </h2>
+                            <button 
+                                onClick={() => { 
+                                    setEditMode(false); 
+                                    setFormData({ 
+                                        crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
+                                        dingtalkUserId: '',
+                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
+                                    }); 
+                                    setShowModal(true); 
+                                }} 
+                                className="text-sm bg-desert-gold text-white px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-yellow-600 transition-colors cursor-pointer"
+                            >
+                                <Plus className="w-4 h-4" /> {t('user_manager.add_account', '新增账号')}
+                            </button>
                         </div>
-                    </div>
+                        
+                        <div className="mb-6 bg-white/50 p-4 rounded-xl text-sm text-arabian-night/70">
+                            <p className="font-bold text-deep-teal mb-2">{t('user_manager.format_req')}</p>
+                            <p>SD | SM | TL | CRM | Team | Position</p>
+                            <p className="mt-2 text-xs opacity-70">{t('user_manager.format_tip')}</p>
+                        </div>
 
-                    {loading && total > 0 && (
-                        <div className="mt-4">
-                            <div className="flex justify-between text-xs text-deep-teal mb-1 font-semibold">
-                                <span>{t('user_manager.import_progress')}</span>
-                                <span>{progress} / {total}</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div className="bg-desert-gold h-2 rounded-full transition-all" style={{ width: `${(progress/total)*100}%` }}></div>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept=".xlsx, .xls, .csv"
+                                onChange={handleFileUpload}
+                                disabled={loading}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                            />
+                            <div className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors ${loading ? 'border-gray-300 bg-gray-50' : 'border-desert-gold/50 bg-desert-gold/5 hover:bg-desert-gold/10'}`}>
+                                <Upload className={`h-10 w-10 mb-3 ${loading ? 'text-gray-400' : 'text-desert-gold'}`} />
+                                <p className="font-bold text-deep-teal">{loading ? t('common.processing') : t('user_manager.click_to_upload')}</p>
                             </div>
                         </div>
-                    )}
 
-                    {statusLog.length > 0 && (
-                        <div className="mt-6 bg-white/60 rounded-xl p-4 h-48 overflow-y-auto text-xs font-mono border border-arabian-night/10">
-                            {statusLog.map((log, i) => (
-                                <div key={i} className={`mb-1 ${log.type === 'error' ? 'text-red-600' : 'text-green-700'}`}>
-                                    {log.msg}
+                        {loading && total > 0 && (
+                            <div className="mt-4">
+                                <div className="flex justify-between text-xs text-deep-teal mb-1 font-semibold">
+                                    <span>{t('user_manager.import_progress')}</span>
+                                    <span>{progress} / {total}</span>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div className="bg-desert-gold h-2 rounded-full transition-all" style={{ width: `${(progress/total)*100}%` }}></div>
+                                </div>
+                            </div>
+                        )}
+
+                        {statusLog.length > 0 && (
+                            <div className="mt-6 bg-white/60 rounded-xl p-4 h-48 overflow-y-auto text-xs font-mono border border-arabian-night/10">
+                                {statusLog.map((log, i) => (
+                                    <div key={i} className={`mb-1 ${log.type === 'error' ? 'text-red-600' : 'text-green-700'}`}>
+                                        {log.msg}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Users List Section */}
                 <div className="glass-panel rounded-2xl p-6 border border-white/40 h-[650px] flex flex-col">
@@ -711,18 +793,40 @@ export default function UserManager() {
                             <Users className="text-desert-gold" />
                             {t('user_manager.current_accounts')} ({users.length})
                         </h2>
-                        <button
-                            onClick={handleDingTalkSync}
-                            disabled={loading}
-                            className={`text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all duration-300 font-medium ${
-                                loading 
-                                    ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
-                                    : 'bg-gradient-to-r from-teal-600 to-deep-teal text-white hover:from-teal-700 hover:to-teal-900 border border-teal-500'
-                            }`}
-                        >
-                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                            {t('user_manager.sync_dingtalk', '同步钉钉账号')}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {profile?.role !== 'super_admin' && (
+                                <button 
+                                    onClick={() => { 
+                                        setEditMode(false); 
+                                        setFormData({ 
+                                            crmId: '', email: '', role: 'user', 
+                                            sd: profile?.role === 'sd' ? profile.crmId : (profile?.role === 'sm' || profile?.role === 'tl' ? (profile.sd || '') : ''), 
+                                            sm: profile?.role === 'sm' ? profile.crmId : (profile?.role === 'tl' ? (profile.sm || '') : ''), 
+                                            tl: profile?.role === 'tl' ? profile.crmId : '', 
+                                            team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
+                                            dingtalkUserId: '',
+                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
+                                        }); 
+                                        setShowModal(true); 
+                                    }} 
+                                    className="text-sm bg-desert-gold text-white px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-yellow-600 transition-colors cursor-pointer"
+                                >
+                                    <Plus className="w-4 h-4" /> {t('user_manager.add_account', '新增账号')}
+                                </button>
+                            )}
+                            <button
+                                onClick={handleDingTalkSync}
+                                disabled={loading}
+                                className={`text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all duration-300 font-medium cursor-pointer ${
+                                    loading 
+                                        ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed' 
+                                        : 'bg-gradient-to-r from-teal-600 to-deep-teal text-white hover:from-teal-700 hover:to-teal-900 border border-teal-500'
+                                }`}
+                            >
+                                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                                {t('user_manager.sync_dingtalk', '同步钉钉账号')}
+                            </button>
+                        </div>
                     </div>
 
                     <div className="relative mb-4">
@@ -784,9 +888,11 @@ export default function UserManager() {
                                     <button onClick={() => handleResetPassword(u.id)} title={t('user_manager.reset_password', '重置密码')} className="p-1.5 text-orange-500 hover:bg-orange-50 rounded">
                                         <Key className="w-4 h-4" />
                                     </button>
-                                    <button onClick={() => handleDeleteUser(u.id)} title={t('user_manager.delete_account', '删除')} className="p-1.5 text-red-500 hover:bg-red-50 rounded">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    {u.crmId.toLowerCase() !== profile?.crmId?.toLowerCase() && (
+                                        <button onClick={() => handleDeleteUser(u.id)} title={t('user_manager.delete_account', '删除')} className="p-1.5 text-red-500 hover:bg-red-50 rounded cursor-pointer">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -854,16 +960,28 @@ export default function UserManager() {
                                     {formData.dep === 'SS' ? (
                                         <>
                                             <option value="user">SS</option>
-                                            <option value="tl">SS TL</option>
-                                            <option value="sm">SS SM</option>
-                                            <option value="sd">SS SD</option>
+                                            {(profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm') && (
+                                                <option value="tl">SS TL</option>
+                                            )}
+                                            {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
+                                                <option value="sm">SS SM</option>
+                                            )}
+                                            {profile?.role === 'super_admin' && (
+                                                <option value="sd">SS SD</option>
+                                            )}
                                         </>
                                     ) : (
                                         <>
                                             <option value="user">CC</option>
-                                            <option value="tl">Team Leader (TL)</option>
-                                            <option value="sm">Sales Manager (SM)</option>
-                                            <option value="sd">Sales Director (SD)</option>
+                                            {(profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm') && (
+                                                <option value="tl">Team Leader (TL)</option>
+                                            )}
+                                            {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
+                                                <option value="sm">Sales Manager (SM)</option>
+                                            )}
+                                            {profile?.role === 'super_admin' && (
+                                                <option value="sd">Sales Director (SD)</option>
+                                            )}
                                         </>
                                     )}
                                     {profile?.role === 'super_admin' && <option value="super_admin">Super Admin</option>}
@@ -896,7 +1014,8 @@ export default function UserManager() {
                                         list="sd-options"
                                         value={formData.sd} 
                                         onChange={e => setFormData({...formData, sd: e.target.value})}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                        disabled={isSdDisabled}
+                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSdDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
                                         placeholder="选择或输入 SD"
                                     />
                                     <datalist id="sd-options">
@@ -913,7 +1032,8 @@ export default function UserManager() {
                                         list="sm-options"
                                         value={formData.sm} 
                                         onChange={e => setFormData({...formData, sm: e.target.value})}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                        disabled={isSmDisabled}
+                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSmDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
                                         placeholder="选择或输入 SM"
                                     />
                                     <datalist id="sm-options">
@@ -930,7 +1050,8 @@ export default function UserManager() {
                                         list="tl-options"
                                         value={formData.tl} 
                                         onChange={e => setFormData({...formData, tl: e.target.value})}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                        disabled={isTlDisabled}
+                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isTlDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
                                         placeholder="选择或输入 TL"
                                     />
                                     <datalist id="tl-options">
@@ -956,7 +1077,7 @@ export default function UserManager() {
                                 </div>
                             )}
 
-                            {formData.role !== 'super_admin' && (
+                            {formData.role !== 'super_admin' && profile?.role === 'super_admin' && (
                                 <div className="pt-4 mt-4 border-t border-gray-100">
                                     <label className="block text-sm font-bold text-arabian-night/80 mb-3">{t('user_manager.label_permissions', '平台使用权限')}</label>
                                     <div className="grid grid-cols-2 gap-3">

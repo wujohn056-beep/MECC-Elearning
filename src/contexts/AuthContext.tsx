@@ -47,15 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isAdmin = profile?.role === 'super_admin';
     const isSuperAdmin = profile?.role === 'super_admin';
     
-    // Permission checks
-    const hasPermission = (permission: keyof UserPermissions) => {
-        return isSuperAdmin || !!profile?.permissions?.[permission];
-    };
-    const hasAnyAdminPermission = isSuperAdmin || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks;
-
     // Leaders (who can assign tasks) include TL, SM, SD, and super_admin
     const isLeader = profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm' || profile?.role === 'tl';
     
+    // Permission checks
+    const hasPermission = (permission: keyof UserPermissions) => {
+        if (permission === 'manageUsers') {
+            return isLeader || !!profile?.permissions?.[permission];
+        }
+        return isSuperAdmin || !!profile?.permissions?.[permission];
+    };
+    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks;
+
     const canAccessTasks = isLeader || hasPermission('manageTasks');
     const canAccessDashboard = isLeader || hasPermission('manageDashboard');
 
