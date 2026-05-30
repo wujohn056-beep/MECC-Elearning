@@ -703,7 +703,7 @@ exports.handler = async (event, context) => {
                         } else {
                             errorMessage = `Pushed to ${results.length} bots. ${failed.length} failed. Sample Error: ${JSON.stringify(failed[0])}`;
                         }
-                    } catch (webErr: any) {
+                    } catch (webErr) {
                         console.error("DingTalk Webhook Push Error:", webErr);
                         errorMessage = `Webhook connection error: ${webErr.message}`;
                     }
