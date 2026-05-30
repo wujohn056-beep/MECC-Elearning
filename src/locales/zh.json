@@ -275,7 +275,8 @@
         "sync_fail": "钉钉账号同步失败，请检查开放平台凭证或网络配置。",
         "dingtalk_linked": "已关联钉钉",
         "dingtalk_unlinked": "未关联",
-        "last_synced": "上次同步: {{time}}"
+        "last_synced": "上次同步: {{time}}",
+        "resigned_reminder": "提示：如有离职员工，请及时在此删除其账户以确保数据与系统安全。"
     },
     "account": {
         "title": "个人学习中心",

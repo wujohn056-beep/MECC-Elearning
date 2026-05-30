@@ -5,7 +5,7 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 import { db, firebaseConfig } from '../../services/firebase';
-import { Users, Upload, Edit, Trash2, Key, Search, Plus, X, RefreshCw } from 'lucide-react';
+import { Users, Upload, Edit, Trash2, Key, Search, Plus, X, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
@@ -720,6 +720,16 @@ export default function UserManager() {
             <div>
                 <h1 className="text-3xl font-bold text-deep-teal">{t('user_manager.title')}</h1>
                 <p className="text-arabian-night/60 mt-1">{t('user_manager.desc')}</p>
+                
+                {/* Prominent Resigned Employee Reminder Alert */}
+                <div className="mt-4 bg-gradient-to-r from-amber-500/10 to-amber-600/5 border border-amber-500/25 backdrop-blur-md rounded-2xl p-4 flex items-start gap-3 text-amber-800 text-sm font-medium shadow-sm animate-in slide-in-from-top duration-300">
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <p className="leading-relaxed font-semibold">
+                            {t('user_manager.resigned_reminder')}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div className={profile?.role === 'super_admin' ? "grid grid-cols-1 lg:grid-cols-2 gap-8" : "w-full"}>

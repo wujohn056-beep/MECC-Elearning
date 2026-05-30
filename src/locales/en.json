@@ -276,7 +276,8 @@
         "sync_fail": "DingTalk synchronization failed. Please check platform credentials or network configuration.",
         "dingtalk_linked": "DingTalk Linked",
         "dingtalk_unlinked": "Not Linked",
-        "last_synced": "Last synced: {{time}}"
+        "last_synced": "Last synced: {{time}}",
+        "resigned_reminder": "Reminder: If there are resigned employees, please delete their accounts in a timely manner to ensure data and system security."
     },
     "account": {
         "title": "Personal Learning Center",

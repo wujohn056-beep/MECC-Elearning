@@ -151,9 +151,25 @@ export default function AdminDashboard() {
         if (absoluteSuperAdmin || isSuperAdmin) return pool;
         
         return pool.filter(u => {
-            if (profile.role === 'sd') return u.sd === profile.crmId || u.id === profile.crmId;
-            if (profile.role === 'sm') return u.sm === profile.crmId || u.id === profile.crmId;
-            if (profile.role === 'tl') return u.team === profile.team || u.id === profile.crmId;
+            const loggedInRole = profile?.role;
+            const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
+            const loggedInTeam = (profile?.team || '').trim().toLowerCase();
+            const uCrmIdLower = (u.crmId || '').trim().toLowerCase();
+            const uIdLower = (u.id || '').trim().toLowerCase();
+            const uSdLower = (u.sd || '').trim().toLowerCase();
+            const uSmLower = (u.sm || '').trim().toLowerCase();
+            const uTlLower = (u.tl || '').trim().toLowerCase();
+            const uTeamLower = (u.team || '').trim().toLowerCase();
+
+            if (loggedInRole === 'sd') {
+                return uSdLower === loggedInCrmId || uIdLower === loggedInCrmId || uCrmIdLower === loggedInCrmId;
+            }
+            if (loggedInRole === 'sm') {
+                return uSmLower === loggedInCrmId || uIdLower === loggedInCrmId || uCrmIdLower === loggedInCrmId;
+            }
+            if (loggedInRole === 'tl') {
+                return uTlLower === loggedInCrmId || uTeamLower === loggedInTeam || uIdLower === loggedInCrmId || uCrmIdLower === loggedInCrmId;
+            }
             return false;
         });
     }, [users, profile, isSuperAdmin]);
