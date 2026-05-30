@@ -357,6 +357,33 @@ export default function LearningHub() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const [loading, setLoading] = useState(true);
+    const [sortType, setSortType] = useState<'latest' | 'popular'>('latest');
+    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss'>('kid');
+    const [displayCount, setDisplayCount] = useState(12);
+    
+    const [searchParams, setSearchParams] = useSearchParams();
+    const taskId = searchParams.get('taskId');
+    const targetRecordingId = searchParams.get('recordingId');
+    const [taskRecordingIds, setTaskRecordingIds] = useState<string[]>([]);
+    const [taskTitle, setTaskTitle] = useState<string>('');
+    const [completedAudioIds, setCompletedAudioIds] = useState<string[]>([]);
+    const [reflections, setReflections] = useState<Record<string, string>>({});
+    const [isSubmittingTask, setIsSubmittingTask] = useState(false);
+    const [isTaskCompleted, setIsTaskCompleted] = useState(false);
+    const [favorites, setFavorites] = useState<string[]>([]);
+    const [selectedLecturer, setSelectedLecturer] = useState<string>('');
+    const [showAllLecturers, setShowAllLecturers] = useState(false);
+    
+    // Leaderboard state
+    const [allFavoritesCount, setAllFavoritesCount] = useState<Record<string, number>>({});
+    const [leaderboardTab, setLeaderboardTab] = useState<'favorites' | 'likes'>('favorites');
+    
+    // Video Modal States
+    const [activeVideoRecording, setActiveVideoRecording] = useState<Recording | null>(null);
+    const [activeVideoDisableSeek, setActiveVideoDisableSeek] = useState(false);
+
+    // Suggestions Autocomplete States
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
     const searchRef = React.useRef<HTMLDivElement>(null);
 
@@ -416,31 +443,6 @@ export default function LearningHub() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
-    const [loading, setLoading] = useState(true);
-    const [sortType, setSortType] = useState<'latest' | 'popular'>('latest');
-    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss'>('kid');
-    const [displayCount, setDisplayCount] = useState(12);
-    
-    const [searchParams, setSearchParams] = useSearchParams();
-    const taskId = searchParams.get('taskId');
-    const targetRecordingId = searchParams.get('recordingId');
-    const [taskRecordingIds, setTaskRecordingIds] = useState<string[]>([]);
-    const [taskTitle, setTaskTitle] = useState<string>('');
-    const [completedAudioIds, setCompletedAudioIds] = useState<string[]>([]);
-    const [reflections, setReflections] = useState<Record<string, string>>({});
-    const [isSubmittingTask, setIsSubmittingTask] = useState(false);
-    const [isTaskCompleted, setIsTaskCompleted] = useState(false);
-    const [favorites, setFavorites] = useState<string[]>([]);
-    const [selectedLecturer, setSelectedLecturer] = useState<string>('');
-    const [showAllLecturers, setShowAllLecturers] = useState(false);
-    
-    // Leaderboard state
-    const [allFavoritesCount, setAllFavoritesCount] = useState<Record<string, number>>({});
-    const [leaderboardTab, setLeaderboardTab] = useState<'favorites' | 'likes'>('favorites');
-    
-    // Video Modal States
-    const [activeVideoRecording, setActiveVideoRecording] = useState<Recording | null>(null);
-    const [activeVideoDisableSeek, setActiveVideoDisableSeek] = useState(false);
 
     useEffect(() => {
         if (profile?.dep === 'SS') {
