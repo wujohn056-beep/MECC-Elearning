@@ -138,8 +138,8 @@ export const handler = async (event, context) => {
                 const base64Data = audioBuffer.toString('base64');
                 const mimeType = getMimeType(audioUrl);
 
-                console.log(`Calling Google Gemini 1.5 Flash API with mimeType: ${mimeType}`);
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                console.log(`Calling Google Gemini 2.5 Flash API with mimeType: ${mimeType}`);
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
                 
                 const geminiResponse = await fetch(geminiUrl, {
                     method: 'POST',
