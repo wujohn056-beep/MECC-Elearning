@@ -614,7 +614,7 @@ exports.handler = async (event, context) => {
         // ACTION: NOTIFY MATERIAL (Phase 2 Material Updates)
         // ==========================================
         if (action === 'notifyMaterial') {
-            const { recordingId, title, displayId, lecturerName, categoryName, description, targetType, selectedSds } = body;
+            const { recordingId, title, displayId, lecturerName, categoryName, description, targetType, selectedSds, webhookLang } = body;
             if (!recordingId || !title) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing material recordingId or title' }) };
             }
@@ -648,37 +648,62 @@ exports.handler = async (event, context) => {
                 if (webhookUrl && !webhookUrl.includes('your_')) {
                     try {
                         pushType = 'webhook';
-                        const webhookRes = await fetch(webhookUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                msgtype: "actionCard",
-                                actionCard: {
-                                    title: "🔥 ME 云学堂精品录音发布 / ME Cloud Academy - New Premium Recording Released",
-                                    text: markdownBilingual,
-                                    btnOrientation: "0",
-                                    btns: [
-                                        {
-                                            title: "🎧 立即收听 / Listen Now",
-                                            actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
-                                        }
-                                    ]
-                                }
-                            })
-                        });
-                        const resText = await webhookRes.text();
-                        let parsed;
-                        try {
-                            parsed = JSON.parse(resText);
-                        } catch (pe) {
-                            parsed = { errcode: webhookRes.ok ? 0 : -1, errmsg: resText };
+                        // Support multiple group bots in parallel separated by commas!
+                        const urls = webhookUrl.split(',').map(url => url.trim()).filter(Boolean);
+                        
+                        // Select target language based on selection
+                        let webhookTitle = "🔥 ME 云学堂精品录音发布 / ME Cloud Academy - New Premium Recording Released";
+                        let webhookText = markdownBilingual;
+                        let webhookBtnText = "🎧 立即收听 / Listen Now";
+                        
+                        if (webhookLang === 'en') {
+                            webhookTitle = "🔥 ME Cloud Academy - New Premium Recording Released";
+                            webhookText = getMsgMarkdown('en');
+                            webhookBtnText = "🎧 Listen Now";
+                        } else if (webhookLang === 'zh') {
+                            webhookTitle = "🔥 ME 云学堂新增精品录音素材";
+                            webhookText = getMsgMarkdown('zh');
+                            webhookBtnText = "🎧 立即收听";
                         }
-                        if (parsed.errcode === 0) {
+
+                        const pushPromises = urls.map(async (url) => {
+                            const webhookRes = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    msgtype: "actionCard",
+                                    actionCard: {
+                                        title: webhookTitle,
+                                        text: webhookText,
+                                        btnOrientation: "0",
+                                        btns: [
+                                            {
+                                                title: webhookBtnText,
+                                                actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
+                                            }
+                                        ]
+                                    }
+                                })
+                            });
+                            const resText = await webhookRes.text();
+                            let parsed;
+                            try {
+                                parsed = JSON.parse(resText);
+                            } catch (e) {
+                                parsed = { errcode: webhookRes.ok ? 0 : -1, errmsg: resText };
+                            }
+                            return parsed;
+                        });
+
+                        const results = await Promise.all(pushPromises);
+                        const failed = results.filter(r => r.errcode !== 0);
+                        
+                        if (failed.length === 0) {
                             sentSuccess = true;
                         } else {
-                            errorMessage = `DingTalk Webhook Bot returned errcode ${parsed.errcode}: ${parsed.errmsg || resText}`;
+                            errorMessage = `Pushed to ${results.length} bots. ${failed.length} failed. Sample Error: ${JSON.stringify(failed[0])}`;
                         }
-                    } catch (webErr) {
+                    } catch (webErr: any) {
                         console.error("DingTalk Webhook Push Error:", webErr);
                         errorMessage = `Webhook connection error: ${webErr.message}`;
                     }

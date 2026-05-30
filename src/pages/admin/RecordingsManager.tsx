@@ -38,6 +38,7 @@ export default function RecordingsManager() {
     const [selectedRecordingForPush, setSelectedRecordingForPush] = useState<Recording | null>(null);
     const [pushTargetType, setPushTargetType] = useState<'group' | 'individuals'>('group');
     const [selectedSdsForPush, setSelectedSdsForPush] = useState<string[]>([]);
+    const [pushWebhookLang, setPushWebhookLang] = useState<'bilingual' | 'en' | 'zh'>('bilingual');
     const [pushingToDingTalk, setPushingToDingTalk] = useState(false);
 
     if (!hasPermission('manageRecordings')) {
@@ -237,7 +238,8 @@ export default function RecordingsManager() {
                     categoryName: selectedRecordingForPush.categoryName || '',
                     description: selectedRecordingForPush.description || '',
                     targetType: pushTargetType,
-                    selectedSds: selectedSdsForPush
+                    selectedSds: selectedSdsForPush,
+                    webhookLang: pushWebhookLang
                 })
             });
 
@@ -1037,6 +1039,50 @@ export default function RecordingsManager() {
                                 {t('recordings_manager.push_to_individuals', '👤 精确推送给个人')}
                             </button>
                         </div>
+
+                        {/* Webhook Push Language Selector */}
+                        {pushTargetType === 'group' && (
+                            <div className="animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col gap-2">
+                                <label className="text-xs font-bold text-arabian-night/70">
+                                    {t('recordings_manager.push_language', '群助手推送语言')}
+                                </label>
+                                <div className="flex bg-gray-100/40 border border-gray-200/50 p-1 rounded-xl gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPushWebhookLang('bilingual')}
+                                        className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                            pushWebhookLang === 'bilingual'
+                                                ? 'bg-deep-teal text-white shadow-sm'
+                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        🌐 Bilingual
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPushWebhookLang('en')}
+                                        className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                            pushWebhookLang === 'en'
+                                                ? 'bg-deep-teal text-white shadow-sm'
+                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        🇬🇧 English
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPushWebhookLang('zh')}
+                                        className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                            pushWebhookLang === 'zh'
+                                                ? 'bg-deep-teal text-white shadow-sm'
+                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        🇨🇳 中文
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* SD Selection Checklist (When individual push is active) */}
                         {pushTargetType === 'individuals' && (

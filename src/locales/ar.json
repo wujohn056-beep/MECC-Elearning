@@ -208,7 +208,8 @@
         "no_sds": "لا يوجد مديرين مبيعات (SD) متاحين",
         "deselect_all": "إلغاء تحديد الكل",
         "pushing": "جاري الدفع...",
-        "no_description": "لا يوجد وصف للخلفية"
+        "no_description": "لا يوجد وصف للخلفية",
+        "push_language": "لغة إرسال روبوت المجموعة"
     },
     "admin_dashboard_page": {
         "title": "نظرة عامة على لوحة القيادة",

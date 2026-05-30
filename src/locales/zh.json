@@ -208,7 +208,8 @@
         "no_sds": "暂无可用销售总监 (SD)",
         "deselect_all": "取消全选",
         "pushing": "正在推送...",
-        "no_description": "无案例背景介绍"
+        "no_description": "无案例背景介绍",
+        "push_language": "群助手推送语言"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",
