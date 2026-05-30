@@ -961,6 +961,15 @@ export default function LearningHub() {
         fetchData();
     }, [user]);
 
+    useEffect(() => {
+        if (targetRecordingId && recordings.length > 0) {
+            const targetRec = recordings.find(r => r.id === targetRecordingId);
+            if (targetRec && (!activeVideoRecording || activeVideoRecording.id !== targetRecordingId)) {
+                setActiveVideoRecording(targetRec);
+            }
+        }
+    }, [targetRecordingId, recordings, activeVideoRecording]);
+
     const handleToggleLike = async (recId: string, currentLikes: string[] = []) => {
         if (!user) return;
 
@@ -1662,7 +1671,16 @@ export default function LearningHub() {
                 <VideoPlayerModal
                     rec={activeVideoRecording}
                     disableSeek={activeVideoDisableSeek}
-                    onClose={() => setActiveVideoRecording(null)}
+                    onClose={() => {
+                        setActiveVideoRecording(null);
+                        if (targetRecordingId && activeVideoRecording.id === targetRecordingId) {
+                            setSearchParams(prev => {
+                                const newParams = new URLSearchParams(prev);
+                                newParams.delete('recordingId');
+                                return newParams;
+                            });
+                        }
+                    }}
                     onEnded={(duration) => {
                         handleAudioEnded(activeVideoRecording, duration);
                     }}
