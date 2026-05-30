@@ -88,11 +88,32 @@ export default function UserManager() {
             if (adminDep !== userDep) return false;
         }
 
-        return u.crmId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (u.team && u.team.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (u.sd && u.sd.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (u.sm && u.sm.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (u.tl && u.tl.toLowerCase().includes(searchQuery.toLowerCase()));
+        if (!searchQuery) return true;
+
+        const q = searchQuery.toLowerCase();
+        return u.crmId.toLowerCase().includes(q) ||
+            (u.team && u.team.toLowerCase().includes(q)) ||
+            (u.sd && u.sd.toLowerCase().includes(q)) ||
+            (u.sm && u.sm.toLowerCase().includes(q)) ||
+            (u.tl && u.tl.toLowerCase().includes(q));
+    }).sort((a, b) => {
+        if (!searchQuery) {
+            return a.crmId.localeCompare(b.crmId);
+        }
+        const q = searchQuery.toLowerCase();
+        const getScore = (u: UserRecord) => {
+            const crmIdLower = u.crmId.toLowerCase();
+            if (crmIdLower === q) return 4;
+            if (crmIdLower.startsWith(q)) return 3;
+            if (crmIdLower.includes(q)) return 2;
+            return 1;
+        };
+        const scoreA = getScore(a);
+        const scoreB = getScore(b);
+        if (scoreA !== scoreB) {
+            return scoreB - scoreA;
+        }
+        return a.crmId.localeCompare(b.crmId);
     });
 
     // Extract unique values for dropdowns
