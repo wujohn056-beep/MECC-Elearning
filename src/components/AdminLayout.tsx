@@ -60,6 +60,9 @@ export default function AdminLayout() {
                     {hasPermission('manageUsers') && (
                         <Link to="/admin/users" className={getLinkClass('/admin/users')}>{t('admin_menu.users')}</Link>
                     )}
+                    {hasAnyAdminPermission && (
+                        <Link to="/admin/comments" className={getLinkClass('/admin/comments')}>{t('admin_menu.comments', '互动审核')}</Link>
+                    )}
                 </nav>
                 <div className="p-4 border-t border-white/10 space-y-2">
                     <Link to="/hub" className="flex items-center justify-center w-full py-2 bg-white/10 hover:bg-desert-gold hover:text-deep-teal rounded-lg transition-colors font-semibold text-sm">

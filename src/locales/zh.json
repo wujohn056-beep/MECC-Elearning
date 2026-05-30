@@ -66,6 +66,7 @@
         "categories": "目录管理",
         "uploads": "资料上传",
         "users": "用户管理",
+        "comments": "互动审核",
         "return_hub": "返回学习广场"
     },
     "login": {

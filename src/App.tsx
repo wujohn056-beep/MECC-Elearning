@@ -12,12 +12,10 @@ import Account from './pages/Account';
 import TeamTasks from './pages/TeamTasks';
 
 import UserManager from './pages/admin/UserManager';
-
 import CategoryManager from './pages/admin/CategoryManager';
-
-
-
 import AdminDashboard from './pages/admin/AdminDashboard';
+import CommentManager from './pages/admin/CommentManager';
+
 function App() {
   return (
     <AuthProvider>
@@ -60,6 +58,8 @@ function App() {
             <Route path="categories" element={<CategoryManager />} />
             <Route path="recordings" element={<RecordingsManager />} />
             <Route path="users" element={<UserManager />} />
+            <Route path="comments" element={<CommentManager />} />
+
           </Route>
         </Routes>
       </Router>
