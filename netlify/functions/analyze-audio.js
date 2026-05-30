@@ -30,6 +30,19 @@ function getFirestoreDb() {
     return dbInstance;
 }
 
+function detectLanguage(text, title) {
+    const combined = (text || '') + ' ' + (title || '');
+    // Check if contains Arabic characters
+    if (/[\u0600-\u06FF]/.test(combined)) {
+        return 'arabic';
+    }
+    // Check if contains Chinese characters
+    if (/[\u4e00-\u9fa5]/.test(combined)) {
+        return 'chinese';
+    }
+    return 'english';
+}
+
 export const handler = async (event, context) => {
     // Enable CORS
     if (event.httpMethod === 'OPTIONS') {
@@ -83,6 +96,7 @@ export const handler = async (event, context) => {
                 const title = recData.title || 'Sales Call';
                 const desc = recData.description || '';
                 const category = recData.categoryName || 'General Sales';
+                const lang = detectLanguage(transcriptText, title);
                 
                 let prompt = '';
                 if (transcriptText) {
@@ -101,12 +115,12 @@ You MUST return a JSON object strictly matching this schema:
   "speechRate": { "sales": number (words per minute), "customer": number (words per minute) },
   "sentimentTrend": [array of exactly 5 numbers representing customer sentiment percentage (0 to 100) at 5 equal intervals of the call],
   "objectionsHandled": [
-    { "objection": "objection name in Chinese", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in Chinese" }
+    { "objection": "objection name in the primary language of the transcript (e.g. Arabic, English, or Chinese)", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in the primary language of the transcript" }
   ],
-  "summary": "a comprehensive review and summary of the call in Chinese (2-3 sentences)",
+  "summary": "a comprehensive review and summary of the call in the primary language of the transcript (2-3 sentences)",
   "tips": [
-    "coaching tip 1 in Chinese",
-    "coaching tip 2 in Chinese"
+    "coaching tip 1 in the primary language of the transcript",
+    "coaching tip 2 in the primary language of the transcript"
   ]
 }
 Return ONLY the raw JSON block without markdown formatting or code blocks.`;
@@ -124,12 +138,12 @@ You MUST return a JSON object strictly matching this schema:
   "speechRate": { "sales": number (110 to 150), "customer": number (95 to 130) },
   "sentimentTrend": [array of exactly 5 numbers representing customer sentiment percentage (0 to 100) at 5 equal intervals of the call],
   "objectionsHandled": [
-    { "objection": "objection name in Chinese related to context", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in Chinese" }
+    { "objection": "objection name in the primary language of the recording title/description (${lang}) related to context", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in that language" }
   ],
-  "summary": "a comprehensive review and summary of the simulated call in Chinese (2-3 sentences)",
+  "summary": "a comprehensive review and summary of the simulated call in that language (2-3 sentences)",
   "tips": [
-    "coaching tip 1 in Chinese",
-    "coaching tip 2 in Chinese"
+    "coaching tip 1 in that language",
+    "coaching tip 2 in that language"
   ]
 }
 Return ONLY the raw JSON block without markdown formatting or code blocks.`;
@@ -163,11 +177,83 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
         if (!analysisResult) {
             const title = recData.title || '录音资料';
             const category = recData.categoryName || '常规销售';
+            const transcriptText = recData.transcript || '';
+            const lang = detectLanguage(transcriptText, title);
             
             // Premium mock generator tailored to the actual course metadata!
             const simulatedScore = Math.floor(Math.random() * 15) + 80; // 80 - 94
             const simulatedSalesRatio = Math.floor(Math.random() * 15) + 45; // 45% - 59%
             const simulatedCustomerRatio = 100 - simulatedSalesRatio;
+
+            let mockData = {};
+            if (lang === 'arabic') {
+                mockData = {
+                    objectionsHandled: [
+                        {
+                            objection: category.includes('价格') || title.includes('价格') || title.includes('Price') ? "الاعتراض على السعر / الميزانية" : "ليس مهتماً / لا أحتاج",
+                            handled: true,
+                            score: simulatedScore - 2,
+                            feedback: `أظهر المبيعات تعاطفاً كبيراً في معالجة اعتراض العميل على ${category} من خلال تقديم تفصيل واضح للقيمة والمدة لتبديد شكوكه.`
+                        },
+                        {
+                            objection: "الرغبة في التفكير / استشارة العائلة",
+                            handled: Math.random() > 0.15,
+                            score: simulatedScore - 5,
+                            feedback: "تم استخدام آلية العرض المحدود والخصم الحصري بنجاح لتسريع الإغلاق، لكن صياغة التعاطف يمكن أن تكون أكثر انسيابية."
+                        }
+                    ],
+                    summary: `هذا التسجيل لـ《${title}》يقدم قيمة تعليمية ممتازة! يوضح كيف يتعامل المبيعات مع اعتراضات العملاء في مرحلة 【${category}】 بمهنية ومرونة.`,
+                    tips: [
+                        "كان معدل الكلام سريعاً قليلاً في البداية (145 كلمة/دقيقة)، يُنصح بالتمهل في أول 30 ثانية لبناء الثقة.",
+                        "عند معالجة الاعتراض الثالث، كان الأسلوب روتينياً بعض الشيء، يُنصح باستخدام عبارات تعاطف أكثر تخصيصاً بدلاً من الصيغ الجاهزة."
+                    ]
+                };
+            } else if (lang === 'english') {
+                mockData = {
+                    objectionsHandled: [
+                        {
+                            objection: category.includes('价格') || title.includes('价格') || title.includes('Price') ? "Price is too high / Over budget" : "Not interested / No need",
+                            handled: true,
+                            score: simulatedScore - 2,
+                            feedback: `The agent demonstrated strong empathy and handled the customer's objection regarding ${category} professionally by highlighting the course value and structure.`
+                        },
+                        {
+                            objection: "Need to think about it / Consult family",
+                            handled: Math.random() > 0.15,
+                            score: simulatedScore - 5,
+                            feedback: "Successfully used the urgency mechanism to close, but the transition into objection handling could be smoother."
+                        }
+                    ],
+                    summary: `This training call for "${title}" has extremely high learning value! It perfectly demonstrates how the agent leverages active listening and value framing during the "${category}" phase.`,
+                    tips: [
+                        "The speech rate at the beginning was slightly fast (around 145 words/min). Consider slowing down in the first 30 seconds to build rapport.",
+                        "During the third objection handling, the phrasing felt a bit scripted. Try replacing standard templates with more tailored empathy."
+                    ]
+                };
+            } else {
+                // Default Chinese
+                mockData = {
+                    objectionsHandled: [
+                        {
+                            objection: category.includes('价格') || title.includes('价格') ? "价格太贵/超出预算" : "不需要/没有兴趣",
+                            handled: true,
+                            score: simulatedScore - 2,
+                            feedback: `针对客户提出的${category}问题，销售表现出极强的同理心，通过主动拆解学习时长 and 效果进行价值锚定，打消了客户顾虑。`
+                        },
+                        {
+                            objection: "考虑一下/问问家人",
+                            handled: Math.random() > 0.15,
+                            score: simulatedScore - 5,
+                            feedback: "快速运用专属名额紧迫感机制促成单，拦截了流失风险，但同理心句式还可以更显流畅。"
+                        }
+                    ],
+                    summary: `本篇《${title}》实战教学价值极高！完整展现了在【${category}】阶段客户产生抗拒时，销售如何通过标准的倾听、价值锚定与紧迫感建立组合拳完成高难度转化。`,
+                    tips: [
+                        "开场语速稍微偏快（达到145词/分钟），客户反应略显冷淡，建议前30秒放缓语调建立温度感。",
+                        "在第3次处理异议时，话术稍微公式化，建议将“理解您的心情”替换为更具针对性的同理句型。"
+                    ]
+                };
+            }
 
             analysisResult = {
                 overallScore: simulatedScore,
@@ -180,25 +266,7 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
                     Math.floor(Math.random() * 15) + 80, // Closing agreement
                     Math.floor(Math.random() * 10) + 90  // High success
                 ],
-                objectionsHandled: [
-                    {
-                        objection: category.includes('价格') || title.includes('价格') ? "价格太贵/超出预算" : "不需要/没有兴趣",
-                        handled: true,
-                        score: simulatedScore - 2,
-                        feedback: `针对客户提出的${category}问题，销售表现出极强的同理心，通过主动拆解学习时长 and 效果进行价值锚定，打消了客户顾虑。`
-                    },
-                    {
-                        objection: "考虑一下/问问家人",
-                        handled: Math.random() > 0.15,
-                        score: simulatedScore - 5,
-                        feedback: "快速运用专属名额紧迫感机制促成单，拦截了流失风险，但同理心句式还可以更显流畅。"
-                    }
-                ],
-                summary: `本篇《${title}》实战教学价值极高！完整展现了在【${category}】阶段客户产生抗拒时，销售如何通过标准的倾听、价值锚定与紧迫感建立组合拳完成高难度转化。`,
-                tips: [
-                    "开场语速稍微偏快（达到145词/分钟），客户反应略显冷淡，建议前30秒放缓语调建立温度感。",
-                    "在第3次处理异议时，话术稍微公式化，建议将“理解您的心情”替换为更具针对性的同理句型。"
-                ]
+                ...mockData
             };
         }
 

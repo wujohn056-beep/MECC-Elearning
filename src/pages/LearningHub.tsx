@@ -954,44 +954,44 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         {/* Overall Score */}
                                         <div className="glass-panel p-5 rounded-2xl border border-desert-gold/30 bg-gradient-to-br from-desert-gold/5 via-transparent to-transparent flex flex-col items-center justify-center text-center relative overflow-hidden shadow-sm">
-                                            <span className="text-[10px] font-extrabold text-desert-gold uppercase tracking-wider mb-2">🏆 通话质量综合得分</span>
+                                            <span className="text-[10px] font-extrabold text-desert-gold uppercase tracking-wider mb-2">🏆 {t('learning_hub.analysis_overall_score', '通话质量综合得分')}</span>
                                             <div className="relative flex items-center justify-center">
                                                 <div className="w-20 h-20 rounded-full border-4 border-desert-gold/20 flex items-center justify-center bg-white shadow-md">
                                                     <span className="text-3xl font-black text-yellow-800">{recordingAnalysis.overallScore}</span>
                                                 </div>
                                             </div>
-                                            <span className="text-xs font-bold text-arabian-night/50 mt-2">等级: {recordingAnalysis.overallScore >= 90 ? 'Excellent (A+)' : recordingAnalysis.overallScore >= 80 ? 'Good (B)' : 'Needs Improvement'}</span>
+                                            <span className="text-xs font-bold text-arabian-night/50 mt-2">{t('learning_hub.analysis_grade', '等级')}: {recordingAnalysis.overallScore >= 90 ? t('learning_hub.analysis_grade_excellent', 'Excellent (A+)') : recordingAnalysis.overallScore >= 80 ? t('learning_hub.analysis_grade_good', 'Good (B)') : t('learning_hub.analysis_grade_needs_improvement', 'Needs Improvement')}</span>
                                         </div>
 
                                         {/* Talk Ratio */}
                                         <div className="glass-panel p-5 rounded-2xl border border-gray-100 flex flex-col justify-center shadow-sm">
-                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3">🗣️ 说听占比 (Talk-to-Listen)</span>
+                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3">🗣️ {t('learning_hub.analysis_talk_ratio', '说听占比 (Talk-to-Listen)')}</span>
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-xs font-bold text-arabian-night/80">
-                                                    <span>CC 销售: {recordingAnalysis.talkRatio.sales}%</span>
-                                                    <span>客户: {recordingAnalysis.talkRatio.customer}%</span>
+                                                    <span>{t('learning_hub.analysis_sales_label', 'CC 销售')}: {recordingAnalysis.talkRatio.sales}%</span>
+                                                    <span>{t('learning_hub.analysis_customer_label', '客户')}: {recordingAnalysis.talkRatio.customer}%</span>
                                                 </div>
                                                 <div className="h-3 w-full bg-blue-100 rounded-full overflow-hidden flex border border-blue-200/20">
                                                     <div className="h-full bg-deep-teal" style={{ width: `${recordingAnalysis.talkRatio.sales}%` }} />
                                                     <div className="h-full bg-desert-gold" style={{ width: `${recordingAnalysis.talkRatio.customer}%` }} />
                                                 </div>
                                                 <p className="text-[10px] text-arabian-night/40 font-bold leading-relaxed mt-1">
-                                                    * 黄金说听比为 45:55，说得太多容易引起客户反感。
+                                                    {t('learning_hub.analysis_ratio_tip', '* 黄金说听比为 45:55，说得太多容易引起客户反感。')}
                                                 </p>
                                             </div>
                                         </div>
 
                                         {/* Speech Rate */}
                                         <div className="glass-panel p-5 rounded-2xl border border-gray-100 flex flex-col justify-center shadow-sm">
-                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3">⚡ 说话平均语速 (Words per Min)</span>
+                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3">⚡ {t('learning_hub.analysis_speech_rate', '说话平均语速 (Words per Min)')}</span>
                                             <div className="grid grid-cols-2 gap-2 text-center">
                                                 <div className="bg-gray-50/75 p-2 rounded-xl border border-gray-100">
-                                                    <p className="text-[10px] font-bold text-arabian-night/40">CC 销售</p>
-                                                    <p className="text-lg font-black text-deep-teal">{recordingAnalysis.speechRate.sales} <span className="text-[10px] font-bold">词/分</span></p>
+                                                    <p className="text-[10px] font-bold text-arabian-night/40">{t('learning_hub.analysis_sales_label', 'CC 销售')}</p>
+                                                    <p className="text-lg font-black text-deep-teal">{recordingAnalysis.speechRate.sales} <span className="text-[10px] font-bold">{t('learning_hub.analysis_wpm_unit', '词/分')}</span></p>
                                                 </div>
                                                 <div className="bg-gray-50/75 p-2 rounded-xl border border-gray-100">
-                                                    <p className="text-[10px] font-bold text-arabian-night/40">客户</p>
-                                                    <p className="text-lg font-black text-desert-gold">{recordingAnalysis.speechRate.customer} <span className="text-[10px] font-bold">词/分</span></p>
+                                                    <p className="text-[10px] font-bold text-arabian-night/40">{t('learning_hub.analysis_customer_label', '客户')}</p>
+                                                    <p className="text-lg font-black text-desert-gold">{recordingAnalysis.speechRate.customer} <span className="text-[10px] font-bold">{t('learning_hub.analysis_wpm_unit', '词/分')}</span></p>
                                                 </div>
                                             </div>
                                         </div>
@@ -999,10 +999,16 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
 
                                     {/* Row 2: Customer Sentiment Trend */}
                                     <div className="glass-panel p-5 rounded-2xl border border-gray-100 shadow-sm">
-                                        <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3 block">📈 客户情绪起伏热力图 (Customer Sentiment Trend)</span>
+                                        <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3 block">📈 {t('learning_hub.analysis_sentiment_trend', '客户情绪起伏热力图 (Customer Sentiment Trend)')}</span>
                                         <div className="flex justify-between items-end gap-3 h-20 pt-4 px-2">
                                             {recordingAnalysis.sentimentTrend.map((score: number, idx: number) => {
-                                                const labels = ["开场建立", "异议切入", "同理突破", "价值促成", "成单达成"];
+                                                const labels = [
+                                                    t('learning_hub.sentiment_phase_1', '开场建立'),
+                                                    t('learning_hub.sentiment_phase_2', '异议切入'),
+                                                    t('learning_hub.sentiment_phase_3', '同理突破'),
+                                                    t('learning_hub.sentiment_phase_4', '价值促成'),
+                                                    t('learning_hub.sentiment_phase_5', '成单达成')
+                                                ];
                                                 return (
                                                     <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
                                                         {/* Bar */}
@@ -1027,7 +1033,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                     {/* Row 3: Objections Handled Checklist */}
                                     {recordingAnalysis.objectionsHandled && recordingAnalysis.objectionsHandled.length > 0 && (
                                         <div className="space-y-2.5">
-                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider block">🎯 异议点突破体检 (Objection Check)</span>
+                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider block">🎯 {t('learning_hub.analysis_objections_check', '异议点突破体检 (Objection Check)')}</span>
                                             <div className="grid grid-cols-1 gap-2.5">
                                                 {recordingAnalysis.objectionsHandled.map((obj: any, idx: number) => (
                                                     <div key={idx} className="bg-gray-50/75 border border-gray-100 rounded-xl p-3 flex flex-col md:flex-row md:items-center gap-3">
@@ -1045,14 +1051,14 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                                                     ? 'bg-green-100/50 text-green-700 border-green-200/55' 
                                                                     : 'bg-red-100/50 text-red-700 border-red-200/55'
                                                             }`}>
-                                                                {obj.handled ? '已突破' : '未突破'}
+                                                                {obj.handled ? t('learning_hub.analysis_objection_handled', '已突破') : t('learning_hub.analysis_objection_unhandled', '未突破')}
                                                             </span>
                                                         </div>
                                                         <div className="flex-1 text-xs text-arabian-night/70 font-semibold leading-relaxed pl-1 md:pl-0 border-l border-transparent md:border-gray-100 md:pl-3">
                                                             {obj.feedback}
                                                         </div>
                                                         <div className="text-right shrink-0 pr-1 text-xs font-black text-yellow-800">
-                                                            得分: {obj.score}
+                                                            {t('learning_hub.analysis_score_label', '得分')}: {obj.score}
                                                         </div>
                                                     </div>
                                                 ))}
@@ -1063,13 +1069,13 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                     {/* Row 4: Summary & Coaching tips */}
                                     <div className="bg-gradient-to-br from-light-teal/5 to-deep-teal/5 border border-light-teal/15 p-5 rounded-2xl space-y-4">
                                         <div>
-                                            <span className="text-[10px] font-extrabold text-deep-teal uppercase tracking-wider block mb-1">📝 智能体检诊断总结</span>
+                                            <span className="text-[10px] font-extrabold text-deep-teal uppercase tracking-wider block mb-1">📝 {t('learning_hub.analysis_diagnose_summary', '智能体检诊断总结')}</span>
                                             <p className="text-xs text-arabian-night font-medium leading-relaxed">
                                                 {recordingAnalysis.summary}
                                             </p>
                                         </div>
                                         <div className="border-t border-deep-teal/10 pt-3">
-                                            <span className="text-[10px] font-extrabold text-desert-gold uppercase tracking-wider block mb-2">⭐ AI 高能优化建议 (Coaching Tips)</span>
+                                            <span className="text-[10px] font-extrabold text-desert-gold uppercase tracking-wider block mb-2">⭐ {t('learning_hub.analysis_coaching_tips', 'AI 高能优化建议 (Coaching Tips)')}</span>
                                             <ul className="space-y-2">
                                                 {recordingAnalysis.tips.map((tip: string, idx: number) => (
                                                     <li key={idx} className="text-xs text-arabian-night/80 flex items-start gap-1.5 font-medium leading-relaxed">
