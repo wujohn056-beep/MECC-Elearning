@@ -1,5 +1,4 @@
-const admin = require('firebase-admin');
-const fetch = require('node-fetch');
+import admin from 'firebase-admin';
 
 // Initialize Firebase Admin if Service Account is configured
 if (!admin.apps.length) {
@@ -22,21 +21,16 @@ function getFirestoreDb() {
     if (!admin.apps.length) {
         throw new Error("Firebase Admin not initialized.");
     }
+    dbInstance = admin.firestore();
     try {
-        const { getFirestore } = require('firebase-admin/firestore');
-        dbInstance = getFirestore(admin.apps[0], 'default');
-    } catch (e) {
-        dbInstance = admin.firestore();
-        try {
-            dbInstance.settings({ databaseId: 'default' });
-        } catch (settingsErr) {
-            console.log("Database settings already applied:", settingsErr.message);
-        }
+        dbInstance.settings({ databaseId: 'default' });
+    } catch (settingsErr) {
+        console.log("Database settings already applied:", settingsErr.message);
     }
     return dbInstance;
 }
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     // Enable CORS
     if (event.httpMethod === 'OPTIONS') {
         return {
@@ -191,7 +185,7 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
                         objection: category.includes('价格') || title.includes('价格') ? "价格太贵/超出预算" : "不需要/没有兴趣",
                         handled: true,
                         score: simulatedScore - 2,
-                        feedback: `针对客户提出的${category}问题，销售表现出极强的同理心，通过主动拆解学习时长和效果进行价值锚定，打消了客户顾虑。`
+                        feedback: `针对客户提出的${category}问题，销售表现出极强的同理心，通过主动拆解学习时长 and 效果进行价值锚定，打消了客户顾虑。`
                     },
                     {
                         objection: "考虑一下/问问家人",

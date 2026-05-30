@@ -1,4 +1,4 @@
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
     try {
@@ -13,7 +13,7 @@ if (!admin.apps.length) {
     }
 }
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     // Only allow POST requests
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
