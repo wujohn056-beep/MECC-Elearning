@@ -357,6 +357,65 @@ export default function LearningHub() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+    const searchRef = React.useRef<HTMLDivElement>(null);
+
+    // Filter recordings for suggestions (scoped by active businessType)
+    const scopedRecordingsForSuggestions = React.useMemo(() => {
+        return recordings.filter(rec => (rec.businessType || 'kid') === businessType);
+    }, [recordings, businessType]);
+
+    // Unique lecturer names matching the query
+    const matchingLecturers = React.useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const query = searchQuery.toLowerCase().trim();
+        const lecturers = Array.from(new Set(scopedRecordingsForSuggestions.map(rec => rec.lecturerName).filter(Boolean))) as string[];
+        return lecturers
+            .filter(name => name.toLowerCase().includes(query))
+            .slice(0, 5);
+    }, [scopedRecordingsForSuggestions, searchQuery]);
+
+    // Recordings (titles) matching the query
+    const matchingTitles = React.useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const query = searchQuery.toLowerCase().trim();
+        return scopedRecordingsForSuggestions
+            .filter(rec => 
+                rec.title.toLowerCase().includes(query) ||
+                (rec.displayId && rec.displayId.toLowerCase().includes(query))
+            )
+            .slice(0, 5);
+    }, [scopedRecordingsForSuggestions, searchQuery]);
+
+    const highlightMatch = (text: string, query: string) => {
+        if (!query.trim()) return <span>{text}</span>;
+        const index = text.toLowerCase().indexOf(query.toLowerCase().trim());
+        if (index === -1) return <span>{text}</span>;
+        
+        const before = text.substring(0, index);
+        const match = text.substring(index, index + query.trim().length);
+        const after = text.substring(index + query.trim().length);
+        
+        return (
+            <span>
+                {before}
+                <span className="text-desert-gold font-extrabold">{match}</span>
+                {after}
+            </span>
+        );
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
     const [loading, setLoading] = useState(true);
     const [sortType, setSortType] = useState<'latest' | 'popular'>('latest');
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss'>('kid');
@@ -777,7 +836,7 @@ export default function LearningHub() {
                             )}
 
                             {/* Search Bar */}
-                            <div className="relative w-full md:w-80 lg:w-[420px] shrink-0 group">
+                            <div ref={searchRef} className="relative w-full md:w-80 lg:w-[420px] shrink-0 group z-50">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
                                     <Search className="h-5 w-5 text-arabian-night/40 group-focus-within:text-desert-gold transition-colors" />
                                 </div>
@@ -785,9 +844,77 @@ export default function LearningHub() {
                                     type="text"
                                     placeholder={t('learning_hub.search_placeholder')}
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setShowSuggestions(true);
+                                    }}
+                                    onFocus={() => setShowSuggestions(true)}
                                     className="w-full pl-12 pr-5 py-3.5 border border-gray-200/80 rounded-full focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold bg-white/60 backdrop-blur-md hover:bg-white transition-all shadow-[0_2px_10px_rgb(0,0,0,0.02)] text-sm font-semibold outline-none"
                                 />
+
+                                {/* Autocomplete Suggestions Panel */}
+                                {showSuggestions && searchQuery.trim().length > 0 && (matchingLecturers.length > 0 || matchingTitles.length > 0) && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-xl py-3 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50 max-h-[380px] overflow-y-auto scrollbar-thin">
+                                        {/* Lecturers Section */}
+                                        {matchingLecturers.length > 0 && (
+                                            <div className="mb-2">
+                                                <div className="px-4 py-1.5 text-[11px] font-black text-deep-teal tracking-wider uppercase bg-gray-50 flex items-center gap-1.5 select-none">
+                                                    <User className="w-3.5 h-3.5 text-desert-gold" />
+                                                    <span>{t('learning_hub.suggested_lecturers', '推荐讲师 / Lecturers')}</span>
+                                                </div>
+                                                <div className="mt-1">
+                                                    {matchingLecturers.map((name) => (
+                                                        <div
+                                                            key={name}
+                                                            onClick={() => {
+                                                                setSearchQuery(name);
+                                                                setShowSuggestions(false);
+                                                            }}
+                                                            className="px-5 py-2.5 hover:bg-gradient-to-r hover:from-desert-gold/10 hover:to-transparent hover:text-desert-gold cursor-pointer text-sm font-bold text-arabian-night transition-colors flex items-center gap-2"
+                                                        >
+                                                            <div className="w-6 h-6 rounded-full bg-desert-gold/10 flex items-center justify-center text-[10px] text-desert-gold font-extrabold shrink-0">
+                                                                {name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <span className="truncate">{highlightMatch(name, searchQuery)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Recordings Section */}
+                                        {matchingTitles.length > 0 && (
+                                            <div>
+                                                <div className="px-4 py-1.5 text-[11px] font-black text-deep-teal tracking-wider uppercase bg-gray-50 flex items-center gap-1.5 select-none">
+                                                    <PlayCircle className="w-3.5 h-3.5 text-desert-gold" />
+                                                    <span>{t('learning_hub.suggested_courses', '推荐课程 / Course Titles')}</span>
+                                                </div>
+                                                <div className="mt-1">
+                                                    {matchingTitles.map((rec) => (
+                                                        <div
+                                                            key={rec.id}
+                                                            onClick={() => {
+                                                                setSearchQuery(rec.title);
+                                                                setShowSuggestions(false);
+                                                            }}
+                                                            className="px-5 py-2.5 hover:bg-gradient-to-r hover:from-desert-gold/10 hover:to-transparent hover:text-desert-gold cursor-pointer text-sm font-bold text-arabian-night transition-colors flex items-center gap-2.5"
+                                                        >
+                                                            <div className="w-6 h-6 rounded-lg bg-deep-teal/5 flex items-center justify-center text-[10px] text-deep-teal font-extrabold shrink-0 border border-deep-teal/10">
+                                                                🎬
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="truncate text-sm text-arabian-night font-bold">{highlightMatch(rec.title, searchQuery)}</div>
+                                                                {rec.lecturerName && (
+                                                                    <div className="text-[10px] text-arabian-night/50 truncate font-semibold mt-0.5">{rec.lecturerName}</div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
