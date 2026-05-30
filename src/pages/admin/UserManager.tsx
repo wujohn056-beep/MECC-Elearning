@@ -38,7 +38,7 @@ interface UserRecord {
 
 export default function UserManager() {
     const { t } = useTranslation();
-    const { hasPermission } = useAuth();
+    const { hasPermission, profile } = useAuth();
     const canManageUsers = hasPermission('manageUsers');
     const [users, setUsers] = useState<UserRecord[]>([]);
     const [loading, setLoading] = useState(false);
@@ -78,13 +78,20 @@ export default function UserManager() {
         return <Navigate to="/admin" replace />;
     }
 
-    const filteredUsers = users.filter(u => 
-        u.crmId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (u.team && u.team.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (u.sd && u.sd.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (u.sm && u.sm.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (u.tl && u.tl.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredUsers = users.filter(u => {
+        const isAbsoluteSuperAdmin = profile?.role === 'super_admin';
+        if (!isAbsoluteSuperAdmin) {
+            const adminDep = profile?.dep || 'CC';
+            const userDep = u.dep || 'CC';
+            if (adminDep !== userDep) return false;
+        }
+
+        return u.crmId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (u.team && u.team.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (u.sd && u.sd.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (u.sm && u.sm.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (u.tl && u.tl.toLowerCase().includes(searchQuery.toLowerCase()));
+    });
 
     // Extract unique values for dropdowns
     const uniqueSDs = Array.from(new Set(users.map(u => u.sd).filter(Boolean))).sort();
@@ -658,15 +665,21 @@ export default function UserManager() {
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_dep', 'Department')}</label>
-                                <select 
-                                    value={formData.dep || 'CC'} 
-                                    onChange={e => setFormData({...formData, dep: e.target.value as 'CC' | 'SS' | 'functional'})}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
-                                >
-                                    <option value="CC">{t('common.type_cc')}</option>
-                                    <option value="SS">{t('common.type_ss')}</option>
-                                    <option value="functional">{t('common.type_functional')}</option>
-                                </select>
+                                {profile?.role === 'super_admin' ? (
+                                    <select 
+                                        value={formData.dep || 'CC'} 
+                                        onChange={e => setFormData({...formData, dep: e.target.value as 'CC' | 'SS' | 'functional'})}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                    >
+                                        <option value="CC">{t('common.type_cc')}</option>
+                                        <option value="SS">{t('common.type_ss')}</option>
+                                        <option value="functional">{t('common.type_functional')}</option>
+                                    </select>
+                                ) : (
+                                    <div className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-100 font-bold text-arabian-night select-none">
+                                        {(profile?.dep || 'CC') === 'SS' ? t('common.type_ss') : (profile?.dep || 'CC') === 'CC' ? t('common.type_cc') : t('common.type_functional')}
+                                    </div>
+                                )}
                             </div>
                             
                             {formData.role !== 'super_admin' && formData.role !== 'sd' && (

@@ -15,6 +15,7 @@ interface UserRecord {
     sd: string;
     sm: string;
     tl: string;
+    dep?: 'CC' | 'SS' | 'functional';
 }
 
 interface LearningLog {
@@ -45,6 +46,7 @@ interface Recording {
     createdAt: any;
     lecturerName?: string;
     title?: string;
+    businessType?: 'kid' | 'adult' | 'ss';
 }
 
 export default function AdminDashboard() {
@@ -138,8 +140,17 @@ export default function AdminDashboard() {
     // 1. Filter Users by Scope
     const scopeUsers = useMemo(() => {
         if (!profile) return [];
-        if (isSuperAdmin) return users;
-        return users.filter(u => {
+        
+        let pool = users;
+        const absoluteSuperAdmin = profile?.role === 'super_admin';
+        if (!absoluteSuperAdmin) {
+            const adminDep = profile?.dep || 'CC';
+            pool = users.filter(u => (u.dep || 'CC') === adminDep);
+        }
+
+        if (absoluteSuperAdmin || isSuperAdmin) return pool;
+        
+        return pool.filter(u => {
             if (profile.role === 'sd') return u.sd === profile.crmId || u.id === profile.crmId;
             if (profile.role === 'sm') return u.sm === profile.crmId || u.id === profile.crmId;
             if (profile.role === 'tl') return u.team === profile.team || u.id === profile.crmId;
@@ -206,9 +217,18 @@ export default function AdminDashboard() {
         return tasks.filter(task => {
             if (!task.createdAt) return false;
             const d = task.createdAt.toDate();
-            return isWithinInterval(d, { start: startDate, end: endDate });
+            const matchesInterval = isWithinInterval(d, { start: startDate, end: endDate });
+            if (!matchesInterval) return false;
+
+            const isAbsoluteSuperAdmin = profile?.role === 'super_admin';
+            if (!isAbsoluteSuperAdmin) {
+                const hasAssigneeInScope = task.assigneeIds?.some(uid => displayedUserIds.has(uid));
+                const hasAssignerInScope = task.assignerId && displayedUserIds.has(task.assignerId);
+                return hasAssigneeInScope || hasAssignerInScope;
+            }
+            return true;
         });
-    }, [tasks, startDate, endDate]);
+    }, [tasks, startDate, endDate, displayedUserIds, profile]);
 
     const filteredActivities = useMemo(() => {
         return activityLogs.filter(log => {
@@ -222,9 +242,21 @@ export default function AdminDashboard() {
         return recordings.filter(rec => {
             if (!rec.createdAt) return false;
             const d = rec.createdAt.toDate();
-            return isWithinInterval(d, { start: startDate, end: endDate });
+            const matchesInterval = isWithinInterval(d, { start: startDate, end: endDate });
+            if (!matchesInterval) return false;
+
+            const isAbsoluteSuperAdmin = profile?.role === 'super_admin';
+            if (!isAbsoluteSuperAdmin) {
+                const adminDep = profile?.dep || 'CC';
+                if (adminDep === 'SS') {
+                    if (rec.businessType !== 'ss') return false;
+                } else {
+                    if (rec.businessType === 'ss') return false;
+                }
+            }
+            return true;
         });
-    }, [recordings, startDate, endDate]);
+    }, [recordings, startDate, endDate, profile]);
 
     // 4. Aggregations
     const userStats = useMemo(() => {
