@@ -576,8 +576,11 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded }: an
                                             
                                             <p className="text-[10px] font-bold text-amber-800/90 tracking-wide uppercase">
                                                 {t('learning_hub.transcript_lock_progress', '解锁进度')}：
-                                                {Math.round(actualListenedSeconds)}秒 / {Math.round(duration / 3)}秒 (1/3时长) 
-                                                （已完成 {Math.min(100, Math.round((actualListenedSeconds / (duration / 3)) * 100))}%）
+                                                {t('learning_hub.transcript_lock_progress_detail', {
+                                                    listened: Math.round(actualListenedSeconds),
+                                                    target: Math.round(duration / 3),
+                                                    percentage: Math.min(100, Math.round((actualListenedSeconds / (duration / 3)) * 100))
+                                                })}
                                             </p>
                                         </div>
                                     </div>
