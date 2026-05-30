@@ -228,6 +228,7 @@
         "add_modal_title": "Add System Account",
         "edit_modal_title": "Edit Account Info",
         "label_crm": "CRM ID (lowercase)",
+        "label_email": "DingTalk Email (Required)",
         "label_role": "System Role",
         "label_sd": "Sales Director (SD)",
         "label_sm": "Sales Manager (SM)",

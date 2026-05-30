@@ -21,6 +21,7 @@ interface ExcelRow {
 interface UserRecord {
     id: string;
     crmId: string;
+    email?: string;
     role: string;
     sd?: string;
     sm?: string;
@@ -48,12 +49,14 @@ export default function UserManager() {
     const [total, setTotal] = useState(0);
     const [statusLog, setStatusLog] = useState<{msg: string, type: 'success'|'error'}[]>([]);
 
+    const defaultDep = profile?.role === 'super_admin' ? 'CC' : (profile?.dep || 'CC');
+
     const [searchQuery, setSearchQuery] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState('');
     const [formData, setFormData] = useState({ 
-        crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: 'CC' as 'CC' | 'SS' | 'functional',
+        crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
     });
 
@@ -501,6 +504,7 @@ export default function UserManager() {
     const openEditModal = (u: UserRecord) => {
         setFormData({
             crmId: u.crmId,
+            email: u.email || '',
             role: u.role || 'user',
             sd: u.sd || '',
             sm: u.sm || '',
@@ -522,8 +526,14 @@ export default function UserManager() {
 
     const handleSaveUser = async () => {
         try {
+            if (!formData.email || !formData.email.trim()) {
+                alert(t('user_manager.email_required', '钉钉绑定邮箱为必填项！'));
+                return;
+            }
+
             if (editMode && selectedUserId) {
                 await updateDoc(doc(db, 'users', selectedUserId), {
+                    email: formData.email.trim(),
                     role: formData.role,
                     sd: formData.sd,
                     sm: formData.sm,
@@ -561,6 +571,7 @@ export default function UserManager() {
 
                 await setDoc(doc(db, 'users', uid), {
                     crmId: formData.crmId.trim(),
+                    email: formData.email.trim(),
                     role: formData.role,
                     sd: formData.sd,
                     sm: formData.sm,
@@ -599,7 +610,7 @@ export default function UserManager() {
                             onClick={() => { 
                                 setEditMode(false); 
                                 setFormData({ 
-                                    crmId: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: 'CC',
+                                    crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                     permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
                                 }); 
                                 setShowModal(true); 
@@ -765,17 +776,39 @@ export default function UserManager() {
                                 />
                             </div>
                             <div>
+                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_email', '钉钉绑定邮箱')}</label>
+                                <input 
+                                    type="email" 
+                                    value={formData.email} 
+                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                    placeholder="example@51talk.com"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                    required
+                                />
+                            </div>
+                            <div>
                                 <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_role', 'Role')}</label>
                                 <select 
                                     value={formData.role} 
                                     onChange={e => setFormData({...formData, role: e.target.value})}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
                                 >
-                                    <option value="user">CC</option>
-                                    <option value="tl">Team Leader (TL)</option>
-                                    <option value="sm">Sales Manager (SM)</option>
-                                    <option value="sd">Sales Director (SD)</option>
-                                    <option value="super_admin">Super Admin</option>
+                                    {formData.dep === 'SS' ? (
+                                        <>
+                                            <option value="user">SS</option>
+                                            <option value="tl">SS TL</option>
+                                            <option value="sm">SS SM</option>
+                                            <option value="sd">SS SD</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="user">CC</option>
+                                            <option value="tl">Team Leader (TL)</option>
+                                            <option value="sm">Sales Manager (SM)</option>
+                                            <option value="sd">Sales Director (SD)</option>
+                                        </>
+                                    )}
+                                    {profile?.role === 'super_admin' && <option value="super_admin">Super Admin</option>}
                                 </select>
                             </div>
                             <div>
