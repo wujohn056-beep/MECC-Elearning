@@ -194,7 +194,10 @@
         "delete_confirm": "Are you sure you want to delete the recording \"{{title}}\"? This action cannot be undone.",
         "batch_delete_confirm": "Are you sure you want to delete selected resources? This action cannot be undone.",
         "delete_audio_fail": "Failed to delete audio file.",
-        "delete_avatar_fail": "Failed to delete avatar file."
+        "delete_avatar_fail": "Failed to delete avatar file.",
+        "confirm_push_dingtalk": "Are you sure you want to push this premium material to DingTalk?\n\nThe system will broadcast a beautiful image-text ActionCard to the DingTalk sales workspace group chat via a bot!",
+        "push_fail": "Failed to push to DingTalk. Please check credentials or network configuration.",
+        "push_success": "Premium material has been pushed successfully to DingTalk!"
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",

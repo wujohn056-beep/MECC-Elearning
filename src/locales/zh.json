@@ -193,7 +193,10 @@
         "delete_confirm": "确定要删除录音 \"{{title}}\" 吗？此操作不可恢复。",
         "delete_audio_fail": "删除文件失败。",
         "delete_avatar_fail": "删除头像失败。",
-        "batch_delete_confirm": "确定要删除选中的这些文件吗？此操作不可恢复。"
+        "batch_delete_confirm": "确定要删除选中的这些文件吗？此操作不可恢复。",
+        "confirm_push_dingtalk": "您确定要将该精品素材推送至钉钉吗？\n\n系统将通过钉钉销售工作群机器人发布精美的图文 ActionCard 卡片广播！",
+        "push_fail": "推送到钉钉失败，请检查通道凭证或网络配置。",
+        "push_success": "精品素材已成功推送至钉钉！"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",
