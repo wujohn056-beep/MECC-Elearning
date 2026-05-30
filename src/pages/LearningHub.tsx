@@ -646,8 +646,9 @@ export default function LearningHub() {
     // Calculate display slice
     const displayedRecordings = sortedRecordings.slice(0, displayCount);
 
-    // Calculate Leaderboard (Global)
-    const displayTopFavorited = [...recordings]
+    // Calculate Leaderboard (Scoped by selected businessType)
+    const displayTopFavorited = recordings
+        .filter(rec => (rec.businessType || 'kid') === businessType)
         .sort((a, b) => {
             const countA = allFavoritesCount[a.id] || 0;
             const countB = allFavoritesCount[b.id] || 0;
@@ -656,7 +657,8 @@ export default function LearningHub() {
         })
         .slice(0, 10);
     
-    const displayTopLiked = [...recordings]
+    const displayTopLiked = recordings
+        .filter(rec => (rec.businessType || 'kid') === businessType)
         .sort((a, b) => {
             const countA = a.likes?.length || 0;
             const countB = b.likes?.length || 0;
