@@ -977,12 +977,12 @@ export default function RecordingsManager() {
                                                              📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
                                                          </span>
                                                      )}
-                                                     {((rec as any).transcriptStatus === 'transcribing' || transcribingIds[rec.id]) && (
+                                                     {false && ((rec as any).transcriptStatus === 'transcribing' || transcribingIds[rec.id]) && (
                                                          <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-0.5 animate-pulse">
                                                              ⚙️ {t('recordings_manager.transcribing', '正在解析为逐字稿...')}
                                                          </span>
                                                      )}
-                                                     {(rec as any).transcriptStatus === 'error' && (
+                                                     {false && (rec as any).transcriptStatus === 'error' && (
                                                          <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-semibold">
                                                              ❌ {t('recordings_manager.transcribe_fail', '语音解析失败')}
                                                          </span>
@@ -1004,22 +1004,25 @@ export default function RecordingsManager() {
                                         </div>
                                         <div className="flex flex-col items-end gap-2 ml-4">
                                             <div className="flex gap-2">
-                                                <button 
-                                                    onClick={() => handleTranscribe(rec)} 
-                                                    disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
-                                                    className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
-                                                        (rec as any).transcript 
-                                                            ? 'text-green-600 hover:bg-green-50' 
-                                                            : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
-                                                    }`} 
-                                                    title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
-                                                >
-                                                    {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
-                                                        <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
-                                                    ) : (
-                                                        <FileText className="h-4 w-4" />
-                                                    )}
-                                                </button>
+                                                {/* Temporarily hidden transcription generation button */}
+                                                {false && (
+                                                    <button 
+                                                        onClick={() => handleTranscribe(rec)} 
+                                                        disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
+                                                        className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
+                                                            (rec as any).transcript 
+                                                                ? 'text-green-600 hover:bg-green-50' 
+                                                                : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
+                                                        }`} 
+                                                        title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
+                                                    >
+                                                        {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
+                                                            <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
+                                                        ) : (
+                                                            <FileText className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                )}
                                                 <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
                                                     <Send className="h-4 w-4" />
                                                 </button>

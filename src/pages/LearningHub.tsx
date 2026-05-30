@@ -272,15 +272,9 @@ const RecordingCard = ({
                             {rec.categoryName || t('common.uncategorized')}
                         </span>
                         {rec.transcript && (
-                            isUnlocked ? (
-                                <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-0.5 shrink-0 select-none">
-                                    🔓 {t('recordings_manager.transcript_unlocked', '阿语逐字稿已解锁')}
-                                </span>
-                            ) : (
-                                <span className="text-[9px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-0.5 animate-pulse shrink-0 select-none">
-                                    📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
-                                </span>
-                            )
+                            <span className="text-[9px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-0.5 shrink-0 select-none">
+                                📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
+                            </span>
                         )}
                     </div>
                 </div>
@@ -356,17 +350,10 @@ const RecordingCard = ({
                             {rec.transcript && (
                                 <button 
                                     onClick={() => onPlayVideo(rec, disableSeek)}
-                                    className={`mt-1 w-full text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20 hover:shadow-md ${
-                                        isUnlocked 
-                                            ? 'bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 shadow-green-100'
-                                            : 'bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800'
-                                    }`}
+                                    className="mt-1 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20 hover:shadow-md"
                                 >
-                                    <BookOpen className={`w-3.5 h-3.5 ${isUnlocked ? 'text-white' : 'text-desert-gold'}`} />
-                                    {isUnlocked 
-                                        ? t('learning_hub.view_transcript_unlocked_btn', '查看阿语逐字稿')
-                                        : t('learning_hub.view_transcript_btn', '查看并解锁阿语逐字稿')
-                                    }
+                                    <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                                    {t('learning_hub.view_transcript_unlocked_btn', '查看阿语逐字稿')}
                                 </button>
                             )}
                         </div>
@@ -1775,7 +1762,7 @@ export default function LearningHub() {
                                                             }}
                                                             onShare={setShareRecording}
                                                             disableSeek={!isTaskCompleted}
-                                                            isUnlocked={completedAudioIds.includes(rec.id)}
+                                                            isUnlocked={true}
                                                             className="w-full h-full"
                                                         />
                                                     </div>
@@ -1828,7 +1815,7 @@ export default function LearningHub() {
                                                     setActiveVideoDisableSeek(isSeekDisabled);
                                                 }}
                                                 onShare={setShareRecording}
-                                                isUnlocked={completedAudioIds.includes(rec.id)}
+                                                isUnlocked={true}
                                                 className="w-full h-full"
                                             />
                                         </div>
@@ -1911,7 +1898,7 @@ export default function LearningHub() {
                 <VideoPlayerModal
                     rec={activeVideoRecording}
                     disableSeek={activeVideoDisableSeek}
-                    isUnlocked={completedAudioIds.includes(activeVideoRecording.id)}
+                    isUnlocked={true}
                     onUnlock={() => handleAudioEnded(activeVideoRecording, 0)}
                     onClose={() => {
                         setActiveVideoRecording(null);
