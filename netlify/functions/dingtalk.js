@@ -29,89 +29,47 @@ function getDingTalkEmail(crmId) {
     return `${key}@51talk.com`;
 }
 
-async function getAllDingTalkUsers(accessToken, logs) {
-    const allUsersMap = new Map(); // email -> userid
-    const deptIdsQueue = [1]; // Start with root department ID 1
-    const visitedDepts = new Set();
-    
-    logs.push({ msg: "🔍 [通讯录同步] 开始自动逐级拉取企业架构并建立邮箱匹配模型...", type: 'success' });
-
-    while (deptIdsQueue.length > 0) {
-        const deptId = deptIdsQueue.shift();
-        if (visitedDepts.has(deptId)) continue;
-        visitedDepts.add(deptId);
-
-        // 1. Fetch sub-departments
-        try {
-            const subDeptRes = await fetch(`https://oapi.dingtalk.com/topapi/v2/department/listsub?access_token=${accessToken}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dept_id: deptId })
-            });
-            const subDeptData = await subDeptRes.json();
-            if (subDeptData.errcode === 0 && Array.isArray(subDeptData.result)) {
-                let newDeptsCount = 0;
-                for (const subDept of subDeptData.result) {
-                    if (subDept.dept_id && !visitedDepts.has(subDept.dept_id)) {
-                        deptIdsQueue.push(subDept.dept_id);
-                        newDeptsCount++;
-                    }
-                }
-                if (newDeptsCount > 0) {
-                    logs.push({ msg: `📂 [通讯录同步] 检测到部门 [ID: ${deptId}] 下有 ${newDeptsCount} 个新子级部门，已加入扫描通道。`, type: 'success' });
-                }
-            }
-        } catch (err) {
-            console.error(`Failed to fetch sub-departments for dept ${deptId}:`, err);
-            logs.push({ msg: `⚠️ [通讯录同步] 抓取部门 [ID: ${deptId}] 的子部门失败: ${err.message}`, type: 'error' });
+async function searchDingTalkUser(accessToken, queryWord) {
+    try {
+        const res = await fetch(`https://api.dingtalk.com/v1.0/contact/users/search`, {
+            method: 'POST',
+            headers: {
+                'x-acs-dingtalk-access-token': accessToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                queryWord: queryWord,
+                offset: 0,
+                size: 20
+            })
+        });
+        const data = await res.json();
+        if (data && Array.isArray(data.list)) {
+            return data.list;
         }
-
-        // 2. Fetch users in this department
-        let cursor = 0;
-        let hasMore = true;
-        let deptUserCount = 0;
-        while (hasMore) {
-            try {
-                const userRes = await fetch(`https://oapi.dingtalk.com/topapi/v2/user/list?access_token=${accessToken}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        dept_id: deptId,
-                        cursor: cursor,
-                        size: 100
-                    })
-                });
-                const userData = await userRes.json();
-                if (userData.errcode === 0 && userData.result) {
-                    const list = userData.result.list || [];
-                    for (const u of list) {
-                        const email = (u.email || '').trim().toLowerCase();
-                        const orgEmail = (u.org_email || '').trim().toLowerCase();
-                        
-                        if (email) allUsersMap.set(email, u.userid);
-                        if (orgEmail) allUsersMap.set(orgEmail, u.userid);
-                        deptUserCount++;
-                    }
-                    hasMore = userData.result.has_more;
-                    if (hasMore) {
-                        cursor = userData.result.next_cursor;
-                    }
-                } else {
-                    hasMore = false;
-                    console.error(`Failed to fetch users for dept ${deptId}:`, userData.errmsg);
-                    logs.push({ msg: `⚠️ [通讯录同步] 获取部门 [ID: ${deptId}] 成员列表失败: ${userData.errmsg}`, type: 'error' });
-                }
-            } catch (err) {
-                hasMore = false;
-                console.error(`Error fetching users for dept ${deptId}:`, err);
-                logs.push({ msg: `⚠️ [通讯录同步] 访问部门 [ID: ${deptId}] 成员接口异常: ${err.message}`, type: 'error' });
-            }
-        }
-        if (deptUserCount > 0) {
-            logs.push({ msg: `👥 [通讯录同步] 部门 [ID: ${deptId}] 抓取完成，成功读取并解密 ${deptUserCount} 名成员特征。`, type: 'success' });
-        }
+        return [];
+    } catch (err) {
+        console.error(`Search failed for query "${queryWord}":`, err);
+        return [];
     }
-    return allUsersMap;
+}
+
+async function getDingTalkUserDetails(accessToken, userId) {
+    try {
+        const res = await fetch(`https://oapi.dingtalk.com/topapi/v2/user/get?access_token=${accessToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userid: userId })
+        });
+        const data = await res.json();
+        if (data.errcode === 0 && data.result) {
+            return data.result;
+        }
+        return null;
+    } catch (err) {
+        console.error(`Failed to get details for userid "${userId}":`, err);
+        return null;
+    }
 }
 
 exports.handler = async (event, context) => {
@@ -166,7 +124,6 @@ exports.handler = async (event, context) => {
             logs.push({ msg: `🔄 [开始同步] 筛选出 ${targetUsers.length} 个非超级管理员账户开展钉钉匹配...`, type: 'success' });
 
             let accessToken = null;
-            let dingTalkUserMap = new Map();
             if (!isMockDingTalk) {
                 try {
                     logs.push({ msg: "🔐 [鉴权] 正在请求钉钉官方 Token...", type: 'success' });
@@ -174,11 +131,7 @@ exports.handler = async (event, context) => {
                     const tokenData = await tokenRes.json();
                     if (tokenData.errcode === 0) {
                         accessToken = tokenData.access_token;
-                        logs.push({ msg: "🔓 [鉴权成功] 钉钉 Access Token 获取成功，已建立安全信道。", type: 'success' });
-                        
-                        // Crawl the DingTalk organization to map all users by email
-                        dingTalkUserMap = await getAllDingTalkUsers(accessToken, logs);
-                        logs.push({ msg: `🎉 [建立拓扑完成] 企业架构深度扫描结束，成功解析 ${dingTalkUserMap.size} 个邮箱与钉钉账号的精准匹配关系。`, type: 'success' });
+                        logs.push({ msg: "🔓 [鉴权成功] 钉钉 Access Token 获取成功，已建立安全信道并开启【精确定向查询通道】。", type: 'success' });
                     } else {
                         logs.push({ msg: `❌ [鉴权失败] 钉钉返回错误: [${tokenData.errcode}] ${tokenData.errmsg}。降级为模拟匹配模式...`, type: 'error' });
                     }
@@ -190,7 +143,7 @@ exports.handler = async (event, context) => {
 
             for (const user of targetUsers) {
                 const crmId = user.crmId || user.id;
-                const email = getDingTalkEmail(crmId);
+                const email = getDingTalkEmail(crmId).toLowerCase();
                 let ddUserId = null;
                 let alreadyLinked = !!user.dingtalkUserId;
 
@@ -203,12 +156,38 @@ exports.handler = async (event, context) => {
 
                 if (!isMockDingTalk && accessToken) {
                     try {
-                        const matchedUserId = dingTalkUserMap.get(email.toLowerCase());
-                        if (matchedUserId) {
-                            ddUserId = matchedUserId;
-                            logs.push({ msg: `✅ [匹配成功] 销售 [${crmId}] (${email}) 成功匹配，对应钉钉 ID: ${ddUserId}`, type: 'success' });
-                        } else {
-                            logs.push({ msg: `ℹ️ [未匹配] 销售 [${crmId}] (${email}) 在您的企业钉钉通讯录中未找到（请检查该成员是否已加入钉钉或邮箱是否配置正确）。`, type: 'error' });
+                        const emailPrefix = email.split('@')[0];
+                        const nameSegment = crmId.split('-').pop();
+                        const searchTerms = Array.from(new Set([crmId, emailPrefix, nameSegment])).filter(Boolean);
+                        
+                        logs.push({ msg: `🔍 [精准匹配] 正在针对销售 [${crmId}] (${email}) 的个人特征，启动多重通讯录定向检索...`, type: 'success' });
+                        
+                        let matched = false;
+                        for (const term of searchTerms) {
+                            if (matched) break;
+                            
+                            const foundUserIds = await searchDingTalkUser(accessToken, term);
+                            for (const uid of foundUserIds) {
+                                const details = await getDingTalkUserDetails(accessToken, uid);
+                                if (details) {
+                                    const ddEmail = (details.email || '').trim().toLowerCase();
+                                    const ddOrgEmail = (details.org_email || '').trim().toLowerCase();
+                                    const ddName = (details.name || '').trim().toLowerCase();
+                                    const ddUserid = (details.userid || '').trim().toLowerCase();
+                                    
+                                    // Match by email or org_email or name / userid
+                                    if (ddEmail === email || ddOrgEmail === email || ddName === crmId.toLowerCase() || ddUserid === emailPrefix) {
+                                        ddUserId = details.userid;
+                                        matched = true;
+                                        logs.push({ msg: `✅ [匹配成功] 成功在通讯录中精准识别到销售 [${crmId}] 关联的钉钉用户 [${details.name}]，匹配工号: ${ddUserId}`, type: 'success' });
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (!matched) {
+                            logs.push({ msg: `ℹ️ [未匹配] 销售 [${crmId}] (${email}) 在您的企业钉钉通讯录中未找到（请确保该成员已加入企业且邮箱一致）。`, type: 'error' });
                         }
                     } catch (apiErr) {
                         console.error("DingTalk API query error for user:", crmId, apiErr);
