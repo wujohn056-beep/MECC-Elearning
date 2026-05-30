@@ -223,6 +223,7 @@
         "generate_transcript": "Generate Arabic Transcript",
         "regenerate_transcript": "Regenerate Arabic Transcript",
         "transcribing": "Transcribing into Arabic...",
+        "transcribe_started": "Background transcription started! Processing securely in background. No need to wait here—feel free to perform other tasks, and it will be ready in 1-2 minutes.",
         "transcript_ready": "Arabic Transcript Ready",
         "transcribe_fail": "Arabic Speech-to-Text Transcription Failed",
         "transcribe_success": "Arabic transcription completed! Automatically synced to database."

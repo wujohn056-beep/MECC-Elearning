@@ -155,6 +155,19 @@ export default function RecordingsManager() {
         fetchData();
     }, []);
 
+    // Polling effect: auto-refresh list if any recording is in 'transcribing' state
+    useEffect(() => {
+        const hasTranscribing = recordings.some(rec => (rec as any).transcriptStatus === 'transcribing');
+        if (!hasTranscribing) return;
+
+        console.log("Detected transcribing recording(s). Activating 10-second polling interval...");
+        const interval = setInterval(() => {
+            fetchData();
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [recordings]);
+
     useEffect(() => {
         if (profile?.dep === 'SS') {
             setBusinessType('ss');
@@ -213,28 +226,37 @@ export default function RecordingsManager() {
     const handleTranscribe = async (rec: Recording) => {
         if (!rec.id) return;
         setTranscribingIds(prev => ({ ...prev, [rec.id]: true }));
+        
+        const recordingRef = doc(db, 'recordings', rec.id);
         try {
-            const res = await fetch('/.netlify/functions/transcribe', {
+            await updateDoc(recordingRef, { transcriptStatus: 'transcribing' });
+            setRecordings(prev => prev.map(r => r.id === rec.id ? { ...r, transcriptStatus: 'transcribing' } as any : r));
+        } catch (dbErr) {
+            console.error("Failed to update status in Firestore:", dbErr);
+        }
+
+        try {
+            const res = await fetch('/.netlify/functions/transcribe-background', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ recordingId: rec.id })
             });
 
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || t('recordings_manager.transcribe_fail', '语音解析失败，请稍后重试。'));
-            }
-
-            const data = await res.json();
-            if (data.success) {
-                alert(t('recordings_manager.transcribe_success', '阿语逐字稿解析完成！已成功同步至录音库。'));
+            if (res.status === 202) {
+                alert(t('recordings_manager.transcribe_started', '后台语音解析已启动！系统正在后台安全处理中，您无需在此等待，可直接进行其他操作，1-2分钟后将自动就绪。'));
                 await fetchData();
             } else {
-                throw new Error(data.error || t('recordings_manager.transcribe_fail'));
+                throw new Error(t('recordings_manager.transcribe_fail', '语音解析启动失败，请稍后重试。'));
             }
         } catch (error: any) {
             console.error("Transcription failed:", error);
             alert(`${t('recordings_manager.transcribe_fail', '语音解析失败')} : ${error.message}`);
+            try {
+                await updateDoc(recordingRef, { transcriptStatus: 'error' });
+                await fetchData();
+            } catch (dbErr) {
+                console.error("Failed to revert status in Firestore:", dbErr);
+            }
         } finally {
             setTranscribingIds(prev => ({ ...prev, [rec.id]: false }));
         }
@@ -950,16 +972,21 @@ export default function RecordingsManager() {
                                                     <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
                                                         {rec.categoryName || t('common.uncategorized')}
                                                     </span>
-                                                    {(rec as any).transcript && (
-                                                        <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
-                                                            📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
-                                                        </span>
-                                                    )}
-                                                    {transcribingIds[rec.id] && (
-                                                        <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-0.5 animate-pulse">
-                                                            ⚙️ {t('recordings_manager.transcribing', '正在解析为逐字稿...')}
-                                                        </span>
-                                                    )}
+                                                    {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && (
+                                                         <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
+                                                             📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
+                                                         </span>
+                                                     )}
+                                                     {((rec as any).transcriptStatus === 'transcribing' || transcribingIds[rec.id]) && (
+                                                         <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-0.5 animate-pulse">
+                                                             ⚙️ {t('recordings_manager.transcribing', '正在解析为逐字稿...')}
+                                                         </span>
+                                                     )}
+                                                     {(rec as any).transcriptStatus === 'error' && (
+                                                         <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-semibold">
+                                                             ❌ {t('recordings_manager.transcribe_fail', '语音解析失败')}
+                                                         </span>
+                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="font-bold text-arabian-night">
@@ -979,7 +1006,7 @@ export default function RecordingsManager() {
                                             <div className="flex gap-2">
                                                 <button 
                                                     onClick={() => handleTranscribe(rec)} 
-                                                    disabled={transcribingIds[rec.id] || uploading}
+                                                    disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
                                                     className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
                                                         (rec as any).transcript 
                                                             ? 'text-green-600 hover:bg-green-50' 
@@ -987,7 +1014,7 @@ export default function RecordingsManager() {
                                                     }`} 
                                                     title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
                                                 >
-                                                    {transcribingIds[rec.id] ? (
+                                                    {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
                                                         <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
                                                     ) : (
                                                         <FileText className="h-4 w-4" />

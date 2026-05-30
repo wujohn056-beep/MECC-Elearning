@@ -8,12 +8,12 @@ if (!admin.apps.length) {
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount)
             });
-            console.log("Firebase Admin successfully initialized in Transcribe function.");
+            console.log("Firebase Admin successfully initialized in Transcribe Background function.");
         } else {
-            console.warn("FIREBASE_SERVICE_ACCOUNT env var not found in Transcribe function. Running in mockup fallback mode.");
+            console.warn("FIREBASE_SERVICE_ACCOUNT env var not found in Transcribe Background function. Running in mockup fallback mode.");
         }
     } catch (error) {
-        console.error("Firebase Admin Initialization Error in Transcribe function:", error);
+        console.error("Firebase Admin Initialization Error in Transcribe Background function:", error);
     }
 }
 
@@ -67,9 +67,10 @@ export const handler = async (event, context) => {
         };
     }
 
+    let recordingId = null;
     try {
         const body = JSON.parse(event.body || '{}');
-        const { recordingId } = body;
+        recordingId = body.recordingId;
 
         if (!recordingId) {
             return {
@@ -110,6 +111,12 @@ export const handler = async (event, context) => {
                 body: JSON.stringify({ error: 'Recording does not contain a valid audio/video URL' })
             };
         }
+
+        // 1. Instantly ensure state is synchronized to 'transcribing' in database
+        console.log(`Setting recording ${recordingId} transcript status to transcribing...`);
+        await recordingRef.update({
+            transcriptStatus: 'transcribing'
+        });
 
         const apiKey = process.env.GEMINI_API_KEY;
         let transcriptText = "";
@@ -192,12 +199,13 @@ export const handler = async (event, context) => {
 العميل: هذا يبدو بالضبط ما أحتاجه. كم تبلغ تكلفة الاشتراك؟
 العامل: قبل أن نتحدث عن الأرقام، أود أن أخبرك أن الاشتراك لدينا يوفر "قيمة إضافية استثنائية" (Extra Value). بالإضافة إلى 30 جلسة فردية مباشرة مع معلمين خبراء، ستحصل مجانًا على وصول غير محدود لمكتبتنا التفاعلية التي تضم أكثر من 500 درس عملي، وجلسات محاكاة حية أسبوعية مع مديري مشاريع دوليين لممارسة سيناريوهات حقيقية. هذا يعني أنك تستثمر في منصة تطوير مهني كاملة وليس مجرد حصص عادية.
 العميل: نعم، هذه إضافات رائعة بالفعل.
-العامل: الاستثمار الإجمالي لهذه الباقة المتكاملة التي تدوم 6 أشهر هو 1200 دولار فقط. وإذا قمنا بالتقسيم، فهو يعادل تقريبًا 200 دولار شهريًا كاستثمار مباشر في ترقيتك المهنية القادمة. ما رأيك في البدء معنا من الأسبوع القادم؟
+العامل: الاستثمار الإجمالي لهذه الباقة المتكاملة التي تدوم 6 أشهر هو 1200 dollar فقط. وإذا قمنا بالتقسيم، فهو يعادل تقريبًا 200 دولار شهريًا كاستثمار مباشر في ترقيتك المهنية القادمة. ما رأيك في البدء معنا من الأسبوع القادم؟
 العميل: الاستثمار يبدو معقولاً جدًا نظرًا للقيمة والخدمات المرفقة الفردية. أعتقد أنني جاهز للبدء.
 العامل: رائع جدًا يا أستاذ سمير! سأرسل لك رابط التسجيل الآمن الآن عبر البريد الإلكتروني. مرحبًا بك في أكاديميتنا!`;
         }
 
-        // Update Firestore document
+        // Update Firestore document with clean transcript status and result
+        console.log(`Successfully completed transcription for recording ${recordingId}. Syncing results to Firestore...`);
         await recordingRef.update({
             transcript: transcriptText,
             transcriptStatus: 'ready',
@@ -219,7 +227,20 @@ export const handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error('Transcribe function error:', error);
+        console.error('Transcribe background function error:', error);
+        
+        // Reset status on failure so it doesn't get stuck in 'transcribing'
+        if (recordingId) {
+            try {
+                const db = getFirestoreDb();
+                await db.collection('recordings').doc(recordingId).update({
+                    transcriptStatus: 'error'
+                });
+            } catch (dbErr) {
+                console.error('Failed to reset status in Firestore:', dbErr);
+            }
+        }
+
         return {
             statusCode: 500,
             headers: { 
