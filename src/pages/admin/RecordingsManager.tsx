@@ -600,11 +600,17 @@ export default function RecordingsManager() {
                                         {showLecturerDropdown && (
                                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto scrollbar-thin">
                                                 {systemUsers
-                                                    .filter(u => 
-                                                        !lecturerName || 
-                                                        (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
-                                                        (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
-                                                    )
+                                                    .filter(u => {
+                                                        const userDep = u.dep || 'CC';
+                                                        if (businessType === 'ss') {
+                                                            if (userDep !== 'SS') return false;
+                                                        } else {
+                                                            if (userDep === 'SS') return false;
+                                                        }
+                                                        return !lecturerName || 
+                                                            (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
+                                                            (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()));
+                                                    })
                                                     .slice(0, 20)
                                                     .map(u => (
                                                         <div 
@@ -620,11 +626,17 @@ export default function RecordingsManager() {
                                                             {u.crmId && <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{u.crmId}</span>}
                                                         </div>
                                                     ))}
-                                                {systemUsers.filter(u => 
-                                                        !lecturerName || 
+                                                {systemUsers.filter(u => {
+                                                    const userDep = u.dep || 'CC';
+                                                    if (businessType === 'ss') {
+                                                        if (userDep !== 'SS') return false;
+                                                    } else {
+                                                        if (userDep === 'SS') return false;
+                                                    }
+                                                    return !lecturerName || 
                                                         (u.name && u.name.toLowerCase().includes(lecturerName.toLowerCase())) ||
-                                                        (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()))
-                                                ).length === 0 && (
+                                                        (u.crmId && u.crmId.toLowerCase().includes(lecturerName.toLowerCase()));
+                                                }).length === 0 && (
                                                     <div className="px-4 py-4 text-center">
                                                         <p className="text-xs text-gray-400 mb-2">
                                                             {t('recordings_manager.no_matching_users', '未找到匹配的系统成员')}
