@@ -170,7 +170,13 @@
         "sensitive_comment_warning": "提醒：为了共同营造积极、专业的学习氛围，请使用具有建设性、专业性的语言进行互动讨论哦！感谢您的配合！",
         "audio_mode": "销售音频模式",
         "timeline_highlights": "音频时间轴高光批注",
-        "attach_timestamp": "关联当前播放时间"
+        "attach_timestamp": "关联当前播放时间",
+        "course_details": "课程详情",
+        "ai_call_portrait": "AI 录音画像",
+        "analysis_not_ready": "AI 智能诊断画像未生成",
+        "analysis_not_ready_desc": "系统正在自动生成录音画像。AI 将深入诊断说话比例、语速、异议处理与情绪走势。",
+        "generate_analysis": "启动 AI 通话体检",
+        "analysis_success": "AI 智能录音诊断画像生成成功！"
     },
     "category_manager": {
         "title": "目录分类管理",

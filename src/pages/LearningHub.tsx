@@ -434,7 +434,19 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [recordingAnalysis, setRecordingAnalysis] = useState<any>(rec.aiAnalysis || null);
 
-    const handleTriggerAnalysis = async () => {
+    React.useEffect(() => {
+        // Safe check to sync active state when database updates or modal changes
+        setRecordingAnalysis(rec.aiAnalysis || null);
+    }, [rec.id, rec.aiAnalysis]);
+
+    React.useEffect(() => {
+        if (!recordingAnalysis && !isAnalyzing && rec.transcriptStatus === 'ready') {
+            console.log("Auto-triggering AI Analysis in the background for recording:", rec.id);
+            handleTriggerAnalysis(true); // silent auto-trigger
+        }
+    }, [rec.id, rec.transcriptStatus, recordingAnalysis]);
+
+    const handleTriggerAnalysis = async (isSilent = false) => {
         setIsAnalyzing(true);
         try {
             const res = await fetch('/.netlify/functions/analyze-audio', {
@@ -445,13 +457,17 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
             const data = await res.json();
             if (res.ok && data.success) {
                 setRecordingAnalysis(data.aiAnalysis);
-                alert(t('learning_hub.analysis_success', 'Gemini AI 智能录音诊断画像生成成功！'));
+                if (!isSilent) {
+                    alert(t('learning_hub.analysis_success', 'AI 智能录音诊断画像生成成功！'));
+                }
             } else {
                 throw new Error(data.error || 'Unknown error');
             }
         } catch (error: any) {
             console.error("AI Analysis Trigger failed:", error);
-            alert(t('learning_hub.analysis_failed', 'AI 诊断画像生成失败：') + error.message);
+            if (!isSilent) {
+                alert(t('learning_hub.analysis_failed', 'AI 诊断画像生成失败：') + error.message);
+            }
         } finally {
             setIsAnalyzing(false);
         }
@@ -1073,10 +1089,10 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-sm font-extrabold text-arabian-night">
-                                            {t('learning_hub.analysis_not_ready', 'Gemini AI 智能诊断画像未生成')}
+                                            {t('learning_hub.analysis_not_ready', 'AI 智能诊断画像未生成')}
                                         </p>
                                         <p className="text-xs text-arabian-night/50 max-w-sm font-semibold leading-relaxed">
-                                            {t('learning_hub.analysis_not_ready_desc', '管理员或团队经理可以一键生成录音画像。AI 将深入诊断说话比例、语速、异议处理与情绪走势。')}
+                                            {t('learning_hub.analysis_not_ready_desc', '系统正在自动生成录音画像。AI 将深入诊断说话比例、语速、异议处理与情绪走势。')}
                                         </p>
                                     </div>
                                     
@@ -1084,7 +1100,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                     {(profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm' || profile?.role === 'tl' || isSuperAdmin) && (
                                         <button
                                             type="button"
-                                            onClick={handleTriggerAnalysis}
+                                            onClick={() => handleTriggerAnalysis(false)}
                                             disabled={isAnalyzing}
                                             className="bg-gradient-to-r from-desert-gold to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 cursor-pointer focus:outline-none"
                                         >
@@ -1095,7 +1111,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                                 </>
                                             ) : (
                                                 <>
-                                                    <span>✨ {t('learning_hub.generate_analysis', '启动 Gemini AI 通话体检')}</span>
+                                                    <span>✨ {t('learning_hub.generate_analysis', '启动 AI 通话体检')}</span>
                                                 </>
                                             )}
                                         </button>

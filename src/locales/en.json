@@ -171,7 +171,13 @@
         "sensitive_comment_warning": "Reminder: To build a positive and professional learning environment, please use constructive and professional language! Thank you for your cooperation!",
         "audio_mode": "Sales Audio Mode",
         "timeline_highlights": "Timeline Highlights & Notes",
-        "attach_timestamp": "Attach Current Playback Time"
+        "attach_timestamp": "Attach Current Playback Time",
+        "course_details": "Course Details",
+        "ai_call_portrait": "AI Call Portrait",
+        "analysis_not_ready": "AI Call Portrait Not Generated",
+        "analysis_not_ready_desc": "The system is automatically generating the call portrait in the background. The AI will analyze talk ratio, speech rate, objection handling, and sentiment trends.",
+        "generate_analysis": "Start AI Call Portrait Analysis",
+        "analysis_success": "AI Call Portrait Analysis generated successfully!"
     },
     "category_manager": {
         "title": "Category Management",
