@@ -163,7 +163,19 @@ exports.handler = async (event, context) => {
                     try {
                         const emailPrefix = email.split('@')[0];
                         const nameSegment = crmId.split('-').pop();
-                        const searchTerms = Array.from(new Set([crmId, emailPrefix, nameSegment])).filter(Boolean);
+                        
+                        // Generate highly inclusive search terms to cover all spelling variations of foreign names
+                        const searchTerms = Array.from(new Set([
+                            crmId,
+                            emailPrefix,
+                            nameSegment,
+                            emailPrefix.length >= 3 ? emailPrefix.substring(0, 3) : null,
+                            emailPrefix.length >= 4 ? emailPrefix.substring(0, 4) : null,
+                            nameSegment.length >= 3 ? nameSegment.substring(0, 3) : null,
+                            emailPrefix.toLowerCase().startsWith('moh') ? 'mohammad' : null,
+                            emailPrefix.toLowerCase().startsWith('moh') ? 'mohammed' : null,
+                            emailPrefix.toLowerCase().startsWith('moh') ? 'moh' : null
+                        ])).filter(Boolean);
                         
                         logs.push({ msg: `🔍 [精准匹配] 正在针对销售 [${crmId}] (${email}) 的个人特征，启动多重通讯录定向检索...`, type: 'success' });
                         
