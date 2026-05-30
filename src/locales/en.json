@@ -47,7 +47,9 @@
         "type_ss": "SS Sales",
         "type_cc": "CC Sales",
         "type_functional": "Functional Dept",
-        "select_business_type": "Select Business"
+        "select_business_type": "Select Business",
+        "share": "Share",
+        "cancel": "Cancel"
     },
     "navbar": {
         "title": "ME Cloud Academy",
@@ -118,7 +120,17 @@
         "see_more": "See More",
         "see_less": "See Less",
         "suggested_lecturers": "Suggested Lecturers",
-        "suggested_courses": "Suggested Courses"
+        "suggested_courses": "Suggested Courses",
+        "share_poster_title": "Generate Share Poster",
+        "share_poster_desc": "Generate high-definition share poster, and send exclusive direct learning link to your sales team.",
+        "exclusive_link": "Exclusive Learning Link",
+        "copy_link": "Copy Link",
+        "copy_link_success": "Link copied to clipboard successfully!",
+        "download_poster": "Download Share Poster",
+        "download_poster_success": "Poster downloaded successfully!",
+        "download_poster_fail": "Failed to generate poster, please try again.",
+        "poster_badge": "Premium Sales Recording",
+        "scan_to_learn": "Scan QR code or use link to learn immediately"
     },
     "category_manager": {
         "title": "Category Management",

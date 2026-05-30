@@ -47,7 +47,9 @@
         "type_ss": "SS مبيعات",
         "type_cc": "CC مبيعات",
         "type_functional": "القسم الوظيفي",
-        "select_business_type": "اختر العمل"
+        "select_business_type": "اختر العمل",
+        "share": "مشاركة",
+        "cancel": "إلغاء"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",
@@ -117,7 +119,17 @@
         "see_more": "عرض المزيد",
         "see_less": "عرض أقل",
         "suggested_lecturers": "المحاضرون المقترحون",
-        "suggested_courses": "المسارات المقترحة"
+        "suggested_courses": "المسارات المقترحة",
+        "share_poster_title": "إنشاء ملصق المشاركة",
+        "share_poster_desc": "قم بإنشاء ملصق مشاركة عالي الدقة، وأرسل رابط التعلم المباشر الحصري لفريق المبيعات الخاص بك.",
+        "exclusive_link": "رابط التعلم الخاص",
+        "copy_link": "نسخ الرابط",
+        "copy_link_success": "تم نسخ الرابط إلى الحافظة بنجاح!",
+        "download_poster": "تحميل ملصق المشاركة",
+        "download_poster_success": "تم تحميل الملصق بنجاح!",
+        "download_poster_fail": "فشل إنشاء الملصق، يرجى المحاولة مرة أخرى.",
+        "poster_badge": "تسجيل مبيعات مميز",
+        "scan_to_learn": "امسح رمز الاستجابة السريعة أو استخدم الرابط للتعلم فورًا"
     },
     "category_manager": {
         "title": "إدارة التصنيفات",

@@ -47,7 +47,9 @@
         "type_ss": "SS 业务",
         "type_cc": "CC 业务",
         "type_functional": "职能部门",
-        "select_business_type": "选择业务线"
+        "select_business_type": "选择业务线",
+        "share": "分享",
+        "cancel": "取消"
     },
     "navbar": {
         "title": "ME 云学堂",
@@ -117,7 +119,17 @@
         "see_more": "展开更多",
         "see_less": "收起",
         "suggested_lecturers": "推荐讲师",
-        "suggested_courses": "推荐课程"
+        "suggested_courses": "推荐课程",
+        "share_poster_title": "生成分享海报",
+        "share_poster_desc": "生成高清晰度分享海报，并将专属直达链接发送给您的销售团队。",
+        "exclusive_link": "专属学习链接",
+        "copy_link": "复制链接",
+        "copy_link_success": "链接已成功复制到剪贴板！",
+        "download_poster": "下载分享海报",
+        "download_poster_success": "海报下载成功！",
+        "download_poster_fail": "海报生成失败，请重试。",
+        "poster_badge": "精品销售实战录音",
+        "scan_to_learn": "扫描二维码或使用链接立即学习"
     },
     "category_manager": {
         "title": "目录分类管理",

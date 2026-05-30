@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Recording {
@@ -149,6 +149,7 @@ const RecordingCard = ({
     handleToggleLike, 
     handleAudioEnded,
     onPlayVideo,
+    onShare,
     disableSeek = false,
     className = ""
 }: any) => {
@@ -238,7 +239,7 @@ const RecordingCard = ({
                             <button 
                                 onClick={() => handleToggleFavorite(rec.id)}
                                 className="flex items-center gap-1 transition-all outline-none bg-white p-1.5 rounded-full border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 active:scale-95"
-                                title="收藏"
+                                title={t('common.favorite', '收藏')}
                             >
                                 <Heart className={`h-4 w-4 transition-all duration-300 ${isFav ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-300 hover:text-red-400'}`} />
                             </button>
@@ -251,6 +252,14 @@ const RecordingCard = ({
                                 <span className={`${isLiked ? 'text-desert-gold' : 'text-arabian-night/50'} font-bold text-xs`}>
                                     {rec.likes?.length || 0}
                                 </span>
+                            </button>
+
+                            <button 
+                                onClick={() => onShare && onShare(rec)}
+                                className="flex items-center gap-1 transition-all outline-none bg-white p-1.5 rounded-full border border-gray-100 shadow-sm hover:shadow-md hover:border-desert-gold/30 active:scale-95"
+                                title={t('common.share', '分享')}
+                            >
+                                <Share2 className="h-4 w-4 text-arabian-night/40 hover:text-desert-gold transition-all" />
                             </button>
                         </div>
                     </div>
@@ -350,6 +359,211 @@ const VideoPlayerModal = ({ rec, disableSeek, onClose, onEnded }: any) => {
     );
 };
 
+const SharePosterModal = ({ rec, onClose }: any) => {
+    const { t } = useTranslation();
+    const posterRef = React.useRef<HTMLDivElement>(null);
+    const [isCopying, setIsCopying] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}?recordingId=${rec.id}`;
+
+    const handleCopyLink = async () => {
+        setIsCopying(true);
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            alert(t('learning_hub.copy_link_success', '链接已成功复制到剪贴板！'));
+        } catch (err) {
+            console.error('Failed to copy', err);
+        } finally {
+            setIsCopying(false);
+        }
+    };
+
+    const handleDownloadPoster = async () => {
+        if (!posterRef.current) return;
+        setIsDownloading(true);
+        try {
+            const { toPng } = await import('html-to-image');
+            const dataUrl = await toPng(posterRef.current, {
+                quality: 0.95,
+                pixelRatio: 2,
+                cacheBust: true,
+            });
+            const link = document.createElement('a');
+            link.download = `ME_Share_Poster_${rec.displayId || 'Course'}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (error) {
+            console.error("Error generating poster image", error);
+            alert(t('learning_hub.download_poster_fail', '海报生成失败，请重试。'));
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
+            {/* Modal Container */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-300 max-h-[90vh] relative z-10">
+                
+                {/* Left Side: Poster Design Canvas */}
+                <div className="bg-gray-100 p-8 flex items-center justify-center md:border-r border-gray-100 overflow-y-auto max-h-[50vh] md:max-h-none flex-1">
+                    {/* The Poster DOM element target */}
+                    <div 
+                        ref={posterRef}
+                        className="w-[320px] h-[480px] bg-gradient-to-br from-[#064e3b] via-[#022c22] to-[#0f172a] border border-desert-gold/30 rounded-2xl p-6 flex flex-col relative shadow-xl shrink-0 text-white overflow-hidden select-none font-sans"
+                    >
+                        {/* Golden Decorative Background Light */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-desert-gold/15 to-transparent rounded-bl-full pointer-events-none blur-xl"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-light-teal/20 to-transparent rounded-tr-full pointer-events-none blur-xl"></div>
+
+                        {/* Top Header Branding */}
+                        <div className="text-center border-b border-white/10 pb-3 relative z-10">
+                            <h2 className="text-lg font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-desert-gold to-yellow-500 flex items-center justify-center gap-1">
+                                🏆 ME CLOUD ACADEMY
+                            </h2>
+                            <span className="bg-desert-gold/15 text-desert-gold border border-desert-gold/30 text-[9px] px-2.5 py-0.5 rounded-full font-black tracking-wider uppercase inline-block mt-1">
+                                {t('learning_hub.poster_badge', '精品销售实战录音')}
+                            </span>
+                        </div>
+
+                        {/* Main Lecturer & Material Info */}
+                        <div className="flex-1 flex flex-col justify-center items-center text-center mt-3 relative z-10">
+                            {/* Lecturer Avatar */}
+                            <div className="w-16 h-16 rounded-full border-3 border-white shadow-md overflow-hidden bg-white/10 flex items-center justify-center mb-2.5">
+                                {rec.avatarUrl ? (
+                                    <img src={rec.avatarUrl} alt="Lecturer" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xl font-bold">
+                                        {rec.lecturerName ? rec.lecturerName.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Lecturer Name */}
+                            {rec.lecturerName && (
+                                <div className="text-desert-gold font-bold text-xs flex items-center gap-1.5 mb-1 px-3 bg-white/5 py-1 rounded-full border border-white/5">
+                                    <span>👤</span> {rec.lecturerName}
+                                </div>
+                            )}
+
+                            {/* Course Display ID & Title */}
+                            <div className="mt-1">
+                                {rec.displayId && (
+                                    <span className="text-desert-gold/90 text-xs font-black tracking-wide bg-desert-gold/10 border border-desert-gold/20 px-2 py-0.5 rounded-md">
+                                        [{rec.displayId}]
+                                    </span>
+                                )}
+                                <h3 className="text-white text-base font-black leading-snug tracking-tight mt-2 line-clamp-2 px-2">
+                                    {rec.title}
+                                </h3>
+                            </div>
+
+                            {/* Short Description */}
+                            <p className="text-white/60 text-[11px] leading-relaxed mt-2.5 px-4 line-clamp-2 italic">
+                                {rec.description || '优秀录音复盘，助推专业成长！'}
+                            </p>
+                        </div>
+
+                        {/* Footer QR Block */}
+                        <div className="border-t border-white/10 pt-3.5 mt-auto w-full flex items-center justify-between relative z-10">
+                            <div className="flex-1 min-w-0 pr-2">
+                                <h4 className="text-[11px] font-black text-desert-gold tracking-wide">
+                                    ME 云学堂 · 荣誉出品
+                                </h4>
+                                <p className="text-[9px] text-white/40 mt-0.5 leading-snug">
+                                    {t('learning_hub.scan_to_learn', '扫描二维码或使用链接立即学习')}
+                                </p>
+                            </div>
+                            <div className="w-16 h-16 bg-white p-1 rounded-xl shadow-lg flex items-center justify-center overflow-hidden shrink-0 border border-white/20">
+                                <img 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`} 
+                                    alt="QR Code" 
+                                    className="w-full h-full object-contain"
+                                    crossOrigin="anonymous"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Side: Options and Actions */}
+                <div className="p-8 flex-1 flex flex-col justify-between max-h-[40vh] md:max-h-none">
+                    {/* Header */}
+                    <div>
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-xl font-extrabold text-deep-teal mb-1">
+                                    {t('learning_hub.share_poster_title', '生成分享海报')}
+                                </h3>
+                                <p className="text-xs text-arabian-night/50 font-bold">
+                                    {t('learning_hub.share_poster_desc', '生成高清晰度分享海报，并将专属直达链接发送给您的销售团队。')}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={onClose}
+                                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-700 outline-none shrink-0"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Link Display Box */}
+                        <div className="bg-gray-50 border border-gray-200/60 rounded-2xl p-4 mt-6">
+                            <h4 className="text-xs font-extrabold text-deep-teal mb-2">
+                                🔗 {t('learning_hub.exclusive_link', '专属学习链接')}
+                            </h4>
+                            <div className="flex gap-2 items-center">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={shareUrl}
+                                    className="flex-1 bg-white border border-gray-200/80 rounded-xl px-3 py-2 text-xs font-semibold outline-none text-arabian-night/70 select-all"
+                                />
+                                <button
+                                    onClick={handleCopyLink}
+                                    className="bg-deep-teal text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-teal-700 hover:shadow-md hover:shadow-teal-900/10 active:scale-95 transition-all shrink-0 cursor-pointer"
+                                >
+                                    {isCopying ? '...' : t('learning_hub.copy_link', '复制')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="mt-8 flex flex-col gap-2.5">
+                        <button
+                            onClick={handleDownloadPoster}
+                            disabled={isDownloading}
+                            className="bg-gradient-to-r from-desert-gold to-yellow-600 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg shadow-yellow-600/10 hover:shadow-yellow-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isDownloading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : '💾'}
+                            {t('learning_hub.download_poster', '下载分享海报')}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="bg-gray-100 hover:bg-gray-200 text-arabian-night/80 font-bold text-sm py-3 rounded-2xl transition-all cursor-pointer text-center"
+                        >
+                            {t('common.cancel', '取消')}
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
 export default function LearningHub() {
     const { t } = useTranslation();
     const { user, profile } = useAuth();
@@ -382,6 +596,9 @@ export default function LearningHub() {
     // Video Modal States
     const [activeVideoRecording, setActiveVideoRecording] = useState<Recording | null>(null);
     const [activeVideoDisableSeek, setActiveVideoDisableSeek] = useState(false);
+
+    // Share Poster Modal State
+    const [shareRecording, setShareRecording] = useState<Recording | null>(null);
 
     // Suggestions Autocomplete States
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -1115,6 +1332,7 @@ export default function LearningHub() {
                                                                 setActiveVideoRecording(videoRec);
                                                                 setActiveVideoDisableSeek(isSeekDisabled);
                                                             }}
+                                                            onShare={setShareRecording}
                                                             disableSeek={!isTaskCompleted}
                                                             className="w-full h-full"
                                                         />
@@ -1167,6 +1385,7 @@ export default function LearningHub() {
                                                     setActiveVideoRecording(videoRec);
                                                     setActiveVideoDisableSeek(isSeekDisabled);
                                                 }}
+                                                onShare={setShareRecording}
                                                 className="w-full h-full"
                                             />
                                         </div>
@@ -1253,6 +1472,12 @@ export default function LearningHub() {
                     onEnded={(duration) => {
                         handleAudioEnded(activeVideoRecording, duration);
                     }}
+                />
+            )}
+            {shareRecording && (
+                <SharePosterModal
+                    rec={shareRecording}
+                    onClose={() => setShareRecording(null)}
                 />
             )}
         </div>
