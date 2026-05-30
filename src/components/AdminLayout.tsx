@@ -1,12 +1,19 @@
+import React, { useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
 
 export default function AdminLayout() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { logout, hasPermission, hasAnyAdminPermission } = useAuth();
     const location = useLocation();
+
+    // Dynamically update document title based on selected language
+    useEffect(() => {
+        const appTitle = t('navbar.title', 'ME Cloud Academy');
+        document.title = `${appTitle} - ${t('navbar.admin_dashboard', '管理后台')}`;
+    }, [i18n.language, t]);
 
     const getLinkClass = (path: string, exact: boolean = false) => {
         const isActive = exact ? location.pathname === path : location.pathname.startsWith(path);

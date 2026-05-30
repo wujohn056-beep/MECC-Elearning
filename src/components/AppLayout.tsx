@@ -129,6 +129,12 @@ export default function AppLayout() {
         i18n.changeLanguage(nextLang);
     };
 
+    // Dynamically update document title based on selected language
+    useEffect(() => {
+        const appTitle = t('navbar.title', 'ME Cloud Academy');
+        document.title = `${appTitle} - ${t('learning_hub.subtitle', '精品销售实战录音库')}`;
+    }, [i18n.language, t]);
+
     // Close menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

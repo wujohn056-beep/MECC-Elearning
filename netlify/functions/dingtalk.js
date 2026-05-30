@@ -402,7 +402,7 @@ exports.handler = async (event, context) => {
                     if (snapshot.empty) {
                         return {
                             statusCode: 400,
-                            body: JSON.stringify({ error: '您当前的钉钉账号未与云学堂绑定，请联系管理员或使用账号密码登录！' })
+                            body: JSON.stringify({ error: '您当前的钉钉账号未与 ME 云学堂绑定，请联系管理员或使用账号密码登录！ / Your DingTalk account is not bound to ME Cloud Academy. Please contact administrator or login with account & password.' })
                         };
                     }
 
@@ -502,13 +502,13 @@ exports.handler = async (event, context) => {
 
             const getMsgMarkdown = (lang) => {
                 if (lang === 'en') {
-                    return `### 📚 **New Learning Task Assigned** \n\n **Task Name**: ${title} \n **Deadline**: ${deadline || '-'} \n **Assigner**: ${assignerName} \n\n Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline. \n\n [👉 Click Here to Start Learning](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
+                    return `### 📚 **ME Cloud Academy - New Learning Task Assigned** \n\n **Task Name**: ${title} \n **Deadline**: ${deadline || '-'} \n **Assigner**: ${assignerName} \n\n Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline. \n\n [👉 Click Here to Start Learning](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
                 }
-                return `### 📚 **收到新的云学堂学习任务** \n\n **任务名称**：${title} \n **截止日期**：${deadline || '-'} \n **指派导师**：${assignerName} \n\n 优秀的销售录音复盘，能助推专业成长，请及时在截止日期前听完相关录音并提交心得感悟。 \n\n [👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
+                return `### 📚 **收到新的 ME 云学堂学习任务** \n\n **任务名称**：${title} \n **截止日期**：${deadline || '-'} \n **指派导师**：${assignerName} \n\n 优秀的销售录音复盘，能助推专业成长，请及时在截止日期前听完相关录音并提交心得感悟。 \n\n [👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
             };
 
             const getMsgTitle = (lang) => {
-                return lang === 'en' ? "📚 New Learning Task Assigned" : "📚 新学习任务指派";
+                return lang === 'en' ? "📚 ME Cloud Academy - New Task" : "📚 ME 云学堂 - 新学习任务指派";
             };
 
             let sentSuccess = false;
@@ -598,13 +598,13 @@ exports.handler = async (event, context) => {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing material recordingId or title' }) };
             }
 
-            const markdownBilingual = `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME云学堂新增精品录音素材 / New Premium Recording Released** \n\n **素材编号 / ID**：[${displayId || recordingId}] \n **录音标题 / Title**：${title} \n **主讲人 / Lecturer**：${lecturerName || '系统导师 / Mentor'} \n **分类线 / Category**：${categoryName || '精品推荐 / Featured'} \n\n **课程介绍 / Introduction**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。 / Highly recommended! Click the link below to listen.'} \n\n 欢迎收听！ / Happy listening!`;
+            const markdownBilingual = `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME 云学堂新增精品录音素材 / ME Cloud Academy - New Premium Recording Released** \n\n **素材编号 / ID**：[${displayId || recordingId}] \n **录音标题 / Title**：${title} \n **主讲人 / Lecturer**：${lecturerName || '系统导师 / Mentor'} \n **分类线 / Category**：${categoryName || '精品推荐 / Featured'} \n\n **课程介绍 / Introduction**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。 / Highly recommended! Click the link below to listen.'} \n\n 欢迎收听！ / Happy listening!`;
 
             const getMsgMarkdown = (lang) => {
                 if (lang === 'en') {
-                    return `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 New Premium Recording Material Released** \n\n **ID**: [${displayId || recordingId}] \n **Title**: ${title} \n **Lecturer**: ${lecturerName || 'Mentor'} \n **Category**: ${categoryName || 'Featured'} \n\n **Introduction**: \n ${description || 'Highly recommended! Click the link below to listen to the recording.'} \n\n Happy listening!`;
+                    return `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME Cloud Academy - New Premium Recording Released** \n\n **ID**: [${displayId || recordingId}] \n **Title**: ${title} \n **Lecturer**: ${lecturerName || 'Mentor'} \n **Category**: ${categoryName || 'Featured'} \n\n **Introduction**: \n ${description || 'Highly recommended! Click the link below to listen to the recording.'} \n\n Happy listening!`;
                 }
-                return `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME云学堂新增精品录音素材** \n\n **素材编号**：[${displayId || recordingId}] \n **录音标题**：${title} \n **主讲人**：${lecturerName || '系统导师'} \n **分类线**：${categoryName || '精品推荐'} \n\n **课程介绍**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。'} \n\n 欢迎收听！`;
+                return `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME 云学堂新增精品录音素材** \n\n **素材编号**：[${displayId || recordingId}] \n **录音标题**：${title} \n **主讲人**：${lecturerName || '系统导师'} \n **分类线**：${categoryName || '精品推荐'} \n\n **课程介绍**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。'} \n\n 欢迎收听！`;
             };
 
             const getMsgBtnText = (lang) => {
@@ -612,7 +612,7 @@ exports.handler = async (event, context) => {
             };
 
             const getMsgTitle = (lang) => {
-                return lang === 'en' ? "🔥 New Premium Recording Released" : "🔥 精品录音发布";
+                return lang === 'en' ? "🔥 ME Cloud Academy - New Material" : "🔥 ME 云学堂精品录音发布";
             };
 
             let sentSuccess = false;
@@ -631,7 +631,7 @@ exports.handler = async (event, context) => {
                         body: JSON.stringify({
                             msgtype: "actionCard",
                             actionCard: {
-                                title: "🔥 ME云学堂精品录音发布 / New Premium Recording Released",
+                                title: "🔥 ME 云学堂精品录音发布 / ME Cloud Academy - New Premium Recording Released",
                                 text: markdownBilingual,
                                 btnOrientation: "0",
                                 btns: [
