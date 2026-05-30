@@ -140,7 +140,10 @@
         "poster_badge": "Premium Sales Recording",
         "poster_default_desc": "Premium recording review, boosting professional growth!",
         "poster_branding": "ME Cloud Academy · Proudly Presented",
-        "scan_to_learn": "Scan QR code or use link to learn immediately"
+        "scan_to_learn": "Scan QR code or use link to learn immediately",
+        "read_document": "Read Study Document",
+        "doc_tag": "Doc",
+        "open_document_btn": "Open and Read Document"
     },
     "category_manager": {
         "title": "Category Management",

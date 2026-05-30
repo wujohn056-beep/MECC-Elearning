@@ -139,7 +139,10 @@
         "poster_badge": "精品销售实战录音",
         "poster_default_desc": "优秀录音复盘，助推专业成长！",
         "poster_branding": "ME 云学堂 · 荣誉出品",
-        "scan_to_learn": "扫描二维码或使用链接立即学习"
+        "scan_to_learn": "扫描二维码或使用链接立即学习",
+        "read_document": "阅读学习文档",
+        "doc_tag": "文档",
+        "open_document_btn": "打开并阅读文档"
     },
     "category_manager": {
         "title": "目录分类管理",

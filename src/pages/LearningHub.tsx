@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2 } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Recording {
@@ -140,6 +140,21 @@ const isVideoUrl = (url: string) => {
            cleanUrl.endsWith('.mkv');
 };
 
+const isDocUrl = (url: string) => {
+    if (!url) return false;
+    const cleanUrl = url.split('?')[0].toLowerCase();
+    return cleanUrl.endsWith('.pdf') || 
+           cleanUrl.endsWith('.doc') || 
+           cleanUrl.endsWith('.docx') || 
+           cleanUrl.endsWith('.xls') || 
+           cleanUrl.endsWith('.xlsx') ||
+           cleanUrl.endsWith('.ppt') ||
+           cleanUrl.endsWith('.pptx') ||
+           cleanUrl.endsWith('.txt') ||
+           cleanUrl.endsWith('.zip') ||
+           cleanUrl.endsWith('.rar');
+};
+
 // Recording Card Component
 const RecordingCard = ({ 
     rec, 
@@ -157,10 +172,41 @@ const RecordingCard = ({
     const isLiked = rec.likes?.includes(user?.uid || '');
     const isFav = favorites.includes(rec.id);
     const isVideo = isVideoUrl(rec.audioUrl);
+    const isDoc = isDocUrl(rec.audioUrl) || 
+                  rec.categoryName?.toLowerCase() === 'doc' || 
+                  rec.categoryName === '文档' || 
+                  rec.categoryName === 'ss文档' || 
+                  rec.categoryName?.toLowerCase() === 'document';
 
     return (
         <div className={`glass-panel rounded-xl hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group flex flex-col border border-white/60 overflow-hidden relative ${className}`}>
-            {isVideo ? (
+            {isDoc ? (
+                /* Beautiful Document Cover in the list card */
+                <a 
+                    href={rec.audioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-24 bg-gradient-to-br from-amber-500 via-orange-600 to-amber-700 relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-gray-100 group/doc shrink-0 animate-in fade-in"
+                >
+                    <div className="absolute inset-0 opacity-25 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
+                    <div className="absolute inset-0 bg-black/10 group-hover/doc:bg-black/35 transition-colors duration-300 z-10"></div>
+                    
+                    {/* Centered Glassmorphic Read Button */}
+                    <div className="flex flex-col items-center justify-center gap-1.5 z-20">
+                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-lg transform group-hover/doc:scale-110 group-hover/doc:bg-white group-hover/doc:text-orange-600 transition-all duration-300">
+                            <FileText className="w-5 h-5 text-white group-hover/doc:text-orange-600" />
+                        </div>
+                        <span className="text-[10px] text-white/90 font-black tracking-widest bg-black/25 px-2 py-0.5 rounded-full select-none">
+                            {t('learning_hub.read_document', '阅读学习文档')}
+                        </span>
+                    </div>
+                    
+                    {/* Document Badge Tag */}
+                    <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none">
+                        📄 {t('learning_hub.doc_tag', '文档')}
+                    </span>
+                </a>
+            ) : isVideo ? (
                 /* Beautiful Video Thumbnail/Cover in the list card */
                 <div 
                     onClick={() => onPlayVideo(rec, disableSeek)}
@@ -187,7 +233,7 @@ const RecordingCard = ({
             )}
 
             {/* Card Content with Restored Avatar */}
-            <div className={`relative z-10 p-4 flex flex-col flex-1 ${!isVideo ? 'pt-5' : 'pt-3'}`}>
+            <div className={`relative z-10 p-4 flex flex-col flex-1 ${(!isVideo && !isDoc) ? 'pt-5' : 'pt-3'}`}>
                 {/* Circular Avatar & Category */}
                 <div className="relative mb-2 flex items-end justify-between">
                     <div className="w-12 h-12 rounded-full border-[3px] border-white shadow-sm bg-white flex items-center justify-center overflow-hidden">
@@ -264,12 +310,24 @@ const RecordingCard = ({
                         </div>
                     </div>
                     
-                    {!isVideo && (
+                    {!isVideo && !isDoc && (
                         <CustomAudioPlayer 
                             src={rec.audioUrl} 
                             onEnded={(duration) => handleAudioEnded(rec, duration)} 
                             disableSeek={disableSeek}
                         />
+                    )}
+                    
+                    {isDoc && (
+                        <a
+                            href={rec.audioUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2.5 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
+                        >
+                            <BookOpen className="w-4 h-4" />
+                            {t('learning_hub.open_document_btn', '打开并阅读文档')}
+                        </a>
                     )}
                 </div>
             </div>
