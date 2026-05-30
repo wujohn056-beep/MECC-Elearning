@@ -162,7 +162,13 @@ export default function UserManager() {
                 const teamValue = row.TEAM ? String(row.TEAM).trim() : (row.Team ? String(row.Team).trim() : (row.DEPARTMENT ? String(row.DEPARTMENT).trim() : (row.Department ? String(row.Department).trim() : '')));
                 const positionValue = row.POSITION ? String(row.POSITION).toUpperCase() : (row.Position ? String(row.Position).toUpperCase() : '');
                 const crmValue = row.CRM ? String(row.CRM).trim() : (row.USERNAME ? String(row.USERNAME).trim() : (row.Username ? String(row.Username).trim() : ''));
+                const emailValue = row.EMAIL ? String(row.EMAIL).trim() : (row.Email ? String(row.Email).trim() : '');
                 
+                let dingtalkUserIdValue = '';
+                if (emailValue) {
+                    dingtalkUserIdValue = emailValue.includes('@') ? emailValue.split('@')[0].toLowerCase().trim().replace(/\s+/g, '') : emailValue.toLowerCase().trim().replace(/\s+/g, '');
+                }
+
                 // Read DEP / DEPARTMENT column
                 const depRaw = row.DEP ? String(row.DEP).trim() : (row.DEPARTMENT ? String(row.DEPARTMENT).trim() : (row.Department ? String(row.Department).trim() : ''));
                 
@@ -187,7 +193,7 @@ export default function UserManager() {
                     const sdId = sdValue.toLowerCase();
                     if (!accountsToCreate.has(sdId)) {
                         accountsToCreate.set(sdId, {
-                            crmId: sdValue, role: 'sd', sd: '', sm: '', tl: '', team: '', dep: depValue
+                            crmId: sdValue, role: 'sd', sd: '', sm: '', tl: '', team: '', dep: depValue, email: '', dingtalkUserId: ''
                         });
                     }
                 }
@@ -196,7 +202,7 @@ export default function UserManager() {
                     const smId = smValue.toLowerCase();
                     if (!accountsToCreate.has(smId)) {
                         accountsToCreate.set(smId, {
-                            crmId: smValue, role: 'sm', sd: sdValue, sm: '', tl: '', team: '', dep: depValue
+                            crmId: smValue, role: 'sm', sd: sdValue, sm: '', tl: '', team: '', dep: depValue, email: '', dingtalkUserId: ''
                         });
                     } else {
                         const existing = accountsToCreate.get(smId);
@@ -209,7 +215,7 @@ export default function UserManager() {
                     const tlId = tlValue.toLowerCase();
                     if (!accountsToCreate.has(tlId)) {
                         accountsToCreate.set(tlId, {
-                            crmId: tlValue, role: 'tl', sd: sdValue, sm: smValue, tl: '', team: '', dep: depValue
+                            crmId: tlValue, role: 'tl', sd: sdValue, sm: smValue, tl: '', team: '', dep: depValue, email: '', dingtalkUserId: ''
                         });
                     } else {
                         const existing = accountsToCreate.get(tlId);
@@ -237,7 +243,9 @@ export default function UserManager() {
                         sm: smValue || existing?.sm || '',
                         tl: tlValue || existing?.tl || '',
                         team: teamValue || existing?.team || '',
-                        dep: depValue || existing?.dep || 'CC'
+                        dep: depValue || existing?.dep || 'CC',
+                        email: emailValue || existing?.email || '',
+                        dingtalkUserId: dingtalkUserIdValue || existing?.dingtalkUserId || ''
                     });
                 }
             });
@@ -279,7 +287,9 @@ export default function UserManager() {
                             sm: row.sm || existingUser.sm || '',
                             tl: row.tl || existingUser.tl || '',
                             team: row.team || existingUser.team || '',
-                            dep: row.dep || existingUser.dep || 'CC'
+                            dep: row.dep || existingUser.dep || 'CC',
+                            email: row.email ? row.email : (existingUser.email || ''),
+                            dingtalkUserId: row.dingtalkUserId ? row.dingtalkUserId : (existingUser.dingtalkUserId || null)
                         });
                         successCount++;
                         setStatusLog(prev => [{msg: `[更新] ${crmId} 架构已更新`, type: 'success'}, ...prev]);
@@ -332,6 +342,8 @@ export default function UserManager() {
                         tl: row.tl,
                         team: row.team,
                         dep: row.dep || 'CC',
+                        email: row.email || '',
+                        dingtalkUserId: row.dingtalkUserId || null,
                         createdAt: serverTimestamp()
                     });
 
