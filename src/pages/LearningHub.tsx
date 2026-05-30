@@ -844,22 +844,6 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                                     <div>
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="text-xs font-black text-arabian-night/90">{comment.userName}</span>
-                                                            {/* User role badging */}
-                                                            {comment.userRole && comment.userRole !== 'user' && (
-                                                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full select-none leading-none shadow-sm uppercase ${
-                                                                    comment.userRole === 'super_admin' 
-                                                                        ? 'bg-red-50 text-red-600 border border-red-200' 
-                                                                        : ['sd', 'sm'].includes(comment.userRole)
-                                                                            ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white'
-                                                                            : 'bg-blue-50 text-blue-600 border border-blue-200'
-                                                                }`}>
-                                                                    {comment.userRole === 'super_admin' 
-                                                                        ? t('user_manager.role_super_admin', '超级管理员') 
-                                                                        : ['sd', 'sm'].includes(comment.userRole)
-                                                                            ? t('user_manager.role_sd', '销售总监/经理')
-                                                                            : t('user_manager.role_tl', '团队负责人')}
-                                                                </span>
-                                                            )}
                                                             {comment.userTeam && (
                                                                 <span className="text-[8px] font-bold text-arabian-night/50 bg-white border border-gray-100 px-1.5 py-0.5 rounded-full leading-none">{comment.userTeam}</span>
                                                             )}
@@ -985,11 +969,6 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                                                         <div>
                                                                             <div className="flex items-center gap-1">
                                                                                 <span className="text-[11px] font-black text-arabian-night/90">{reply.userName}</span>
-                                                                                {reply.userRole && reply.userRole !== 'user' && (
-                                                                                    <span className="text-[7px] font-bold bg-blue-50 text-blue-600 border border-blue-100 px-1 py-0.2 rounded-full scale-90 leading-none">
-                                                                                        {reply.userRole === 'super_admin' ? t('user_manager.role_super_admin', '超级管理员') : t('user_manager.role_tl', 'TL/经理')}
-                                                                                    </span>
-                                                                                )}
                                                                             </div>
                                                                             <span className="text-[8px] text-arabian-night/35 font-medium">
                                                                                 {reply.createdAt?.toDate?.()?.toLocaleString() || t('common.just_now', '刚刚')}
