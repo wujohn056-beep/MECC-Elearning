@@ -389,6 +389,8 @@ export default function LearningHub() {
         } else {
             setBusinessType('kid');
         }
+        setActiveTab('all');
+        setSelectedLecturer('');
     }, [profile]);
 
     useEffect(() => {
@@ -435,7 +437,14 @@ export default function LearningHub() {
                 // Fetch Categories
                 const catSnapshot = await getDocs(query(collection(db, 'categories'), orderBy('createdAt', 'desc')));
                 const catData: Category[] = [];
-                catSnapshot.forEach(doc => catData.push({ id: doc.id, name: doc.data().name }));
+                catSnapshot.forEach(doc => {
+                    const docData = doc.data();
+                    catData.push({ 
+                        id: doc.id, 
+                        name: docData.name,
+                        businessType: docData.businessType || 'kid'
+                    });
+                });
                 setCategories(catData);
 
                 // Fetch Recordings
@@ -710,7 +719,7 @@ export default function LearningHub() {
                             ) : profile?.role === 'super_admin' ? (
                                 <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
                                     <button
-                                        onClick={() => setBusinessType('kid')}
+                                        onClick={() => { setBusinessType('kid'); setActiveTab('all'); setSelectedLecturer(''); }}
                                         className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
                                             businessType === 'kid' 
                                                 ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' 
@@ -720,7 +729,7 @@ export default function LearningHub() {
                                         {t('common.type_kid', '青少业务')}
                                     </button>
                                     <button
-                                        onClick={() => setBusinessType('adult')}
+                                        onClick={() => { setBusinessType('adult'); setActiveTab('all'); setSelectedLecturer(''); }}
                                         className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
                                             businessType === 'adult' 
                                                 ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105' 
@@ -730,7 +739,7 @@ export default function LearningHub() {
                                         {t('common.type_adult', '成人业务')}
                                     </button>
                                     <button
-                                        onClick={() => setBusinessType('ss')}
+                                        onClick={() => { setBusinessType('ss'); setActiveTab('all'); setSelectedLecturer(''); }}
                                         className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
                                             businessType === 'ss' 
                                                 ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-105' 
@@ -743,7 +752,7 @@ export default function LearningHub() {
                             ) : (
                                 <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
                                     <button
-                                        onClick={() => setBusinessType('kid')}
+                                        onClick={() => { setBusinessType('kid'); setActiveTab('all'); setSelectedLecturer(''); }}
                                         className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
                                             businessType === 'kid' 
                                                 ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' 
@@ -753,7 +762,7 @@ export default function LearningHub() {
                                         {t('common.type_kid', '青少业务')}
                                     </button>
                                     <button
-                                        onClick={() => setBusinessType('adult')}
+                                        onClick={() => { setBusinessType('adult'); setActiveTab('all'); setSelectedLecturer(''); }}
                                         className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
                                             businessType === 'adult' 
                                                 ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105' 
@@ -829,7 +838,7 @@ export default function LearningHub() {
                             >
                                 {t('learning_hub.all_content')}
                             </button>
-                            {categories.map(cat => (
+                            {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
                                 <button
                                     key={cat.id}
                                     onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); }}

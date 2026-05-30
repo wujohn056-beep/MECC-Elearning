@@ -24,6 +24,7 @@ interface Recording {
 interface Category {
     id: string;
     name: string;
+    businessType?: 'kid' | 'adult' | 'ss';
 }
 
 export default function RecordingsManager() {
@@ -85,11 +86,22 @@ export default function RecordingsManager() {
             const catSnapshot = (await Promise.race([catPromise, timeoutPromise])) as any;
             
             const catData: Category[] = [];
-            catSnapshot.forEach((doc: any) => catData.push({ id: doc.id, name: doc.data().name }));
+            catSnapshot.forEach((doc: any) => {
+                const docData = doc.data();
+                catData.push({ 
+                    id: doc.id, 
+                    name: docData.name, 
+                    businessType: docData.businessType || 'kid' 
+                });
+            });
             setCategories(catData);
 
             if (catData.length > 0 && !selectedCategoryId && !editingId) {
-                setSelectedCategoryId(catData[0].id);
+                const targetBusType = profile?.dep === 'SS' ? 'ss' : 'kid';
+                const activeCats = catData.filter(c => (c.businessType || 'kid') === targetBusType);
+                if (activeCats.length > 0) {
+                    setSelectedCategoryId(activeCats[0].id);
+                }
             }
 
             // Fetch Recordings with timeout
@@ -128,6 +140,18 @@ export default function RecordingsManager() {
         }
     }, [profile]);
 
+    useEffect(() => {
+        const activeCats = categories.filter(c => (c.businessType || 'kid') === businessType);
+        const currentCat = activeCats.find(c => c.id === selectedCategoryId);
+        if (!currentCat) {
+            if (activeCats.length > 0) {
+                setSelectedCategoryId(activeCats[0].id);
+            } else {
+                setSelectedCategoryId('');
+            }
+        }
+    }, [businessType, categories, selectedCategoryId]);
+
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -148,8 +172,12 @@ export default function RecordingsManager() {
         setBusinessType(profile?.dep === 'SS' ? 'ss' : 'kid');
         setProgress(0);
         setUploading(false);
-        if (categories.length > 0) {
-            setSelectedCategoryId(categories[0].id);
+        const targetBusType = profile?.dep === 'SS' ? 'ss' : 'kid';
+        const activeCats = categories.filter(c => (c.businessType || 'kid') === targetBusType);
+        if (activeCats.length > 0) {
+            setSelectedCategoryId(activeCats[0].id);
+        } else {
+            setSelectedCategoryId('');
         }
         
         // Reset file inputs visually
@@ -414,7 +442,7 @@ export default function RecordingsManager() {
                                     required
                                 >
                                     <option value="" disabled>{t('recordings_manager.select_placeholder')}</option>
-                                    {categories.map(cat => (
+                                    {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                                     ))}
                                 </select>

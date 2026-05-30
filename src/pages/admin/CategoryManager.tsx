@@ -10,6 +10,7 @@ interface Category {
     id: string;
     name: string;
     createdAt?: any;
+    businessType?: 'kid' | 'adult' | 'ss';
 }
 
 export default function CategoryManager() {
@@ -21,7 +22,8 @@ export default function CategoryManager() {
     const [editName, setEditName] = useState('');
     const [pageError, setPageError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
-    const { hasPermission } = useAuth();
+    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss'>('kid');
+    const { hasPermission, profile } = useAuth();
     
     if (!hasPermission('manageCategories')) {
         return <Navigate to="/admin" replace />;
@@ -37,7 +39,14 @@ export default function CategoryManager() {
             const snapshot = (await Promise.race([catPromise, timeoutPromise])) as any;
             
             const data: Category[] = [];
-            snapshot.forEach((doc: any) => data.push({ id: doc.id, name: doc.data().name }));
+            snapshot.forEach((doc: any) => {
+                const docData = doc.data();
+                data.push({ 
+                    id: doc.id, 
+                    name: docData.name, 
+                    businessType: docData.businessType || 'kid'
+                });
+            });
             setCategories(data);
             setPageError(null);
         } catch (error: any) {
@@ -51,6 +60,16 @@ export default function CategoryManager() {
         fetchCategories();
     }, []);
 
+    useEffect(() => {
+        if (profile?.dep === 'SS') {
+            setBusinessType('ss');
+        } else {
+            setBusinessType('kid');
+        }
+    }, [profile]);
+
+    const filteredCategories = categories.filter(cat => (cat.businessType || 'kid') === businessType);
+
     const handleCreate = async () => {
         if (!newCategoryName.trim()) return;
         setActionLoading(true);
@@ -59,6 +78,7 @@ export default function CategoryManager() {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error(t('common.timeout'))), 10000));
             const addPromise = addDoc(collection(db, 'categories'), {
                 name: newCategoryName.trim(),
+                businessType: businessType,
                 createdAt: serverTimestamp()
             });
             await Promise.race([addPromise, timeoutPromise]);
@@ -173,10 +193,81 @@ export default function CategoryManager() {
                                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                                 disabled={actionLoading}
                             />
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('common.business_type', '业务线')}</label>
+                                {profile?.dep === 'SS' ? (
+                                    <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-orange-400 select-none animate-pulse">
+                                        ✨ {t('common.type_ss', 'SS 业务')}
+                                    </div>
+                                ) : profile?.role === 'super_admin' ? (
+                                    <div className="flex flex-wrap gap-2.5 mt-1">
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryBusinessType"
+                                                value="kid"
+                                                checked={businessType === 'kid'}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('common.type_kid', '青少')}</span>
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryBusinessType"
+                                                value="adult"
+                                                checked={businessType === 'adult'}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('common.type_adult', '成人')}</span>
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryBusinessType"
+                                                value="ss"
+                                                checked={businessType === 'ss'}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('common.type_ss', 'SS 业务')}</span>
+                                        </label>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2.5 mt-1">
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryBusinessType"
+                                                value="kid"
+                                                checked={businessType === 'kid'}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('common.type_kid', '青少')}</span>
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryBusinessType"
+                                                value="adult"
+                                                checked={businessType === 'adult'}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('common.type_adult', '成人')}</span>
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+
                             <button
                                 onClick={handleCreate}
                                 disabled={actionLoading || !newCategoryName.trim()}
-                                className="w-full py-3 bg-deep-teal text-white rounded-xl font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:transform-none transition-all"
+                                className="w-full py-3 bg-deep-teal text-white rounded-xl font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:transform-none transition-all mt-2"
                             >
                                 {actionLoading ? t('common.processing') : t('category_manager.add_btn')}
                             </button>
@@ -192,21 +283,21 @@ export default function CategoryManager() {
                 <div className="md:col-span-2">
                     <div className="glass-panel rounded-2xl p-6 border border-white/40 min-h-[500px]">
                         <h2 className="text-xl font-bold text-deep-teal mb-4 flex items-center gap-2">
-                            {t('category_manager.list_title')} ({categories.length})
+                            {t('category_manager.list_title')} ({filteredCategories.length})
                         </h2>
 
                         {loading ? (
                             <div className="flex justify-center py-12">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-desert-gold"></div>
                             </div>
-                        ) : categories.length === 0 ? (
+                        ) : filteredCategories.length === 0 ? (
                             <div className="text-center py-12 text-arabian-night/40">
                                 <FolderPlus className="h-12 w-12 mx-auto mb-3 opacity-20" />
                                 <p>{t('category_manager.no_category')}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {categories.map(cat => (
+                                {filteredCategories.map(cat => (
                                     <div key={cat.id} className="bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group transition-colors shadow-sm hover:shadow-md">
                                         {editingId === cat.id ? (
                                             <div className="flex-1 flex items-center gap-2 mr-2">
