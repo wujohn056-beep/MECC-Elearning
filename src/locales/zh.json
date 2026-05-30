@@ -184,6 +184,23 @@
         "add_fail": "添加失败:",
         "update_fail": "更新失败:"
     },
+    "comment_manager": {
+        "title": "互动内容审核",
+        "desc": "审核销售学堂各素材下的评论互动，确保合规运营与专业正向学习环境",
+        "tab_flagged": "被举报审核",
+        "tab_all": "全部活跃互动",
+        "tab_pinned": "置顶精选",
+        "search_placeholder": "搜索发言人、大组、内容、课程名...",
+        "no_flagged_comments": "好消息！当前没有任何被举报的互动内容。",
+        "no_matching_comments": "未找到匹配的互动讨论记录。",
+        "status_flagged": "待核举报",
+        "source_material": "素材课程",
+        "action_approve": "安全通过",
+        "action_unpin": "取消置顶",
+        "action_pin": "置顶精选",
+        "action_delete": "下架清除",
+        "confirm_delete": "确认下架并永久删除此条互动内容？下架后该内容将无法恢复且对所有用户不可见。"
+    },
     "recordings_manager": {
         "title": "内容与目录管理",
         "desc": "分类管理、上传销售录音与讲师头像",

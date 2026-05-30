@@ -185,6 +185,23 @@
         "add_fail": "Failed to add:",
         "update_fail": "Failed to update:"
     },
+    "comment_manager": {
+        "title": "Q&A Moderation",
+        "desc": "Audit Q&A interactions under learning materials to ensure professional alignment and compliant operations.",
+        "tab_flagged": "Flagged for Review",
+        "tab_all": "All Active Discussions",
+        "tab_pinned": "Featured Notes",
+        "search_placeholder": "Search speaker, team, content, course...",
+        "no_flagged_comments": "Great news! There are no flagged comments under review.",
+        "no_matching_comments": "No matching interaction records found.",
+        "status_flagged": "Flagged",
+        "source_material": "Material Course",
+        "action_approve": "Approve",
+        "action_unpin": "Unpin",
+        "action_pin": "Pin Note",
+        "action_delete": "Remove",
+        "confirm_delete": "Are you sure you want to remove and permanently delete this interaction? This action cannot be undone and it will be hidden from all users."
+    },
     "recordings_manager": {
         "title": "Content & Category Management",
         "desc": "Manage categories, upload sales recordings and lecturer avatars",
