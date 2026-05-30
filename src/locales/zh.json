@@ -152,6 +152,7 @@
         "unlocked_success": "恭喜！您已成功解锁该录音的阿语逐字稿！",
         "anti_cheat_warning": "提醒：您必须实际收听录音的至少三分之一时间，且播放结束后才能解锁逐字稿和记录进度哦！",
         "view_transcript_btn": "查看并解锁阿语逐字稿",
+        "view_transcript_unlocked_btn": "查看阿语逐字稿",
         "audio_mode": "销售音频模式"
     },
     "category_manager": {
@@ -224,6 +225,7 @@
         "transcribing": "正在解析为逐字稿...",
         "transcribe_started": "后台语音解析已启动！系统正在后台安全处理中，您无需在此等待，可直接进行其他操作，1-2分钟后将自动就绪。",
         "transcript_ready": "阿语逐字稿已就绪",
+        "transcript_unlocked": "阿语逐字稿已解锁",
         "transcribe_fail": "语音解析为逐字稿失败",
         "transcribe_success": "阿语逐字稿解析完成！已成功同步至录音库。"
     },

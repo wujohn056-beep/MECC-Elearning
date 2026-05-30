@@ -153,6 +153,7 @@
         "unlocked_success": "Congratulations! You have successfully unlocked the Arabic transcript for this recording!",
         "anti_cheat_warning": "Reminder: You must listen to at least 1/3 of the recording duration and play to the end to unlock the transcript and log your progress!",
         "view_transcript_btn": "View & Unlock Arabic Transcript",
+        "view_transcript_unlocked_btn": "View Arabic Transcript",
         "audio_mode": "Sales Audio Mode"
     },
     "category_manager": {
@@ -225,6 +226,7 @@
         "transcribing": "Transcribing into Arabic...",
         "transcribe_started": "Background transcription started! Processing securely in background. No need to wait here—feel free to perform other tasks, and it will be ready in 1-2 minutes.",
         "transcript_ready": "Arabic Transcript Ready",
+        "transcript_unlocked": "Arabic Transcript Unlocked",
         "transcribe_fail": "Arabic Speech-to-Text Transcription Failed",
         "transcribe_success": "Arabic transcription completed! Automatically synced to database."
     },
