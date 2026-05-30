@@ -430,6 +430,32 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [replyText, setReplyText] = useState('');
     const [modalCurrentTime, setModalCurrentTime] = useState(0);
     const [attachTimestamp, setAttachTimestamp] = useState(false);
+    const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>('details');
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [recordingAnalysis, setRecordingAnalysis] = useState<any>(rec.aiAnalysis || null);
+
+    const handleTriggerAnalysis = async () => {
+        setIsAnalyzing(true);
+        try {
+            const res = await fetch('/.netlify/functions/analyze-audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recordingId: rec.id })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setRecordingAnalysis(data.aiAnalysis);
+                alert(t('learning_hub.analysis_success', 'Gemini AI 智能录音诊断画像生成成功！'));
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
+        } catch (error: any) {
+            console.error("AI Analysis Trigger failed:", error);
+            alert(t('learning_hub.analysis_failed', 'AI 诊断画像生成失败：') + error.message);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
 
     const formatTime = (time: number) => {
         if (isNaN(time) || !isFinite(time)) return "0:00";
@@ -768,372 +794,584 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                         {rec.title}
                     </h3>
                     
-                    {rec.lecturerName && (
-                        <div className="flex items-center gap-1.5 text-sm font-bold text-desert-gold mb-3">
-                            <User className="h-4 w-4" />
-                            <span>{rec.lecturerName}</span>
-                        </div>
-                    )}
-                    
-                    <p className="text-sm text-arabian-night/70 leading-relaxed border-t border-gray-100 pt-3">
-                        {rec.description}
-                    </p>
+                    {/* Sleek Tabs Bar */}
+                    <div className="flex gap-2 border-b border-gray-100 pb-3 mb-5 mt-4">
+                        <button
+                            type="button"
+                            onClick={() => setActiveModalTab('details')}
+                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
+                                activeModalTab === 'details' 
+                                    ? 'bg-deep-teal/10 text-deep-teal shadow-sm border border-deep-teal/20' 
+                                    : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                            }`}
+                        >
+                            📝 {t('learning_hub.course_details', '课程详情')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveModalTab('ai_analysis')}
+                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
+                                activeModalTab === 'ai_analysis' 
+                                    ? 'bg-desert-gold/15 text-yellow-800 shadow-sm border border-desert-gold/30' 
+                                    : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                            }`}
+                        >
+                            ✨ {t('learning_hub.ai_call_portrait', 'AI 录音画像')}
+                            {recordingAnalysis && (
+                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveModalTab('comments')}
+                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
+                                activeModalTab === 'comments' 
+                                    ? 'bg-deep-teal/10 text-deep-teal shadow-sm border border-deep-teal/20' 
+                                    : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                            }`}
+                        >
+                            💬 {t('learning_hub.comments_and_qa', '互动问答')} ({comments.length})
+                        </button>
+                    </div>
 
-                    {/* Arabic Transcript Document with Anti-Cheating Unlock */}
-                    {rec.transcript && (
-                        <div className="mt-6 border-t border-gray-100 pt-5">
-                            {isUnlocked ? (
-                                <div className="animate-in fade-in duration-700">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5">
-                                            <FileText className="h-5 w-5 text-desert-gold" />
-                                            {t('learning_hub.arabic_transcript', '阿语逐字稿')}
-                                        </h4>
-                                        <button 
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(rec.transcript);
-                                                alert(t('common.copied', '已复制到剪贴板！'));
-                                            }}
-                                            className="text-xs font-semibold text-desert-gold border border-desert-gold/30 hover:bg-yellow-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-                                        >
-                                            {t('common.copy', '复制')}
-                                        </button>
-                                    </div>
-                                    <div 
-                                        className="bg-gray-50/75 border border-gray-100 rounded-2xl p-5 max-h-[300px] overflow-y-auto text-sm text-arabian-night/95 leading-relaxed whitespace-pre-line text-right font-medium" 
-                                        dir="rtl"
-                                    >
-                                        {rec.transcript}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="animate-in fade-in duration-500">
-                                    <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5 mb-3">
-                                        <FileText className="h-5 w-5 text-gray-400" />
-                                        {t('learning_hub.arabic_transcript', '阿语逐字稿')}
-                                    </h4>
-                                    <div className="relative rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.04] to-transparent p-6 overflow-hidden flex flex-col items-center justify-center min-h-[160px] text-center shadow-sm">
-                                        {/* Blurred placeholder layout representation */}
-                                        <div className="absolute inset-0 select-none pointer-events-none opacity-5 blur-sm whitespace-pre-line text-right p-5 text-xs font-serif" dir="rtl">
-                                            العامل: مرحبًا، شكرًا لاتصالك بخدمة العملاء. كيف يمكنني مساعدتك اليوم؟
-                                            العميل: مرحبًا، أود الاستفسار عن تفاصيل الاشتراك وتحديث باقة التعلم الخاصة بي.
-                                            العامل: بالتأكيد! يسعدني جدًا مساعدتك في ذلك. لدينا باقة متميزة توفر قيمة إضافية رائعة...
-                                        </div>
-                                        
-                                        <div className="relative z-10 flex flex-col items-center gap-3 w-full">
-                                            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm animate-pulse">
-                                                <Lock className="w-5 h-5 text-amber-600" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-sm font-bold text-amber-900">
-                                                    {t('learning_hub.transcript_locked', '阿语逐字稿已锁定')}
-                                                </p>
-                                                <p className="text-xs text-amber-800/80 max-w-md px-4 leading-relaxed font-semibold">
-                                                    {t('learning_hub.transcript_lock_desc', '为了您的学习成效，收听完整录音的 1/3 时长且播放结束后即可解锁阿语逐字稿文档。')}
-                                                </p>
-                                            </div>
-                                            
-                                            {/* Progress indicator */}
-                                            {duration > 0 && (
-                                                <div className="w-full max-w-xs mt-1 bg-amber-100/50 rounded-full h-2.5 overflow-hidden border border-amber-200">
-                                                    <div 
-                                                        className="bg-amber-500 h-full rounded-full transition-all duration-500"
-                                                        style={{ width: `${Math.min(100, (actualListenedSeconds / (duration / 3)) * 100)}%` }}
-                                                    />
-                                                </div>
-                                            )}
-                                            
-                                            <p className="text-[10px] font-bold text-amber-800/90 tracking-wide uppercase">
-                                                {t('learning_hub.transcript_lock_progress', '解锁进度')}：
-                                                {t('learning_hub.transcript_lock_progress_detail', {
-                                                    listened: Math.round(actualListenedSeconds),
-                                                    target: Math.round(duration / 3),
-                                                    percentage: Math.min(100, Math.round((actualListenedSeconds / (duration / 3)) * 100))
-                                                })}
-                                            </p>
-                                        </div>
-                                    </div>
+                    {/* Tab 1: Course Details */}
+                    {activeModalTab === 'details' && (
+                        <div className="space-y-4 animate-in fade-in duration-300">
+                            {rec.lecturerName && (
+                                <div className="flex items-center gap-1.5 text-sm font-bold text-desert-gold mb-3">
+                                    <User className="h-4 w-4" />
+                                    <span>{rec.lecturerName}</span>
                                 </div>
                             )}
-                        </div>
-                    )}
+                            
+                            <p className="text-sm text-arabian-night/70 leading-relaxed border-t border-gray-100 pt-3">
+                                {rec.description}
+                            </p>
 
-                    {/* Premium Interaction & Q&A section */}
-                    <div className="mt-8 border-t border-gray-100 pt-6">
-                        <div className="flex items-center gap-2 mb-6">
-                            <div className="w-1.5 h-5 bg-deep-teal rounded-full"></div>
-                            <h4 className="text-base font-extrabold text-arabian-night flex items-center gap-2">
-                                <MessageSquare className="w-4 h-4 text-desert-gold" />
-                                {t('learning_hub.comments_and_qa', '互动交流与问答')}
-                                <span className="text-xs bg-gray-100 text-arabian-night/60 px-2.5 py-0.5 rounded-full font-bold select-none">
-                                    {comments.length}
-                                </span>
-                            </h4>
-                        </div>
-
-                        {/* Comment Input Card */}
-                        <form onSubmit={handleAddComment} className="glass-panel p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex gap-3 items-start hover:shadow-md transition-shadow">
-                            <div className="w-9 h-9 rounded-full shrink-0 overflow-hidden bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">
-                                {profile?.avatarUrl ? (
-                                    <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
-                                ) : (
-                                    <User className="w-4 h-4" />
-                                )}
-                            </div>
-                            <div className="flex-1 flex flex-col gap-2">
-                                <textarea
-                                    value={newCommentText}
-                                    onChange={(e) => setNewCommentText(e.target.value)}
-                                    placeholder={t('learning_hub.comment_placeholder', '分享你的学习心得、感悟，或针对本录音提出您的问题...')}
-                                    className="w-full min-h-[70px] max-h-[140px] text-sm p-3 border border-gray-100 bg-gray-50/50 rounded-xl outline-none focus:ring-2 focus:ring-deep-teal focus:bg-white resize-y font-medium text-arabian-night/90 placeholder:text-arabian-night/40"
-                                />
-                                <div className="flex justify-between items-center mt-1">
-                                    <label className="flex items-center gap-1.5 text-xs text-arabian-night/60 cursor-pointer font-bold select-none hover:text-deep-teal transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={attachTimestamp}
-                                            onChange={(e) => setAttachTimestamp(e.target.checked)}
-                                            className="rounded text-desert-gold focus:ring-desert-gold"
-                                        />
-                                        <span>⏱️ {t('learning_hub.attach_timestamp', '关联当前播放时间')} ({formatTime(modalCurrentTime)})</span>
-                                    </label>
-                                    <button 
-                                        type="submit"
-                                        disabled={!newCommentText.trim()}
-                                        className="bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                                    >
-                                        <Send className="w-3 h-3" />
-                                        {t('common.submit', '提交评论')}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        {/* Comments Thread List */}
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                            {comments.filter(c => c.parentId === null).length === 0 ? (
-                                <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                                    <p className="text-sm font-semibold text-arabian-night/40">💬 {t('learning_hub.no_comments_yet', '暂无互动讨论，快来发表第一条观点吧！')}</p>
-                                </div>
-                            ) : (
-                                comments.filter(c => c.parentId === null).map((comment) => {
-                                    const isFlagged = comment.status === 'flagged';
-                                    const isCommentLiked = comment.likes?.includes(user?.uid || '');
-                                    const userLikesCount = comment.likes?.length || 0;
-                                    
-                                    // Filter replies for this parent
-                                    const replies = comments.filter(r => r.parentId === comment.id);
-
-                                    return (
-                                        <div key={comment.id} className={`p-4 rounded-2xl border transition-all duration-300 ${
-                                            comment.isPinned 
-                                                ? 'bg-gradient-to-r from-desert-gold/5 via-amber-500/[0.02] to-transparent border-desert-gold/30 shadow-sm'
-                                                : 'bg-gray-50/30 border-gray-100/70 hover:border-gray-200/50'
-                                        }`}>
-                                            {/* Primary Comment Header */}
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div className="flex gap-2.5 items-center">
-                                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center shadow-inner">
-                                                        {comment.userAvatar ? (
-                                                            <img src={comment.userAvatar} alt={comment.userName} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xs font-bold font-serif uppercase">
-                                                                {comment.userName.charAt(0)}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs font-black text-arabian-night/90">{comment.userName}</span>
-                                                            {comment.userTeam && (
-                                                                <span className="text-[8px] font-bold text-arabian-night/50 bg-white border border-gray-100 px-1.5 py-0.5 rounded-full leading-none">{comment.userTeam}</span>
-                                                            )}
-                                                        </div>
-                                                        <span className="text-[10px] text-arabian-night/40 font-medium">
-                                                            {comment.createdAt?.toDate?.()?.toLocaleString() || t('common.just_now', '刚刚')}
-                                                        </span>
-                                                    </div>
+                            {/* Arabic Transcript Document with Anti-Cheating Unlock */}
+                            {rec.transcript && (
+                                <div className="mt-6 border-t border-gray-100 pt-5">
+                                    {isUnlocked ? (
+                                        <div className="animate-in fade-in duration-700">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5">
+                                                    <FileText className="h-5 w-5 text-desert-gold" />
+                                                    {t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                                                </h4>
+                                                <button 
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(rec.transcript);
+                                                        alert(t('common.copied', '已复制到剪贴板！'));
+                                                    }}
+                                                    className="text-xs font-semibold text-desert-gold border border-desert-gold/30 hover:bg-yellow-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                                                >
+                                                    {t('common.copy', '复制')}
+                                                </button>
+                                            </div>
+                                            <div 
+                                                className="bg-gray-50/75 border border-gray-100 rounded-2xl p-5 max-h-[300px] overflow-y-auto text-sm text-arabian-night/95 leading-relaxed whitespace-pre-line text-right font-medium" 
+                                                dir="rtl"
+                                            >
+                                                {rec.transcript}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="animate-in fade-in duration-500">
+                                            <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5 mb-3">
+                                                <FileText className="h-5 w-5 text-gray-400" />
+                                                {t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                                            </h4>
+                                            <div className="relative rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.04] to-transparent p-6 overflow-hidden flex flex-col items-center justify-center min-h-[160px] text-center shadow-sm">
+                                                {/* Blurred placeholder layout representation */}
+                                                <div className="absolute inset-0 select-none pointer-events-none opacity-5 blur-sm whitespace-pre-line text-right p-5 text-xs font-serif" dir="rtl">
+                                                    العامل: مرحبًا، شكرًا لاتصالك بخدمة العملاء. كيف يمكنني مساعدتك اليوم؟
+                                                    العميل: مرحبًا، أود الاستفسار عن تفاصيل الاشتراك وتحديث باقة التعلم الخاصة بي.
+                                                    العامل: بالتأكيد! يسعدني جدًا مساعدتك في ذلك. لدينا باقة متميزة توفر قيمة إضافية رائعة...
                                                 </div>
                                                 
-                                                {/* Pinned Crown info */}
-                                                <div className="flex items-center gap-1.5">
-                                                    {comment.isPinned && (
-                                                        <span className="text-[9px] bg-gradient-to-r from-desert-gold to-yellow-600 text-white font-extrabold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5 animate-pulse select-none">
-                                                            📌 {t('learning_hub.featured_comment', '置顶精选')}
-                                                        </span>
+                                                <div className="relative z-10 flex flex-col items-center gap-3 w-full">
+                                                    <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm animate-pulse">
+                                                        <Lock className="w-5 h-5 text-amber-600" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <p className="text-sm font-bold text-amber-900">
+                                                            {t('learning_hub.transcript_locked', '阿语逐字稿已锁定')}
+                                                        </p>
+                                                        <p className="text-xs text-amber-800/80 max-w-md px-4 leading-relaxed font-semibold">
+                                                            {t('learning_hub.transcript_lock_desc', '为了您的学习成效，收听完整录音的 1/3 时长且播放结束后即可解锁阿语逐字稿文档。')}
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    {/* Progress indicator */}
+                                                    {duration > 0 && (
+                                                        <div className="w-full max-w-xs mt-1 bg-amber-100/50 rounded-full h-2.5 overflow-hidden border border-amber-200">
+                                                            <div 
+                                                                className="bg-amber-500 h-full rounded-full transition-all duration-500"
+                                                                style={{ width: `${Math.min(100, (actualListenedSeconds / (duration / 3)) * 100)}%` }}
+                                                            />
+                                                        </div>
                                                     )}
-                                                </div>
-                                            </div>
-
-                                            {/* Primary Comment Content */}
-                                            {isFlagged ? (
-                                                <div className="bg-amber-500/5 border border-dashed border-amber-500/25 rounded-xl p-3 my-2 text-center text-xs text-amber-800 font-semibold select-none">
-                                                    👁️ {t('learning_hub.comment_under_moderation', '该互动内容已被安全举报，正在由系统管理员审核中...')}
-                                                </div>
-                                            ) : (
-                                                <div className="pl-10 space-y-1">
-                                                    {comment.timestamp !== undefined && comment.timestamp !== null && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => jumpToTime(comment.timestamp)}
-                                                            className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-desert-gold/15 hover:bg-desert-gold/25 text-yellow-800 border border-desert-gold/30 rounded-md px-1.5 py-0.5 transition-colors cursor-pointer select-none mb-1.5 focus:outline-none"
-                                                            title={t('learning_hub.click_to_seek', '点击跳转播放')}
-                                                        >
-                                                            ⏱️ {formatTime(comment.timestamp)}
-                                                        </button>
-                                                    )}
-                                                    <p className="text-sm text-arabian-night/85 leading-relaxed font-medium whitespace-pre-line break-words">
-                                                        {comment.content}
+                                                    
+                                                    <p className="text-[10px] font-bold text-amber-800/90 tracking-wide uppercase">
+                                                        {t('learning_hub.transcript_lock_progress', '解锁进度')}：
+                                                        {t('learning_hub.transcript_lock_progress_detail', {
+                                                            listened: Math.round(actualListenedSeconds),
+                                                            target: Math.round(duration / 3),
+                                                            percentage: Math.min(100, Math.round((actualListenedSeconds / (duration / 3)) * 100))
+                                                        })}
                                                     </p>
                                                 </div>
-                                            )}
-
-                                            {/* Primary Comment Actions */}
-                                            <div className="flex gap-4 items-center mt-3 pl-10 text-[11px] font-bold text-arabian-night/50">
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => handleLikeComment(comment.id, comment.likes || [])}
-                                                    disabled={isFlagged}
-                                                    className={`flex items-center gap-1 transition-colors hover:text-deep-teal ${isCommentLiked ? 'text-deep-teal scale-105 font-black' : ''}`}
-                                                >
-                                                    <ThumbsUp className={`w-3.5 h-3.5 ${isCommentLiked ? 'fill-deep-teal text-deep-teal' : ''}`} />
-                                                    <span>{userLikesCount} {t('common.like', '赞')}</span>
-                                                </button>
-
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (replyToId === comment.id) {
-                                                            setReplyToId(null);
-                                                        } else {
-                                                            setReplyToId(comment.id);
-                                                            setReplyText('');
-                                                        }
-                                                    }}
-                                                    disabled={isFlagged}
-                                                    className={`flex items-center gap-1 transition-colors hover:text-desert-gold ${replyToId === comment.id ? 'text-desert-gold' : ''}`}
-                                                >
-                                                    <MessageSquare className="w-3.5 h-3.5" />
-                                                    <span>{t('learning_hub.reply', '回复')} ({replies.length})</span>
-                                                </button>
-
-                                                {/* Report/Flag button */}
-                                                {!isFlagged && comment.userId !== user?.uid && (
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => handleFlagComment(comment.id)}
-                                                        className="flex items-center gap-1 transition-colors hover:text-red-500 ml-auto"
-                                                        title={t('learning_hub.report', '举报不妥言论')}
-                                                    >
-                                                        <Flag className="w-3 h-3" />
-                                                        <span>{t('learning_hub.report', '举报')}</span>
-                                                    </button>
-                                                )}
                                             </div>
-
-                                            {/* Inline Reply Input Box */}
-                                            {replyToId === comment.id && (
-                                                <form onSubmit={(e) => handleAddReply(e, comment.id)} className="mt-3.5 pl-10 flex gap-2 items-start animate-in slide-in-from-top-2 duration-300">
-                                                    <textarea
-                                                        value={replyText}
-                                                        onChange={(e) => setReplyText(e.target.value)}
-                                                        placeholder={t('learning_hub.reply_placeholder', '回复该心得观点...')}
-                                                        className="flex-1 min-h-[40px] text-xs p-2.5 border border-gray-100 bg-white rounded-xl outline-none focus:ring-1 focus:ring-deep-teal font-medium text-arabian-night/90"
-                                                    />
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <button 
-                                                            type="submit"
-                                                            disabled={!replyText.trim()}
-                                                            className="bg-gradient-to-r from-deep-teal to-teal-700 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition-all disabled:opacity-40"
-                                                        >
-                                                            {t('common.send', '发送')}
-                                                        </button>
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => setReplyToId(null)}
-                                                            className="bg-gray-100 text-arabian-night/60 text-[10px] font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition-all"
-                                                        >
-                                                            {t('common.cancel', '取消')}
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            )}
-
-                                            {/* Secondary Indented Reply List */}
-                                            {replies.length > 0 && (
-                                                <div className="mt-3.5 pl-10 border-l-2 border-gray-100 space-y-3">
-                                                    {replies.map((reply) => {
-                                                        const isReplyFlagged = reply.status === 'flagged';
-                                                        const isReplyLiked = reply.likes?.includes(user?.uid || '');
-
-                                                        return (
-                                                            <div key={reply.id} className="p-3 bg-white/40 border border-gray-50 rounded-xl hover:border-gray-100/50 transition-all duration-300">
-                                                                <div className="flex justify-between items-center mb-1">
-                                                                    <div className="flex gap-2 items-center">
-                                                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shadow-inner text-[10px]">
-                                                                            {reply.userAvatar ? (
-                                                                                <img src={reply.userAvatar} alt={reply.userName} className="w-full h-full object-cover" />
-                                                                            ) : (
-                                                                                <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-[8px] font-bold font-serif uppercase">
-                                                                                    {reply.userName.charAt(0)}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                        <div>
-                                                                            <div className="flex items-center gap-1">
-                                                                                <span className="text-[11px] font-black text-arabian-night/90">{reply.userName}</span>
-                                                                            </div>
-                                                                            <span className="text-[8px] text-arabian-night/35 font-medium">
-                                                                                {reply.createdAt?.toDate?.()?.toLocaleString() || t('common.just_now', '刚刚')}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                {isReplyFlagged ? (
-                                                                    <div className="bg-amber-500/5 border border-dashed border-amber-500/15 rounded-lg p-2 my-1 text-center text-[10px] text-amber-800 font-semibold select-none">
-                                                                        👁️ {t('learning_hub.comment_under_moderation', '已被举报送审...')}
-                                                                    </div>
-                                                                ) : (
-                                                                    <p className="text-xs text-arabian-night/80 pl-8 leading-relaxed font-semibold break-words">
-                                                                        {reply.content}
-                                                                    </p>
-                                                                )}
-
-                                                                <div className="flex gap-3 items-center mt-1.5 pl-8 text-[10px] font-bold text-arabian-night/40">
-                                                                    <button 
-                                                                        type="button"
-                                                                        onClick={() => handleLikeComment(reply.id, reply.likes || [])}
-                                                                        disabled={isReplyFlagged}
-                                                                        className={`flex items-center gap-0.5 hover:text-deep-teal ${isReplyLiked ? 'text-deep-teal font-black' : ''}`}
-                                                                    >
-                                                                        <ThumbsUp className="w-3 h-3" />
-                                                                        <span>{reply.likes?.length || 0}</span>
-                                                                    </button>
-
-                                                                    {!isReplyFlagged && reply.userId !== user?.uid && (
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => handleFlagComment(reply.id)}
-                                                                            className="flex items-center gap-0.5 hover:text-red-500 ml-auto"
-                                                                            title={t('learning_hub.report', '举报不妥言论')}
-                                                                        >
-                                                                            <Flag className="w-2.5 h-2.5" />
-                                                                            <span>{t('learning_hub.report', '举报')}</span>
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
                                         </div>
-                                    );
-                                })
+                                    )}
+                                </div>
                             )}
                         </div>
-                    </div>
+                    )}
+
+                    {/* Tab 2: AI Call Analysis Portrait Dashboard */}
+                    {activeModalTab === 'ai_analysis' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                            {recordingAnalysis ? (
+                                <div className="space-y-6">
+                                    {/* Row 1: Header metrics */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {/* Overall Score */}
+                                        <div className="glass-panel p-5 rounded-2xl border border-desert-gold/30 bg-gradient-to-br from-desert-gold/5 via-transparent to-transparent flex flex-col items-center justify-center text-center relative overflow-hidden shadow-sm">
+                                            <span className="text-[10px] font-extrabold text-desert-gold uppercase tracking-wider mb-2">🏆 通话质量综合得分</span>
+                                            <div className="relative flex items-center justify-center">
+                                                <div className="w-20 h-20 rounded-full border-4 border-desert-gold/20 flex items-center justify-center bg-white shadow-md">
+                                                    <span className="text-3xl font-black text-yellow-800">{recordingAnalysis.overallScore}</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-arabian-night/50 mt-2">等级: {recordingAnalysis.overallScore >= 90 ? 'Excellent (A+)' : recordingAnalysis.overallScore >= 80 ? 'Good (B)' : 'Needs Improvement'}</span>
+                                        </div>
+
+                                        {/* Talk Ratio */}
+                                        <div className="glass-panel p-5 rounded-2xl border border-gray-100 flex flex-col justify-center shadow-sm">
+                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3">🗣️ 说听占比 (Talk-to-Listen)</span>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-xs font-bold text-arabian-night/80">
+                                                    <span>CC 销售: {recordingAnalysis.talkRatio.sales}%</span>
+                                                    <span>客户: {recordingAnalysis.talkRatio.customer}%</span>
+                                                </div>
+                                                <div className="h-3 w-full bg-blue-100 rounded-full overflow-hidden flex border border-blue-200/20">
+                                                    <div className="h-full bg-deep-teal" style={{ width: `${recordingAnalysis.talkRatio.sales}%` }} />
+                                                    <div className="h-full bg-desert-gold" style={{ width: `${recordingAnalysis.talkRatio.customer}%` }} />
+                                                </div>
+                                                <p className="text-[10px] text-arabian-night/40 font-bold leading-relaxed mt-1">
+                                                    * 黄金说听比为 45:55，说得太多容易引起客户反感。
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Speech Rate */}
+                                        <div className="glass-panel p-5 rounded-2xl border border-gray-100 flex flex-col justify-center shadow-sm">
+                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3">⚡ 说话平均语速 (Words per Min)</span>
+                                            <div className="grid grid-cols-2 gap-2 text-center">
+                                                <div className="bg-gray-50/75 p-2 rounded-xl border border-gray-100">
+                                                    <p className="text-[10px] font-bold text-arabian-night/40">CC 销售</p>
+                                                    <p className="text-lg font-black text-deep-teal">{recordingAnalysis.speechRate.sales} <span className="text-[10px] font-bold">词/分</span></p>
+                                                </div>
+                                                <div className="bg-gray-50/75 p-2 rounded-xl border border-gray-100">
+                                                    <p className="text-[10px] font-bold text-arabian-night/40">客户</p>
+                                                    <p className="text-lg font-black text-desert-gold">{recordingAnalysis.speechRate.customer} <span className="text-[10px] font-bold">词/分</span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Row 2: Customer Sentiment Trend */}
+                                    <div className="glass-panel p-5 rounded-2xl border border-gray-100 shadow-sm">
+                                        <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider mb-3 block">📈 客户情绪起伏热力图 (Customer Sentiment Trend)</span>
+                                        <div className="flex justify-between items-end gap-3 h-20 pt-4 px-2">
+                                            {recordingAnalysis.sentimentTrend.map((score: number, idx: number) => {
+                                                const labels = ["开场建立", "异议切入", "同理突破", "价值促成", "成单达成"];
+                                                return (
+                                                    <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                                                        {/* Bar */}
+                                                        <div 
+                                                            className={`w-full rounded-t-lg transition-all duration-700 shadow-sm border border-transparent ${
+                                                                score >= 80 
+                                                                    ? 'bg-gradient-to-t from-green-500/80 to-green-600/90 border-green-300/35' 
+                                                                    : score >= 60 
+                                                                        ? 'bg-gradient-to-t from-amber-400/80 to-amber-500/90 border-amber-300/35' 
+                                                                        : 'bg-gradient-to-t from-red-400/80 to-red-500/90 border-red-300/35'
+                                                            }`}
+                                                            style={{ height: `${score}%` }}
+                                                            title={`情绪得分: ${score}%`}
+                                                        />
+                                                        <span className="text-[8px] font-bold text-arabian-night/40 select-none truncate w-full text-center">{labels[idx]}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Row 3: Objections Handled Checklist */}
+                                    {recordingAnalysis.objectionsHandled && recordingAnalysis.objectionsHandled.length > 0 && (
+                                        <div className="space-y-2.5">
+                                            <span className="text-[10px] font-extrabold text-arabian-night/50 uppercase tracking-wider block">🎯 异议点突破体检 (Objection Check)</span>
+                                            <div className="grid grid-cols-1 gap-2.5">
+                                                {recordingAnalysis.objectionsHandled.map((obj: any, idx: number) => (
+                                                    <div key={idx} className="bg-gray-50/75 border border-gray-100 rounded-xl p-3 flex flex-col md:flex-row md:items-center gap-3">
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center border shadow-inner ${
+                                                                obj.handled 
+                                                                    ? 'bg-green-50 text-green-600 border-green-200' 
+                                                                    : 'bg-red-50 text-red-500 border-red-200'
+                                                            }`}>
+                                                                {obj.handled ? '✓' : '✗'}
+                                                            </div>
+                                                            <span className="font-extrabold text-xs text-arabian-night">{obj.objection}</span>
+                                                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded leading-none border ${
+                                                                obj.handled 
+                                                                    ? 'bg-green-100/50 text-green-700 border-green-200/55' 
+                                                                    : 'bg-red-100/50 text-red-700 border-red-200/55'
+                                                            }`}>
+                                                                {obj.handled ? '已突破' : '未突破'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex-1 text-xs text-arabian-night/70 font-semibold leading-relaxed pl-1 md:pl-0 border-l border-transparent md:border-gray-100 md:pl-3">
+                                                            {obj.feedback}
+                                                        </div>
+                                                        <div className="text-right shrink-0 pr-1 text-xs font-black text-yellow-800">
+                                                            得分: {obj.score}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Row 4: Summary & Coaching tips */}
+                                    <div className="bg-gradient-to-br from-light-teal/5 to-deep-teal/5 border border-light-teal/15 p-5 rounded-2xl space-y-4">
+                                        <div>
+                                            <span className="text-[10px] font-extrabold text-deep-teal uppercase tracking-wider block mb-1">📝 智能体检诊断总结</span>
+                                            <p className="text-xs text-arabian-night font-medium leading-relaxed">
+                                                {recordingAnalysis.summary}
+                                            </p>
+                                        </div>
+                                        <div className="border-t border-deep-teal/10 pt-3">
+                                            <span className="text-[10px] font-extrabold text-desert-gold uppercase tracking-wider block mb-2">⭐ AI 高能优化建议 (Coaching Tips)</span>
+                                            <ul className="space-y-2">
+                                                {recordingAnalysis.tips.map((tip: string, idx: number) => (
+                                                    <li key={idx} className="text-xs text-arabian-night/80 flex items-start gap-1.5 font-medium leading-relaxed">
+                                                        <span className="text-desert-gold select-none mt-0.5">✦</span>
+                                                        <span>{tip}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                // Empty / Prompt generate state
+                                <div className="text-center py-12 px-4 rounded-3xl border border-dashed border-gray-200 bg-gray-50/25 flex flex-col items-center justify-center gap-4">
+                                    <div className="w-14 h-14 rounded-full bg-desert-gold/10 border border-desert-gold/20 flex items-center justify-center text-2xl select-none animate-pulse">
+                                        ✨
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-extrabold text-arabian-night">
+                                            {t('learning_hub.analysis_not_ready', 'Gemini AI 智能诊断画像未生成')}
+                                        </p>
+                                        <p className="text-xs text-arabian-night/50 max-w-sm font-semibold leading-relaxed">
+                                            {t('learning_hub.analysis_not_ready_desc', '管理员或团队经理可以一键生成录音画像。AI 将深入诊断说话比例、语速、异议处理与情绪走势。')}
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Generate Button strictly for TL and above */}
+                                    {(profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm' || profile?.role === 'tl' || isSuperAdmin) && (
+                                        <button
+                                            type="button"
+                                            onClick={handleTriggerAnalysis}
+                                            disabled={isAnalyzing}
+                                            className="bg-gradient-to-r from-desert-gold to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 cursor-pointer focus:outline-none"
+                                        >
+                                            {isAnalyzing ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
+                                                    <span>{t('learning_hub.analyzing', '智能解析中...')}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>✨ {t('learning_hub.generate_analysis', '启动 Gemini AI 通话体检')}</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Tab 3: Interactive Q&A & Pinned Timeline Comments */}
+                    {activeModalTab === 'comments' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                            {/* Comment Input Card */}
+                            <form onSubmit={handleAddComment} className="glass-panel p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex gap-3 items-start hover:shadow-md transition-shadow">
+                                <div className="w-9 h-9 rounded-full shrink-0 overflow-hidden bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                                    {profile?.avatarUrl ? (
+                                        <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-4 h-4" />
+                                    )}
+                                </div>
+                                <div className="flex-1 flex flex-col gap-2">
+                                    <textarea
+                                        value={newCommentText}
+                                        onChange={(e) => setNewCommentText(e.target.value)}
+                                        placeholder={t('learning_hub.comment_placeholder', '分享你的学习心得、感悟，或针对本录音提出您的问题...')}
+                                        className="w-full min-h-[70px] max-h-[140px] text-sm p-3 border border-gray-100 bg-gray-50/50 rounded-xl outline-none focus:ring-2 focus:ring-deep-teal focus:bg-white resize-y font-medium text-arabian-night/90 placeholder:text-arabian-night/40"
+                                    />
+                                    <div className="flex justify-between items-center mt-1">
+                                        <label className="flex items-center gap-1.5 text-xs text-arabian-night/60 cursor-pointer font-bold select-none hover:text-deep-teal transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={attachTimestamp}
+                                                onChange={(e) => setAttachTimestamp(e.target.checked)}
+                                                className="rounded text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span>⏱️ {t('learning_hub.attach_timestamp', '关联当前播放时间')} ({formatTime(modalCurrentTime)})</span>
+                                        </label>
+                                        <button 
+                                            type="submit"
+                                            disabled={!newCommentText.trim()}
+                                            className="bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                        >
+                                            <Send className="w-3 h-3" />
+                                            {t('common.submit', '提交评论')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            {/* Comments Thread List */}
+                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                                {comments.filter(c => c.parentId === null).length === 0 ? (
+                                    <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                                        <p className="text-sm font-semibold text-arabian-night/40">💬 {t('learning_hub.no_comments_yet', '暂无互动讨论，快来发表第一条观点吧！')}</p>
+                                    </div>
+                                ) : (
+                                    comments.filter(c => c.parentId === null).map((comment) => {
+                                        const isFlagged = comment.status === 'flagged';
+                                        const isCommentLiked = comment.likes?.includes(user?.uid || '');
+                                        const userLikesCount = comment.likes?.length || 0;
+                                        
+                                        // Filter replies for this parent
+                                        const replies = comments.filter(r => r.parentId === comment.id);
+
+                                        return (
+                                            <div key={comment.id} className={`p-4 rounded-2xl border transition-all duration-300 ${
+                                                comment.isPinned 
+                                                    ? 'bg-gradient-to-r from-desert-gold/5 via-amber-500/[0.02] to-transparent border-desert-gold/30 shadow-sm'
+                                                    : 'bg-gray-50/30 border-gray-100/70 hover:border-gray-200/50'
+                                            }`}>
+                                                {/* Primary Comment Header */}
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex gap-2.5 items-center">
+                                                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center shadow-inner">
+                                                            {comment.userAvatar ? (
+                                                                <img src={comment.userAvatar} alt={comment.userName} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xs font-bold font-serif uppercase">
+                                                                    {comment.userName.charAt(0)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="text-xs font-black text-arabian-night/90">{comment.userName}</span>
+                                                                {comment.userTeam && (
+                                                                    <span className="text-[8px] font-bold text-arabian-night/50 bg-white border border-gray-100 px-1.5 py-0.5 rounded-full leading-none">{comment.userTeam}</span>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[10px] text-arabian-night/40 font-medium">
+                                                                {comment.createdAt?.toDate?.()?.toLocaleString() || t('common.just_now', '刚刚')}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Pinned Crown info */}
+                                                    <div className="flex items-center gap-1.5">
+                                                        {comment.isPinned && (
+                                                            <span className="text-[9px] bg-gradient-to-r from-desert-gold to-yellow-600 text-white font-extrabold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5 animate-pulse select-none">
+                                                                📌 {t('learning_hub.featured_comment', '置顶精选')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Primary Comment Content */}
+                                                {isFlagged ? (
+                                                    <div className="bg-amber-500/5 border border-dashed border-amber-500/25 rounded-xl p-3 my-2 text-center text-xs text-amber-800 font-semibold select-none">
+                                                        👁️ {t('learning_hub.comment_under_moderation', '该互动内容已被安全举报，正在由系统管理员审核中...')}
+                                                    </div>
+                                                ) : (
+                                                    <div className="pl-10 space-y-1">
+                                                        {comment.timestamp !== undefined && comment.timestamp !== null && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => jumpToTime(comment.timestamp)}
+                                                                className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-desert-gold/15 hover:bg-desert-gold/25 text-yellow-800 border border-desert-gold/30 rounded-md px-1.5 py-0.5 transition-colors cursor-pointer select-none mb-1.5 focus:outline-none"
+                                                                title={t('learning_hub.click_to_seek', '点击跳转播放')}
+                                                            >
+                                                                ⏱️ {formatTime(comment.timestamp)}
+                                                            </button>
+                                                        )}
+                                                        <p className="text-sm text-arabian-night/85 leading-relaxed font-medium whitespace-pre-line break-words">
+                                                            {comment.content}
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Primary Comment Actions */}
+                                                <div className="flex gap-4 items-center mt-3 pl-10 text-[11px] font-bold text-arabian-night/50">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => handleLikeComment(comment.id, comment.likes || [])}
+                                                        disabled={isFlagged}
+                                                        className={`flex items-center gap-1 transition-colors hover:text-deep-teal ${isCommentLiked ? 'text-deep-teal scale-105 font-black' : ''}`}
+                                                    >
+                                                        <ThumbsUp className={`w-3.5 h-3.5 ${isCommentLiked ? 'fill-deep-teal text-deep-teal' : ''}`} />
+                                                        <span>{userLikesCount} {t('common.like', '赞')}</span>
+                                                    </button>
+
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (replyToId === comment.id) {
+                                                                setReplyToId(null);
+                                                            } else {
+                                                                setReplyToId(comment.id);
+                                                                setReplyText('');
+                                                            }
+                                                        }}
+                                                        disabled={isFlagged}
+                                                        className={`flex items-center gap-1 transition-colors hover:text-desert-gold ${replyToId === comment.id ? 'text-desert-gold' : ''}`}
+                                                    >
+                                                        <MessageSquare className="w-3.5 h-3.5" />
+                                                        <span>{t('learning_hub.reply', '回复')} ({replies.length})</span>
+                                                    </button>
+
+                                                    {/* Report/Flag button */}
+                                                    {!isFlagged && comment.userId !== user?.uid && (
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => handleFlagComment(comment.id)}
+                                                            className="flex items-center gap-1 transition-colors hover:text-red-500 ml-auto"
+                                                            title={t('learning_hub.report', '举报不妥言论')}
+                                                        >
+                                                            <Flag className="w-3 h-3" />
+                                                            <span>{t('learning_hub.report', '举报')}</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* Inline Reply Input Box */}
+                                                {replyToId === comment.id && (
+                                                    <form onSubmit={(e) => handleAddReply(e, comment.id)} className="mt-3.5 pl-10 flex gap-2 items-start animate-in slide-in-from-top-2 duration-300">
+                                                        <textarea
+                                                            value={replyText}
+                                                            onChange={(e) => setReplyText(e.target.value)}
+                                                            placeholder={t('learning_hub.reply_placeholder', '回复该心得观点...')}
+                                                            className="flex-1 min-h-[40px] text-xs p-2.5 border border-gray-100 bg-white rounded-xl outline-none focus:ring-1 focus:ring-deep-teal font-medium text-arabian-night/90"
+                                                        />
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <button 
+                                                                type="submit"
+                                                                disabled={!replyText.trim()}
+                                                                className="bg-gradient-to-r from-deep-teal to-teal-700 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition-all disabled:opacity-40"
+                                                            >
+                                                                {t('common.send', '发送')}
+                                                            </button>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => setReplyToId(null)}
+                                                                className="bg-gray-100 text-arabian-night/60 text-[10px] font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+                                                            >
+                                                                {t('common.cancel', '取消')}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                )}
+
+                                                {/* Secondary Indented Reply List */}
+                                                {replies.length > 0 && (
+                                                    <div className="mt-3.5 pl-10 border-l-2 border-gray-100 space-y-3">
+                                                        {replies.map((reply) => {
+                                                            const isReplyFlagged = reply.status === 'flagged';
+                                                            const isReplyLiked = reply.likes?.includes(user?.uid || '');
+
+                                                            return (
+                                                                <div key={reply.id} className="p-3 bg-white/40 border border-gray-50 rounded-xl hover:border-gray-100/50 transition-all duration-300">
+                                                                    <div className="flex justify-between items-center mb-1">
+                                                                        <div className="flex gap-2 items-center">
+                                                                            <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shadow-inner text-[10px]">
+                                                                                {reply.userAvatar ? (
+                                                                                    <img src={reply.userAvatar} alt={reply.userName} className="w-full h-full object-cover" />
+                                                                                ) : (
+                                                                                    <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-[8px] font-bold font-serif uppercase">
+                                                                                        {reply.userName.charAt(0)}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <span className="text-[11px] font-black text-arabian-night/90">{reply.userName}</span>
+                                                                                </div>
+                                                                                <span className="text-[8px] text-arabian-night/35 font-medium">
+                                                                                    {reply.createdAt?.toDate?.()?.toLocaleString() || t('common.just_now', '刚刚')}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    {isReplyFlagged ? (
+                                                                        <div className="bg-amber-500/5 border border-dashed border-amber-500/15 rounded-lg p-2 my-1 text-center text-[10px] text-amber-800 font-semibold select-none">
+                                                                            👁️ {t('learning_hub.comment_under_moderation', '已被举报送审...')}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <p className="text-xs text-arabian-night/80 pl-8 leading-relaxed font-semibold break-words">
+                                                                            {reply.content}
+                                                                        </p>
+                                                                    )}
+
+                                                                    <div className="flex gap-3 items-center mt-1.5 pl-8 text-[10px] font-bold text-arabian-night/40">
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => handleLikeComment(reply.id, reply.likes || [])}
+                                                                            disabled={isReplyFlagged}
+                                                                            className={`flex items-center gap-0.5 hover:text-deep-teal ${isReplyLiked ? 'text-deep-teal font-black' : ''}`}
+                                                                        >
+                                                                            <ThumbsUp className="w-3 h-3" />
+                                                                            <span>{reply.likes?.length || 0}</span>
+                                                                        </button>
+
+                                                                        {!isReplyFlagged && reply.userId !== user?.uid && (
+                                                                            <button 
+                                                                                type="button"
+                                                                                onClick={() => handleFlagComment(reply.id)}
+                                                                                className="flex items-center gap-0.5 hover:text-red-500 ml-auto"
+                                                                                title={t('learning_hub.report', '举报不妥言论')}
+                                                                            >
+                                                                                <Flag className="w-2.5 h-2.5" />
+                                                                                <span>{t('learning_hub.report', '举报')}</span>
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -2299,7 +2537,7 @@ export default function LearningHub() {
                                                 <div key={recId} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm col-span-full">
                                                     <div className="w-full lg:w-[340px] shrink-0">
                                                         <RecordingCard 
-                                                            rec={{ ...rec, transcript: null }} 
+                                                            rec={rec} 
                                                             user={user} 
                                                             favorites={favorites}
                                                             handleToggleFavorite={handleToggleFavorite}
@@ -2311,7 +2549,7 @@ export default function LearningHub() {
                                                             }}
                                                             onShare={setShareRecording}
                                                             disableSeek={!isTaskCompleted}
-                                                            isUnlocked={true}
+                                                            isUnlocked={completedAudioIds.includes(rec.id)}
                                                             className="w-full h-full"
                                                             commentCount={globalCommentCounts[recId] || 0}
                                                         />
@@ -2354,7 +2592,7 @@ export default function LearningHub() {
                                     displayedRecordings.map(rec => (
                                         <div key={rec.id} className="flex flex-col gap-3">
                                             <RecordingCard 
-                                                rec={{ ...rec, transcript: null }} 
+                                                rec={rec} 
                                                 user={user} 
                                                 favorites={favorites}
                                                 handleToggleFavorite={handleToggleFavorite}
@@ -2365,7 +2603,7 @@ export default function LearningHub() {
                                                     setActiveVideoDisableSeek(isSeekDisabled);
                                                 }}
                                                 onShare={setShareRecording}
-                                                isUnlocked={true}
+                                                isUnlocked={completedAudioIds.includes(rec.id)}
                                                 className="w-full h-full"
                                                 commentCount={globalCommentCounts[rec.id] || 0}
                                             />
@@ -2447,9 +2685,9 @@ export default function LearningHub() {
             )}
             {activeVideoRecording && (
                 <VideoPlayerModal
-                    rec={{ ...activeVideoRecording, transcript: null }}
+                    rec={activeVideoRecording}
                     disableSeek={activeVideoDisableSeek}
-                    isUnlocked={true}
+                    isUnlocked={completedAudioIds.includes(activeVideoRecording.id)}
                     onUnlock={() => handleAudioEnded(activeVideoRecording, 0)}
                     onClose={() => {
                         setActiveVideoRecording(null);

@@ -1005,24 +1005,22 @@ export default function RecordingsManager() {
                                         <div className="flex flex-col items-end gap-2 ml-4">
                                             <div className="flex gap-2">
                                                 {/* Temporarily hidden transcription generation button */}
-                                                {false && (
-                                                    <button 
-                                                        onClick={() => handleTranscribe(rec)} 
-                                                        disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
-                                                        className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
-                                                            (rec as any).transcript 
-                                                                ? 'text-green-600 hover:bg-green-50' 
-                                                                : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
-                                                        }`} 
-                                                        title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
-                                                    >
-                                                        {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
-                                                            <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
-                                                        ) : (
-                                                            <FileText className="h-4 w-4" />
-                                                        )}
-                                                    </button>
-                                                )}
+                                                <button 
+                                                    onClick={() => handleTranscribe(rec)} 
+                                                    disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
+                                                    className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
+                                                        (rec as any).transcript 
+                                                            ? 'text-green-600 hover:bg-green-50' 
+                                                            : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
+                                                    }`} 
+                                                    title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
+                                                >
+                                                    {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
+                                                        <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
+                                                    ) : (
+                                                        <FileText className="h-4 w-4" />
+                                                    )}
+                                                </button>
                                                 <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
                                                     <Send className="h-4 w-4" />
                                                 </button>
