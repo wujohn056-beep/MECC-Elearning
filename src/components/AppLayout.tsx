@@ -129,11 +129,20 @@ export default function AppLayout() {
         i18n.changeLanguage(nextLang);
     };
 
-    // Dynamically update document title based on selected language
+    // Dynamically update document title and share preview meta tags unconditionally in English to satisfy social platform card standards
     useEffect(() => {
-        const appTitle = t('navbar.title', 'ME Cloud Academy');
-        document.title = `${appTitle} - ${t('learning_hub.subtitle', '精品销售实战录音库')}`;
-    }, [i18n.language, t]);
+        document.title = "ME Cloud Academy - Premium Sales Recordings";
+
+        const updateMeta = (selector: string, attr: string, value: string) => {
+            const el = document.querySelector(selector);
+            if (el) {
+                el.setAttribute(attr, value);
+            }
+        };
+        updateMeta('meta[name="description"]', 'content', 'ME Cloud Academy premium sales recordings library. Review excellent recordings to boost professional growth!');
+        updateMeta('meta[property="og:title"]', 'content', 'ME Cloud Academy - Premium Sales Recordings');
+        updateMeta('meta[property="og:description"]', 'content', 'Review excellent recordings to boost professional growth! Click the link to enter your dedicated Cloud Academy and start learning.');
+    }, []);
 
     // Close menu when clicking outside
     useEffect(() => {
