@@ -125,12 +125,28 @@ export default function TeamTasks() {
             
             // Filter users based on leader's scope
             const filteredUsers = usersData.filter(u => {
+                const uTeam = (u.team || '').trim();
+                // Never show users without a team in task assignment to prevent "Unassigned" block
+                if (!uTeam) return false;
+
                 if (isSuperAdmin) return true;
-                // Allow self-assignment and test account 'wuchuan' to always be selectable for convenient testing
-                if (u.id === user?.uid || u.email === 'wuchuan@51talk.com' || u.crmId === 'wuchuan') return true;
-                if (profile?.role === 'sd' && u.sd === profile.crmId) return true;
-                if (profile?.role === 'sm' && u.sm === profile.crmId) return true;
-                if (profile?.role === 'tl' && u.team === profile.team) return true;
+
+                const loggedInRole = String(profile?.role).trim().toLowerCase();
+                const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
+                const loggedInTeam = (profile?.team || '').trim().toLowerCase();
+
+                const uSd = (u.sd || '').trim().toLowerCase();
+                const uSm = (u.sm || '').trim().toLowerCase();
+                const uTl = (u.tl || '').trim().toLowerCase();
+                const uTeamLower = uTeam.toLowerCase();
+
+                if (loggedInRole === 'sd') {
+                    return uSd === loggedInCrmId;
+                } else if (loggedInRole === 'sm') {
+                    return uSm === loggedInCrmId;
+                } else if (loggedInRole === 'tl') {
+                    return uTeamLower === loggedInTeam || uTl === loggedInCrmId;
+                }
                 return false;
             });
             setAllUsers(filteredUsers);
