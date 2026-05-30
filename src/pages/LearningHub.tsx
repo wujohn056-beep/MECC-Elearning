@@ -188,7 +188,8 @@ const RecordingCard = ({
     onShare,
     disableSeek = false,
     className = "",
-    isUnlocked = false
+    isUnlocked = false,
+    commentCount = 0
 }: any) => {
     const { t } = useTranslation();
     const isLiked = rec.likes?.includes(user?.uid || '');
@@ -227,6 +228,11 @@ const RecordingCard = ({
                     <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none">
                         📄 {t('learning_hub.doc_tag', '文档')}
                     </span>
+                    {commentCount > 0 && (
+                        <span className="absolute bottom-2.5 left-2.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none animate-pulse">
+                            💬 {commentCount}
+                        </span>
+                    )}
                 </a>
             ) : isVideo ? (
                 /* Beautiful Video Thumbnail/Cover in the list card */
@@ -246,6 +252,11 @@ const RecordingCard = ({
                     <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none">
                         🎥 {t('learning_hub.video_tag', '视频')}
                     </span>
+                    {commentCount > 0 && (
+                        <span className="absolute bottom-2.5 left-2.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none animate-pulse">
+                            💬 {commentCount}
+                        </span>
+                    )}
                 </div>
             ) : (
                 /* Decorative Background Top for Audio */
@@ -317,6 +328,12 @@ const RecordingCard = ({
                                     <span>{rec.playCount}{t('common.times')}</span>
                                 </div>
                             )}
+                            {commentCount > 0 && (
+                                <div className="flex items-center gap-1 text-deep-teal font-extrabold animate-in fade-in">
+                                    <MessageSquare className="h-3 w-3 text-desert-gold" />
+                                    <span>{commentCount}{t('learning_hub.comments_count_label', '条讨论')}</span>
+                                </div>
+                            )}
                         </div>
                         
                         <div className="flex items-center gap-2">
@@ -361,7 +378,12 @@ const RecordingCard = ({
                                 className="mt-1 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20 hover:shadow-md"
                             >
                                 <MessageSquare className="w-3.5 h-3.5 text-desert-gold" />
-                                {t('learning_hub.comments_btn', '参与互动交流与问答')}
+                                <span>{t('learning_hub.comments_btn', '参与互动交流与问答')}</span>
+                                {commentCount > 0 && (
+                                    <span className="bg-desert-gold text-deep-teal text-[10px] font-black px-2 py-0.5 rounded-full shadow-inner animate-pulse shrink-0 ml-1 border border-white/10">
+                                        {commentCount}
+                                    </span>
+                                )}
                             </button>
                             {rec.transcript && (
                                 <button 
@@ -1404,6 +1426,9 @@ export default function LearningHub() {
     // Share Poster Modal State
     const [shareRecording, setShareRecording] = useState<Recording | null>(null);
 
+    // Global Comments Count Aggregator
+    const [globalCommentCounts, setGlobalCommentCounts] = useState<Record<string, number>>({});
+
     // Suggestions Autocomplete States
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
     const searchRef = React.useRef<HTMLDivElement>(null);
@@ -1594,6 +1619,24 @@ export default function LearningHub() {
             }
         }
     }, [targetRecordingId, recordings, activeVideoRecording]);
+
+    // Real-time listener for global comment counts aggregation
+    useEffect(() => {
+        const q = query(collection(db, 'comments'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const counts: Record<string, number> = {};
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.audioId && data.status !== 'deleted') {
+                    counts[data.audioId] = (counts[data.audioId] || 0) + 1;
+                }
+            });
+            setGlobalCommentCounts(counts);
+        }, (error) => {
+            console.error("Error loading global comment counts:", error);
+        });
+        return () => unsubscribe();
+    }, []);
 
     const handleToggleLike = async (recId: string, currentLikes: string[] = []) => {
         if (!user) return;
@@ -2179,6 +2222,7 @@ export default function LearningHub() {
                                                             disableSeek={!isTaskCompleted}
                                                             isUnlocked={true}
                                                             className="w-full h-full"
+                                                            commentCount={globalCommentCounts[recId] || 0}
                                                         />
                                                     </div>
                                                     <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-desert-gold/30 flex flex-col relative overflow-hidden">
@@ -2232,6 +2276,7 @@ export default function LearningHub() {
                                                 onShare={setShareRecording}
                                                 isUnlocked={true}
                                                 className="w-full h-full"
+                                                commentCount={globalCommentCounts[rec.id] || 0}
                                             />
                                         </div>
                                     ))

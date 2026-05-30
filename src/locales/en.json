@@ -159,6 +159,7 @@
         "view_transcript_unlocked_btn": "View Arabic Transcript",
         "comments_btn": "Q&A and Interactive Comments",
         "comments_and_qa": "Q&A and Discussion",
+        "comments_count_label": " comments",
         "comment_placeholder": "Share your learning, insights, or ask a question about this recording...",
         "no_comments_yet": "No comments yet. Be the first to share your thoughts!",
         "featured_comment": "Featured Note",
