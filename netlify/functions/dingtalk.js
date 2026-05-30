@@ -475,7 +475,7 @@ exports.handler = async (event, context) => {
                 });
             }
 
-            const messageMarkdown = `### 📚 **收到新的云学堂学习任务** \n\n **任务名称**：${title} \n **截止日期**：${deadline || '-'} \n **指派导师**：${assignerName} \n\n 优秀的销售录音复盘，能助推专业成长，请及时在截止日期前听完相关录音并提交心得感悟。 \n\n [👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub)`;
+            const messageMarkdown = `### 📚 **收到新的云学堂学习任务** \n\n **任务名称**：${title} \n **截止日期**：${deadline || '-'} \n **指派导师**：${assignerName} \n\n 优秀的销售录音复盘，能助推专业成长，请及时在截止日期前听完相关录音并提交心得感悟。 \n\n [👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
 
             let sentSuccess = false;
             let mockPayload = null;
