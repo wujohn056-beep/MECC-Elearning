@@ -479,6 +479,7 @@ exports.handler = async (event, context) => {
 
             let sentSuccess = false;
             let mockPayload = null;
+            let dingtalkApiResponse = null;
 
             if (!isMockDingTalk && recipients.length > 0 && agentId) {
                 try {
@@ -505,13 +506,17 @@ exports.handler = async (event, context) => {
                             })
                         });
                         const notifyData = await notifyRes.json();
+                        dingtalkApiResponse = notifyData;
                         sentSuccess = notifyData.errcode === 0;
                         if (!sentSuccess) {
                             console.error("DingTalk Notification API failed:", notifyData);
                         }
+                    } else {
+                        dingtalkApiResponse = tokenData;
                     }
                 } catch (notifyErr) {
                     console.error("DingTalk Notification connection error:", notifyErr);
+                    dingtalkApiResponse = { error: notifyErr.message };
                 }
             } else {
                 // Mock Mode: Print and return mock payload
@@ -537,7 +542,8 @@ exports.handler = async (event, context) => {
                     dbError: dbError,
                     queryLogs: queryLogs,
                     isMockFirebase: isMockFirebase,
-                    isMockDingTalk: isMockDingTalk
+                    isMockDingTalk: isMockDingTalk,
+                    dingtalkApiResponse: dingtalkApiResponse
                 })
             };
         }
