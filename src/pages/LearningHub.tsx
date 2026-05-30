@@ -18,6 +18,8 @@ interface Recording {
     likes?: string[];
     displayId?: string;
     playCount?: number;
+    transcript?: string;
+    transcriptStatus?: string;
 }
 
 interface Category {
@@ -256,9 +258,16 @@ const RecordingCard = ({
                             </div>
                         )}
                     </div>
-                    <span className="text-[10px] bg-white text-desert-gold border border-desert-gold/30 px-2 py-0.5 rounded-full font-bold shadow-sm">
-                        {rec.categoryName || t('common.uncategorized')}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="text-[10px] bg-white text-desert-gold border border-desert-gold/30 px-2 py-0.5 rounded-full font-bold shadow-sm">
+                            {rec.categoryName || t('common.uncategorized')}
+                        </span>
+                        {rec.transcript && (
+                            <span className="text-[9px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-0.5 animate-pulse shrink-0">
+                                📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
+                            </span>
+                        )}
+                    </div>
                 </div>
                 
                 <div className="flex-1">
@@ -322,11 +331,22 @@ const RecordingCard = ({
                     </div>
                     
                     {!isVideo && !isDoc && (
-                        <CustomAudioPlayer 
-                            src={rec.audioUrl} 
-                            onEnded={(duration) => handleAudioEnded(rec, duration)} 
-                            disableSeek={disableSeek}
-                        />
+                        <div className="flex flex-col gap-2">
+                            <CustomAudioPlayer 
+                                src={rec.audioUrl} 
+                                onEnded={(duration) => handleAudioEnded(rec, duration)} 
+                                disableSeek={disableSeek}
+                            />
+                            {rec.transcript && (
+                                <button 
+                                    onClick={() => onPlayVideo(rec, disableSeek)}
+                                    className="mt-1 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20 hover:shadow-md"
+                                >
+                                    <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                                    {t('learning_hub.view_transcript_btn', '查看并解锁阿语逐字稿')}
+                                </button>
+                            )}
+                        </div>
                     )}
                     
                     {isDoc && (
@@ -348,36 +368,38 @@ const RecordingCard = ({
 
 const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded }: any) => {
     const { t } = useTranslation();
-    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const mediaRef = React.useRef<HTMLMediaElement>(null);
     const lastTimeRef = React.useRef(0);
     const [actualListenedSeconds, setActualListenedSeconds] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const isVideo = isVideoUrl(rec.audioUrl);
 
     const handleTimeUpdate = () => {
-        if (videoRef.current) {
-            const curr = videoRef.current.currentTime;
+        if (mediaRef.current) {
+            const curr = mediaRef.current.currentTime;
             const diff = curr - lastTimeRef.current;
             
-            // Increment actual listened time only when the video is playing legitimately (less than 1.5s skip)
-            const isPlaying = !videoRef.current.paused && !videoRef.current.ended;
-            if (isPlaying && diff > 0 && diff < 1.5) {
+            // Increment actual listened time only when the media is playing legitimately (less than 1.5s skip)
+            const playing = !mediaRef.current.paused && !mediaRef.current.ended;
+            if (playing && diff > 0 && diff < 1.5) {
                 setActualListenedSeconds(prev => prev + diff);
             }
             
             if (disableSeek) {
-                if (videoRef.current.currentTime > lastTimeRef.current + 1.5) {
-                    videoRef.current.currentTime = lastTimeRef.current;
+                if (mediaRef.current.currentTime > lastTimeRef.current + 1.5) {
+                    mediaRef.current.currentTime = lastTimeRef.current;
                 } else {
-                    lastTimeRef.current = videoRef.current.currentTime;
+                    lastTimeRef.current = mediaRef.current.currentTime;
                 }
             } else {
-                lastTimeRef.current = videoRef.current.currentTime;
+                lastTimeRef.current = mediaRef.current.currentTime;
             }
         }
     };
 
     const handleLoadedMetadata = () => {
-        if (videoRef.current) setDuration(videoRef.current.duration);
+        if (mediaRef.current) setDuration(mediaRef.current.duration);
     };
 
     useEffect(() => {
@@ -395,8 +417,12 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded }: an
                 {/* Modal Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] bg-desert-gold/10 text-yellow-800 border border-desert-gold/20 px-2 py-0.5 rounded-full font-bold">
-                            🎥 {rec.categoryName || t('common.uncategorized')}
+                        <span className={`text-[10px] border px-2 py-0.5 rounded-full font-bold shadow-sm ${
+                            isVideo 
+                                ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                : 'bg-amber-50 text-yellow-800 border-desert-gold/30'
+                        }`}>
+                            {isVideo ? '🎥' : '🎵'} {rec.categoryName || t('common.uncategorized')}
                         </span>
                         {rec.displayId && <span className="text-desert-gold text-xs font-extrabold">[{rec.displayId}]</span>}
                     </div>
@@ -408,22 +434,63 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded }: an
                     </button>
                 </div>
 
-                {/* Video Playback viewport */}
+                {/* Playback viewport */}
                 <div className="bg-black flex-1 flex items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-[400px]">
-                    <video
-                        ref={videoRef}
-                        src={rec.audioUrl}
-                        className="w-full max-h-[60vh] object-contain"
-                        controls
-                        autoPlay
-                        controlsList={disableSeek ? "nodownload nofullscreen noremoteplayback" : "nodownload"}
-                        onTimeUpdate={handleTimeUpdate}
-                        onLoadedMetadata={handleLoadedMetadata}
-                        onEnded={() => {
-                            onEnded(videoRef.current?.duration || 0, actualListenedSeconds);
-                        }}
-                        preload="metadata"
-                    />
+                    {isVideo ? (
+                        <video
+                            ref={mediaRef as React.RefObject<HTMLVideoElement>}
+                            src={rec.audioUrl}
+                            className="w-full max-h-[60vh] object-contain"
+                            controls
+                            autoPlay
+                            controlsList={disableSeek ? "nodownload nofullscreen noremoteplayback" : "nodownload"}
+                            onTimeUpdate={handleTimeUpdate}
+                            onLoadedMetadata={handleLoadedMetadata}
+                            onEnded={() => {
+                                setIsPlaying(false);
+                                onEnded(mediaRef.current?.duration || 0, actualListenedSeconds);
+                            }}
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            preload="metadata"
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-4 py-10 w-full bg-gradient-to-br from-light-teal/20 to-deep-teal/40 backdrop-blur-md rounded-3xl border border-white/10 shadow-inner min-h-[300px] px-6">
+                            <div className={`w-36 h-36 rounded-full border-4 border-desert-gold/30 flex items-center justify-center bg-arabian-night shadow-2xl relative overflow-hidden ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }}>
+                                {/* Vinyl Grooves */}
+                                <div className="absolute inset-2 rounded-full border border-white/5"></div>
+                                <div className="absolute inset-4 rounded-full border border-white/5"></div>
+                                <div className="absolute inset-6 rounded-full border border-white/5"></div>
+                                <div className="absolute inset-8 rounded-full border border-white/5"></div>
+                                {/* Record Label */}
+                                <div className="w-12 h-12 rounded-full bg-desert-gold flex items-center justify-center text-deep-teal font-black text-xs shadow-md border-2 border-white/20 select-none">
+                                    🎵
+                                </div>
+                            </div>
+                            <div className="text-center space-y-1">
+                                <span className="text-[10px] bg-desert-gold/15 text-yellow-800 border border-desert-gold/30 px-3 py-1 rounded-full font-bold shadow-sm uppercase tracking-widest select-none">
+                                    🎧 {t('learning_hub.audio_mode', '销售音频模式')}
+                                </span>
+                            </div>
+                            <audio
+                                ref={mediaRef as React.RefObject<HTMLAudioElement>}
+                                src={rec.audioUrl}
+                                className="w-full max-w-lg mt-4 px-4"
+                                controls
+                                autoPlay
+                                controlsList={disableSeek ? "nodownload noremoteplayback" : "nodownload"}
+                                onTimeUpdate={handleTimeUpdate}
+                                onLoadedMetadata={handleLoadedMetadata}
+                                onEnded={() => {
+                                    setIsPlaying(false);
+                                    onEnded(mediaRef.current?.duration || 0, actualListenedSeconds);
+                                }}
+                                onPlay={() => setIsPlaying(true)}
+                                onPause={() => setIsPlaying(false)}
+                                preload="metadata"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Details view */}
