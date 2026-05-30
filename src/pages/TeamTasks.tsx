@@ -126,6 +126,8 @@ export default function TeamTasks() {
             // Filter users based on leader's scope
             const filteredUsers = usersData.filter(u => {
                 if (isSuperAdmin) return true;
+                // Allow self-assignment and test account 'wuchuan' to always be selectable for convenient testing
+                if (u.id === user?.uid || u.email === 'wuchuan@51talk.com' || u.crmId === 'wuchuan') return true;
                 if (profile?.role === 'sd' && u.sd === profile.crmId) return true;
                 if (profile?.role === 'sm' && u.sm === profile.crmId) return true;
                 if (profile?.role === 'tl' && u.team === profile.team) return true;

@@ -17,6 +17,33 @@ if (!admin.apps.length) {
     }
 }
 
+let dbInstance = null;
+
+function getFirestoreDb() {
+    if (dbInstance) return dbInstance;
+    
+    if (!admin.apps.length) {
+        throw new Error("Firebase Admin not initialized. Check FIREBASE_SERVICE_ACCOUNT env var.");
+    }
+    
+    try {
+        const { getFirestore } = require('firebase-admin/firestore');
+        dbInstance = getFirestore(admin.apps[0], 'default');
+        console.log("Firestore initialized successfully using getFirestore(app, 'default').");
+    } catch (e) {
+        console.warn("Failed to load getFirestore from firebase-admin/firestore, falling back to legacy settings():", e);
+        const db = admin.firestore();
+        try {
+            db.settings({ databaseId: 'default' });
+        } catch (settingsErr) {
+            console.log("Database settings already applied or failed to apply:", settingsErr.message);
+        }
+        dbInstance = db;
+    }
+    
+    return dbInstance;
+}
+
 const CUSTOM_DINGTALK_EMAIL_MAP = {
     'serdah': 'mohserdah@51talk.com'
 };
@@ -110,8 +137,7 @@ exports.handler = async (event, context) => {
             let users = [];
             if (!isMockFirebase) {
                 try {
-                    const db = admin.firestore();
-                    db.settings({ databaseId: 'default' });
+                    const db = getFirestoreDb();
                     if (userIdsToSync && Array.isArray(userIdsToSync) && userIdsToSync.length > 0) {
                         for (const uid of userIdsToSync) {
                             const doc = await db.collection('users').doc(uid).get();
@@ -239,8 +265,7 @@ exports.handler = async (event, context) => {
 
                     if (!isMockFirebase) {
                         try {
-                            const db = admin.firestore();
-                            db.settings({ databaseId: 'default' });
+                            const db = getFirestoreDb();
                             await db.collection('users').doc(user.id).update({
                                 dingtalkUserId: ddUserId,
                                 dingtalkSyncedAt: syncTime
@@ -289,8 +314,7 @@ exports.handler = async (event, context) => {
                 // Try to find the user in Firebase first
                 if (!isMockFirebase) {
                     try {
-                        const db = admin.firestore();
-                        db.settings({ databaseId: 'default' });
+                        const db = getFirestoreDb();
                         const snapshot = await db.collection('users').where('crmId', '==', resolvedCrmId).limit(1).get();
                         if (!snapshot.empty) {
                             resolvedUserId = snapshot.docs[0].id;
@@ -306,8 +330,7 @@ exports.handler = async (event, context) => {
                     // In mock environment, if database is running, let's create a placeholder user in Firestore
                     if (!isMockFirebase) {
                         try {
-                            const db = admin.firestore();
-                            db.settings({ databaseId: 'default' });
+                            const db = getFirestoreDb();
                             await db.collection('users').doc(resolvedUserId).set({
                                 crmId: resolvedCrmId,
                                 role: 'user',
@@ -359,8 +382,7 @@ exports.handler = async (event, context) => {
                         };
                     }
 
-                    const db = admin.firestore();
-                    db.settings({ databaseId: 'default' });
+                    const db = getFirestoreDb();
                     const snapshot = await db.collection('users').where('dingtalkUserId', '==', ddUserId).limit(1).get();
                     if (snapshot.empty) {
                         return {
@@ -419,24 +441,37 @@ exports.handler = async (event, context) => {
             }
 
             const recipients = [];
+            let dbError = null;
+            const queryLogs = [];
+
             // Fetch users to retrieve their dingtalkUserIds
             if (!isMockFirebase) {
                 try {
-                    const db = admin.firestore();
-                    db.settings({ databaseId: 'default' });
+                    const db = getFirestoreDb();
                     for (const uid of assigneeIds) {
                         const doc = await db.collection('users').doc(uid).get();
-                        if (doc.exists && doc.data().dingtalkUserId) {
-                            recipients.push(doc.data().dingtalkUserId);
+                        if (doc.exists) {
+                            const data = doc.data();
+                            if (data.dingtalkUserId) {
+                                recipients.push(data.dingtalkUserId);
+                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId });
+                            } else {
+                                queryLogs.push({ uid, found: true, dingtalkUserId: null, crmId: data.crmId, msg: "dingtalkUserId is missing in database profile" });
+                            }
+                        } else {
+                            queryLogs.push({ uid, found: false, msg: "User document not found in Firestore users collection" });
                         }
                     }
                 } catch (err) {
                     console.error("Failed to query assignees dingtalkUserIds:", err);
+                    dbError = err.message;
                 }
             } else {
                 // Mock Recipients
                 assigneeIds.forEach(id => {
-                    recipients.push(`dd_mock_id_${id}`);
+                    const mockId = `dd_mock_id_${id}`;
+                    recipients.push(mockId);
+                    queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, msg: "mocked" });
                 });
             }
 
@@ -484,7 +519,9 @@ exports.handler = async (event, context) => {
                 mockPayload = {
                     recipientIds: recipients,
                     markdown: messageMarkdown,
-                    note: "System is running in Mock Mode. Message simulated successfully."
+                    note: "System is running in Mock Mode. Message simulated successfully.",
+                    isMockDingTalk,
+                    hasAgentId: !!agentId
                 };
                 console.log("[Mock Notification sent]", mockPayload);
             }
@@ -495,7 +532,12 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({
                     success: sentSuccess,
                     recipientsCount: recipients.length,
-                    mockPayload: mockPayload
+                    recipientIds: recipients,
+                    mockPayload: mockPayload,
+                    dbError: dbError,
+                    queryLogs: queryLogs,
+                    isMockFirebase: isMockFirebase,
+                    isMockDingTalk: isMockDingTalk
                 })
             };
         }
@@ -549,8 +591,7 @@ exports.handler = async (event, context) => {
 
                 if (!isMockFirebase) {
                     try {
-                        const db = admin.firestore();
-                        db.settings({ databaseId: 'default' });
+                        const db = getFirestoreDb();
                         const snapshot = await db.collection('users').where('role', '!=', 'super_admin').get();
                         snapshot.forEach(doc => {
                             if (doc.data().dingtalkUserId) {
