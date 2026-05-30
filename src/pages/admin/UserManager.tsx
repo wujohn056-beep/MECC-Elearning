@@ -364,61 +364,84 @@ export default function UserManager() {
     const handleDingTalkSync = async () => {
         setLoading(true);
         setStatusLog([{ msg: t('user_manager.syncing_dingtalk', '正在与钉钉同步账号信息，请稍候...'), type: 'success' }]);
+
+        // Filter out super admins and already linked users to sync only what is needed!
+        const unlinkedUsers = users.filter(u => u.role !== 'super_admin' && !u.dingtalkUserId);
+
+        if (unlinkedUsers.length === 0) {
+            setStatusLog(prev => [{ msg: t('user_manager.all_synced', '所有销售账号均已关联钉钉，无需同步。'), type: 'success' }, ...prev]);
+            setLoading(false);
+            return;
+        }
+
         setProgress(0);
-        setTotal(users.length);
+        setTotal(unlinkedUsers.length);
+
+        const BATCH_SIZE = 5;
+        let linkedCount = 0;
 
         try {
-            const response = await fetch('/.netlify/functions/dingtalk', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'sync' })
-            });
-
-            if (!response.ok) {
-                throw new Error(t('user_manager.sync_fail', '钉钉账号同步失败，请检查开放平台凭证或网络配置。'));
-            }
-
-            const result = await response.json();
-            if (result.success) {
-                // Local environment mock database fallback writer
-                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                if (isLocal) {
-                    setStatusLog(prev => [{ msg: "📝 [本地同步通道] 检测到处于测试环境，系统已开启客户端自愈写入，正在将钉钉绑定数据同步至 Firestore 数据库...", type: 'success' }, ...prev]);
-                    const { doc, updateDoc } = await import('firebase/firestore');
+            // Local environment mock database fallback writer (processed in one go if running locally to make testing fast)
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocal) {
+                setStatusLog(prev => [{ msg: "📝 [本地同步通道] 检测到处于测试环境，系统已开启客户端自愈写入，正在将钉钉绑定数据同步至 Firestore 数据库...", type: 'success' }, ...prev]);
+                const { doc, updateDoc } = await import('firebase/firestore');
+                
+                let localLinkedCount = 0;
+                for (const u of unlinkedUsers) {
+                    const crmIdClean = u.crmId.replace(/[^a-zA-Z0-9]/g, '');
+                    const mockDdId = `dd_mock_${crmIdClean}`;
+                    const syncTime = new Date().toISOString();
                     
-                    let localLinkedCount = 0;
-                    for (const u of users) {
-                        if (u.role === 'super_admin') continue;
-                        if (u.dingtalkUserId) continue; // Already linked
-                        
-                        const crmIdClean = u.crmId.replace(/[^a-zA-Z0-9]/g, '');
-                        const mockDdId = `dd_mock_${crmIdClean}`;
-                        const syncTime = new Date().toISOString();
-                        
-                        try {
-                            await updateDoc(doc(db, 'users', u.id), {
-                                dingtalkUserId: mockDdId,
-                                dingtalkSyncedAt: syncTime
-                            });
-                            localLinkedCount++;
-                        } catch (writeErr) {
-                            console.error(`Failed to write client-side DingTalk sync for user ${u.crmId}:`, writeErr);
-                        }
+                    try {
+                        await updateDoc(doc(db, 'users', u.id), {
+                            dingtalkUserId: mockDdId,
+                            dingtalkSyncedAt: syncTime
+                        });
+                        localLinkedCount++;
+                    } catch (writeErr) {
+                        console.error(`Failed to write client-side DingTalk sync for user ${u.crmId}:`, writeErr);
                     }
-                    setStatusLog(prev => [{ msg: `🎉 [本地自愈成功] 客户端成功为 ${localLinkedCount} 个销售账户在 Firestore 中匹配并写入了钉钉关联状态！`, type: 'success' }, ...prev]);
+                }
+                setStatusLog(prev => [{ msg: `🎉 [本地自愈成功] 客户端成功为 ${localLinkedCount} 个销售账户在 Firestore 中匹配并写入了钉钉关联状态！`, type: 'success' }, ...prev]);
+                setProgress(unlinkedUsers.length);
+                fetchUsers();
+                setLoading(false);
+                return;
+            }
+
+            // Real production batch syncing (prevents Netlify 10s Serverless Gateway 504 Timeout)
+            for (let i = 0; i < unlinkedUsers.length; i += BATCH_SIZE) {
+                const batch = unlinkedUsers.slice(i, i + BATCH_SIZE);
+                const batchIds = batch.map(u => u.id);
+
+                setStatusLog(prev => [{ msg: `⏳ 正在同步批次 (${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(unlinkedUsers.length/BATCH_SIZE)}) 共 ${batch.length} 个账号...`, type: 'success' }, ...prev]);
+
+                const response = await fetch('/.netlify/functions/dingtalk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'sync', userIds: batchIds })
+                });
+
+                if (!response.ok) {
+                    throw new Error(t('user_manager.sync_fail', '钉钉账号同步失败，请检查开放平台凭证或网络配置。'));
                 }
 
-                if (result.logs && Array.isArray(result.logs)) {
-                    setStatusLog(prev => [...result.logs, ...prev]);
+                const result = await response.json();
+                if (result.success) {
+                    linkedCount += result.linkedCount || 0;
+                    if (result.logs && Array.isArray(result.logs)) {
+                        setStatusLog(prev => [...result.logs, ...prev]);
+                    }
+                    setProgress(Math.min(i + batch.length, unlinkedUsers.length));
+                } else {
+                    throw new Error(result.error || t('user_manager.sync_fail', '钉钉账号同步失败，请检查开放平台凭证或网络配置。'));
                 }
-                const successMsg = t('user_manager.sync_success', '钉钉账号同步完成！共成功关联 {{count}} 个销售账户。').replace('{{count}}', (result.linkedCount || 0).toString());
-                setStatusLog(prev => [{ msg: successMsg, type: 'success' }, ...prev]);
-                setProgress(result.linkedCount || 0);
-                setTotal(users.length);
-                fetchUsers();
-            } else {
-                throw new Error(result.error || t('user_manager.sync_fail', '钉钉账号同步失败，请检查开放平台凭证或网络配置。'));
             }
+
+            const successMsg = t('user_manager.sync_success', '钉钉账号同步完成！共成功关联 {{count}} 个销售账户。').replace('{{count}}', linkedCount.toString());
+            setStatusLog(prev => [{ msg: successMsg, type: 'success' }, ...prev]);
+            fetchUsers();
         } catch (err: any) {
             console.error("DingTalk sync error:", err);
             setStatusLog(prev => [{ msg: err.message || t('user_manager.sync_fail', '钉钉账号同步失败，请检查开放平台凭证或网络配置。'), type: 'error' }, ...prev]);

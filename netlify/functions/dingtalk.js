@@ -106,15 +106,26 @@ exports.handler = async (event, context) => {
                 logs.push({ msg: "⚠️ [未配置凭证] 钉钉 AppKey/AppSecret 未在环境变量中配置，系统正在运行在【高级模拟(Mock)测试环境】中...", type: 'error' });
             }
 
+            const userIdsToSync = body.userIds;
             let users = [];
             if (!isMockFirebase) {
                 try {
                     const db = admin.firestore();
-                    const snapshot = await db.collection('users').get();
-                    snapshot.forEach(doc => {
-                        users.push({ id: doc.id, ...doc.data() });
-                    });
-                    logs.push({ msg: `📂 [数据库连接成功] 自 Firestore 读取到共 ${users.length} 个系统账户。`, type: 'success' });
+                    if (userIdsToSync && Array.isArray(userIdsToSync) && userIdsToSync.length > 0) {
+                        for (const uid of userIdsToSync) {
+                            const doc = await db.collection('users').doc(uid).get();
+                            if (doc.exists) {
+                                users.push({ id: doc.id, ...doc.data() });
+                            }
+                        }
+                        logs.push({ msg: `📂 [数据库连接成功] 已定位批次内 ${users.length} 个账号档案。`, type: 'success' });
+                    } else {
+                        const snapshot = await db.collection('users').get();
+                        snapshot.forEach(doc => {
+                            users.push({ id: doc.id, ...doc.data() });
+                        });
+                        logs.push({ msg: `📂 [数据库连接成功] 自 Firestore 读取到共 ${users.length} 个系统账户。`, type: 'success' });
+                    }
                 } catch (fsErr) {
                     console.error("Firestore read error:", fsErr);
                     logs.push({ msg: `❌ [数据库故障] 读取 Firestore 用户表失败，进入完全模拟测试：${fsErr.message}`, type: 'error' });
