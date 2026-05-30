@@ -1,4 +1,4 @@
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
 
 // Initialize Firebase Admin if Service Account is configured
 if (!admin.apps.length) {
@@ -27,18 +27,15 @@ function getFirestoreDb() {
     }
     
     try {
-        const { getFirestore } = require('firebase-admin/firestore');
-        dbInstance = getFirestore(admin.apps[0], 'default');
-        console.log("Firestore initialized successfully using getFirestore(app, 'default').");
-    } catch (e) {
-        console.warn("Failed to load getFirestore from firebase-admin/firestore, falling back to legacy settings():", e);
-        const db = admin.firestore();
+        dbInstance = admin.firestore();
         try {
-            db.settings({ databaseId: 'default' });
+            dbInstance.settings({ databaseId: 'default' });
         } catch (settingsErr) {
             console.log("Database settings already applied or failed to apply:", settingsErr.message);
         }
-        dbInstance = db;
+    } catch (e) {
+        console.warn("Failed to initialize firestore:", e);
+        dbInstance = admin.firestore();
     }
     
     return dbInstance;
@@ -57,7 +54,7 @@ function getMimeType(url) {
     return 'audio/mp3'; // default fallback
 }
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     // Only allow POST requests
     if (event.httpMethod !== 'POST') {
         return { 
@@ -124,18 +121,18 @@ exports.handler = async (event, context) => {
         } else {
             try {
                 console.log(`Downloading audio file from URL: ${audioUrl}`);
-                // Download file
-                const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+                // Download file using global fetch
                 const response = await fetch(audioUrl);
                 if (!response.ok) {
                     throw new Error(`Failed to download audio file: Status ${response.status}`);
                 }
-                const audioBuffer = await response.buffer();
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = Buffer.from(arrayBuffer);
                 const base64Data = audioBuffer.toString('base64');
                 const mimeType = getMimeType(audioUrl);
 
-                console.log(`Calling Google Gemini 2.5 Flash API with mimeType: ${mimeType}`);
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                console.log(`Calling Google Gemini 1.5 Flash API with mimeType: ${mimeType}`);
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 
                 const geminiResponse = await fetch(geminiUrl, {
                     method: 'POST',
