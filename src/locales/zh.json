@@ -154,6 +154,7 @@
         "anti_cheat_warning": "提醒：您必须实际收听录音的至少三分之一时间，且播放结束后才能解锁逐字稿和记录进度哦！",
         "view_transcript_btn": "查看并解锁阿语逐字稿",
         "view_transcript_unlocked_btn": "查看阿语逐字稿",
+        "comments_btn": "参与互动交流与问答",
         "audio_mode": "销售音频模式"
     },
     "category_manager": {

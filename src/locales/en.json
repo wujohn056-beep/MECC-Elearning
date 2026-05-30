@@ -155,6 +155,7 @@
         "anti_cheat_warning": "Reminder: You must listen to at least 1/3 of the recording duration and play to the end to unlock the transcript and log your progress!",
         "view_transcript_btn": "View & Unlock Arabic Transcript",
         "view_transcript_unlocked_btn": "View Arabic Transcript",
+        "comments_btn": "Q&A and Interactive Comments",
         "audio_mode": "Sales Audio Mode"
     },
     "category_manager": {

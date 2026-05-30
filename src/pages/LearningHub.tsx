@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDoc, setDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDoc, setDoc, increment, where, onSnapshot } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Recording {
@@ -249,7 +249,10 @@ const RecordingCard = ({
                 </div>
             ) : (
                 /* Decorative Background Top for Audio */
-                <div className="h-14 w-full bg-gradient-to-br from-light-teal to-deep-teal absolute top-0 left-0 z-0">
+                <div 
+                    onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
+                    className="h-14 w-full bg-gradient-to-br from-light-teal to-deep-teal absolute top-0 left-0 z-0 cursor-pointer"
+                >
                     <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
                 </div>
             )}
@@ -280,12 +283,18 @@ const RecordingCard = ({
                 </div>
                 
                 <div className="flex-1">
-                    <h4 className="font-bold text-base mb-0.5 group-hover:text-desert-gold transition-colors line-clamp-1 text-arabian-night">
+                    <h4 
+                        onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
+                        className={`font-bold text-base mb-0.5 group-hover:text-desert-gold transition-colors line-clamp-1 text-arabian-night ${!isDoc ? 'cursor-pointer' : ''}`}
+                    >
                         {rec.displayId && <span className="text-desert-gold mr-1 text-xs font-bold">[{rec.displayId}]</span>}
                         {rec.title}
                     </h4>
                     {rec.lecturerName && (
-                        <div className="flex items-center gap-1 text-[11px] font-semibold text-desert-gold mb-1">
+                        <div 
+                            onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
+                            className={`flex items-center gap-1 text-[11px] font-semibold text-desert-gold mb-1 ${!isDoc ? 'cursor-pointer hover:underline' : ''}`}
+                        >
                             <User className="h-3 w-3" />
                             <span>{rec.lecturerName}</span>
                         </div>
@@ -328,7 +337,7 @@ const RecordingCard = ({
                                     {rec.likes?.length || 0}
                                 </span>
                             </button>
-
+ 
                             <button 
                                 onClick={() => onShare && onShare(rec)}
                                 className="flex items-center gap-1 transition-all outline-none bg-white p-1.5 rounded-full border border-gray-100 shadow-sm hover:shadow-md hover:border-desert-gold/30 active:scale-95"
@@ -347,6 +356,13 @@ const RecordingCard = ({
                                 onUnlock={() => handleAudioEnded(rec, 0)}
                                 disableSeek={disableSeek}
                             />
+                            <button 
+                                onClick={() => onPlayVideo(rec, disableSeek)}
+                                className="mt-1 w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold py-2 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/20 hover:shadow-md"
+                            >
+                                <MessageSquare className="w-3.5 h-3.5 text-desert-gold" />
+                                {t('learning_hub.comments_btn', '参与互动交流与问答')}
+                            </button>
                             {rec.transcript && (
                                 <button 
                                     onClick={() => onPlayVideo(rec, disableSeek)}
@@ -384,6 +400,149 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const isVideo = false; // Always treat as audio in the player modal to show the premium vinyl record animation
+
+    const { user, profile } = useAuth();
+    const [comments, setComments] = useState<any[]>([]);
+    const [newCommentText, setNewCommentText] = useState('');
+    const [replyToId, setReplyToId] = useState<string | null>(null);
+    const [replyText, setReplyText] = useState('');
+
+    // Real-time comments listener (onSnapshot)
+    useEffect(() => {
+        if (!rec.id) return;
+        
+        // Simple query by audioId (highly safe, does not require composite indexes)
+        const q = query(
+            collection(db, 'comments'),
+            where('audioId', '==', rec.id)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.status !== 'deleted') {
+                    list.push({ id: doc.id, ...data });
+                }
+            });
+
+            // Sort in memory: Pinned comments first, then descending by createdAt timestamp
+            list.sort((a, b) => {
+                if (a.isPinned !== b.isPinned) {
+                    return a.isPinned ? -1 : 1;
+                }
+                const timeA = a.createdAt?.toDate?.()?.getTime() || 0;
+                const timeB = b.createdAt?.toDate?.()?.getTime() || 0;
+                return timeB - timeA;
+            });
+
+            setComments(list);
+        }, (error) => {
+            console.error("Error loading comments:", error);
+        });
+
+        return () => unsubscribe();
+    }, [rec.id]);
+
+    const containsSensitiveWord = (text: string) => {
+        const list = ['垃圾', '垃圾平台', '辣鸡', '烂平台', '差劲', '投诉', '举报', '不专业', '太差', '垃圾视频', '垃圾音频', '吐槽', '抱怨', 'complaint', 'rubbish', 'worst', 'garbage', 'terrible', 'useless', 'stupid', 'bastard', 'fuck', 'shit'];
+        return list.some(word => text.toLowerCase().includes(word));
+    };
+
+    const handleAddComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newCommentText.trim()) return;
+
+        if (containsSensitiveWord(newCommentText)) {
+            alert(t('learning_hub.sensitive_comment_warning', '提醒：为了共同营造积极、专业的学习氛围，请使用具有建设性、专业性的语言进行互动讨论哦！感谢您的配合！'));
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, 'comments'), {
+                audioId: rec.id,
+                userId: user?.uid || '',
+                userName: profile?.name || user?.displayName || user?.email?.split('@')[0] || t('common.anonymous', '匿名用户'),
+                userAvatar: profile?.avatarUrl || '',
+                userRole: profile?.role || 'user',
+                userTeam: profile?.team || '',
+                content: newCommentText.trim(),
+                createdAt: serverTimestamp(),
+                likes: [],
+                parentId: null,
+                status: 'approved',
+                isPinned: false
+            });
+            setNewCommentText('');
+        } catch (error: any) {
+            console.error("Failed to add comment:", error);
+            alert(t('common.save_fail', '保存失败：') + error.message);
+        }
+    };
+
+    const handleAddReply = async (e: React.FormEvent, parentCommentId: string) => {
+        e.preventDefault();
+        if (!replyText.trim()) return;
+
+        if (containsSensitiveWord(replyText)) {
+            alert(t('learning_hub.sensitive_comment_warning', '提醒：为了共同营造积极、专业的学习氛围，请使用具有建设性、专业性的语言进行互动讨论哦！感谢您的配合！'));
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, 'comments'), {
+                audioId: rec.id,
+                userId: user?.uid || '',
+                userName: profile?.name || user?.displayName || user?.email?.split('@')[0] || t('common.anonymous', '匿名用户'),
+                userAvatar: profile?.avatarUrl || '',
+                userRole: profile?.role || 'user',
+                userTeam: profile?.team || '',
+                content: replyText.trim(),
+                createdAt: serverTimestamp(),
+                likes: [],
+                parentId: parentCommentId,
+                status: 'approved',
+                isPinned: false
+            });
+            setReplyText('');
+            setReplyToId(null);
+        } catch (error: any) {
+            console.error("Failed to add reply:", error);
+            alert(t('common.save_fail', '保存失败：') + error.message);
+        }
+    };
+
+    const handleLikeComment = async (commentId: string, currentLikes: string[]) => {
+        if (!user?.uid) return;
+        const commentRef = doc(db, 'comments', commentId);
+        try {
+            if (currentLikes.includes(user.uid)) {
+                await updateDoc(commentRef, {
+                    likes: arrayRemove(user.uid)
+                });
+            } else {
+                await updateDoc(commentRef, {
+                    likes: arrayUnion(user.uid)
+                });
+            }
+        } catch (error: any) {
+            console.error("Failed to like comment:", error);
+        }
+    };
+
+    const handleFlagComment = async (commentId: string) => {
+        if (window.confirm(t('learning_hub.confirm_report_comment', '确认举报该条互动讨论内容？举报后该内容将被暂时屏蔽并提交至管理员审核。'))) {
+            const commentRef = doc(db, 'comments', commentId);
+            try {
+                await updateDoc(commentRef, {
+                    status: 'flagged'
+                });
+                alert(t('learning_hub.report_success', '举报成功，内容已屏蔽送审。'));
+            } catch (error: any) {
+                console.error("Failed to flag comment:", error);
+            }
+        }
+    };
 
     const handleTimeUpdate = () => {
         if (mediaRef.current) {
@@ -606,6 +765,283 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                             )}
                         </div>
                     )}
+
+                    {/* Premium Interaction & Q&A section */}
+                    <div className="mt-8 border-t border-gray-100 pt-6">
+                        <div className="flex items-center gap-2 mb-6">
+                            <div className="w-1.5 h-5 bg-deep-teal rounded-full"></div>
+                            <h4 className="text-base font-extrabold text-arabian-night flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4 text-desert-gold" />
+                                {t('learning_hub.comments_and_qa', '互动交流与问答')}
+                                <span className="text-xs bg-gray-100 text-arabian-night/60 px-2.5 py-0.5 rounded-full font-bold select-none">
+                                    {comments.length}
+                                </span>
+                            </h4>
+                        </div>
+
+                        {/* Comment Input Card */}
+                        <form onSubmit={handleAddComment} className="glass-panel p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex gap-3 items-start hover:shadow-md transition-shadow">
+                            <div className="w-9 h-9 rounded-full shrink-0 overflow-hidden bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                                {profile?.avatarUrl ? (
+                                    <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="w-4 h-4" />
+                                )}
+                            </div>
+                            <div className="flex-1 flex flex-col gap-2">
+                                <textarea
+                                    value={newCommentText}
+                                    onChange={(e) => setNewCommentText(e.target.value)}
+                                    placeholder={t('learning_hub.comment_placeholder', '分享你的学习心得、感悟，或针对本录音提出您的问题...')}
+                                    className="w-full min-h-[70px] max-h-[140px] text-sm p-3 border border-gray-100 bg-gray-50/50 rounded-xl outline-none focus:ring-2 focus:ring-deep-teal focus:bg-white resize-y font-medium text-arabian-night/90 placeholder:text-arabian-night/40"
+                                />
+                                <div className="flex justify-end">
+                                    <button 
+                                        type="submit"
+                                        disabled={!newCommentText.trim()}
+                                        className="bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                    >
+                                        <Send className="w-3 h-3" />
+                                        {t('common.submit', '提交评论')}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        {/* Comments Thread List */}
+                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                            {comments.filter(c => c.parentId === null).length === 0 ? (
+                                <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                                    <p className="text-sm font-semibold text-arabian-night/40">💬 {t('learning_hub.no_comments_yet', '暂无互动讨论，快来发表第一条观点吧！')}</p>
+                                </div>
+                            ) : (
+                                comments.filter(c => c.parentId === null).map((comment) => {
+                                    const isFlagged = comment.status === 'flagged';
+                                    const isCommentLiked = comment.likes?.includes(user?.uid || '');
+                                    const userLikesCount = comment.likes?.length || 0;
+                                    
+                                    // Filter replies for this parent
+                                    const replies = comments.filter(r => r.parentId === comment.id);
+
+                                    return (
+                                        <div key={comment.id} className={`p-4 rounded-2xl border transition-all duration-300 ${
+                                            comment.isPinned 
+                                                ? 'bg-gradient-to-r from-desert-gold/5 via-amber-500/[0.02] to-transparent border-desert-gold/30 shadow-sm'
+                                                : 'bg-gray-50/30 border-gray-100/70 hover:border-gray-200/50'
+                                        }`}>
+                                            {/* Primary Comment Header */}
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex gap-2.5 items-center">
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center shadow-inner">
+                                                        {comment.userAvatar ? (
+                                                            <img src={comment.userAvatar} alt={comment.userName} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-xs font-bold font-serif uppercase">
+                                                                {comment.userName.charAt(0)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs font-black text-arabian-night/90">{comment.userName}</span>
+                                                            {/* User role badging */}
+                                                            {comment.userRole && comment.userRole !== 'user' && (
+                                                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full select-none leading-none shadow-sm uppercase ${
+                                                                    comment.userRole === 'super_admin' 
+                                                                        ? 'bg-red-50 text-red-600 border border-red-200' 
+                                                                        : ['sd', 'sm'].includes(comment.userRole)
+                                                                            ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white'
+                                                                            : 'bg-blue-50 text-blue-600 border border-blue-200'
+                                                                }`}>
+                                                                    {comment.userRole === 'super_admin' 
+                                                                        ? t('user_manager.role_super_admin', '超级管理员') 
+                                                                        : ['sd', 'sm'].includes(comment.userRole)
+                                                                            ? t('user_manager.role_sd', '销售总监/经理')
+                                                                            : t('user_manager.role_tl', '团队负责人')}
+                                                                </span>
+                                                            )}
+                                                            {comment.userTeam && (
+                                                                <span className="text-[8px] font-bold text-arabian-night/50 bg-white border border-gray-100 px-1.5 py-0.5 rounded-full leading-none">{comment.userTeam}</span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-[10px] text-arabian-night/40 font-medium">
+                                                            {comment.createdAt?.toDate?.()?.toLocaleString() || t('common.just_now', '刚刚')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Pinned Crown info */}
+                                                <div className="flex items-center gap-1.5">
+                                                    {comment.isPinned && (
+                                                        <span className="text-[9px] bg-gradient-to-r from-desert-gold to-yellow-600 text-white font-extrabold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5 animate-pulse select-none">
+                                                            📌 {t('learning_hub.featured_comment', '置顶精选')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Primary Comment Content */}
+                                            {isFlagged ? (
+                                                <div className="bg-amber-500/5 border border-dashed border-amber-500/25 rounded-xl p-3 my-2 text-center text-xs text-amber-800 font-semibold select-none">
+                                                    👁️ {t('learning_hub.comment_under_moderation', '该互动内容已被安全举报，正在由系统管理员审核中...')}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-arabian-night/85 pl-10 leading-relaxed font-medium whitespace-pre-line break-words">
+                                                    {comment.content}
+                                                </p>
+                                            )}
+
+                                            {/* Primary Comment Actions */}
+                                            <div className="flex gap-4 items-center mt-3 pl-10 text-[11px] font-bold text-arabian-night/50">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleLikeComment(comment.id, comment.likes || [])}
+                                                    disabled={isFlagged}
+                                                    className={`flex items-center gap-1 transition-colors hover:text-deep-teal ${isCommentLiked ? 'text-deep-teal scale-105 font-black' : ''}`}
+                                                >
+                                                    <ThumbsUp className={`w-3.5 h-3.5 ${isCommentLiked ? 'fill-deep-teal text-deep-teal' : ''}`} />
+                                                    <span>{userLikesCount} {t('common.like', '赞')}</span>
+                                                </button>
+
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (replyToId === comment.id) {
+                                                            setReplyToId(null);
+                                                        } else {
+                                                            setReplyToId(comment.id);
+                                                            setReplyText('');
+                                                        }
+                                                    }}
+                                                    disabled={isFlagged}
+                                                    className={`flex items-center gap-1 transition-colors hover:text-desert-gold ${replyToId === comment.id ? 'text-desert-gold' : ''}`}
+                                                >
+                                                    <MessageSquare className="w-3.5 h-3.5" />
+                                                    <span>{t('learning_hub.reply', '回复')} ({replies.length})</span>
+                                                </button>
+
+                                                {/* Report/Flag button */}
+                                                {!isFlagged && comment.userId !== user?.uid && (
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => handleFlagComment(comment.id)}
+                                                        className="flex items-center gap-1 transition-colors hover:text-red-500 ml-auto"
+                                                        title={t('learning_hub.report', '举报不妥言论')}
+                                                    >
+                                                        <Flag className="w-3 h-3" />
+                                                        <span>{t('learning_hub.report', '举报')}</span>
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Inline Reply Input Box */}
+                                            {replyToId === comment.id && (
+                                                <form onSubmit={(e) => handleAddReply(e, comment.id)} className="mt-3.5 pl-10 flex gap-2 items-start animate-in slide-in-from-top-2 duration-300">
+                                                    <textarea
+                                                        value={replyText}
+                                                        onChange={(e) => setReplyText(e.target.value)}
+                                                        placeholder={t('learning_hub.reply_placeholder', '回复该心得观点...')}
+                                                        className="flex-1 min-h-[40px] text-xs p-2.5 border border-gray-100 bg-white rounded-xl outline-none focus:ring-1 focus:ring-deep-teal font-medium text-arabian-night/90"
+                                                    />
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <button 
+                                                            type="submit"
+                                                            disabled={!replyText.trim()}
+                                                            className="bg-gradient-to-r from-deep-teal to-teal-700 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition-all disabled:opacity-40"
+                                                        >
+                                                            {t('common.send', '发送')}
+                                                        </button>
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setReplyToId(null)}
+                                                            className="bg-gray-100 text-arabian-night/60 text-[10px] font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+                                                        >
+                                                            {t('common.cancel', '取消')}
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            )}
+
+                                            {/* Secondary Indented Reply List */}
+                                            {replies.length > 0 && (
+                                                <div className="mt-3.5 pl-10 border-l-2 border-gray-100 space-y-3">
+                                                    {replies.map((reply) => {
+                                                        const isReplyFlagged = reply.status === 'flagged';
+                                                        const isReplyLiked = reply.likes?.includes(user?.uid || '');
+
+                                                        return (
+                                                            <div key={reply.id} className="p-3 bg-white/40 border border-gray-50 rounded-xl hover:border-gray-100/50 transition-all duration-300">
+                                                                <div className="flex justify-between items-center mb-1">
+                                                                    <div className="flex gap-2 items-center">
+                                                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shadow-inner text-[10px]">
+                                                                            {reply.userAvatar ? (
+                                                                                <img src={reply.userAvatar} alt={reply.userName} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-full h-full bg-gradient-to-br from-desert-gold to-yellow-600 flex items-center justify-center text-white text-[8px] font-bold font-serif uppercase">
+                                                                                    {reply.userName.charAt(0)}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="flex items-center gap-1">
+                                                                                <span className="text-[11px] font-black text-arabian-night/90">{reply.userName}</span>
+                                                                                {reply.userRole && reply.userRole !== 'user' && (
+                                                                                    <span className="text-[7px] font-bold bg-blue-50 text-blue-600 border border-blue-100 px-1 py-0.2 rounded-full scale-90 leading-none">
+                                                                                        {reply.userRole === 'super_admin' ? t('user_manager.role_super_admin', '超级管理员') : t('user_manager.role_tl', 'TL/经理')}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <span className="text-[8px] text-arabian-night/35 font-medium">
+                                                                                {reply.createdAt?.toDate?.()?.toLocaleString() || t('common.just_now', '刚刚')}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {isReplyFlagged ? (
+                                                                    <div className="bg-amber-500/5 border border-dashed border-amber-500/15 rounded-lg p-2 my-1 text-center text-[10px] text-amber-800 font-semibold select-none">
+                                                                        👁️ {t('learning_hub.comment_under_moderation', '已被举报送审...')}
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-xs text-arabian-night/80 pl-8 leading-relaxed font-semibold break-words">
+                                                                        {reply.content}
+                                                                    </p>
+                                                                )}
+
+                                                                <div className="flex gap-3 items-center mt-1.5 pl-8 text-[10px] font-bold text-arabian-night/40">
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => handleLikeComment(reply.id, reply.likes || [])}
+                                                                        disabled={isReplyFlagged}
+                                                                        className={`flex items-center gap-0.5 hover:text-deep-teal ${isReplyLiked ? 'text-deep-teal font-black' : ''}`}
+                                                                    >
+                                                                        <ThumbsUp className="w-3 h-3" />
+                                                                        <span>{reply.likes?.length || 0}</span>
+                                                                    </button>
+
+                                                                    {!isReplyFlagged && reply.userId !== user?.uid && (
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => handleFlagComment(reply.id)}
+                                                                            className="flex items-center gap-0.5 hover:text-red-500 ml-auto"
+                                                                            title={t('learning_hub.report', '举报不妥言论')}
+                                                                        >
+                                                                            <Flag className="w-2.5 h-2.5" />
+                                                                            <span>{t('learning_hub.report', '举报')}</span>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
