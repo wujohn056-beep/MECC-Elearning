@@ -704,7 +704,11 @@ exports.handler = async (event, context) => {
                                 if (targetType === 'individuals' && Array.isArray(selectedSds)) {
                                     // Segmented push strictly by selected SDs (case insensitive comparison)
                                     const userSd = String(data.sd || '').trim().toLowerCase();
-                                    const sdMatched = selectedSds.some(sd => String(sd).trim().toLowerCase() === userSd);
+                                    const userCrmId = String(data.crmId || '').trim().toLowerCase();
+                                    const sdMatched = selectedSds.some(sd => {
+                                        const sdLower = String(sd).trim().toLowerCase();
+                                        return sdLower === userSd || (data.role === 'sd' && sdLower === userCrmId);
+                                    });
                                     if (sdMatched) {
                                         if (isEnglishSpeaker) {
                                             recipientsEn.push(data.dingtalkUserId);
@@ -735,7 +739,11 @@ exports.handler = async (event, context) => {
                     recipientsZh.push('dd_mock_sales2');
                 }
 
-                if (!isMockDingTalk && (recipientsZh.length > 0 || recipientsEn.length > 0) && agentId) {
+                // Deduplicate lists to prevent duplicate messages when a user occupies multiple roles
+                const uniqueRecipientsZh = Array.from(new Set(recipientsZh));
+                const uniqueRecipientsEn = Array.from(new Set(recipientsEn));
+
+                if (!isMockDingTalk && (uniqueRecipientsZh.length > 0 || uniqueRecipientsEn.length > 0) && agentId) {
                     try {
                         const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
                         const tokenData = await tokenRes.json();
@@ -775,8 +783,8 @@ exports.handler = async (event, context) => {
                                 }
                             };
 
-                            const enResult = await sendNotification(recipientsEn, 'en');
-                            const zhResult = await sendNotification(recipientsZh, 'zh');
+                            const enResult = await sendNotification(uniqueRecipientsEn, 'en');
+                            const zhResult = await sendNotification(uniqueRecipientsZh, 'zh');
                             
                             sentSuccess = enResult.success && zhResult.success;
                             if (!sentSuccess) {
@@ -796,8 +804,8 @@ exports.handler = async (event, context) => {
                     if (isMockDingTalk) {
                         sentSuccess = true;
                         mockPayload = {
-                            recipientsZh,
-                            recipientsEn,
+                            recipientsZh: uniqueRecipientsZh,
+                            recipientsEn: uniqueRecipientsEn,
                             pushType: pushType,
                             markdownZh: getMsgMarkdown('zh'),
                             markdownEn: getMsgMarkdown('en'),
