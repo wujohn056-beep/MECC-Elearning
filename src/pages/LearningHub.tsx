@@ -1750,7 +1750,7 @@ export default function LearningHub() {
                                                 <div key={recId} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm col-span-full">
                                                     <div className="w-full lg:w-[340px] shrink-0">
                                                         <RecordingCard 
-                                                            rec={rec} 
+                                                            rec={{ ...rec, transcript: null }} 
                                                             user={user} 
                                                             favorites={favorites}
                                                             handleToggleFavorite={handleToggleFavorite}
@@ -1804,7 +1804,7 @@ export default function LearningHub() {
                                     displayedRecordings.map(rec => (
                                         <div key={rec.id} className="flex flex-col gap-3">
                                             <RecordingCard 
-                                                rec={rec} 
+                                                rec={{ ...rec, transcript: null }} 
                                                 user={user} 
                                                 favorites={favorites}
                                                 handleToggleFavorite={handleToggleFavorite}
@@ -1896,7 +1896,7 @@ export default function LearningHub() {
             )}
             {activeVideoRecording && (
                 <VideoPlayerModal
-                    rec={activeVideoRecording}
+                    rec={{ ...activeVideoRecording, transcript: null }}
                     disableSeek={activeVideoDisableSeek}
                     isUnlocked={true}
                     onUnlock={() => handleAudioEnded(activeVideoRecording, 0)}
