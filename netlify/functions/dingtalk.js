@@ -739,9 +739,10 @@ exports.handler = async (event, context) => {
                     recipientsZh.push('dd_mock_sales2');
                 }
 
-                // Deduplicate lists to prevent duplicate messages when a user occupies multiple roles
+                // Deduplicate lists to prevent duplicate messages when a user occupies multiple roles (e.g. Iris as SM and IRIS as SD sharing same DingTalk account)
                 const uniqueRecipientsZh = Array.from(new Set(recipientsZh));
-                const uniqueRecipientsEn = Array.from(new Set(recipientsEn));
+                // If a user qualifies for Chinese (SD/Admin level), exclude them from English to avoid duplicate push notifications in different languages
+                const uniqueRecipientsEn = Array.from(new Set(recipientsEn)).filter(uid => !uniqueRecipientsZh.includes(uid));
 
                 if (!isMockDingTalk && (uniqueRecipientsZh.length > 0 || uniqueRecipientsEn.length > 0) && agentId) {
                     try {
@@ -765,7 +766,7 @@ exports.handler = async (event, context) => {
                                                 title: getMsgTitle(lang),
                                                 markdown: getMsgMarkdown(lang),
                                                 btn_orientation: "0",
-                                                btns: [
+                                                btn_json_list: [
                                                     {
                                                         title: getMsgBtnText(lang),
                                                         action_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
