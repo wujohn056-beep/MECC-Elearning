@@ -65,7 +65,7 @@ export const handler = async (event, context) => {
     }
 
     try {
-        const { recordingId } = JSON.parse(event.body || '{}');
+        const { recordingId, targetLang = 'zh' } = JSON.parse(event.body || '{}');
         if (!recordingId) {
             return {
                 statusCode: 400,
@@ -74,6 +74,7 @@ export const handler = async (event, context) => {
             };
         }
 
+        const cleanTargetLang = ['zh', 'en', 'ar'].includes(targetLang) ? targetLang : 'zh';
         const db = getFirestoreDb();
         const recordingSnap = await db.collection('recordings').doc(recordingId).get();
         if (!recordingSnap.exists) {
@@ -87,20 +88,88 @@ export const handler = async (event, context) => {
         const recData = recordingSnap.data();
         const apiKey = process.env.GEMINI_API_KEY;
 
+        // 1. Check if the target language already exists in Firestore cache
+        if (recData.aiAnalysisMultilang && recData.aiAnalysisMultilang[cleanTargetLang]) {
+            return {
+                statusCode: 200,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ success: true, aiAnalysis: recData.aiAnalysisMultilang[cleanTargetLang] })
+            };
+        }
+
+        // 2. Check if cleanTargetLang is Chinese and legacy analysis already exists
+        if (cleanTargetLang === 'zh' && recData.aiAnalysis && (!recData.aiAnalysisMultilang || !recData.aiAnalysisMultilang.zh)) {
+            const updatedMultilang = recData.aiAnalysisMultilang || {};
+            updatedMultilang.zh = recData.aiAnalysis;
+            await db.collection('recordings').doc(recordingId).update({
+                aiAnalysisMultilang: updatedMultilang
+            }).catch(e => console.error("Failed to migrate legacy zh analysis:", e));
+
+            return {
+                statusCode: 200,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ success: true, aiAnalysis: recData.aiAnalysis })
+            };
+        }
+
         let analysisResult = null;
+        const sourceAnalysis = recData.aiAnalysis || (recData.aiAnalysisMultilang ? Object.values(recData.aiAnalysisMultilang)[0] : null);
 
         if (apiKey) {
             try {
-                // We have Gemini API Key! Let's prompt Gemini
-                const transcriptText = recData.transcript || '';
-                const title = recData.title || 'Sales Call';
-                const desc = recData.description || '';
-                const category = recData.categoryName || 'General Sales';
-                const lang = detectLanguage(transcriptText, title);
-                
-                let prompt = '';
-                if (transcriptText) {
-                    prompt = `You are an elite AI Sales Training Coach and Call Analyst (like Gong or Chorus). 
+                const targetLangName = cleanTargetLang === 'zh' ? 'Chinese' : cleanTargetLang === 'ar' ? 'Arabic' : 'English';
+
+                // 3. If an analysis already exists in another language, translate it using Gemini (highly accurate, fast & consistent)
+                if (sourceAnalysis) {
+                    const prompt = `You are a professional sales trainer and translator. Translate the following JSON object representing a sales call coaching analysis into the target language: "${targetLangName}".
+Maintain all numbers, booleans, arrays, structures, and scores exactly as they are. ONLY translate the Chinese/Arabic/English natural language text fields inside the JSON object, specifically:
+- "objection" inside objectionsHandled
+- "feedback" inside objectionsHandled
+- "summary"
+- "tips" (translate each string in the array)
+
+Original JSON to translate:
+${JSON.stringify(sourceAnalysis, null, 2)}
+
+You MUST return a JSON object strictly matching the exact same schema. Return ONLY the raw JSON block without markdown formatting or code blocks.`;
+
+                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                    const response = await fetch(geminiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: {
+                                responseMimeType: "application/json"
+                            }
+                        })
+                    });
+
+                    if (response.ok) {
+                        const resultJson = await response.json();
+                        const textResponse = resultJson.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                        analysisResult = JSON.parse(textResponse.trim());
+                    } else {
+                        console.error("Gemini Translation API call failed:", await response.text());
+                    }
+                }
+
+                // 4. If no source analysis exists yet, generate it from scratch in the target language
+                if (!analysisResult) {
+                    const transcriptText = recData.transcript || '';
+                    const title = recData.title || 'Sales Call';
+                    const desc = recData.description || '';
+                    const category = recData.categoryName || 'General Sales';
+                    
+                    let prompt = '';
+                    if (transcriptText) {
+                        prompt = `You are an elite AI Sales Training Coach and Call Analyst (like Gong or Chorus). 
 Analyze the following sales call transcript and output a high-fidelity structured analysis.
 Recording Title: "${title}"
 Category: "${category}"
@@ -108,77 +177,76 @@ Description: "${desc}"
 Transcript:
 ${transcriptText}
 
-You MUST return a JSON object strictly matching this schema:
+You MUST return a JSON object strictly matching this schema. All text fields (summary, tips, objections, feedback) MUST be written in the requested target language: "${targetLangName}".
 {
   "overallScore": number (0 to 100),
   "talkRatio": { "sales": number (0 to 100), "customer": number (0 to 100) },
   "speechRate": { "sales": number (words per minute), "customer": number (words per minute) },
   "sentimentTrend": [array of exactly 5 numbers representing customer sentiment percentage (0 to 100) at 5 equal intervals of the call],
   "objectionsHandled": [
-    { "objection": "objection name in the primary language of the transcript (e.g. Arabic, English, or Chinese)", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in the primary language of the transcript" }
+    { "objection": "objection name in ${targetLangName}", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in ${targetLangName}" }
   ],
-  "summary": "a comprehensive review and summary of the call in the primary language of the transcript (2-3 sentences)",
+  "summary": "a comprehensive review and summary of the call in ${targetLangName} (2-3 sentences)",
   "tips": [
-    "coaching tip 1 in the primary language of the transcript",
-    "coaching tip 2 in the primary language of the transcript"
+    "coaching tip 1 in ${targetLangName}",
+    "coaching tip 2 in ${targetLangName}"
   ]
 }
 Return ONLY the raw JSON block without markdown formatting or code blocks.`;
-                } else {
-                    prompt = `You are an elite AI Sales Training Coach. Since the audio is not yet transcribed, analyze this sales training recording metadata and simulate a high-fidelity realistic call analysis based on this context:
+                    } else {
+                        prompt = `You are an elite AI Sales Training Coach. Since the audio is not yet transcribed, analyze this sales training recording metadata and simulate a high-fidelity realistic call analysis based on this context:
 Recording Title: "${title}"
 Category: "${category}"
 Description: "${desc}"
 
 Simulate a realistic sales call performance where the agent handles objections related to "${category}".
-You MUST return a JSON object strictly matching this schema:
+You MUST return a JSON object strictly matching this schema. All text fields (summary, tips, objections, feedback) MUST be written in the requested target language: "${targetLangName}".
 {
   "overallScore": number (60 to 95),
   "talkRatio": { "sales": number (0 to 100), "customer": number (0 to 100) },
   "speechRate": { "sales": number (110 to 150), "customer": number (95 to 130) },
   "sentimentTrend": [array of exactly 5 numbers representing customer sentiment percentage (0 to 100) at 5 equal intervals of the call],
   "objectionsHandled": [
-    { "objection": "objection name in the primary language of the recording title/description (${lang}) related to context", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in that language" }
+    { "objection": "objection name related to context in ${targetLangName}", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in ${targetLangName}" }
   ],
-  "summary": "a comprehensive review and summary of the simulated call in that language (2-3 sentences)",
+  "summary": "a comprehensive review and summary of the simulated call in ${targetLangName} (2-3 sentences)",
   "tips": [
-    "coaching tip 1 in that language",
-    "coaching tip 2 in that language"
+    "coaching tip 1 in ${targetLangName}",
+    "coaching tip 2 in ${targetLangName}"
   ]
 }
 Return ONLY the raw JSON block without markdown formatting or code blocks.`;
-                }
+                    }
 
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-                const response = await fetch(geminiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            responseMimeType: "application/json"
-                        }
-                    })
-                });
+                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                    const response = await fetch(geminiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: {
+                                responseMimeType: "application/json"
+                            }
+                        })
+                    });
 
-                if (response.ok) {
-                    const resultJson = await response.json();
-                    const textResponse = resultJson.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                    analysisResult = JSON.parse(textResponse.trim());
-                } else {
-                    console.error("Gemini API call failed:", await response.text());
+                    if (response.ok) {
+                        const resultJson = await response.json();
+                        const textResponse = resultJson.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                        analysisResult = JSON.parse(textResponse.trim());
+                    } else {
+                        console.error("Gemini API call failed:", await response.text());
+                    }
                 }
             } catch (err) {
                 console.error("Gemini content generation error:", err);
             }
         }
 
-        // If Gemini failed or API key was absent, use our premium metadata mock generator
+        // 5. Fallback Mock Generator if Gemini failed or apiKey is absent
         if (!analysisResult) {
             const title = recData.title || '录音资料';
             const category = recData.categoryName || '常规销售';
-            const transcriptText = recData.transcript || '';
-            const lang = detectLanguage(transcriptText, title);
             
             // Premium mock generator tailored to the actual course metadata!
             const simulatedScore = Math.floor(Math.random() * 15) + 80; // 80 - 94
@@ -186,7 +254,7 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
             const simulatedCustomerRatio = 100 - simulatedSalesRatio;
 
             let mockData = {};
-            if (lang === 'arabic') {
+            if (cleanTargetLang === 'ar') {
                 mockData = {
                     objectionsHandled: [
                         {
@@ -208,7 +276,7 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
                         "عند معالجة الاعتراض الثالث، كان الأسلوب روتينياً بعض الشيء، يُنصح باستخدام عبارات تعاطف أكثر تخصيصاً بدلاً من الصيغ الجاهزة."
                     ]
                 };
-            } else if (lang === 'english') {
+            } else if (cleanTargetLang === 'en') {
                 mockData = {
                     objectionsHandled: [
                         {
@@ -270,12 +338,21 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
             };
         }
 
-        // Update the recording document with the parsed analysis result
-        await db.collection('recordings').doc(recordingId).update({
-            aiAnalysis: analysisResult,
+        // 6. Save the new language analysis under the specific language key
+        const updatedMultilang = recData.aiAnalysisMultilang || {};
+        updatedMultilang[cleanTargetLang] = analysisResult;
+
+        const updatePayload = {
+            aiAnalysisMultilang: updatedMultilang,
             aiAnalysisStatus: 'ready',
             aiAnalysisUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        };
+
+        if (!recData.aiAnalysis) {
+            updatePayload.aiAnalysis = analysisResult;
+        }
+
+        await db.collection('recordings').doc(recordingId).update(updatePayload);
 
         return {
             statusCode: 200,

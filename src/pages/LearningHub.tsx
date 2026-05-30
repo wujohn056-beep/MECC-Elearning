@@ -415,7 +415,7 @@ const RecordingCard = ({
 };
 
 const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUnlock }: any) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const mediaRef = React.useRef<HTMLMediaElement>(null);
     const lastTimeRef = React.useRef(0);
     const [actualListenedSeconds, setActualListenedSeconds] = useState(0);
@@ -432,27 +432,37 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [attachTimestamp, setAttachTimestamp] = useState(false);
     const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>('details');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [recordingAnalysis, setRecordingAnalysis] = useState<any>(rec.aiAnalysis || null);
+    const [recordingAnalysis, setRecordingAnalysis] = useState<any>(null);
 
     React.useEffect(() => {
-        // Safe check to sync active state when database updates or modal changes
-        setRecordingAnalysis(rec.aiAnalysis || null);
-    }, [rec.id, rec.aiAnalysis]);
+        const currentLang = i18n.language || 'en';
+        if (rec.aiAnalysisMultilang?.[currentLang]) {
+            setRecordingAnalysis(rec.aiAnalysisMultilang[currentLang]);
+        } else if (rec.aiAnalysis && (!rec.aiAnalysisMultilang || !rec.aiAnalysisMultilang[currentLang])) {
+            setRecordingAnalysis(rec.aiAnalysis);
+        } else {
+            setRecordingAnalysis(null);
+        }
+    }, [rec.id, rec.aiAnalysis, rec.aiAnalysisMultilang, i18n.language]);
 
     React.useEffect(() => {
-        if (!recordingAnalysis && !isAnalyzing && rec.transcriptStatus === 'ready') {
-            console.log("Auto-triggering AI Analysis in the background for recording:", rec.id);
+        const currentLang = i18n.language || 'en';
+        const hasLangAnalysis = rec.aiAnalysisMultilang?.[currentLang] || (currentLang === 'zh' && rec.aiAnalysis);
+        
+        if (!hasLangAnalysis && !isAnalyzing && rec.transcriptStatus === 'ready') {
+            console.log("Auto-triggering AI Analysis in the background for language:", currentLang, "and recording:", rec.id);
             handleTriggerAnalysis(true); // silent auto-trigger
         }
-    }, [rec.id, rec.transcriptStatus, recordingAnalysis]);
+    }, [rec.id, rec.transcriptStatus, rec.aiAnalysisMultilang, i18n.language]);
 
     const handleTriggerAnalysis = async (isSilent = false) => {
         setIsAnalyzing(true);
+        const currentLang = i18n.language || 'en';
         try {
             const res = await fetch('/.netlify/functions/analyze-audio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recordingId: rec.id })
+                body: JSON.stringify({ recordingId: rec.id, targetLang: currentLang })
             });
             const data = await res.json();
             if (res.ok && data.success) {
