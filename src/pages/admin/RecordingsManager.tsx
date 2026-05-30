@@ -973,7 +973,7 @@ export default function RecordingsManager() {
 
             {/* Custom Glassmorphic DingTalk Push Modal */}
             {showPushModal && selectedRecordingForPush && (
-                <div className="fixed inset 0 bg-arabian-night/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
+                <div className="fixed inset-0 bg-arabian-night/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
                     <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-6 md:p-8 max-w-lg w-full mx-4 transform transition-all animate-in zoom-in-95 duration-300 flex flex-col gap-4 text-arabian-night">
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
