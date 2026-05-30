@@ -760,15 +760,15 @@ exports.handler = async (event, context) => {
                                         agent_id: parseInt(agentId),
                                         userid_list: recipientsList.join(','),
                                         msg: {
-                                            msgtype: "actionCard",
-                                            actionCard: {
+                                            msgtype: "action_card",
+                                            action_card: {
                                                 title: getMsgTitle(lang),
-                                                text: getMsgMarkdown(lang),
-                                                btnOrientation: "0",
+                                                markdown: getMsgMarkdown(lang),
+                                                btn_orientation: "0",
                                                 btns: [
                                                     {
                                                         title: getMsgBtnText(lang),
-                                                        actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
+                                                        action_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
                                                     }
                                                 ]
                                             }
