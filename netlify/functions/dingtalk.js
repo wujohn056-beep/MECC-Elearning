@@ -440,7 +440,8 @@ exports.handler = async (event, context) => {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing assigneeIds' }) };
             }
 
-            const recipients = [];
+            const recipientsZh = [];
+            const recipientsEn = [];
             let dbError = null;
             const queryLogs = [];
 
@@ -453,8 +454,14 @@ exports.handler = async (event, context) => {
                         if (doc.exists) {
                             const data = doc.data();
                             if (data.dingtalkUserId) {
-                                recipients.push(data.dingtalkUserId);
-                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId });
+                                const crmIdLower = String(data.crmId || '').trim().toLowerCase();
+                                const isEnglishSpeaker = crmIdLower.startsWith('jocc-') || crmIdLower.startsWith('egcc-');
+                                if (isEnglishSpeaker) {
+                                    recipientsEn.push(data.dingtalkUserId);
+                                } else {
+                                    recipientsZh.push(data.dingtalkUserId);
+                                }
+                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId, lang: isEnglishSpeaker ? 'en' : 'zh' });
                             } else {
                                 queryLogs.push({ uid, found: true, dingtalkUserId: null, crmId: data.crmId, msg: "dingtalkUserId is missing in database profile" });
                             }
@@ -467,63 +474,83 @@ exports.handler = async (event, context) => {
                     dbError = err.message;
                 }
             } else {
-                // Mock Recipients
+                // Mock Recipients: wuchuan receives Chinese, others English
                 assigneeIds.forEach(id => {
                     const mockId = `dd_mock_id_${id}`;
-                    recipients.push(mockId);
+                    if (id.toLowerCase().includes('wuchuan')) {
+                        recipientsZh.push(mockId);
+                    } else {
+                        recipientsEn.push(mockId);
+                    }
                     queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, msg: "mocked" });
                 });
             }
 
-            const messageMarkdown = `### 📚 **收到新的云学堂学习任务** \n\n **任务名称**：${title} \n **截止日期**：${deadline || '-'} \n **指派导师**：${assignerName} \n\n 优秀的销售录音复盘，能助推专业成长，请及时在截止日期前听完相关录音并提交心得感悟。 \n\n [👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
+            const getMsgMarkdown = (lang) => {
+                if (lang === 'en') {
+                    return `### 📚 **New Learning Task Assigned** \n\n **Task Name**: ${title} \n **Deadline**: ${deadline || '-'} \n **Assigner**: ${assignerName} \n\n Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline. \n\n [👉 Click Here to Start Learning](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
+                }
+                return `### 📚 **收到新的云学堂学习任务** \n\n **任务名称**：${title} \n **截止日期**：${deadline || '-'} \n **指派导师**：${assignerName} \n\n 优秀的销售录音复盘，能助推专业成长，请及时在截止日期前听完相关录音并提交心得感悟。 \n\n [👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fteam-tasks)`;
+            };
+
+            const getMsgTitle = (lang) => {
+                return lang === 'en' ? "📚 New Learning Task Assigned" : "📚 新学习任务指派";
+            };
 
             let sentSuccess = false;
             let mockPayload = null;
-            let dingtalkApiResponse = null;
+            let dingtalkApiResponse = [];
 
-            if (!isMockDingTalk && recipients.length > 0 && agentId) {
+            if (!isMockDingTalk && agentId && (recipientsZh.length > 0 || recipientsEn.length > 0)) {
                 try {
                     // Get Token
                     const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
                     const tokenData = await tokenRes.json();
                     if (tokenData.errcode === 0) {
                         const token = tokenData.access_token;
-                        // POST async work notification
-                        const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
-                        const notifyRes = await fetch(notifyUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                agent_id: parseInt(agentId),
-                                userid_list: recipients.join(','),
-                                msg: {
-                                    msgtype: "markdown",
-                                    markdown: {
-                                        title: "📚 新学习任务指派",
-                                        text: messageMarkdown
+                        
+                        const sendNotification = async (recipientsList, lang) => {
+                            if (recipientsList.length === 0) return true;
+                            
+                            const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
+                            const notifyRes = await fetch(notifyUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    agent_id: parseInt(agentId),
+                                    userid_list: recipientsList.join(','),
+                                    msg: {
+                                        msgtype: "markdown",
+                                        markdown: {
+                                            title: getMsgTitle(lang),
+                                            text: getMsgMarkdown(lang)
+                                        }
                                     }
-                                }
-                            })
-                        });
-                        const notifyData = await notifyRes.json();
-                        dingtalkApiResponse = notifyData;
-                        sentSuccess = notifyData.errcode === 0;
-                        if (!sentSuccess) {
-                            console.error("DingTalk Notification API failed:", notifyData);
-                        }
+                                })
+                            });
+                            const notifyData = await notifyRes.json();
+                            dingtalkApiResponse.push({ lang, data: notifyData });
+                            return notifyData.errcode === 0;
+                        };
+
+                        const enSuccess = await sendNotification(recipientsEn, 'en');
+                        const zhSuccess = await sendNotification(recipientsZh, 'zh');
+                        sentSuccess = enSuccess && zhSuccess;
                     } else {
-                        dingtalkApiResponse = tokenData;
+                        dingtalkApiResponse.push({ error: "Token fail", detail: tokenData });
                     }
                 } catch (notifyErr) {
                     console.error("DingTalk Notification connection error:", notifyErr);
-                    dingtalkApiResponse = { error: notifyErr.message };
+                    dingtalkApiResponse.push({ error: notifyErr.message });
                 }
             } else {
                 // Mock Mode: Print and return mock payload
                 sentSuccess = true;
                 mockPayload = {
-                    recipientIds: recipients,
-                    markdown: messageMarkdown,
+                    recipientsZh,
+                    recipientsEn,
+                    markdownZh: getMsgMarkdown('zh'),
+                    markdownEn: getMsgMarkdown('en'),
                     note: "System is running in Mock Mode. Message simulated successfully.",
                     isMockDingTalk,
                     hasAgentId: !!agentId
@@ -536,8 +563,8 @@ exports.handler = async (event, context) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     success: sentSuccess,
-                    recipientsCount: recipients.length,
-                    recipientIds: recipients,
+                    recipientsZhCount: recipientsZh.length,
+                    recipientsEnCount: recipientsEn.length,
                     mockPayload: mockPayload,
                     dbError: dbError,
                     queryLogs: queryLogs,
@@ -557,7 +584,22 @@ exports.handler = async (event, context) => {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing material recordingId or title' }) };
             }
 
-            const markdownText = `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME云学堂新增精品录音素材** \n\n **素材编号**：[${displayId || recordingId}] \n **录音标题**：${title} \n **主讲人**：${lecturerName || '系统导师'} \n **分类线**：${categoryName || '精品推荐'} \n\n **课程介绍**：${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。'} \n\n 欢迎收听！`;
+            const markdownBilingual = `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME云学堂新增精品录音素材 / New Premium Recording Released** \n\n **素材编号 / ID**：[${displayId || recordingId}] \n **录音标题 / Title**：${title} \n **主讲人 / Lecturer**：${lecturerName || '系统导师 / Mentor'} \n **分类线 / Category**：${categoryName || '精品推荐 / Featured'} \n\n **课程介绍 / Introduction**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。 / Highly recommended! Click the link below to listen.'} \n\n 欢迎收听！ / Happy listening!`;
+
+            const getMsgMarkdown = (lang) => {
+                if (lang === 'en') {
+                    return `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 New Premium Recording Material Released** \n\n **ID**: [${displayId || recordingId}] \n **Title**: ${title} \n **Lecturer**: ${lecturerName || 'Mentor'} \n **Category**: ${categoryName || 'Featured'} \n\n **Introduction**: \n ${description || 'Highly recommended! Click the link below to listen to the recording.'} \n\n Happy listening!`;
+                }
+                return `![cover](https://me-elearning.netlify.app/images/share-preview.png) \n\n ### **🔥 ME云学堂新增精品录音素材** \n\n **素材编号**：[${displayId || recordingId}] \n **录音标题**：${title} \n **主讲人**：${lecturerName || '系统导师'} \n **分类线**：${categoryName || '精品推荐'} \n\n **课程介绍**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。'} \n\n 欢迎收听！`;
+            };
+
+            const getMsgBtnText = (lang) => {
+                return lang === 'en' ? "🎧 Listen Online Now" : "🎧 立即在线收听";
+            };
+
+            const getMsgTitle = (lang) => {
+                return lang === 'en' ? "🔥 New Premium Recording Released" : "🔥 精品录音发布";
+            };
 
             let sentSuccess = false;
             let pushType = 'none';
@@ -575,12 +617,12 @@ exports.handler = async (event, context) => {
                         body: JSON.stringify({
                             msgtype: "actionCard",
                             actionCard: {
-                                title: "🔥 ME云学堂精品录音发布",
-                                text: markdownText,
+                                title: "🔥 ME云学堂精品录音发布 / New Premium Recording Released",
+                                text: markdownBilingual,
                                 btnOrientation: "0",
                                 btns: [
                                     {
-                                        title: "🎧 立即在线收听",
+                                        title: "🎧 立即收听 / Listen Now",
                                         actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
                                     }
                                 ]
@@ -593,9 +635,10 @@ exports.handler = async (event, context) => {
                     console.error("DingTalk Webhook Push Error:", webErr);
                 }
             } else {
-                // Broadcast/Targeted Push via Work Notification
+                // Broadcast/Targeted Push via Work Notification partitioned by language
                 pushType = targetType === 'individuals' ? 'targeted_broadcast' : 'broadcast';
-                const recipients = [];
+                const recipientsZh = [];
+                const recipientsEn = [];
                 const queryLogs = [];
 
                 if (!isMockFirebase) {
@@ -605,60 +648,82 @@ exports.handler = async (event, context) => {
                         snapshot.forEach(doc => {
                             const data = doc.data();
                             if (data.dingtalkUserId) {
+                                const crmIdLower = String(data.crmId || '').trim().toLowerCase();
+                                const isEnglishSpeaker = crmIdLower.startsWith('jocc-') || crmIdLower.startsWith('egcc-');
+                                
                                 if (targetType === 'individuals' && Array.isArray(selectedSds)) {
                                     // Segmented push strictly by selected SDs (case insensitive comparison)
                                     const userSd = String(data.sd || '').trim().toLowerCase();
                                     const sdMatched = selectedSds.some(sd => String(sd).trim().toLowerCase() === userSd);
                                     if (sdMatched) {
-                                        recipients.push(data.dingtalkUserId);
-                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: true });
+                                        if (isEnglishSpeaker) {
+                                            recipientsEn.push(data.dingtalkUserId);
+                                        } else {
+                                            recipientsZh.push(data.dingtalkUserId);
+                                        }
+                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: true, lang: isEnglishSpeaker ? 'en' : 'zh' });
                                     } else {
                                         queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: false });
                                     }
                                 } else {
                                     // Broadcast to all linked non-admin users
-                                    recipients.push(data.dingtalkUserId);
+                                    if (isEnglishSpeaker) {
+                                        recipientsEn.push(data.dingtalkUserId);
+                                    } else {
+                                        recipientsZh.push(data.dingtalkUserId);
+                                    }
+                                    queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: true, lang: isEnglishSpeaker ? 'en' : 'zh' });
                                 }
                             }
                         });
-                        console.log(`[Material Push] Recipients collected: ${recipients.length}. TargetType: ${targetType}. SD filters: ${JSON.stringify(selectedSds)}`);
+                        console.log(`[Material Push] Recipients: ZH=${recipientsZh.length}, EN=${recipientsEn.length}. TargetType: ${targetType}. SD filters: ${JSON.stringify(selectedSds)}`);
                     } catch (err) {
                         console.error("Failed to query linked user ids:", err);
                     }
                 } else {
-                    recipients.push('dd_mock_sales1', 'dd_mock_sales2');
+                    recipientsEn.push('dd_mock_sales1');
+                    recipientsZh.push('dd_mock_sales2');
                 }
 
-                if (!isMockDingTalk && recipients.length > 0 && agentId) {
+                if (!isMockDingTalk && (recipientsZh.length > 0 || recipientsEn.length > 0) && agentId) {
                     try {
                         const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
                         const tokenData = await tokenRes.json();
                         if (tokenData.errcode === 0) {
                             const token = tokenData.access_token;
-                            const notifyRes = await fetch(`https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    agent_id: parseInt(agentId),
-                                    userid_list: recipients.join(','),
-                                    msg: {
-                                        msgtype: "actionCard",
-                                        actionCard: {
-                                            title: "🔥 精品录音发布",
-                                            text: markdownText,
-                                            btnOrientation: "0",
-                                            btns: [
-                                                {
-                                                    title: "🎧 立即在线收听",
-                                                    actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
-                                                }
-                                            ]
+                            
+                            const sendNotification = async (recipientsList, lang) => {
+                                if (recipientsList.length === 0) return true;
+                                
+                                const notifyRes = await fetch(`https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        agent_id: parseInt(agentId),
+                                        userid_list: recipientsList.join(','),
+                                        msg: {
+                                            msgtype: "actionCard",
+                                            actionCard: {
+                                                title: getMsgTitle(lang),
+                                                text: getMsgMarkdown(lang),
+                                                btnOrientation: "0",
+                                                btns: [
+                                                    {
+                                                        title: getMsgBtnText(lang),
+                                                        actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
+                                                    }
+                                                ]
+                                            }
                                         }
-                                    }
-                                })
-                            });
-                            const notifyData = await notifyRes.json();
-                            sentSuccess = notifyData.errcode === 0;
+                                    })
+                                });
+                                const notifyData = await notifyRes.json();
+                                return notifyData.errcode === 0;
+                            };
+
+                            const enSuccess = await sendNotification(recipientsEn, 'en');
+                            const zhSuccess = await sendNotification(recipientsZh, 'zh');
+                            sentSuccess = enSuccess && zhSuccess;
                         }
                     } catch (broadcastErr) {
                         console.error("DingTalk broadcast error:", broadcastErr);
@@ -666,9 +731,11 @@ exports.handler = async (event, context) => {
                 } else {
                     sentSuccess = true;
                     mockPayload = {
-                        recipientIds: recipients,
+                        recipientsZh,
+                        recipientsEn,
                         pushType: pushType,
-                        markdown: markdownText,
+                        markdownZh: getMsgMarkdown('zh'),
+                        markdownEn: getMsgMarkdown('en'),
                         actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`,
                         queryLogs: queryLogs
                     };
