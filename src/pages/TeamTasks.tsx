@@ -180,7 +180,7 @@ export default function TeamTasks() {
 
             // Trigger DingTalk Task Assignment Notifications via Serverless endpoint
             try {
-                fetch('/api/dingtalk', {
+                fetch('/.netlify/functions/dingtalk', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

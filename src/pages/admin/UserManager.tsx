@@ -343,7 +343,7 @@ export default function UserManager() {
         setTotal(users.length);
 
         try {
-            const response = await fetch('/api/dingtalk', {
+            const response = await fetch('/.netlify/functions/dingtalk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'sync' })
@@ -405,7 +405,7 @@ export default function UserManager() {
     const handleDeleteUser = async (uid: string) => {
         if (!window.confirm(t('user_manager.confirm_delete', '确定要删除该账号吗？'))) return;
         try {
-            const res = await fetch('/api/manageUser', {
+            const res = await fetch('/.netlify/functions/manageUser', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'delete', uid })
@@ -448,7 +448,7 @@ export default function UserManager() {
     const handleResetPassword = async (uid: string) => {
         if (!window.confirm(t('user_manager.confirm_reset', '确定重置密码吗？'))) return;
         try {
-            const res = await fetch('/api/manageUser', {
+            const res = await fetch('/.netlify/functions/manageUser', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'resetPassword', uid })

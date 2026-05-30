@@ -64,7 +64,7 @@ export default function Login() {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch('/api/dingtalk', {
+            const res = await fetch('/.netlify/functions/dingtalk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'login', code })
