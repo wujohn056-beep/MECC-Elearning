@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send } from 'lucide-react';
 
 interface Recording {
     id: string;
@@ -185,6 +185,44 @@ export default function RecordingsManager() {
         if (audioInput) audioInput.value = '';
         const avatarInput = document.getElementById('avatarInput') as HTMLInputElement;
         if (avatarInput) avatarInput.value = '';
+    };
+
+    const handlePushToDingTalk = async (rec: Recording) => {
+        const confirmMsg = t(
+            'recordings_manager.confirm_push_dingtalk', 
+            '您确定要将该精品素材推送至钉钉吗？\n\n系统将通过钉钉销售工作群机器人发布精美的图文 ActionCard 卡片广播！'
+        );
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            const res = await fetch('/api/dingtalk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'notifyMaterial',
+                    recordingId: rec.id,
+                    title: rec.title,
+                    displayId: rec.displayId || '',
+                    lecturerName: rec.lecturerName || '',
+                    categoryName: rec.categoryName || '',
+                    description: rec.description || ''
+                })
+            });
+
+            if (!res.ok) {
+                throw new Error(t('recordings_manager.push_fail', '推送到钉钉失败，请检查通道凭证或网络配置。'));
+            }
+
+            const data = await res.json();
+            if (data.success) {
+                alert(t('recordings_manager.push_success', '精品素材已成功推送至钉钉工作群！'));
+            } else {
+                throw new Error(data.error || t('recordings_manager.push_fail'));
+            }
+        } catch (err: any) {
+            console.error('DingTalk material push error:', err);
+            alert(err.message || t('recordings_manager.push_fail'));
+        }
     };
 
     const handleEdit = (rec: Recording) => {
@@ -861,6 +899,9 @@ export default function RecordingsManager() {
                                         </div>
                                         <div className="flex flex-col items-end gap-2 ml-4">
                                             <div className="flex gap-2">
+                                                <button onClick={() => handlePushToDingTalk(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
+                                                    <Send className="h-4 w-4" />
+                                                </button>
                                                 <button onClick={() => handleEdit(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-deep-teal hover:bg-gray-100 transition-colors shadow-sm border border-gray-100" title="编辑">
                                                     <Pencil className="h-4 w-4" />
                                                 </button>

@@ -73,17 +73,40 @@ export default function TeamTasks() {
         if (!user) return;
         setLoadingTasks(true);
         try {
-            const q = query(
-                collection(db, 'learning_tasks'),
-                where('assignerId', '==', user.uid),
-                orderBy('createdAt', 'desc')
-            );
-            const snapshot = await getDocs(q);
-            const tasksData: LearningTask[] = [];
-            snapshot.forEach(doc => {
-                tasksData.push({ id: doc.id, ...doc.data() } as LearningTask);
+            const uidsToQuery = [user.uid];
+            // If the user profile contains a real database UID (like Serdah's real UID), add it to the query
+            const profileRealUid = (profile as any)?.realUid;
+            if (profileRealUid && profileRealUid !== user.uid) {
+                uidsToQuery.push(profileRealUid);
+            }
+
+            const tasksMap = new Map<string, LearningTask>();
+            
+            // Execute queries in parallel
+            await Promise.all(uidsToQuery.map(async (uid) => {
+                const q = query(
+                    collection(db, 'learning_tasks'),
+                    where('assignerId', '==', uid),
+                    orderBy('createdAt', 'desc')
+                );
+                const snapshot = await getDocs(q);
+                snapshot.forEach(doc => {
+                    tasksMap.set(doc.id, { id: doc.id, ...doc.data() } as LearningTask);
+                });
+            }));
+
+            // Convert map to array and sort by createdAt descending
+            const mergedTasks = Array.from(tasksMap.values()).sort((a, b) => {
+                const getMillis = (task: LearningTask) => {
+                    if (!task.createdAt) return Date.now(); // Fallback for newly created unsynced tasks
+                    if (typeof task.createdAt.toMillis === 'function') return task.createdAt.toMillis();
+                    if (task.createdAt.seconds) return task.createdAt.seconds * 1000;
+                    return 0;
+                };
+                return getMillis(b) - getMillis(a);
             });
-            setTasks(tasksData);
+
+            setTasks(mergedTasks);
         } catch (error) {
             console.error("Error fetching tasks", error);
         } finally {
@@ -154,6 +177,24 @@ export default function TeamTasks() {
                 deadline: Timestamp.fromDate(deadlineObj),
                 createdAt: serverTimestamp()
             });
+
+            // Trigger DingTalk Task Assignment Notifications via Serverless endpoint
+            try {
+                fetch('/api/dingtalk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'notifyTask',
+                        title: newTaskTitle || '学习任务',
+                        assignerName: profile?.crmId || 'Leader',
+                        assigneeIds: selectedUserIds,
+                        recordingIds: selectedRecordingIds,
+                        deadline: deadlineObj.toLocaleString()
+                    })
+                }).catch(err => console.error("DingTalk task notification background error:", err));
+            } catch (notifyErr) {
+                console.error("Failed to initiate DingTalk task notification request:", notifyErr);
+            }
 
             setShowCreateModal(false);
             setNewTaskTitle('');

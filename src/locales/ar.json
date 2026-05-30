@@ -248,7 +248,14 @@
         "perm_manage_recordings": "إدارة المواد",
         "perm_manage_users": "إدارة المستخدمين",
         "perm_manage_dashboard": "الوصول إلى لوحة القيادة",
-        "perm_manage_tasks": "الوصول إلى مركز المهام"
+        "perm_manage_tasks": "الوصول إلى مركز المهام",
+        "sync_dingtalk": "مزامنة دينغ توك",
+        "syncing_dingtalk": "جاري المزامنة مع دينغ توك، يرجى الانتظار...",
+        "sync_success": "اكتملت مزامنة دينغ توك! تم ربط {{count}} حسابات بنجاح.",
+        "sync_fail": "فشلت مزامنة دينغ توك. يرجى التحقق من بيانات الاعتماد أو تكوين الشبكة.",
+        "dingtalk_linked": "مرتبط بدينغ توك",
+        "dingtalk_unlinked": "غير مرتبط",
+        "last_synced": "آخر مزامنة: {{time}}"
     },
     "account": {
         "title": "مركز التعلم الشخصي",

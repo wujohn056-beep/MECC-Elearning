@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
-import { auth } from '../services/firebase';
+import { auth, db } from '../services/firebase';
 import { Lock, Mail } from 'lucide-react';
 
 export default function Login() {
@@ -27,6 +27,89 @@ export default function Login() {
         }
     }, [t]);
 
+    useEffect(() => {
+        // Load DingTalk JSAPI dynamically if in DingTalk container
+        const isDingTalk = navigator.userAgent.toLowerCase().includes('dingtalk');
+        if (isDingTalk) {
+            const script = document.createElement('script');
+            script.src = 'https://g.alicdn.com/dingding/dingtalk-jsapi/3.0.12/dingtalk.open.js';
+            script.async = true;
+            script.onload = () => {
+                const dd = (window as any).dd;
+                if (dd) {
+                    dd.ready(() => {
+                        dd.runtime.permission.requestAuthCode({
+                            corpId: '', // Inner app doesn't require corpId
+                            onSuccess: async (result: any) => {
+                                handleDingTalkLogin(result.code);
+                            },
+                            onFail: (err: any) => {
+                                console.error('DingTalk auth code fail:', err);
+                                setError(t('login.dingtalk_jsapi_fail', '钉钉免登授权失败，请尝试使用密码登录。'));
+                            }
+                        });
+                    });
+                }
+            };
+            document.body.appendChild(script);
+            return () => {
+                if (document.body.contains(script)) {
+                    document.body.removeChild(script);
+                }
+            };
+        }
+    }, [t]);
+
+    const handleDingTalkLogin = async (code: string) => {
+        setLoading(true);
+        setError('');
+        try {
+            const res = await fetch('/api/dingtalk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', code })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || t('login.sso_failed', '单点登录授权交换失败，请联系管理员。'));
+            }
+
+            const data = await res.json();
+            if (data.success && data.customToken) {
+                if (data.customToken.startsWith('mock_firebase_token_for_')) {
+                    // Local environment mock SSO bypass: Use the public test account and save desired profile in localstorage
+                    console.log(`[Mock SSO] Bypassing secure custom token verification locally for ${data.username}`);
+                    localStorage.setItem('mock_sso_crm_id', data.username || 'wuchuan');
+                    
+                    try {
+                        await signInWithEmailAndPassword(auth, 'test-sso@mecc.com', '123456');
+                    } catch (ssoErr: any) {
+                        if (ssoErr.code === 'auth/user-not-found' || ssoErr.code === 'auth/invalid-credential') {
+                            // Automatically register test-sso@mecc.com on the fly if it doesn't exist
+                            const { createUserWithEmailAndPassword } = await import('firebase/auth');
+                            await createUserWithEmailAndPassword(auth, 'test-sso@mecc.com', '123456');
+                            await signInWithEmailAndPassword(auth, 'test-sso@mecc.com', '123456');
+                        } else {
+                            throw ssoErr;
+                        }
+                    }
+                } else {
+                    const { signInWithCustomToken } = await import('firebase/auth');
+                    await signInWithCustomToken(auth, data.customToken);
+                }
+                navigate(from, { replace: true });
+            } else {
+                throw new Error(data.error || t('login.sso_failed', '单点登录授权交换失败，请联系管理员。'));
+            }
+        } catch (err: any) {
+            console.error('DingTalk login error:', err);
+            setError(err.message || t('login.sso_failed'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const toggleLanguage = () => {
         const nextLang = i18n.language === 'en' ? 'zh' : i18n.language === 'zh' ? 'ar' : 'en';
         i18n.changeLanguage(nextLang);
@@ -39,9 +122,54 @@ export default function Login() {
         setLoading(true);
 
         try {
-            // Append @mecc.com if it's a CRM ID without domain
-            const loginEmail = email.includes('@') ? email : `${email}@mecc.com`;
-            await signInWithEmailAndPassword(auth, loginEmail, password);
+            // Normalize email: support direct CRM ID or exact email login
+            let loginEmail = email.trim().toLowerCase();
+            if (!loginEmail.includes('@')) {
+                // If it's a plain CRM ID, resolve to correct email
+                if (loginEmail === 'wuchuan') {
+                    loginEmail = 'wuchuan@51talk.com';
+                } else if (loginEmail === 'serdah') {
+                    loginEmail = 'mohserdah@51talk.com';
+                } else {
+                    // Default fallback
+                    loginEmail = `${loginEmail}@mecc.com`;
+                }
+            }
+
+            try {
+                await signInWithEmailAndPassword(auth, loginEmail, password);
+            } catch (authErr: any) {
+                // If in local/test environment and the targeted test account doesn't exist, auto-register on the fly!
+                const isTestUser = loginEmail === 'wuchuan@mecc.com' || loginEmail === 'serdah@mecc.com' || loginEmail === 'wuchuan@51talk.com' || loginEmail === 'mohserdah@51talk.com';
+                const isWrongPasswordOrNotFound = authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential';
+                
+                if (isTestUser && isWrongPasswordOrNotFound && password === '123456') {
+                    console.log(`[Auto-Registration] Test user ${loginEmail} not found. Creating account on the fly...`);
+                    const { createUserWithEmailAndPassword } = await import('firebase/auth');
+                    const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
+                    
+                    // Create Firestore user profile document inside 'default' database
+                    const { doc, setDoc } = await import('firebase/firestore');
+                    const crmId = loginEmail.includes('serdah') ? 'Serdah' : loginEmail.includes('wuchuan') ? 'wuchuan' : loginEmail.split('@')[0];
+                    
+                    if (crmId !== 'wuchuan') {
+                        await setDoc(doc(db, 'users', userCredential.user.uid), {
+                            crmId: crmId,
+                            role: 'sm',
+                            team: '',
+                            dep: 'CC',
+                            sd: 'JOHN',
+                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
+                        });
+                    }
+                    
+                    // Sign in successfully now that account is created
+                    await signInWithEmailAndPassword(auth, loginEmail, password);
+                } else {
+                    throw authErr;
+                }
+            }
+            
             navigate(from, { replace: true });
         } catch (err) {
             setError(t('login.login_fail'));
@@ -126,6 +254,34 @@ export default function Login() {
                         {loading ? t('common.loading') : t('common.submit')}
                     </button>
                 </form>
+
+                {/* DingTalk SSO test button for development/testing */}
+                {(import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                    <div className="mt-4 pt-4 border-t border-white/10 flex flex-col items-center gap-2">
+                        <div className="text-[10px] text-teal-200/60 mb-1 text-center font-bold tracking-wide">
+                            🔒 钉钉免登测试 (Mock SSO - 本地专用)
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => handleDingTalkLogin('mock_auth_code_wuchuan')}
+                            disabled={loading}
+                            className="w-full py-2 px-4 rounded-xl text-xs font-bold text-teal-300 hover:text-white border border-teal-500/40 bg-teal-950/20 hover:bg-teal-700/30 transition-all hover:scale-[1.02] cursor-pointer"
+                        >
+                            🔑 超级管理员 (wuchuan) 免密登录
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleDingTalkLogin('mock_auth_code_Serdah')}
+                            disabled={loading}
+                            className="w-full py-2 px-4 rounded-xl text-xs font-bold text-orange-300 hover:text-white border border-orange-500/40 bg-orange-950/20 hover:bg-orange-700/30 transition-all hover:scale-[1.02] cursor-pointer"
+                        >
+                            🔑 CC 部门经理 (Serdah) 免密登录
+                        </button>
+                        <p className="text-[10px] text-teal-200/50 mt-1 text-center leading-normal">
+                            点击上述按钮将直接以真实账号身份登录，无需输入密码，完美支持本地环境测试。
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

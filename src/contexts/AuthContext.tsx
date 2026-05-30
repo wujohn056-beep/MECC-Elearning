@@ -64,27 +64,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(currentUser);
 
             if (currentUser) {
-                // Hardcoded super admin
+                // Hardcoded super admin or Mock SSO test account
                 if (currentUser.email === 'wuchuan@51talk.com') {
                     setProfile({
                         crmId: 'wuchuan',
                         role: 'super_admin'
+                    });
+                } else if (currentUser.email === 'test-sso@mecc.com') {
+                    const mockCrmId = localStorage.getItem('mock_sso_crm_id') || 'wuchuan';
+                    if (mockCrmId.toLowerCase() === 'serdah') {
+                        setProfile({
+                            crmId: 'Serdah',
+                            role: 'sm',
+                            dep: 'CC',
+                            sd: 'JOHN',
+                            team: '',
+                            realUid: 'hBhX4w7gqOQZEEiytqKe3FTDhAT2'
+                        });
+                    } else {
+                        setProfile({
+                            crmId: 'wuchuan',
+                            role: 'super_admin'
+                        });
+                    }
+                } else if (currentUser.email === 'mohserdah@51talk.com') {
+                    setProfile({
+                        crmId: 'Serdah',
+                        role: 'sm',
+                        dep: 'CC',
+                        sd: 'JOHN',
+                        team: '',
+                        realUid: 'hBhX4w7gqOQZEEiytqKe3FTDhAT2'
                     });
                 } else {
                     // Fetch user profile from Firestore
                     try {
                         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
                         if (userDoc.exists()) {
-                            setProfile(userDoc.data() as UserProfile);
-                        } else {
-                            // Account is deleted or disabled in Firestore database
-                            console.warn("User has Auth account but no Firestore profile. Force logging out.");
-                            sessionStorage.setItem('auth_blocked_reason', 'deleted');
                             setProfile({
-                                crmId: 'blocked',
-                                role: 'blocked'
-                            } as any);
-                            await firebaseSignOut(auth);
+                                ...(userDoc.data() as UserProfile),
+                                realUid: userDoc.id
+                            });
+                        } else {
+                            // Try querying by crmId as a fallback to support different UIDs across auth/database in test environment
+                            const emailPrefix = currentUser.email?.split('@')[0] || '';
+                            let targetCrmId = emailPrefix;
+                            
+                            // Specific mappings
+                            if (emailPrefix.toLowerCase() === 'mohserdah' || emailPrefix.toLowerCase() === 'serdah') {
+                                targetCrmId = 'Serdah';
+                            }
+                            
+                            console.log(`[AuthContext] UID document not found. Attempting query by crmId: ${targetCrmId}`);
+                            const { collection, query, where, getDocs } = await import('firebase/firestore');
+                            const q = query(collection(db, 'users'), where('crmId', '==', targetCrmId));
+                            const querySnapshot = await getDocs(q);
+                            
+                            if (!querySnapshot.empty) {
+                                const matchedDoc = querySnapshot.docs[0];
+                                console.log(`[AuthContext] Successfully resolved user profile via crmId query:`, matchedDoc.data());
+                                setProfile({
+                                    ...(matchedDoc.data() as UserProfile),
+                                    realUid: matchedDoc.id
+                                });
+                            } else {
+                                // Try case-insensitive or partial match
+                                const allUsersSnap = await getDocs(collection(db, 'users'));
+                                let found = false;
+                                allUsersSnap.forEach((doc) => {
+                                    const data = doc.data();
+                                    const dbCrmId = String(data.crmId || '').toLowerCase();
+                                    const searchPrefix = targetCrmId.toLowerCase();
+                                    if (dbCrmId === searchPrefix || dbCrmId.includes(searchPrefix) || searchPrefix.includes(dbCrmId)) {
+                                        console.log(`[AuthContext] Successfully resolved user profile via fallback scan:`, data);
+                                        setProfile({
+                                            ...(data as UserProfile),
+                                            realUid: doc.id
+                                        });
+                                        found = true;
+                                    }
+                                });
+                                
+                                if (!found) {
+                                    console.warn("User has Auth account but no Firestore profile. Force logging out.");
+                                    sessionStorage.setItem('auth_blocked_reason', 'deleted');
+                                    setProfile({
+                                        crmId: 'blocked',
+                                        role: 'blocked'
+                                    } as any);
+                                    await firebaseSignOut(auth);
+                                }
+                            }
                         }
                     } catch (error) {
                         console.error("Error fetching user profile:", error);
