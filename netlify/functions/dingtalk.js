@@ -668,6 +668,78 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // ==========================================
+        // ACTION: CHECK PROGRESS (Diagnostic Action)
+        // ==========================================
+        if (action === 'checkProgress') {
+            const { taskId } = body;
+            if (!taskId) {
+                return { statusCode: 400, body: JSON.stringify({ error: 'Missing taskId' }) };
+            }
+
+            if (isMockDingTalk) {
+                return {
+                    statusCode: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        success: true,
+                        note: "Running in mock mode. Simulated progress: 100%."
+                    })
+                };
+            }
+
+            try {
+                // Get Token
+                const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
+                const tokenData = await tokenRes.json();
+                if (tokenData.errcode !== 0) {
+                    return { statusCode: 500, body: JSON.stringify({ error: `Token exchange failed: ${tokenData.errmsg}` }) };
+                }
+                const token = tokenData.access_token;
+
+                // 1. Get Progress
+                const progressRes = await fetch(`https://oapi.dingtalk.com/topapi/message/corpconversation/getsendprogress?access_token=${token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_id: parseInt(agentId),
+                        task_id: parseInt(taskId)
+                    })
+                });
+                const progressData = await progressRes.json();
+
+                // 2. Get Result
+                const resultRes = await fetch(`https://oapi.dingtalk.com/topapi/message/corpconversation/getsendresult?access_token=${token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agent_id: parseInt(agentId),
+                        task_id: parseInt(taskId)
+                    })
+                });
+                const resultData = await resultRes.json();
+
+                return {
+                    statusCode: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        success: true,
+                        progress: progressData,
+                        result: resultData
+                    })
+                };
+            } catch (err) {
+                return {
+                    statusCode: 500,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        success: false,
+                        error: err.message
+                    })
+                };
+            }
+        }
+
         return { statusCode: 400, body: JSON.stringify({ error: 'Unsupported action' }) };
 
     } catch (error) {
