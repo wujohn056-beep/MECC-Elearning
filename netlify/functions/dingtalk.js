@@ -552,7 +552,7 @@ exports.handler = async (event, context) => {
         // ACTION: NOTIFY MATERIAL (Phase 2 Material Updates)
         // ==========================================
         if (action === 'notifyMaterial') {
-            const { recordingId, title, displayId, lecturerName, categoryName, description } = body;
+            const { recordingId, title, displayId, lecturerName, categoryName, description, targetType, selectedSds } = body;
             if (!recordingId || !title) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing material recordingId or title' }) };
             }
@@ -563,7 +563,9 @@ exports.handler = async (event, context) => {
             let pushType = 'none';
             let mockPayload = null;
 
-            if (webhookUrl && !webhookUrl.includes('your_')) {
+            const isPushToGroup = !targetType || targetType === 'group';
+
+            if (isPushToGroup && webhookUrl && !webhookUrl.includes('your_')) {
                 // Group Webhook push (Plan C custom bot)
                 try {
                     pushType = 'webhook';
@@ -591,19 +593,35 @@ exports.handler = async (event, context) => {
                     console.error("DingTalk Webhook Push Error:", webErr);
                 }
             } else {
-                // Broadcast to all linked sales users via Work Notification
-                pushType = 'broadcast';
+                // Broadcast/Targeted Push via Work Notification
+                pushType = targetType === 'individuals' ? 'targeted_broadcast' : 'broadcast';
                 const recipients = [];
+                const queryLogs = [];
 
                 if (!isMockFirebase) {
                     try {
                         const db = getFirestoreDb();
                         const snapshot = await db.collection('users').where('role', '!=', 'super_admin').get();
                         snapshot.forEach(doc => {
-                            if (doc.data().dingtalkUserId) {
-                                recipients.push(doc.data().dingtalkUserId);
+                            const data = doc.data();
+                            if (data.dingtalkUserId) {
+                                if (targetType === 'individuals' && Array.isArray(selectedSds)) {
+                                    // Segmented push strictly by selected SDs (case insensitive comparison)
+                                    const userSd = String(data.sd || '').trim().toLowerCase();
+                                    const sdMatched = selectedSds.some(sd => String(sd).trim().toLowerCase() === userSd);
+                                    if (sdMatched) {
+                                        recipients.push(data.dingtalkUserId);
+                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: true });
+                                    } else {
+                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: false });
+                                    }
+                                } else {
+                                    // Broadcast to all linked non-admin users
+                                    recipients.push(data.dingtalkUserId);
+                                }
                             }
                         });
+                        console.log(`[Material Push] Recipients collected: ${recipients.length}. TargetType: ${targetType}. SD filters: ${JSON.stringify(selectedSds)}`);
                     } catch (err) {
                         console.error("Failed to query linked user ids:", err);
                     }
@@ -649,9 +667,10 @@ exports.handler = async (event, context) => {
                     sentSuccess = true;
                     mockPayload = {
                         recipientIds: recipients,
-                        pushType: webhookUrl ? 'webhook' : 'broadcast_simulated',
+                        pushType: pushType,
                         markdown: markdownText,
-                        actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`
+                        actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Fme-elearning.netlify.app%2Fhub%3FrecordingId%3D${recordingId}`,
+                        queryLogs: queryLogs
                     };
                     console.log("[Mock Material Push sent]", mockPayload);
                 }

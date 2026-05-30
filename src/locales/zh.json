@@ -196,7 +196,14 @@
         "batch_delete_confirm": "确定要删除选中的这些文件吗？此操作不可恢复。",
         "confirm_push_dingtalk": "您确定要将该精品素材推送至钉钉吗？\n\n系统将通过钉钉销售工作群机器人发布精美的图文 ActionCard 卡片广播！",
         "push_fail": "推送到钉钉失败，请检查通道凭证或网络配置。",
-        "push_success": "精品素材已成功推送至钉钉！"
+        "push_success": "精品素材已成功推送至钉钉！",
+        "push_modal_title": "推送精品素材至钉钉",
+        "push_to_group": "👥 推送至工作群机器人",
+        "push_to_individuals": "👤 精确推送给个人",
+        "select_sd_teams": "选择接收部门 (按 SD 维度)",
+        "select_all": "全选",
+        "push_btn_group": "广播推送至工作群",
+        "push_btn_individuals": "推送给选定团队 (共 {{count}} 个)"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",

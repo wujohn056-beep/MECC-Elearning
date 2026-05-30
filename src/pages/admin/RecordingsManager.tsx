@@ -32,6 +32,13 @@ export default function RecordingsManager() {
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const { hasPermission, profile } = useAuth();
+    
+    // DingTalk Multi-Target Push States
+    const [showPushModal, setShowPushModal] = useState(false);
+    const [selectedRecordingForPush, setSelectedRecordingForPush] = useState<Recording | null>(null);
+    const [pushTargetType, setPushTargetType] = useState<'group' | 'individuals'>('group');
+    const [selectedSdsForPush, setSelectedSdsForPush] = useState<string[]>([]);
+    const [pushingToDingTalk, setPushingToDingTalk] = useState(false);
 
     if (!hasPermission('manageRecordings')) {
         return <Navigate to="/admin" replace />;
@@ -61,6 +68,20 @@ export default function RecordingsManager() {
     // Autocomplete for lecturer
     const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const [showLecturerDropdown, setShowLecturerDropdown] = useState(false);
+
+    // Compute SDs list dynamically from systemUsers
+    const sdList = React.useMemo(() => {
+        const sds = new Set<string>();
+        systemUsers.forEach(u => {
+            if (u.role === 'sd' && u.crmId) {
+                sds.add(u.crmId);
+            }
+            if (u.sd) {
+                sds.add(u.sd);
+            }
+        });
+        return Array.from(sds).sort();
+    }, [systemUsers]);
 
     const filteredRecordings = recordings.filter(rec => {
         const isSuperAdmin = profile?.role === 'super_admin';
@@ -187,25 +208,36 @@ export default function RecordingsManager() {
         if (avatarInput) avatarInput.value = '';
     };
 
-    const handlePushToDingTalk = async (rec: Recording) => {
-        const confirmMsg = t(
-            'recordings_manager.confirm_push_dingtalk', 
-            '您确定要将该精品素材推送至钉钉吗？\n\n系统将通过钉钉销售工作群机器人发布精美的图文 ActionCard 卡片广播！'
-        );
-        if (!window.confirm(confirmMsg)) return;
+    const handlePushToDingTalkClick = (rec: Recording) => {
+        setSelectedRecordingForPush(rec);
+        setPushTargetType('group');
+        setSelectedSdsForPush([]);
+        setShowPushModal(true);
+    };
 
+    const handleExecutePush = async () => {
+        if (!selectedRecordingForPush) return;
+
+        if (pushTargetType === 'individuals' && selectedSdsForPush.length === 0) {
+            alert(t('recordings_manager.select_at_least_one_sd', '请选择至少一个接收团队！'));
+            return;
+        }
+
+        setPushingToDingTalk(true);
         try {
             const res = await fetch('/.netlify/functions/dingtalk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'notifyMaterial',
-                    recordingId: rec.id,
-                    title: rec.title,
-                    displayId: rec.displayId || '',
-                    lecturerName: rec.lecturerName || '',
-                    categoryName: rec.categoryName || '',
-                    description: rec.description || ''
+                    recordingId: selectedRecordingForPush.id,
+                    title: selectedRecordingForPush.title,
+                    displayId: selectedRecordingForPush.displayId || '',
+                    lecturerName: selectedRecordingForPush.lecturerName || '',
+                    categoryName: selectedRecordingForPush.categoryName || '',
+                    description: selectedRecordingForPush.description || '',
+                    targetType: pushTargetType,
+                    selectedSds: selectedSdsForPush
                 })
             });
 
@@ -215,13 +247,16 @@ export default function RecordingsManager() {
 
             const data = await res.json();
             if (data.success) {
-                alert(t('recordings_manager.push_success', '精品素材已成功推送至钉钉工作群！'));
+                alert(t('recordings_manager.push_success', '精品素材已成功推送至钉钉！'));
+                setShowPushModal(false);
             } else {
                 throw new Error(data.error || t('recordings_manager.push_fail'));
             }
         } catch (err: any) {
             console.error('DingTalk material push error:', err);
             alert(err.message || t('recordings_manager.push_fail'));
+        } finally {
+            setPushingToDingTalk(false);
         }
     };
 
@@ -899,7 +934,7 @@ export default function RecordingsManager() {
                                         </div>
                                         <div className="flex flex-col items-end gap-2 ml-4">
                                             <div className="flex gap-2">
-                                                <button onClick={() => handlePushToDingTalk(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
+                                                <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
                                                     <Send className="h-4 w-4" />
                                                 </button>
                                                 <button onClick={() => handleEdit(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-deep-teal hover:bg-gray-100 transition-colors shadow-sm border border-gray-100" title="编辑">
@@ -935,6 +970,155 @@ export default function RecordingsManager() {
                     </div>
                 </div>
             </div>
+
+            {/* Custom Glassmorphic DingTalk Push Modal */}
+            {showPushModal && selectedRecordingForPush && (
+                <div className="fixed inset 0 bg-arabian-night/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-6 md:p-8 max-w-lg w-full mx-4 transform transition-all animate-in zoom-in-95 duration-300 flex flex-col gap-4 text-arabian-night">
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                            <div className="flex items-center gap-2">
+                                <Send className="h-5 w-5 text-deep-teal" />
+                                <h3 className="text-lg font-bold text-arabian-night">
+                                    {t('recordings_manager.push_modal_title', '推送精品素材至钉钉')}
+                                </h3>
+                            </div>
+                            <button 
+                                onClick={() => setShowPushModal(false)}
+                                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <X className="h-5 w-5 text-arabian-night/40 hover:text-arabian-night/80" />
+                            </button>
+                        </div>
+
+                        {/* Material Info Card */}
+                        <div className="bg-deep-teal/5 border border-deep-teal/10 rounded-2xl p-4 flex gap-3 items-start">
+                            <div className="bg-deep-teal/10 p-2.5 rounded-xl text-deep-teal">
+                                <FileText className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-arabian-night">
+                                    {selectedRecordingForPush.displayId && <span className="text-desert-gold mr-1">[{selectedRecordingForPush.displayId}]</span>}
+                                    {selectedRecordingForPush.title}
+                                </h4>
+                                <p className="text-xs text-arabian-night/60 mt-1 line-clamp-1">
+                                    {selectedRecordingForPush.description || '无案例背景介绍'}
+                                </p>
+                                {selectedRecordingForPush.lecturerName && (
+                                    <p className="text-xs text-desert-gold mt-1 font-semibold flex items-center gap-1">
+                                        <User className="h-3 w-3" /> {selectedRecordingForPush.lecturerName}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Push Segment Toggle */}
+                        <div className="flex bg-gray-100/80 p-1 rounded-xl gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setPushTargetType('group')}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                    pushTargetType === 'group'
+                                        ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                        : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                }`}
+                            >
+                                {t('recordings_manager.push_to_group', '👥 推送至工作群机器人')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPushTargetType('individuals')}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                    pushTargetType === 'individuals'
+                                        ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                        : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                }`}
+                            >
+                                {t('recordings_manager.push_to_individuals', '👤 精确推送给个人')}
+                            </button>
+                        </div>
+
+                        {/* SD Selection Checklist (When individual push is active) */}
+                        {pushTargetType === 'individuals' && (
+                            <div className="animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col gap-2">
+                                <div className="flex items-center justify-between text-xs font-bold text-arabian-night/70">
+                                    <span>{t('recordings_manager.select_sd_teams', '选择接收部门 (按 SD 维度)')}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (selectedSdsForPush.length === sdList.length) {
+                                                setSelectedSdsForPush([]);
+                                            } else {
+                                                setSelectedSdsForPush([...sdList]);
+                                            }
+                                        }}
+                                        className="text-deep-teal hover:text-desert-gold transition-colors"
+                                    >
+                                        {selectedSdsForPush.length === sdList.length ? '取消全选' : t('recordings_manager.select_all', '全选')}
+                                    </button>
+                                </div>
+                                <div className="border border-gray-100 rounded-2xl bg-white/50 p-3 flex flex-col gap-1 max-h-40 overflow-y-auto mt-1 custom-scrollbar">
+                                    {sdList.length === 0 ? (
+                                        <p className="text-xs text-arabian-night/40 py-4 text-center">暂无可用销售总监 (SD)</p>
+                                    ) : (
+                                        sdList.map(sd => {
+                                            const isChecked = selectedSdsForPush.includes(sd);
+                                            return (
+                                                <label 
+                                                    key={sd} 
+                                                    className="flex items-center gap-2.5 text-xs font-bold hover:bg-deep-teal/5 p-2 rounded-xl transition-colors cursor-pointer select-none"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => {
+                                                            if (isChecked) {
+                                                                setSelectedSdsForPush(selectedSdsForPush.filter(x => x !== sd));
+                                                            } else {
+                                                                setSelectedSdsForPush([...selectedSdsForPush, sd]);
+                                                            }
+                                                        }}
+                                                        className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all"
+                                                    />
+                                                    <span>{sd} 团队</span>
+                                                </label>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Footer buttons */}
+                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 mt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowPushModal(false)}
+                                className="px-4 py-2 text-xs font-bold text-arabian-night/60 hover:text-arabian-night hover:bg-gray-100 rounded-xl transition-all"
+                            >
+                                取消
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExecutePush}
+                                disabled={pushingToDingTalk || (pushTargetType === 'individuals' && selectedSdsForPush.length === 0)}
+                                className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 rounded-xl transition-all shadow-lg hover:shadow-xl shadow-teal-600/10 hover:shadow-teal-600/25 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {pushingToDingTalk ? (
+                                    <>
+                                        <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                        正在推送...
+                                    </>
+                                ) : pushTargetType === 'group' ? (
+                                    t('recordings_manager.push_btn_group', '广播推送至工作群')
+                                ) : (
+                                    t('recordings_manager.push_btn_individuals', '推送给选定团队 (共 {{count}} 个)', { count: selectedSdsForPush.length })
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

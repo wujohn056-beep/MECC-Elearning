@@ -197,7 +197,14 @@
         "delete_avatar_fail": "Failed to delete avatar file.",
         "confirm_push_dingtalk": "Are you sure you want to push this premium material to DingTalk?\n\nThe system will broadcast a beautiful image-text ActionCard to the DingTalk sales workspace group chat via a bot!",
         "push_fail": "Failed to push to DingTalk. Please check credentials or network configuration.",
-        "push_success": "Premium material has been pushed successfully to DingTalk!"
+        "push_success": "Premium material has been pushed successfully to DingTalk!",
+        "push_modal_title": "Push Premium Material to DingTalk",
+        "push_to_group": "👥 Push to Group Chat Bot",
+        "push_to_individuals": "👤 Push to Selected Individuals",
+        "select_sd_teams": "Select Target Teams (By SD)",
+        "select_all": "Select All",
+        "push_btn_group": "Broadcast to Group Chat",
+        "push_btn_individuals": "Push to Selected Teams ({{count}} total)"
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",
