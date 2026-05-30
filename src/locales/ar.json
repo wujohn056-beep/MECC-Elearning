@@ -115,7 +115,9 @@
         "recording_deleted": "ربما تم حذف هذا التسجيل",
         "video_tag": "فيديو",
         "see_more": "عرض المزيد",
-        "see_less": "عرض أقل"
+        "see_less": "عرض أقل",
+        "suggested_lecturers": "المحاضرون المقترحون",
+        "suggested_courses": "المسارات المقترحة"
     },
     "category_manager": {
         "title": "إدارة التصنيفات",

@@ -115,7 +115,9 @@
         "recording_deleted": "录音可能已被删除",
         "video_tag": "视频",
         "see_more": "展开更多",
-        "see_less": "收起"
+        "see_less": "收起",
+        "suggested_lecturers": "推荐讲师",
+        "suggested_courses": "推荐课程"
     },
     "category_manager": {
         "title": "目录分类管理",

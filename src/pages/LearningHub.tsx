@@ -739,7 +739,7 @@ export default function LearningHub() {
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/10 via-teal-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl"></div>
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-deep-teal/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
                 
-                <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-10">
+                <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-30">
                     <div>
                         {taskId ? (
                             <>
@@ -862,7 +862,7 @@ export default function LearningHub() {
                                             <div className="mb-2">
                                                 <div className="px-4 py-1.5 text-[11px] font-black text-deep-teal tracking-wider uppercase bg-gray-50 flex items-center gap-1.5 select-none">
                                                     <User className="w-3.5 h-3.5 text-desert-gold" />
-                                                    <span>{t('learning_hub.suggested_lecturers', '推荐讲师 / Lecturers')}</span>
+                                                    <span>{t('learning_hub.suggested_lecturers', '推荐讲师')}</span>
                                                 </div>
                                                 <div className="mt-1">
                                                     {matchingLecturers.map((name) => (
@@ -889,7 +889,7 @@ export default function LearningHub() {
                                             <div>
                                                 <div className="px-4 py-1.5 text-[11px] font-black text-deep-teal tracking-wider uppercase bg-gray-50 flex items-center gap-1.5 select-none">
                                                     <PlayCircle className="w-3.5 h-3.5 text-desert-gold" />
-                                                    <span>{t('learning_hub.suggested_courses', '推荐课程 / Course Titles')}</span>
+                                                    <span>{t('learning_hub.suggested_courses', '推荐课程')}</span>
                                                 </div>
                                                 <div className="mt-1">
                                                     {matchingTitles.map((rec) => (

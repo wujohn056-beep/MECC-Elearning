@@ -116,7 +116,9 @@
         "recording_deleted": "This recording may have been deleted",
         "video_tag": "Video",
         "see_more": "See More",
-        "see_less": "See Less"
+        "see_less": "See Less",
+        "suggested_lecturers": "Suggested Lecturers",
+        "suggested_courses": "Suggested Courses"
     },
     "category_manager": {
         "title": "Category Management",
