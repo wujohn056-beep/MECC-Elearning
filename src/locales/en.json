@@ -150,6 +150,7 @@
         "transcript_lock_desc": "To ensure your learning outcome, please listen to at least 1/3 of the recording duration. The Arabic transcript will be unlocked automatically after the playback finishes.",
         "transcript_lock_progress": "Unlock Progress",
         "transcript_lock_progress_detail": "{{listened}}s / {{target}}s (1/3 duration) ({{percentage}}% completed)",
+        "unlocked_success": "Congratulations! You have successfully unlocked the Arabic transcript for this recording!",
         "anti_cheat_warning": "Reminder: You must listen to at least 1/3 of the recording duration and play to the end to unlock the transcript and log your progress!",
         "view_transcript_btn": "View & Unlock Arabic Transcript",
         "audio_mode": "Sales Audio Mode"

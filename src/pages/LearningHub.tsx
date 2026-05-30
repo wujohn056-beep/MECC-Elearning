@@ -27,7 +27,7 @@ interface Category {
     name: string;
 }
 
-const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string, onEnded: (duration: number, actualSec?: number) => void, disableSeek?: boolean }) => {
+const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { src: string, onEnded: (duration: number, actualSec?: number) => void, onUnlock?: () => void, disableSeek?: boolean }) => {
     const { t } = useTranslation();
     const audioRef = React.useRef<HTMLAudioElement>(null);
     const lastTimeRef = React.useRef(0);
@@ -52,7 +52,15 @@ const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string,
             const diff = curr - lastTimeRef.current;
             // Only accumulate when playing legitimately (skip check)
             if (isPlaying && diff > 0 && diff < 1.5) {
-                setActualListenedSeconds(prev => prev + diff);
+                setActualListenedSeconds(prev => {
+                    const next = prev + diff;
+                    const target = duration / 3;
+                    if (target > 0 && prev < target && next >= target && onUnlock) {
+                        // Trigger unlock!
+                        setTimeout(() => onUnlock(), 0);
+                    }
+                    return next;
+                });
             }
             lastTimeRef.current = curr;
             setCurrentTime(curr);
@@ -335,6 +343,7 @@ const RecordingCard = ({
                             <CustomAudioPlayer 
                                 src={rec.audioUrl} 
                                 onEnded={(duration) => handleAudioEnded(rec, duration)} 
+                                onUnlock={() => handleAudioEnded(rec, 0)}
                                 disableSeek={disableSeek}
                             />
                             {rec.transcript && (
@@ -366,7 +375,7 @@ const RecordingCard = ({
     );
 };
 
-const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded }: any) => {
+const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUnlock }: any) => {
     const { t } = useTranslation();
     const mediaRef = React.useRef<HTMLMediaElement>(null);
     const lastTimeRef = React.useRef(0);
@@ -383,7 +392,15 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded }: an
             // Increment actual listened time only when the media is playing legitimately (less than 1.5s skip)
             const playing = !mediaRef.current.paused && !mediaRef.current.ended;
             if (playing && diff > 0 && diff < 1.5) {
-                setActualListenedSeconds(prev => prev + diff);
+                setActualListenedSeconds(prev => {
+                    const next = prev + diff;
+                    const target = duration / 3;
+                    if (target > 0 && prev < target && next >= target && onUnlock) {
+                        // Just crossed the threshold! Trigger unlock!
+                        setTimeout(() => onUnlock(), 0);
+                    }
+                    return next;
+                });
             }
             
             if (disableSeek) {
@@ -1216,6 +1233,12 @@ export default function LearningHub() {
             }
         }
         
+        // Prevent duplicates
+        if (completedAudioIds.includes(rec.id)) return;
+        
+        // Show success alert for new unlock
+        alert(t('learning_hub.unlocked_success', '恭喜！您已成功解锁该录音的阿语逐字稿！'));
+        
         // Mark that user has completed this audio
         setCompletedAudioIds(prev => prev.includes(rec.id) ? prev : [...prev, rec.id]);
 
@@ -1873,6 +1896,7 @@ export default function LearningHub() {
                     rec={activeVideoRecording}
                     disableSeek={activeVideoDisableSeek}
                     isUnlocked={completedAudioIds.includes(activeVideoRecording.id)}
+                    onUnlock={() => handleAudioEnded(activeVideoRecording, 0)}
                     onClose={() => {
                         setActiveVideoRecording(null);
                         if (targetRecordingId && activeVideoRecording.id === targetRecordingId) {
