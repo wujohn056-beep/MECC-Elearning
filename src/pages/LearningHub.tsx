@@ -428,6 +428,23 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [newCommentText, setNewCommentText] = useState('');
     const [replyToId, setReplyToId] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
+    const [modalCurrentTime, setModalCurrentTime] = useState(0);
+    const [attachTimestamp, setAttachTimestamp] = useState(false);
+
+    const formatTime = (time: number) => {
+        if (isNaN(time) || !isFinite(time)) return "0:00";
+        const m = Math.floor(time / 60);
+        const s = Math.floor(time % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+
+    const jumpToTime = (seconds: number) => {
+        if (mediaRef.current) {
+            mediaRef.current.currentTime = seconds;
+            mediaRef.current.play();
+            setIsPlaying(true);
+        }
+    };
 
     // Real-time comments listener (onSnapshot)
     useEffect(() => {
@@ -493,9 +510,11 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                 likes: [],
                 parentId: null,
                 status: 'approved',
-                isPinned: false
+                isPinned: false,
+                timestamp: attachTimestamp ? Math.round(modalCurrentTime) : null
             });
             setNewCommentText('');
+            setAttachTimestamp(false);
         } catch (error: any) {
             console.error("Failed to add comment:", error);
             alert(t('common.save_fail', '保存失败：') + error.message);
@@ -569,6 +588,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const handleTimeUpdate = () => {
         if (mediaRef.current) {
             const curr = mediaRef.current.currentTime;
+            setModalCurrentTime(curr);
             const diff = curr - lastTimeRef.current;
             
             // Increment actual listened time only when the media is playing legitimately (less than 1.5s skip)
@@ -688,6 +708,56 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                 onPause={() => setIsPlaying(false)}
                                 preload="metadata"
                             />
+                            
+                            {/* Timeline Highlights Interactive Bar */}
+                            {duration > 0 && comments.some(c => c.timestamp !== undefined && c.timestamp !== null) && (
+                                <div className="w-full max-w-lg mt-4 px-4 flex flex-col gap-2 animate-in fade-in duration-500">
+                                    <div className="flex justify-between items-center text-[10px] font-extrabold text-white/70 tracking-wider">
+                                        <span className="flex items-center gap-1">📍 {t('learning_hub.timeline_highlights', '音频时间轴高光批注')}</span>
+                                        <span>{comments.filter(c => c.timestamp !== undefined && c.timestamp !== null).length} 个批注点</span>
+                                    </div>
+                                    
+                                    {/* Timeline Track with Pinned Dots */}
+                                    <div className="relative w-full h-2 bg-white/20 rounded-full select-none overflow-visible border border-white/5 shadow-inner flex items-center">
+                                        {/* Progress fill */}
+                                        <div 
+                                            className="absolute left-0 top-0 bottom-0 bg-desert-gold/50 rounded-full" 
+                                            style={{ width: `${(modalCurrentTime / duration) * 100}%` }}
+                                        />
+                                        
+                                        {/* Clickable pins */}
+                                        {comments
+                                            .filter(c => c.timestamp !== undefined && c.timestamp !== null)
+                                            .map((c) => {
+                                                const percent = (c.timestamp / duration) * 100;
+                                                const isActive = Math.abs(modalCurrentTime - c.timestamp) < 2;
+                                                return (
+                                                    <button
+                                                        key={c.id}
+                                                        type="button"
+                                                        onClick={() => jumpToTime(c.timestamp)}
+                                                        className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border border-white transition-all transform hover:scale-125 cursor-pointer z-20 focus:outline-none ${
+                                                            isActive 
+                                                                ? 'bg-desert-gold shadow-lg shadow-yellow-500/50 scale-110' 
+                                                                : 'bg-amber-400 shadow-sm'
+                                                        } group`}
+                                                        style={{ left: `${percent}%`, transform: 'translate(-50%, -50%)' }}
+                                                    >
+                                                        {/* Glowing ring for active bookmarks */}
+                                                        {isActive && (
+                                                            <span className="absolute inset-0 rounded-full animate-ping bg-desert-gold opacity-75"></span>
+                                                        )}
+                                                        
+                                                        {/* Rich tooltip preview */}
+                                                        <span className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 hidden group-hover:block bg-arabian-night/95 text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-xl border border-white/10 z-30 pointer-events-none transition-all">
+                                                            ⏱️ {formatTime(c.timestamp)} | <span className="font-extrabold text-desert-gold">{c.userName}</span>: {c.content.length > 20 ? c.content.slice(0, 20) + '...' : c.content}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -817,7 +887,16 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                     placeholder={t('learning_hub.comment_placeholder', '分享你的学习心得、感悟，或针对本录音提出您的问题...')}
                                     className="w-full min-h-[70px] max-h-[140px] text-sm p-3 border border-gray-100 bg-gray-50/50 rounded-xl outline-none focus:ring-2 focus:ring-deep-teal focus:bg-white resize-y font-medium text-arabian-night/90 placeholder:text-arabian-night/40"
                                 />
-                                <div className="flex justify-end">
+                                <div className="flex justify-between items-center mt-1">
+                                    <label className="flex items-center gap-1.5 text-xs text-arabian-night/60 cursor-pointer font-bold select-none hover:text-deep-teal transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={attachTimestamp}
+                                            onChange={(e) => setAttachTimestamp(e.target.checked)}
+                                            className="rounded text-desert-gold focus:ring-desert-gold"
+                                        />
+                                        <span>⏱️ {t('learning_hub.attach_timestamp', '关联当前播放时间')} ({formatTime(modalCurrentTime)})</span>
+                                    </label>
                                     <button 
                                         type="submit"
                                         disabled={!newCommentText.trim()}
@@ -892,9 +971,21 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                                     👁️ {t('learning_hub.comment_under_moderation', '该互动内容已被安全举报，正在由系统管理员审核中...')}
                                                 </div>
                                             ) : (
-                                                <p className="text-sm text-arabian-night/85 pl-10 leading-relaxed font-medium whitespace-pre-line break-words">
-                                                    {comment.content}
-                                                </p>
+                                                <div className="pl-10 space-y-1">
+                                                    {comment.timestamp !== undefined && comment.timestamp !== null && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => jumpToTime(comment.timestamp)}
+                                                            className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-desert-gold/15 hover:bg-desert-gold/25 text-yellow-800 border border-desert-gold/30 rounded-md px-1.5 py-0.5 transition-colors cursor-pointer select-none mb-1.5 focus:outline-none"
+                                                            title={t('learning_hub.click_to_seek', '点击跳转播放')}
+                                                        >
+                                                            ⏱️ {formatTime(comment.timestamp)}
+                                                        </button>
+                                                    )}
+                                                    <p className="text-sm text-arabian-night/85 leading-relaxed font-medium whitespace-pre-line break-words">
+                                                        {comment.content}
+                                                    </p>
+                                                </div>
                                             )}
 
                                             {/* Primary Comment Actions */}

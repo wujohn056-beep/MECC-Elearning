@@ -168,7 +168,9 @@
         "confirm_report_comment": "确认举报该条互动讨论内容？举报后该内容将被暂时屏蔽并提交至管理员审核。",
         "report_success": "举报成功，内容已屏蔽送审。",
         "sensitive_comment_warning": "提醒：为了共同营造积极、专业的学习氛围，请使用具有建设性、专业性的语言进行互动讨论哦！感谢您的配合！",
-        "audio_mode": "销售音频模式"
+        "audio_mode": "销售音频模式",
+        "timeline_highlights": "音频时间轴高光批注",
+        "attach_timestamp": "关联当前播放时间"
     },
     "category_manager": {
         "title": "目录分类管理",

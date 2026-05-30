@@ -169,7 +169,9 @@
         "confirm_report_comment": "Are you sure you want to report this comment? It will be temporarily hidden and submitted to administrators for review.",
         "report_success": "Reported successfully. The comment has been temporarily hidden for review.",
         "sensitive_comment_warning": "Reminder: To build a positive and professional learning environment, please use constructive and professional language! Thank you for your cooperation!",
-        "audio_mode": "Sales Audio Mode"
+        "audio_mode": "Sales Audio Mode",
+        "timeline_highlights": "Timeline Highlights & Notes",
+        "attach_timestamp": "Attach Current Playback Time"
     },
     "category_manager": {
         "title": "Category Management",
