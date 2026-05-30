@@ -69,15 +69,15 @@ export default function RecordingsManager() {
     const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const [showLecturerDropdown, setShowLecturerDropdown] = useState(false);
 
-    // Compute SDs list dynamically from systemUsers
+    // Compute SDs list dynamically from systemUsers (casing normalized to uppercase to prevent duplicate team names like ALAN and Alan)
     const sdList = React.useMemo(() => {
         const sds = new Set<string>();
         systemUsers.forEach(u => {
             if (u.role === 'sd' && u.crmId) {
-                sds.add(u.crmId);
+                sds.add(u.crmId.toUpperCase());
             }
             if (u.sd) {
-                sds.add(u.sd);
+                sds.add(u.sd.toUpperCase());
             }
         });
         return Array.from(sds).sort();
@@ -1002,7 +1002,7 @@ export default function RecordingsManager() {
                                     {selectedRecordingForPush.title}
                                 </h4>
                                 <p className="text-xs text-arabian-night/60 mt-1 line-clamp-1">
-                                    {selectedRecordingForPush.description || '无案例背景介绍'}
+                                    {selectedRecordingForPush.description || t('recordings_manager.no_description', '无案例背景介绍')}
                                 </p>
                                 {selectedRecordingForPush.lecturerName && (
                                     <p className="text-xs text-desert-gold mt-1 font-semibold flex items-center gap-1">
@@ -1054,12 +1054,12 @@ export default function RecordingsManager() {
                                         }}
                                         className="text-deep-teal hover:text-desert-gold transition-colors"
                                     >
-                                        {selectedSdsForPush.length === sdList.length ? '取消全选' : t('recordings_manager.select_all', '全选')}
+                                        {selectedSdsForPush.length === sdList.length ? t('recordings_manager.deselect_all', '取消全选') : t('recordings_manager.select_all', '全选')}
                                     </button>
                                 </div>
                                 <div className="border border-gray-100 rounded-2xl bg-white/50 p-3 flex flex-col gap-1 max-h-40 overflow-y-auto mt-1 custom-scrollbar">
                                     {sdList.length === 0 ? (
-                                        <p className="text-xs text-arabian-night/40 py-4 text-center">暂无可用销售总监 (SD)</p>
+                                        <p className="text-xs text-arabian-night/40 py-4 text-center">{t('recordings_manager.no_sds', '暂无可用销售总监 (SD)')}</p>
                                     ) : (
                                         sdList.map(sd => {
                                             const isChecked = selectedSdsForPush.includes(sd);
@@ -1080,7 +1080,7 @@ export default function RecordingsManager() {
                                                         }}
                                                         className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all"
                                                     />
-                                                    <span>{sd} 团队</span>
+                                                    <span>{sd} {t('recordings_manager.team_suffix', '团队')}</span>
                                                 </label>
                                             );
                                         })
@@ -1096,7 +1096,7 @@ export default function RecordingsManager() {
                                 onClick={() => setShowPushModal(false)}
                                 className="px-4 py-2 text-xs font-bold text-arabian-night/60 hover:text-arabian-night hover:bg-gray-100 rounded-xl transition-all"
                             >
-                                取消
+                                {t('common.cancel', '取消')}
                             </button>
                             <button
                                 type="button"
@@ -1107,7 +1107,7 @@ export default function RecordingsManager() {
                                 {pushingToDingTalk ? (
                                     <>
                                         <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                        正在推送...
+                                        {t('recordings_manager.pushing', '正在推送...')}
                                     </>
                                 ) : pushTargetType === 'group' ? (
                                     t('recordings_manager.push_btn_group', '广播推送至工作群')

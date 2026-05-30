@@ -204,7 +204,12 @@
         "select_sd_teams": "Select Target Teams (By SD)",
         "select_all": "Select All",
         "push_btn_group": "Broadcast to Group Chat",
-        "push_btn_individuals": "Push to Selected Teams ({{count}} total)"
+        "push_btn_individuals": "Push to Selected Teams ({{count}} total)",
+        "team_suffix": "Team",
+        "no_sds": "No Sales Directors (SD) available",
+        "deselect_all": "Deselect All",
+        "pushing": "Pushing...",
+        "no_description": "No background description"
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",

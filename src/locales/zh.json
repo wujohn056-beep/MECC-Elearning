@@ -203,7 +203,12 @@
         "select_sd_teams": "选择接收部门 (按 SD 维度)",
         "select_all": "全选",
         "push_btn_group": "广播推送至工作群",
-        "push_btn_individuals": "推送给选定团队 (共 {{count}} 个)"
+        "push_btn_individuals": "推送给选定团队 (共 {{count}} 个)",
+        "team_suffix": "团队",
+        "no_sds": "暂无可用销售总监 (SD)",
+        "deselect_all": "取消全选",
+        "pushing": "正在推送...",
+        "no_description": "无案例背景介绍"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",
