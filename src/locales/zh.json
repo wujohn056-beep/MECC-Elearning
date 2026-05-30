@@ -143,7 +143,12 @@
         "scan_to_learn": "扫描二维码或使用链接立即学习",
         "read_document": "阅读学习文档",
         "doc_tag": "文档",
-        "open_document_btn": "打开并阅读文档"
+        "open_document_btn": "打开并阅读文档",
+        "arabic_transcript": "阿语逐字稿",
+        "transcript_locked": "阿语逐字稿已锁定",
+        "transcript_lock_desc": "为了您的学习成效，收听完整录音的 1/3 时长且播放结束后即可解锁阿语逐字稿文档。",
+        "transcript_lock_progress": "解锁进度",
+        "anti_cheat_warning": "提醒：您必须实际收听录音的至少三分之一时间，且播放结束后才能解锁逐字稿和记录进度哦！"
     },
     "category_manager": {
         "title": "目录分类管理",
@@ -209,7 +214,13 @@
         "deselect_all": "取消全选",
         "pushing": "正在推送...",
         "no_description": "无案例背景介绍",
-        "push_language": "群助手推送语言"
+        "push_language": "群助手推送语言",
+        "generate_transcript": "自动生成阿语逐字稿",
+        "regenerate_transcript": "重新生成阿语逐字稿",
+        "transcribing": "正在解析为逐字稿...",
+        "transcript_ready": "阿语逐字稿已就绪",
+        "transcribe_fail": "语音解析为逐字稿失败",
+        "transcribe_success": "阿语逐字稿解析完成！已成功同步至录音库。"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",

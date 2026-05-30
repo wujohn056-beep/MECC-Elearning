@@ -144,7 +144,12 @@
         "scan_to_learn": "Scan QR code or use link to learn immediately",
         "read_document": "Read Study Document",
         "doc_tag": "Doc",
-        "open_document_btn": "Open and Read Document"
+        "open_document_btn": "Open and Read Document",
+        "arabic_transcript": "Arabic Transcript",
+        "transcript_locked": "Arabic Transcript Locked",
+        "transcript_lock_desc": "To ensure your learning outcome, please listen to at least 1/3 of the recording duration. The Arabic transcript will be unlocked automatically after the playback finishes.",
+        "transcript_lock_progress": "Unlock Progress",
+        "anti_cheat_warning": "Reminder: You must listen to at least 1/3 of the recording duration and play to the end to unlock the transcript and log your progress!"
     },
     "category_manager": {
         "title": "Category Management",
@@ -210,7 +215,13 @@
         "deselect_all": "Deselect All",
         "pushing": "Pushing...",
         "no_description": "No background description",
-        "push_language": "Bot Push Language"
+        "push_language": "Bot Push Language",
+        "generate_transcript": "Generate Arabic Transcript",
+        "regenerate_transcript": "Regenerate Arabic Transcript",
+        "transcribing": "Transcribing into Arabic...",
+        "transcript_ready": "Arabic Transcript Ready",
+        "transcribe_fail": "Arabic Speech-to-Text Transcription Failed",
+        "transcribe_success": "Arabic transcription completed! Automatically synced to database."
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",

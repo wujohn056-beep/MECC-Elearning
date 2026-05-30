@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Recording {
@@ -25,13 +25,15 @@ interface Category {
     name: string;
 }
 
-const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string, onEnded: (duration: number) => void, disableSeek?: boolean }) => {
+const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string, onEnded: (duration: number, actualSec?: number) => void, disableSeek?: boolean }) => {
     const { t } = useTranslation();
     const audioRef = React.useRef<HTMLAudioElement>(null);
+    const lastTimeRef = React.useRef(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [playbackRate, setPlaybackRate] = useState(1);
+    const [actualListenedSeconds, setActualListenedSeconds] = useState(0);
     const speeds = [0.75, 1, 1.5];
 
     const togglePlay = () => {
@@ -43,7 +45,16 @@ const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string,
     };
 
     const handleTimeUpdate = () => {
-        if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+        if (audioRef.current) {
+            const curr = audioRef.current.currentTime;
+            const diff = curr - lastTimeRef.current;
+            // Only accumulate when playing legitimately (skip check)
+            if (isPlaying && diff > 0 && diff < 1.5) {
+                setActualListenedSeconds(prev => prev + diff);
+            }
+            lastTimeRef.current = curr;
+            setCurrentTime(curr);
+        }
     };
 
     const cycleSpeed = () => {
@@ -84,7 +95,7 @@ const CustomAudioPlayer = ({ src, onEnded, disableSeek = false }: { src: string,
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={() => {
                     setIsPlaying(false);
-                    onEnded(duration);
+                    onEnded(duration, actualListenedSeconds);
                 }}
                 className="hidden"
             />
@@ -335,19 +346,38 @@ const RecordingCard = ({
     );
 };
 
-const VideoPlayerModal = ({ rec, disableSeek, onClose, onEnded }: any) => {
+const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded }: any) => {
     const { t } = useTranslation();
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const lastTimeRef = React.useRef(0);
+    const [actualListenedSeconds, setActualListenedSeconds] = useState(0);
+    const [duration, setDuration] = useState(0);
 
     const handleTimeUpdate = () => {
-        if (disableSeek && videoRef.current) {
-            if (videoRef.current.currentTime > lastTimeRef.current + 1.5) {
-                videoRef.current.currentTime = lastTimeRef.current;
+        if (videoRef.current) {
+            const curr = videoRef.current.currentTime;
+            const diff = curr - lastTimeRef.current;
+            
+            // Increment actual listened time only when the video is playing legitimately (less than 1.5s skip)
+            const isPlaying = !videoRef.current.paused && !videoRef.current.ended;
+            if (isPlaying && diff > 0 && diff < 1.5) {
+                setActualListenedSeconds(prev => prev + diff);
+            }
+            
+            if (disableSeek) {
+                if (videoRef.current.currentTime > lastTimeRef.current + 1.5) {
+                    videoRef.current.currentTime = lastTimeRef.current;
+                } else {
+                    lastTimeRef.current = videoRef.current.currentTime;
+                }
             } else {
                 lastTimeRef.current = videoRef.current.currentTime;
             }
         }
+    };
+
+    const handleLoadedMetadata = () => {
+        if (videoRef.current) setDuration(videoRef.current.duration);
     };
 
     useEffect(() => {
@@ -388,15 +418,16 @@ const VideoPlayerModal = ({ rec, disableSeek, onClose, onEnded }: any) => {
                         autoPlay
                         controlsList={disableSeek ? "nodownload nofullscreen noremoteplayback" : "nodownload"}
                         onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleLoadedMetadata}
                         onEnded={() => {
-                            onEnded(videoRef.current?.duration || 0);
+                            onEnded(videoRef.current?.duration || 0, actualListenedSeconds);
                         }}
                         preload="metadata"
                     />
                 </div>
 
                 {/* Details view */}
-                <div className="p-6 bg-white overflow-y-auto">
+                <div className="p-6 bg-white overflow-y-auto max-h-[40vh]">
                     <h3 className="text-lg font-extrabold text-arabian-night mb-2">
                         {rec.title}
                     </h3>
@@ -411,6 +442,82 @@ const VideoPlayerModal = ({ rec, disableSeek, onClose, onEnded }: any) => {
                     <p className="text-sm text-arabian-night/70 leading-relaxed border-t border-gray-100 pt-3">
                         {rec.description}
                     </p>
+
+                    {/* Arabic Transcript Document with Anti-Cheating Unlock */}
+                    {rec.transcript && (
+                        <div className="mt-6 border-t border-gray-100 pt-5">
+                            {isUnlocked ? (
+                                <div className="animate-in fade-in duration-700">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5">
+                                            <FileText className="h-5 w-5 text-desert-gold" />
+                                            {t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                                        </h4>
+                                        <button 
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(rec.transcript);
+                                                alert(t('common.copied', '已复制到剪贴板！'));
+                                            }}
+                                            className="text-xs font-semibold text-desert-gold border border-desert-gold/30 hover:bg-yellow-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                            {t('common.copy', '复制')}
+                                        </button>
+                                    </div>
+                                    <div 
+                                        className="bg-gray-50/75 border border-gray-100 rounded-2xl p-5 max-h-[300px] overflow-y-auto text-sm text-arabian-night/95 leading-relaxed whitespace-pre-line text-right font-medium" 
+                                        dir="rtl"
+                                    >
+                                        {rec.transcript}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="animate-in fade-in duration-500">
+                                    <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5 mb-3">
+                                        <FileText className="h-5 w-5 text-gray-400" />
+                                        {t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                                    </h4>
+                                    <div className="relative rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.04] to-transparent p-6 overflow-hidden flex flex-col items-center justify-center min-h-[160px] text-center shadow-sm">
+                                        {/* Blurred placeholder layout representation */}
+                                        <div className="absolute inset-0 select-none pointer-events-none opacity-5 blur-sm whitespace-pre-line text-right p-5 text-xs font-serif" dir="rtl">
+                                            العامل: مرحبًا، شكرًا لاتصالك بخدمة العملاء. كيف يمكنني مساعدتك اليوم؟
+                                            العميل: مرحبًا، أود الاستفسار عن تفاصيل الاشتراك وتحديث باقة التعلم الخاصة بي.
+                                            العامل: بالتأكيد! يسعدني جدًا مساعدتك في ذلك. لدينا باقة متميزة توفر قيمة إضافية رائعة...
+                                        </div>
+                                        
+                                        <div className="relative z-10 flex flex-col items-center gap-3 w-full">
+                                            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm animate-pulse">
+                                                <Lock className="w-5 h-5 text-amber-600" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-bold text-amber-900">
+                                                    {t('learning_hub.transcript_locked', '阿语逐字稿已锁定')}
+                                                </p>
+                                                <p className="text-xs text-amber-800/80 max-w-md px-4 leading-relaxed font-semibold">
+                                                    {t('learning_hub.transcript_lock_desc', '为了您的学习成效，收听完整录音的 1/3 时长且播放结束后即可解锁阿语逐字稿文档。')}
+                                                </p>
+                                            </div>
+                                            
+                                            {/* Progress indicator */}
+                                            {duration > 0 && (
+                                                <div className="w-full max-w-xs mt-1 bg-amber-100/50 rounded-full h-2.5 overflow-hidden border border-amber-200">
+                                                    <div 
+                                                        className="bg-amber-500 h-full rounded-full transition-all duration-500"
+                                                        style={{ width: `${Math.min(100, (actualListenedSeconds / (duration / 3)) * 100)}%` }}
+                                                    />
+                                                </div>
+                                            )}
+                                            
+                                            <p className="text-[10px] font-bold text-amber-800/90 tracking-wide uppercase">
+                                                {t('learning_hub.transcript_lock_progress', '解锁进度')}：
+                                                {Math.round(actualListenedSeconds)}秒 / {Math.round(duration / 3)}秒 (1/3时长) 
+                                                （已完成 {Math.min(100, Math.round((actualListenedSeconds / (duration / 3)) * 100))}%）
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -950,6 +1057,21 @@ export default function LearningHub() {
                     if (favDoc.exists()) {
                         setFavorites(favDoc.data().recordingIds || []);
                     }
+
+                    // Fetch current User's learning history to populate completedAudioIds
+                    const historyQ = query(
+                        collection(db, 'learning_history'),
+                        where('userId', '==', user.uid)
+                    );
+                    const historySnap = await getDocs(historyQ);
+                    const completedIds: string[] = [];
+                    historySnap.forEach(hDoc => {
+                        const hData = hDoc.data();
+                        if (hData.recordingId) {
+                            completedIds.push(hData.recordingId);
+                        }
+                    });
+                    setCompletedAudioIds(prev => Array.from(new Set([...prev, ...completedIds])));
                 }
             } catch (error) {
                 console.error("Error fetching data: ", error);
@@ -1012,8 +1134,17 @@ export default function LearningHub() {
         }
     };
 
-    const handleAudioEnded = async (rec: Recording, durationSeconds: number) => {
+    const handleAudioEnded = async (rec: Recording, durationSeconds: number, actualListenedSeconds?: number) => {
         if (!user) return;
+        
+        // Anti-cheating guard: Must listen to at least 1/3 of the duration (minimum 10s file threshold)
+        if (actualListenedSeconds !== undefined && durationSeconds > 10) {
+            const minRequiredSeconds = durationSeconds / 3;
+            if (actualListenedSeconds < minRequiredSeconds) {
+                alert(t('learning_hub.anti_cheat_warning', '提醒：您必须实际收听录音的至少三分之一时间，且播放结束后才能解锁逐字稿和记录进度哦！'));
+                return;
+            }
+        }
         
         // Mark that user has completed this audio
         setCompletedAudioIds(prev => prev.includes(rec.id) ? prev : [...prev, rec.id]);
@@ -1671,6 +1802,7 @@ export default function LearningHub() {
                 <VideoPlayerModal
                     rec={activeVideoRecording}
                     disableSeek={activeVideoDisableSeek}
+                    isUnlocked={completedAudioIds.includes(activeVideoRecording.id)}
                     onClose={() => {
                         setActiveVideoRecording(null);
                         if (targetRecordingId && activeVideoRecording.id === targetRecordingId) {
@@ -1681,8 +1813,8 @@ export default function LearningHub() {
                             });
                         }
                     }}
-                    onEnded={(duration) => {
-                        handleAudioEnded(activeVideoRecording, duration);
+                    onEnded={(duration, actualSec) => {
+                        handleAudioEnded(activeVideoRecording, duration, actualSec);
                     }}
                 />
             )}

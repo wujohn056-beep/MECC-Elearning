@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw } from 'lucide-react';
 
 interface Recording {
     id: string;
@@ -32,6 +32,7 @@ export default function RecordingsManager() {
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const { hasPermission, profile } = useAuth();
+    const [transcribingIds, setTranscribingIds] = useState<Record<string, boolean>>({});
     
     // DingTalk Multi-Target Push States
     const [showPushModal, setShowPushModal] = useState(false);
@@ -207,6 +208,36 @@ export default function RecordingsManager() {
         if (audioInput) audioInput.value = '';
         const avatarInput = document.getElementById('avatarInput') as HTMLInputElement;
         if (avatarInput) avatarInput.value = '';
+    };
+
+    const handleTranscribe = async (rec: Recording) => {
+        if (!rec.id) return;
+        setTranscribingIds(prev => ({ ...prev, [rec.id]: true }));
+        try {
+            const res = await fetch('/.netlify/functions/transcribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recordingId: rec.id })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || t('recordings_manager.transcribe_fail', '语音解析失败，请稍后重试。'));
+            }
+
+            const data = await res.json();
+            if (data.success) {
+                alert(t('recordings_manager.transcribe_success', '阿语逐字稿解析完成！已成功同步至录音库。'));
+                await fetchData();
+            } else {
+                throw new Error(data.error || t('recordings_manager.transcribe_fail'));
+            }
+        } catch (error: any) {
+            console.error("Transcription failed:", error);
+            alert(`${t('recordings_manager.transcribe_fail', '语音解析失败')} : ${error.message}`);
+        } finally {
+            setTranscribingIds(prev => ({ ...prev, [rec.id]: false }));
+        }
     };
 
     const handlePushToDingTalkClick = (rec: Recording) => {
@@ -919,6 +950,16 @@ export default function RecordingsManager() {
                                                     <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
                                                         {rec.categoryName || t('common.uncategorized')}
                                                     </span>
+                                                    {(rec as any).transcript && (
+                                                        <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
+                                                            📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
+                                                        </span>
+                                                    )}
+                                                    {transcribingIds[rec.id] && (
+                                                        <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-0.5 animate-pulse">
+                                                            ⚙️ {t('recordings_manager.transcribing', '正在解析为逐字稿...')}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="font-bold text-arabian-night">
@@ -936,6 +977,22 @@ export default function RecordingsManager() {
                                         </div>
                                         <div className="flex flex-col items-end gap-2 ml-4">
                                             <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => handleTranscribe(rec)} 
+                                                    disabled={transcribingIds[rec.id] || uploading}
+                                                    className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
+                                                        (rec as any).transcript 
+                                                            ? 'text-green-600 hover:bg-green-50' 
+                                                            : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
+                                                    }`} 
+                                                    title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
+                                                >
+                                                    {transcribingIds[rec.id] ? (
+                                                        <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
+                                                    ) : (
+                                                        <FileText className="h-4 w-4" />
+                                                    )}
+                                                </button>
                                                 <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
                                                     <Send className="h-4 w-4" />
                                                 </button>
