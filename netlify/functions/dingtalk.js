@@ -111,6 +111,7 @@ exports.handler = async (event, context) => {
             if (!isMockFirebase) {
                 try {
                     const db = admin.firestore();
+                    db.settings({ databaseId: 'default' });
                     if (userIdsToSync && Array.isArray(userIdsToSync) && userIdsToSync.length > 0) {
                         for (const uid of userIdsToSync) {
                             const doc = await db.collection('users').doc(uid).get();
@@ -239,6 +240,7 @@ exports.handler = async (event, context) => {
                     if (!isMockFirebase) {
                         try {
                             const db = admin.firestore();
+                            db.settings({ databaseId: 'default' });
                             await db.collection('users').doc(user.id).update({
                                 dingtalkUserId: ddUserId,
                                 dingtalkSyncedAt: syncTime
@@ -288,6 +290,7 @@ exports.handler = async (event, context) => {
                 if (!isMockFirebase) {
                     try {
                         const db = admin.firestore();
+                        db.settings({ databaseId: 'default' });
                         const snapshot = await db.collection('users').where('crmId', '==', resolvedCrmId).limit(1).get();
                         if (!snapshot.empty) {
                             resolvedUserId = snapshot.docs[0].id;
@@ -304,6 +307,7 @@ exports.handler = async (event, context) => {
                     if (!isMockFirebase) {
                         try {
                             const db = admin.firestore();
+                            db.settings({ databaseId: 'default' });
                             await db.collection('users').doc(resolvedUserId).set({
                                 crmId: resolvedCrmId,
                                 role: 'user',
@@ -356,6 +360,7 @@ exports.handler = async (event, context) => {
                     }
 
                     const db = admin.firestore();
+                    db.settings({ databaseId: 'default' });
                     const snapshot = await db.collection('users').where('dingtalkUserId', '==', ddUserId).limit(1).get();
                     if (snapshot.empty) {
                         return {
@@ -418,6 +423,7 @@ exports.handler = async (event, context) => {
             if (!isMockFirebase) {
                 try {
                     const db = admin.firestore();
+                    db.settings({ databaseId: 'default' });
                     for (const uid of assigneeIds) {
                         const doc = await db.collection('users').doc(uid).get();
                         if (doc.exists && doc.data().dingtalkUserId) {
@@ -544,6 +550,7 @@ exports.handler = async (event, context) => {
                 if (!isMockFirebase) {
                     try {
                         const db = admin.firestore();
+                        db.settings({ databaseId: 'default' });
                         const snapshot = await db.collection('users').where('role', '!=', 'super_admin').get();
                         snapshot.forEach(doc => {
                             if (doc.data().dingtalkUserId) {
