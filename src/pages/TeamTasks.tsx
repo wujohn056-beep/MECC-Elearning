@@ -18,6 +18,7 @@ interface RecordingInfo {
     id: string;
     title: string;
     displayId?: string;
+    createdAt?: any;
 }
 
 interface TaskAssignee {
@@ -164,8 +165,27 @@ export default function TeamTasks() {
             const recsData: RecordingInfo[] = [];
             recsSnap.forEach(doc => {
                 const data = doc.data();
-                recsData.push({ id: doc.id, title: data.title, displayId: data.displayId });
+                recsData.push({ 
+                    id: doc.id, 
+                    title: data.title, 
+                    displayId: data.displayId,
+                    createdAt: data.createdAt 
+                });
             });
+            
+            // Sort recordings by upload time descending (newest first)
+            recsData.sort((a, b) => {
+                const getMillis = (rec: RecordingInfo) => {
+                    if (!rec.createdAt) return 0;
+                    if (typeof rec.createdAt.toMillis === 'function') return rec.createdAt.toMillis();
+                    if (rec.createdAt.seconds) return rec.createdAt.seconds * 1000;
+                    if (typeof rec.createdAt.toDate === 'function') return rec.createdAt.toDate().getTime();
+                    const d = new Date(rec.createdAt);
+                    return isNaN(d.getTime()) ? 0 : d.getTime();
+                };
+                return getMillis(b) - getMillis(a);
+            });
+            
             setAllRecordings(recsData);
             
         } catch (error) {
