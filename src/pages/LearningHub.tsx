@@ -291,7 +291,7 @@ const RecordingCard = ({
                         <span className="text-[10px] bg-amber-50/70 border border-desert-gold/25 text-[#a88216] px-3 py-0.5 rounded-full font-black shadow-sm tracking-wider backdrop-blur-sm transition-all duration-300 hover:bg-[#a88216] hover:text-white hover:border-transparent select-none">
                             {rec.categoryName || t('common.uncategorized')}
                         </span>
-                        {rec.transcript && (
+                        {rec.transcript && !isVideo && (
                             <span className="text-[9.5px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-3 py-0.5 rounded-full font-black shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-md transition-all duration-300">
                                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -433,7 +433,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [actualListenedSeconds, setActualListenedSeconds] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
-    const isVideo = false; // Always treat as audio in the player modal to show the premium vinyl record animation
+    const isVideo = isVideoUrl(rec.audioUrl);
 
     const { user, profile } = useAuth();
     const [comments, setComments] = useState<any[]>([]);
@@ -442,11 +442,12 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [replyText, setReplyText] = useState('');
     const [modalCurrentTime, setModalCurrentTime] = useState(0);
     const [attachTimestamp, setAttachTimestamp] = useState(false);
-    const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>('details');
+    const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>(isVideo ? 'comments' : 'details');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [recordingAnalysis, setRecordingAnalysis] = useState<any>(null);
 
     React.useEffect(() => {
+        if (isVideo) return;
         const currentLang = i18n.language || 'en';
         if (rec.aiAnalysisMultilang?.[currentLang]) {
             setRecordingAnalysis(rec.aiAnalysisMultilang[currentLang]);
@@ -455,9 +456,10 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
         } else {
             setRecordingAnalysis(null);
         }
-    }, [rec.id, rec.aiAnalysis, rec.aiAnalysisMultilang, i18n.language]);
+    }, [rec.id, rec.aiAnalysis, rec.aiAnalysisMultilang, i18n.language, isVideo]);
 
     React.useEffect(() => {
+        if (isVideo) return;
         const currentLang = i18n.language || 'en';
         const hasLangAnalysis = rec.aiAnalysisMultilang?.[currentLang] || (currentLang === 'zh' && rec.aiAnalysis);
         
@@ -465,7 +467,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
             console.log("Auto-triggering AI Analysis in the background for language:", currentLang, "and recording:", rec.id);
             handleTriggerAnalysis(true); // silent auto-trigger
         }
-    }, [rec.id, rec.transcriptStatus, rec.aiAnalysisMultilang, i18n.language]);
+    }, [rec.id, rec.transcriptStatus, rec.aiAnalysisMultilang, i18n.language, isVideo]);
 
     const handleTriggerAnalysis = async (isSilent = false) => {
         setIsAnalyzing(true);
@@ -845,20 +847,22 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                         >
                             📝 {t('learning_hub.course_details', '课程详情')}
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveModalTab('ai_analysis')}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
-                                activeModalTab === 'ai_analysis' 
-                                    ? 'bg-desert-gold/15 text-yellow-800 shadow-sm border border-desert-gold/30' 
-                                    : 'text-gray-500 hover:bg-gray-50 border border-transparent'
-                            }`}
-                        >
-                            ✨ {t('learning_hub.ai_call_portrait', 'AI 录音画像')}
-                            {recordingAnalysis && (
-                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                            )}
-                        </button>
+                        {!isVideo && (
+                            <button
+                                type="button"
+                                onClick={() => setActiveModalTab('ai_analysis')}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
+                                    activeModalTab === 'ai_analysis' 
+                                        ? 'bg-desert-gold/15 text-yellow-800 shadow-sm border border-desert-gold/30' 
+                                        : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                                }`}
+                            >
+                                ✨ {t('learning_hub.ai_call_portrait', 'AI 录音画像')}
+                                {recordingAnalysis && (
+                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                )}
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => setActiveModalTab('comments')}
@@ -887,7 +891,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                             </p>
 
                             {/* Arabic Transcript Document with Anti-Cheating Unlock */}
-                            {rec.transcript && (
+                            {rec.transcript && !isVideo && (
                                 <div className="mt-6 border-t border-gray-100 pt-5">
                                     {isUnlocked ? (
                                         <div className="animate-in fade-in duration-700">

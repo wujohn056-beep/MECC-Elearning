@@ -937,100 +937,107 @@ export default function RecordingsManager() {
                             </div>
                         ) : (
                             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                                {filteredRecordings.map((rec) => (
-                                    <div key={rec.id} className={`bg-white/60 p-4 rounded-xl flex items-center justify-between hover:bg-white transition-colors border ${editingId === rec.id ? 'border-desert-gold shadow-md' : 'border-transparent hover:border-desert-gold/30'} group`}>
-                                        <div className="flex items-start gap-4">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.includes(rec.id)}
-                                                onChange={() => toggleSelect(rec.id)}
-                                                className="mt-3.5 w-4 h-4 text-desert-gold border-gray-300 rounded focus:ring-desert-gold cursor-pointer shrink-0"
-                                            />
-                                            <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0 bg-gradient-to-br from-light-teal to-deep-teal">
-                                                {rec.avatarUrl ? (
-                                                    <img src={rec.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <User className="h-6 w-6 text-white/50" />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                                                        (rec.businessType || 'kid') === 'ss'
-                                                            ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-orange-400'
-                                                            : (rec.businessType || 'kid') === 'kid' 
-                                                                ? 'bg-blue-100 text-blue-700' 
-                                                                : 'bg-purple-100 text-purple-700'
-                                                    }`}>
-                                                        {(rec.businessType || 'kid') === 'ss'
-                                                            ? t('common.type_ss')
-                                                            : (rec.businessType || 'kid') === 'kid'
-                                                                ? t('common.type_kid')
-                                                                : t('common.type_adult')
-                                                        }
-                                                    </span>
-                                                    <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
-                                                        {rec.categoryName || t('common.uncategorized')}
-                                                    </span>
-                                                    {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && (
-                                                         <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
-                                                             📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
-                                                         </span>
-                                                     )}
-                                                     {false && ((rec as any).transcriptStatus === 'transcribing' || transcribingIds[rec.id]) && (
-                                                         <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-0.5 animate-pulse">
-                                                             ⚙️ {t('recordings_manager.transcribing', '正在解析为逐字稿...')}
-                                                         </span>
-                                                     )}
-                                                     {false && (rec as any).transcriptStatus === 'error' && (
-                                                         <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-semibold">
-                                                             ❌ {t('recordings_manager.transcribe_fail', '语音解析失败')}
-                                                         </span>
-                                                     )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-bold text-arabian-night">
-                                                        {rec.displayId && <span className="text-desert-gold mr-1.5 text-sm">[{rec.displayId}]</span>}
-                                                        {rec.title}
-                                                    </h3>
-                                                </div>
-                                                <p className="text-sm text-arabian-night/60 mt-1 line-clamp-1">{rec.description}</p>
-                                                {rec.lecturerName && (
-                                                    <p className="text-xs text-desert-gold mt-1 font-medium flex items-center gap-1">
-                                                        <User className="h-3 w-3" /> {rec.lecturerName}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-2 ml-4">
-                                            <div className="flex gap-2">
-                                                {/* Temporarily hidden transcription generation button */}
-                                                <button 
-                                                    onClick={() => handleTranscribe(rec)} 
-                                                    disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
-                                                    className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
-                                                        (rec as any).transcript 
-                                                            ? 'text-green-600 hover:bg-green-50' 
-                                                            : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
-                                                    }`} 
-                                                    title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
-                                                >
-                                                    {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
-                                                        <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
+                                {filteredRecordings.map((rec) => {
+                                    const url = rec.audioUrl?.toLowerCase() || '';
+                                    const cleanUrl = url.split('?')[0];
+                                    const isVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.m4v') || cleanUrl.endsWith('.avi') || cleanUrl.endsWith('.mkv');
+
+                                    return (
+                                        <div key={rec.id} className={`bg-white/60 p-4 rounded-xl flex items-center justify-between hover:bg-white transition-colors border ${editingId === rec.id ? 'border-desert-gold shadow-md' : 'border-transparent hover:border-desert-gold/30'} group`}>
+                                            <div className="flex items-start gap-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.includes(rec.id)}
+                                                    onChange={() => toggleSelect(rec.id)}
+                                                    className="mt-3.5 w-4 h-4 text-desert-gold border-gray-300 rounded focus:ring-desert-gold cursor-pointer shrink-0"
+                                                />
+                                                <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0 bg-gradient-to-br from-light-teal to-deep-teal">
+                                                    {rec.avatarUrl ? (
+                                                        <img src={rec.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <FileText className="h-4 w-4" />
+                                                        <User className="h-6 w-6 text-white/50" />
                                                     )}
-                                                </button>
-                                                <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
-                                                    <Send className="h-4 w-4" />
-                                                </button>
-                                                <button onClick={() => handleEdit(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-deep-teal hover:bg-gray-100 transition-colors shadow-sm border border-gray-100" title="编辑">
-                                                    <Pencil className="h-4 w-4" />
-                                                </button>
-                                                <button onClick={() => handleDelete(rec)} disabled={uploading} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm border border-gray-100 disabled:opacity-50" title="删除">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                                            (rec.businessType || 'kid') === 'ss'
+                                                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-orange-400'
+                                                                : (rec.businessType || 'kid') === 'kid' 
+                                                                    ? 'bg-blue-100 text-blue-700' 
+                                                                    : 'bg-purple-100 text-purple-700'
+                                                        }`}>
+                                                            {(rec.businessType || 'kid') === 'ss'
+                                                                ? t('common.type_ss')
+                                                                : (rec.businessType || 'kid') === 'kid'
+                                                                    ? t('common.type_kid')
+                                                                    : t('common.type_adult')
+                                                            }
+                                                        </span>
+                                                        <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
+                                                            {rec.categoryName || t('common.uncategorized')}
+                                                        </span>
+                                                        {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && !isVideo && (
+                                                             <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
+                                                                 📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
+                                                             </span>
+                                                         )}
+                                                         {false && ((rec as any).transcriptStatus === 'transcribing' || transcribingIds[rec.id]) && !isVideo && (
+                                                             <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-0.5 animate-pulse">
+                                                                 ⚙️ {t('recordings_manager.transcribing', '正在解析为逐字稿...')}
+                                                             </span>
+                                                         )}
+                                                         {false && (rec as any).transcriptStatus === 'error' && !isVideo && (
+                                                             <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-semibold">
+                                                                 ❌ {t('recordings_manager.transcribe_fail', '语音解析失败')}
+                                                             </span>
+                                                         )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-bold text-arabian-night">
+                                                            {rec.displayId && <span className="text-desert-gold mr-1.5 text-sm">[{rec.displayId}]</span>}
+                                                            {rec.title}
+                                                        </h3>
+                                                    </div>
+                                                    <p className="text-sm text-arabian-night/60 mt-1 line-clamp-1">{rec.description}</p>
+                                                    {rec.lecturerName && (
+                                                        <p className="text-xs text-desert-gold mt-1 font-medium flex items-center gap-1">
+                                                            <User className="h-3 w-3" /> {rec.lecturerName}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
+                                            <div className="flex flex-col items-end gap-2 ml-4">
+                                                <div className="flex gap-2">
+                                                    {/* Temporarily hidden transcription generation button */}
+                                                    {!isVideo && (
+                                                        <button 
+                                                            onClick={() => handleTranscribe(rec)} 
+                                                            disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
+                                                            className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
+                                                                (rec as any).transcript 
+                                                                    ? 'text-green-600 hover:bg-green-50' 
+                                                                    : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
+                                                            }`} 
+                                                            title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
+                                                        >
+                                                            {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
+                                                                <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
+                                                            ) : (
+                                                                <FileText className="h-4 w-4" />
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                    <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
+                                                        <Send className="h-4 w-4" />
+                                                    </button>
+                                                    <button onClick={() => handleEdit(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-deep-teal hover:bg-gray-100 transition-colors shadow-sm border border-gray-100" title="编辑">
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(rec)} disabled={uploading} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm border border-gray-100 disabled:opacity-50" title="删除">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             {(() => {
                                                 const url = rec.audioUrl?.toLowerCase() || '';
                                                 const cleanUrl = url.split('?')[0];
@@ -1051,7 +1058,8 @@ export default function RecordingsManager() {
                                             })()}
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
