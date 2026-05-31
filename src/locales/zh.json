@@ -445,7 +445,15 @@
         "max_recordings_limit": "一次最多只能同时指派2个录音！",
         "unassigned_team": "未分组",
         "management_staff": "管理层",
-        "team_suffix": "团队"
+        "team_suffix": "团队",
+        "deadline_must_be_future": "截止时间必须晚于当前时间！",
+        "deadline_warning_past": "警告：截止时间不能早于或等于当前时间！",
+        "edit_deadline": "修改截止时间",
+        "edit_deadline_title": "修改截止时间",
+        "current_deadline": "当前截止：",
+        "new_deadline_date": "新截止日期",
+        "new_deadline_time": "新截止时间",
+        "deadline_update_success": "截止时间修改成功！"
     },
     "dashboard": {
         "title": "仪表盘总览",

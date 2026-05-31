@@ -446,7 +446,15 @@
         "max_recordings_limit": "You can only assign a maximum of 2 recordings at a time!",
         "unassigned_team": "Unassigned",
         "management_staff": "Management",
-        "team_suffix": "Team"
+        "team_suffix": "Team",
+        "deadline_must_be_future": "Deadline must be in the future!",
+        "deadline_warning_past": "Warning: Deadline cannot be in the past or equal to current time!",
+        "edit_deadline": "Edit Deadline",
+        "edit_deadline_title": "Edit Deadline",
+        "current_deadline": "Current Deadline: ",
+        "new_deadline_date": "New Deadline Date",
+        "new_deadline_time": "New Deadline Time",
+        "deadline_update_success": "Deadline updated successfully!"
     },
     "dashboard": {
         "title": "Dashboard Overview",

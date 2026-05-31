@@ -440,7 +440,15 @@
         "max_recordings_limit": "يمكنك تعيين بحد أقصى 2 تسجيلات في المرة الواحدة!",
         "unassigned_team": "غير معين",
         "management_staff": "الإدارة",
-        "team_suffix": "فريق"
+        "team_suffix": "فريق",
+        "deadline_must_be_future": "يجب أن يكون الموعد النهائي في المستقبل!",
+        "deadline_warning_past": "تحذير: لا يمكن أن يكون الموعد النهائي في الماضي أو مساوياً للوقت الحالي!",
+        "edit_deadline": "تعديل الموعد النهائي",
+        "edit_deadline_title": "تعديل الموعد النهائي",
+        "current_deadline": "الموعد النهائي الحالي: ",
+        "new_deadline_date": "تاريخ الموعد الجديد",
+        "new_deadline_time": "وقت الموعد الجديد",
+        "deadline_update_success": "تم تحديث الموعد النهائي بنجاح!"
     },
     "dashboard": {
         "title": "نظرة عامة على لوحة القيادة",

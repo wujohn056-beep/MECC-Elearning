@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, getDocs, addDoc, serverTimestamp, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp, query, where, orderBy, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
-import { Users, FileAudio, Calendar, CheckCircle, Clock, AlertCircle, Search, LayoutDashboard, ClipboardList } from 'lucide-react';
+import { Users, FileAudio, Calendar, CheckCircle, Clock, AlertCircle, Search, LayoutDashboard, ClipboardList, Edit2 } from 'lucide-react';
 
 interface UserRecord {
     id: string;
@@ -52,6 +52,10 @@ export default function TeamTasks() {
     const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
     const [allRecordings, setAllRecordings] = useState<RecordingInfo[]>([]);
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+    const [editingTask, setEditingTask] = useState<LearningTask | null>(null);
+    const [editDeadlineDate, setEditDeadlineDate] = useState('');
+    const [editDeadlineTime, setEditDeadlineTime] = useState('');
+    const [updatingDeadline, setUpdatingDeadline] = useState(false);
     
     // Tabs state
     const [activeTab, setActiveTab] = useState<'in_progress' | 'expired'>('in_progress');
@@ -65,6 +69,26 @@ export default function TeamTasks() {
     const [deadlineTime, setDeadlineTime] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [recordingSearchQuery, setRecordingSearchQuery] = useState('');
+
+    const isDeadlineInvalid = React.useMemo(() => {
+        if (!deadlineDate || !deadlineTime) return false;
+        try {
+            const deadlineObj = new Date(`${deadlineDate}T${deadlineTime}`);
+            return deadlineObj <= new Date();
+        } catch (e) {
+            return false;
+        }
+    }, [deadlineDate, deadlineTime]);
+
+    const isEditDeadlineInvalid = React.useMemo(() => {
+        if (!editDeadlineDate || !editDeadlineTime) return false;
+        try {
+            const deadlineObj = new Date(`${editDeadlineDate}T${editDeadlineTime}`);
+            return deadlineObj <= new Date();
+        } catch (e) {
+            return false;
+        }
+    }, [editDeadlineDate, editDeadlineTime]);
 
     useEffect(() => {
         fetchTasks();
@@ -202,6 +226,12 @@ export default function TeamTasks() {
         try {
             const deadlineObj = new Date(`${deadlineDate}T${deadlineTime}`);
             
+            if (deadlineObj <= new Date()) {
+                alert(t('team_tasks.deadline_must_be_future', '截止时间必须晚于当前时间！'));
+                setSubmitting(false);
+                return;
+            }
+            
             const assigneesMap: Record<string, TaskAssignee> = {};
             selectedUserIds.forEach(uid => {
                 const u = allUsers.find(x => x.id === uid);
@@ -335,6 +365,47 @@ export default function TeamTasks() {
         }
     };
 
+    const openEditDeadlineModal = (task: LearningTask) => {
+        setEditingTask(task);
+        if (task.deadline) {
+            const date = task.deadline.toDate();
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            setEditDeadlineDate(`${yyyy}-${mm}-${dd}`);
+            setEditDeadlineTime(`${hh}:${min}`);
+        } else {
+            setEditDeadlineDate('');
+            setEditDeadlineTime('');
+        }
+    };
+
+    const handleUpdateDeadline = async () => {
+        if (!editingTask || !editDeadlineDate || !editDeadlineTime) return;
+        setUpdatingDeadline(true);
+        try {
+            const deadlineObj = new Date(`${editDeadlineDate}T${editDeadlineTime}`);
+            if (deadlineObj <= new Date()) {
+                alert(t('team_tasks.deadline_must_be_future', '截止时间必须晚于当前时间！'));
+                setUpdatingDeadline(false);
+                return;
+            }
+            await updateDoc(doc(db, 'learning_tasks', editingTask.id), {
+                deadline: Timestamp.fromDate(deadlineObj)
+            });
+            setEditingTask(null);
+            fetchTasks();
+            alert(t('team_tasks.deadline_update_success', '截止时间修改成功！'));
+        } catch (error) {
+            console.error("Error updating deadline", error);
+            alert(t('common.save_fail', '保存失败'));
+        } finally {
+            setUpdatingDeadline(false);
+        }
+    };
+
     const filteredRecordings = allRecordings.filter(r => 
         r.title.toLowerCase().includes(recordingSearchQuery.toLowerCase()) || 
         (r.displayId && r.displayId.toLowerCase().includes(recordingSearchQuery.toLowerCase()))
@@ -464,7 +535,19 @@ export default function TeamTasks() {
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-semibold text-arabian-night/50 uppercase tracking-wider leading-none mb-0.5">{t('team_tasks.deadline', 'Deadline')}</p>
+                                            <p className="text-[10px] font-semibold text-arabian-night/50 uppercase tracking-wider leading-none mb-0.5 flex items-center gap-1.5 justify-end">
+                                                {t('team_tasks.deadline', 'Deadline')}
+                                                {(user?.uid === task.assignerId || profile?.role === 'super_admin' || isSuperAdmin) && (
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => openEditDeadlineModal(task)} 
+                                                        className="text-deep-teal hover:text-desert-gold transition-colors inline-flex cursor-pointer p-0.5 rounded hover:bg-black/5"
+                                                        title={t('team_tasks.edit_deadline', '修改截止时间')}
+                                                    >
+                                                        <Edit2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </p>
                                             <p className={`text-sm font-bold ${isExpired ? 'text-red-500' : 'text-desert-gold'}`}>
                                                 {task.deadline?.toDate().toLocaleString()}
                                             </p>
@@ -737,7 +820,7 @@ export default function TeamTasks() {
                                         type="date" 
                                         value={deadlineDate}
                                         onChange={e => setDeadlineDate(e.target.value)}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold outline-none text-sm"
+                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
                                     />
                                 </div>
                                 <div>
@@ -746,10 +829,16 @@ export default function TeamTasks() {
                                         type="time" 
                                         value={deadlineTime}
                                         onChange={e => setDeadlineTime(e.target.value)}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold outline-none text-sm"
+                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
                                     />
                                 </div>
                             </div>
+                            {isDeadlineInvalid && (
+                                <p className="text-red-500 text-xs font-semibold flex items-center gap-1 mt-1 animate-pulse">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    {t('team_tasks.deadline_warning_past', '警告：截止时间不能早于或等于当前时间！')}
+                                </p>
+                            )}
                         </div>
                         
                         <div className="p-6 border-t border-gray-200 bg-white flex justify-end gap-3">
@@ -766,6 +855,73 @@ export default function TeamTasks() {
                             >
                                 {submitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
                                 {t('team_tasks.confirm')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Task Deadline Modal */}
+            {editingTask && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arabian-night/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-warm-white rounded-3xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-white">
+                            <h2 className="text-xl font-bold text-deep-teal">{t('team_tasks.edit_deadline_title', '修改截止时间')}</h2>
+                            <button onClick={() => setEditingTask(null)} className="text-gray-400 hover:text-gray-700 font-bold">✕</button>
+                        </div>
+                        
+                        <div className="p-6 space-y-6">
+                            <div className="bg-white/40 p-4 rounded-xl border border-gray-100/50">
+                                <h3 className="font-bold text-sm text-deep-teal mb-1">{editingTask.title}</h3>
+                                <p className="text-xs text-arabian-night/60 flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5 text-desert-gold" />
+                                    {t('team_tasks.current_deadline', '当前截止：')}{editingTask.deadline?.toDate().toLocaleString()}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-arabian-night/85 mb-2">{t('team_tasks.new_deadline_date', '新截止日期')}</label>
+                                    <input 
+                                        type="date" 
+                                        value={editDeadlineDate}
+                                        onChange={e => setEditDeadlineDate(e.target.value)}
+                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isEditDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-arabian-night/85 mb-2">{t('team_tasks.new_deadline_time', '新截止时间')}</label>
+                                    <input 
+                                        type="time" 
+                                        value={editDeadlineTime}
+                                        onChange={e => setEditDeadlineTime(e.target.value)}
+                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isEditDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
+                                    />
+                                </div>
+                            </div>
+
+                            {isEditDeadlineInvalid && (
+                                <p className="text-red-500 text-xs font-semibold flex items-center gap-1 mt-1 animate-pulse">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    {t('team_tasks.deadline_warning_past', '警告：截止时间不能早于或等于当前时间！')}
+                                </p>
+                            )}
+                        </div>
+                        
+                        <div className="p-6 border-t border-gray-200 bg-white flex justify-end gap-3">
+                            <button 
+                                onClick={() => setEditingTask(null)}
+                                className="px-5 py-2 rounded-lg font-bold text-arabian-night/60 hover:bg-gray-100 transition-colors text-sm"
+                            >
+                                {t('team_tasks.cancel', '取消')}
+                            </button>
+                            <button 
+                                onClick={handleUpdateDeadline}
+                                disabled={updatingDeadline || isEditDeadlineInvalid || !editDeadlineDate || !editDeadlineTime}
+                                className="px-6 py-2 bg-deep-teal text-white rounded-lg font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm flex items-center gap-2"
+                            >
+                                {updatingDeadline && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                                {t('common.submit', '确定')}
                             </button>
                         </div>
                     </div>
