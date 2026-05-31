@@ -445,7 +445,8 @@
         "no_recordings_found": "No recordings found",
         "max_recordings_limit": "You can only assign a maximum of 2 recordings at a time!",
         "unassigned_team": "Unassigned",
-        "management_staff": "Management"
+        "management_staff": "Management",
+        "team_suffix": "Team"
     },
     "dashboard": {
         "title": "Dashboard Overview",

@@ -284,15 +284,30 @@ export default function TeamTasks() {
     const groupedUsers = React.useMemo(() => {
         const groups: Record<string, UserRecord[]> = {};
         allUsers.forEach(u => {
-            let teamName = u.team || '';
-            if (!teamName) {
-                const uRole = String(u.role || '').trim().toLowerCase();
-                if (['sd', 'sm', 'super_admin'].includes(uRole)) {
-                    teamName = t('team_tasks.management_staff', '管理层');
+            let teamName = '';
+            
+            const hasSd = !!u.sd;
+            const isSd = u.role === 'sd';
+            const isSales = hasSd || isSd;
+            
+            if (isSales) {
+                // Sales user: group by SD team
+                const sdName = (u.sd || (isSd ? u.crmId : '')).trim().toUpperCase();
+                if (sdName) {
+                    teamName = `${sdName} ${t('team_tasks.team_suffix', 'Team')}`;
+                } else {
+                    teamName = t('team_tasks.unassigned_team', '未分组');
+                }
+            } else {
+                // Non-sales user: group by functional team / department
+                const functionalTeam = (u.team || u.dep || '').trim();
+                if (functionalTeam) {
+                    teamName = functionalTeam;
                 } else {
                     teamName = t('team_tasks.unassigned_team', '未分组');
                 }
             }
+            
             if (!groups[teamName]) groups[teamName] = [];
             groups[teamName].push(u);
         });
