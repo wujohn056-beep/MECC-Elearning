@@ -1832,27 +1832,6 @@ export default function LearningHub() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
 
-    // Category scroll indicators
-    const categoryScrollRef = React.useRef<HTMLDivElement>(null);
-    const [showLeftArrow, setShowLeftArrow] = useState(false);
-    const [showRightArrow, setShowRightArrow] = useState(false);
-
-    const checkCategoryScroll = () => {
-        const el = categoryScrollRef.current;
-        if (el) {
-            setShowLeftArrow(el.scrollLeft > 2);
-            setShowRightArrow(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
-        }
-    };
-
-    const scrollCategories = (direction: 'left' | 'right') => {
-        const el = categoryScrollRef.current;
-        if (el) {
-            const scrollAmount = direction === 'left' ? -240 : 240;
-            el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            setTimeout(checkCategoryScroll, 300);
-        }
-    };
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [sortType, setSortType] = useState<'latest' | 'popular'>('latest');
@@ -1957,22 +1936,6 @@ export default function LearningHub() {
         setSelectedLecturer('');
     }, [profile]);
 
-    useEffect(() => {
-        // Reset scroll position on category changes
-        if (categoryScrollRef.current) {
-            categoryScrollRef.current.scrollLeft = 0;
-        }
-        const timer = setTimeout(checkCategoryScroll, 150);
-        return () => clearTimeout(timer);
-    }, [categories, businessType]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            checkCategoryScroll();
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     useEffect(() => {
         if (taskId && user) {
@@ -2534,72 +2497,31 @@ export default function LearningHub() {
 
                 {/* Category Tabs */}
                 {!taskId && !targetRecordingId && (
-                    <div className="mt-10 pt-6 border-t border-gray-100/60 relative z-10 group/cats">
-                        <div className="relative flex items-center">
-                            {/* Left Scroll Fading Guard & Arrow Button */}
-                            <div 
-                                className={`absolute left-0 top-0 bottom-0 flex items-center pl-1 z-20 pointer-events-none transition-all duration-300 ${
-                                    showLeftArrow ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                    <div className="mt-10 pt-6 border-t border-gray-100/60 relative z-10">
+                        <div className="flex flex-wrap gap-3 py-2">
+                            <button
+                                onClick={() => { setActiveTab('all'); setSelectedLecturer(''); }}
+                                className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
+                                    activeTab === 'all' 
+                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
+                                        : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
                                 }`}
                             >
-                                <div className="w-16 h-full bg-gradient-to-r from-white via-white/95 to-transparent absolute left-0 top-0 pointer-events-none rounded-l-full"></div>
+                                {t('learning_hub.all_content')}
+                            </button>
+                            {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
                                 <button
-                                    type="button"
-                                    onClick={() => scrollCategories('left')}
-                                    className="relative pointer-events-auto w-9 h-9 rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.08)] border border-gray-200/50 flex items-center justify-center text-arabian-night/60 hover:text-deep-teal hover:bg-teal-50/50 hover:shadow-lg transition-all hover:scale-110 active:scale-95"
-                                    title="Scroll Left"
-                                >
-                                    <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-                                </button>
-                            </div>
-
-                            {/* Scroll Port */}
-                            <div 
-                                ref={categoryScrollRef}
-                                onScroll={checkCategoryScroll}
-                                className="flex overflow-x-auto hide-scrollbar gap-3 py-2 pb-3 w-full scroll-smooth"
-                            >
-                                <button
-                                    onClick={() => { setActiveTab('all'); setSelectedLecturer(''); }}
+                                    key={cat.id}
+                                    onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); }}
                                     className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
-                                        activeTab === 'all' 
+                                        activeTab === cat.id 
                                             ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
                                             : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
                                     }`}
                                 >
-                                    {t('learning_hub.all_content')}
+                                    {cat.name}
                                 </button>
-                                {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); }}
-                                        className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
-                                            activeTab === cat.id 
-                                                ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
-                                                : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
-                                        }`}
-                                    >
-                                        {cat.name}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Right Scroll Fading Guard & Arrow Button */}
-                            <div 
-                                className={`absolute right-0 top-0 bottom-0 flex items-center pr-1 z-20 pointer-events-none transition-all duration-300 ${
-                                    showRightArrow ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
-                                }`}
-                            >
-                                <div className="w-16 h-full bg-gradient-to-l from-white via-white/95 to-transparent absolute right-0 top-0 pointer-events-none rounded-r-full"></div>
-                                <button
-                                    type="button"
-                                    onClick={() => scrollCategories('right')}
-                                    className="relative pointer-events-auto w-9 h-9 rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.08)] border border-gray-200/50 flex items-center justify-center text-arabian-night/60 hover:text-deep-teal hover:bg-teal-50/50 hover:shadow-lg transition-all hover:scale-110 active:scale-95"
-                                    title="Scroll Right"
-                                >
-                                    <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-                                </button>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 )}
