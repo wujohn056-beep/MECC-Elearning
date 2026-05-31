@@ -738,9 +738,10 @@ export const handler = async (event, context) => {
 
                                     // Match Non-Sales Department groups (only users without SD assignment who are not SDs themselves)
                                     const userDep = String(data.dep || '').trim().toLowerCase();
+                                    const userTeam = String(data.team || '').trim().toLowerCase();
                                     const hasSd = !!data.sd;
                                     const isSd = data.role === 'sd';
-                                    const depMatched = !hasSd && !isSd && depFilters.includes(userDep);
+                                    const depMatched = !hasSd && !isSd && (depFilters.includes(userDep) || depFilters.includes(userTeam));
 
                                     const isMatched = sdMatched || depMatched;
 

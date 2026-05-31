@@ -275,7 +275,7 @@
         "push_modal_title": "دفع المواد المميزة إلى DingTalk",
         "push_to_group": "👥 دفع إلى روبوت مجموعة العمل",
         "push_to_individuals": "👤 دفع إلى أفراد محددين",
-        "select_sd_teams": "اختر الأقسام المستهدفة (حسب المدير SD)",
+        "select_sd_teams": "اختر الأقسام المستهدفة (حسب SD والأقسام الوظيفية)",
         "select_all": "تحديد الكل",
         "push_btn_group": "بث إلى مجموعة العمل",
         "push_btn_individuals": "دفع إلى الفرق المحددة (إجمالي {{count}})",

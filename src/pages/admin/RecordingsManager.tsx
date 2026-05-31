@@ -91,8 +91,14 @@ export default function RecordingsManager() {
         systemUsers.forEach(u => {
             const hasSd = !!u.sd;
             const isSd = u.role === 'sd';
-            if (!hasSd && !isSd && u.dep) {
-                deps.add(u.dep.trim().toUpperCase());
+            const isSuper = u.role === 'super_admin';
+            if (!hasSd && !isSd && !isSuper) {
+                // If it is a non-sales user, their "team" field represents their functional department/team
+                if (u.team && u.team.trim()) {
+                    deps.add(u.team.trim().toUpperCase());
+                } else if (u.dep && u.dep.trim()) {
+                    deps.add(u.dep.trim().toUpperCase());
+                }
             }
         });
         return Array.from(deps).sort();
@@ -1301,7 +1307,7 @@ export default function RecordingsManager() {
                         {pushTargetType === 'individuals' && (
                             <div className="animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col gap-2">
                                 <div className="flex items-center justify-between text-xs font-bold text-arabian-night/70">
-                                    <span>{t('recordings_manager.select_sd_teams', '选择接收部门 (按 SD 维度)')}</span>
+                                    <span>{t('recordings_manager.select_sd_teams', '选择接收部门 (按 SD 维度及职能部门)')}</span>
                                     <button
                                         type="button"
                                         onClick={() => {
