@@ -353,6 +353,7 @@
         "perm_manage_users": "用户管理",
         "perm_manage_dashboard": "仪表盘访问",
         "perm_manage_tasks": "任务中心访问",
+        "perm_manage_comments": "评论审核",
         "sync_dingtalk": "同步钉钉账号",
         "syncing_dingtalk": "正在与钉钉同步账号信息，请稍候...",
         "sync_success": "钉钉账号同步完成！共成功关联 {{count}} 个销售账户。",

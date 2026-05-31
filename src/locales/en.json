@@ -354,6 +354,7 @@
         "perm_manage_users": "User Management",
         "perm_manage_dashboard": "Dashboard Access",
         "perm_manage_tasks": "Task Center Access",
+        "perm_manage_comments": "Q&A Moderation",
         "sync_dingtalk": "Sync DingTalk",
         "syncing_dingtalk": "Syncing accounts with DingTalk, please wait...",
         "sync_success": "DingTalk synchronization complete! {{count}} sales accounts linked successfully.",

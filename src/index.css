@@ -20,10 +20,55 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/85 backdrop-blur-lg border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(26,43,60,0.08)] transition-all duration-300;
+    @apply bg-white/85 backdrop-blur-lg border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_60px_rgba(26,43,60,0.08)] transition-all duration-500 ease-out;
+  }
+  
+  .glass-panel-dark {
+    @apply bg-slate-900/80 backdrop-blur-lg border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all duration-500 ease-out;
   }
   
   .text-gradient-gold {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-yellow-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-amber-500;
+  }
+
+  .glow-gold-hover {
+    @apply transition-all duration-300;
+  }
+  .glow-gold-hover:hover {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    border-color: rgba(212, 175, 55, 0.6);
+  }
+
+  /* Micro-animations */
+  @keyframes gold-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 12px 4px rgba(212, 175, 55, 0.1);
+    }
+  }
+
+  .animate-gold-pulse {
+    animation: gold-pulse 2s infinite ease-in-out;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.95);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(0.95);
+      opacity: 0.5;
+    }
+  }
+
+  .animate-pulse-ring {
+    animation: pulse-ring 2s infinite ease-in-out;
   }
 }

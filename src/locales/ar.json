@@ -353,6 +353,7 @@
         "perm_manage_users": "إدارة المستخدمين",
         "perm_manage_dashboard": "الوصول إلى لوحة القيادة",
         "perm_manage_tasks": "الوصول إلى مركز المهام",
+        "perm_manage_comments": "إشراف التعليقات",
         "sync_dingtalk": "مزامنة دينغ توك",
         "syncing_dingtalk": "جاري المزامنة مع دينغ توك، يرجى الانتظار...",
         "sync_success": "اكتملت مزامنة دينغ توك! تم ربط {{count}} حسابات بنجاح.",
