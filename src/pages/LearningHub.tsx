@@ -235,16 +235,24 @@ const RecordingCard = ({
                     )}
                 </div>
             ) : isVideo ? (
-                /* Premium Video Cover - Deep Aurora Gradient with glassmorphic pulse play button */
+                /* Premium Video Cover - Native first-frame rendering via HTML5 video metadata preload with glassmorphic pulse play button */
                 <div 
                     onClick={() => onPlayVideo(rec, disableSeek)}
                     className="w-full aspect-video bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-white/10 group/video shrink-0 animate-in fade-in duration-500"
                 >
-                    <div className="absolute inset-0 opacity-15 bg-[url('data:image/svg+xml,%3Csvg width=\'30\' height=\'30\' viewBox=\'0 0 30 30\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ccircle cx=\'15\' cy=\'15\' r=\'2\' fill=\'%23ffffff\' fill-opacity=\'0.2\'/%3E%3C/svg%3E')]"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent z-10" />
+                    {/* Native First-Frame Video Thumbnail Preload Cover */}
+                    <video 
+                        src={rec.audioUrl} 
+                        preload="metadata" 
+                        className="absolute inset-0 w-full h-full object-cover z-0 opacity-40 group-hover/video:opacity-65 transition-opacity duration-500"
+                        muted
+                        playsInline
+                    />
+                    <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=\'30\' height=\'30\' viewBox=\'0 0 30 30\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ccircle cx=\'15\' cy=\'15\' r=\'2\' fill=\'%23ffffff\' fill-opacity=\'0.2\'/%3E%3C/svg%3E')] z-10 pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-slate-950/40 z-10 pointer-events-none" />
                     
                     {/* Elegant pulsating backdrop under play icon */}
-                    <div className="absolute z-20 w-12 h-12 rounded-full bg-[#d4af37]/20 border border-[#d4af37]/40 scale-100 opacity-0 group-hover/video:scale-125 group-hover/video:opacity-100 transition-all duration-700 animate-pulse-ring" />
+                    <div className="absolute z-20 w-12 h-12 rounded-full bg-[#d4af37]/20 border border-[#d4af37]/40 scale-100 opacity-0 group-hover/video:scale-125 group-hover/video:opacity-100 transition-all duration-700 animate-pulse-ring pointer-events-none" />
                     
                     {/* Centered Glassmorphic Play Button */}
                     <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-2xl transform group-hover/video:scale-110 group-hover/video:bg-desert-gold group-hover/video:border-transparent group-hover/video:shadow-[0_0_25px_rgba(212,175,55,0.45)] transition-all duration-500 z-20">
