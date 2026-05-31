@@ -18,20 +18,20 @@ interface Recording {
     categoryName?: string;
     createdAt: any;
     displayId?: string;
-    businessType?: 'kid' | 'adult' | 'ss';
+    businessType?: 'kid' | 'adult' | 'ss' | 'leader';
 }
 
 interface Category {
     id: string;
     name: string;
-    businessType?: 'kid' | 'adult' | 'ss';
+    businessType?: 'kid' | 'adult' | 'ss' | 'leader';
 }
 
 export default function RecordingsManager() {
     const { t } = useTranslation();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const { hasPermission, profile } = useAuth();
+    const { hasPermission, profile, isLeader } = useAuth();
     const [transcribingIds, setTranscribingIds] = useState<Record<string, boolean>>({});
     
     // DingTalk Multi-Target Push States
@@ -56,7 +56,7 @@ export default function RecordingsManager() {
     const [file, setFile] = useState<File | null>(null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss'>('kid');
+    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
     
     // Upload States
     const [uploading, setUploading] = useState(false);
@@ -127,9 +127,17 @@ export default function RecordingsManager() {
         const isSuperAdmin = profile?.role === 'super_admin';
         if (!isSuperAdmin) {
             if (profile?.dep === 'SS') {
-                if (rec.businessType !== 'ss') return false;
+                if (isLeader) {
+                    if (rec.businessType !== 'ss' && rec.businessType !== 'leader') return false;
+                } else {
+                    if (rec.businessType !== 'ss') return false;
+                }
             } else {
-                if (rec.businessType === 'ss') return false;
+                if (isLeader) {
+                    if (rec.businessType === 'ss') return false;
+                } else {
+                    if (rec.businessType === 'ss' || rec.businessType === 'leader') return false;
+                }
             }
         }
         return rec.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -616,11 +624,7 @@ export default function RecordingsManager() {
 
                             <div>
                                 <label className="block text-sm font-semibold text-deep-teal mb-1">{t('common.business_type', '业务线')}</label>
-                                {profile?.dep === 'SS' ? (
-                                    <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-orange-400 select-none mt-1 animate-pulse">
-                                        ✨ {t('common.type_ss', 'SS 业务')}
-                                    </div>
-                                ) : profile?.role === 'super_admin' ? (
+                                {profile?.role === 'super_admin' ? (
                                     <div className="flex items-center gap-6 mt-2">
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
@@ -628,7 +632,7 @@ export default function RecordingsManager() {
                                                 name="businessType"
                                                 value="kid"
                                                 checked={businessType === 'kid'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-sm font-semibold text-arabian-night">{t('common.type_kid', '青少业务')}</span>
@@ -639,7 +643,7 @@ export default function RecordingsManager() {
                                                 name="businessType"
                                                 value="adult"
                                                 checked={businessType === 'adult'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-sm font-semibold text-arabian-night">{t('common.type_adult', '成人业务')}</span>
@@ -650,11 +654,89 @@ export default function RecordingsManager() {
                                                 name="businessType"
                                                 value="ss"
                                                 checked={businessType === 'ss'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-sm font-semibold text-arabian-night">{t('common.type_ss', 'SS 业务')}</span>
                                         </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="businessType"
+                                                value="leader"
+                                                checked={businessType === 'leader'}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-sm font-semibold text-arabian-night">{t('common.type_leader', 'Leader 学院')}</span>
+                                        </label>
+                                    </div>
+                                ) : isLeader ? (
+                                    profile?.dep === 'SS' ? (
+                                        <div className="flex items-center gap-6 mt-2">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="businessType"
+                                                    value="ss"
+                                                    checked={businessType === 'ss'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-sm font-semibold text-arabian-night">{t('common.type_ss', 'SS 业务')}</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="businessType"
+                                                    value="leader"
+                                                    checked={businessType === 'leader'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-sm font-semibold text-arabian-night">{t('common.type_leader', 'Leader 学院')}</span>
+                                            </label>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-6 mt-2">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="businessType"
+                                                    value="kid"
+                                                    checked={businessType === 'kid'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-sm font-semibold text-arabian-night">{t('common.type_kid', '青少业务')}</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="businessType"
+                                                    value="adult"
+                                                    checked={businessType === 'adult'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-sm font-semibold text-arabian-night">{t('common.type_adult', '成人业务')}</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="businessType"
+                                                    value="leader"
+                                                    checked={businessType === 'leader'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-sm font-semibold text-arabian-night">{t('common.type_leader', 'Leader 学院')}</span>
+                                            </label>
+                                        </div>
+                                    )
+                                ) : profile?.dep === 'SS' ? (
+                                    <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-orange-400 select-none mt-1 animate-pulse">
+                                        ✨ {t('common.type_ss', 'SS 业务')}
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-6 mt-2">
@@ -664,7 +746,7 @@ export default function RecordingsManager() {
                                                 name="businessType"
                                                 value="kid"
                                                 checked={businessType === 'kid'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-sm font-semibold text-arabian-night">{t('common.type_kid', '青少业务')}</span>
@@ -675,7 +757,7 @@ export default function RecordingsManager() {
                                                 name="businessType"
                                                 value="adult"
                                                 checked={businessType === 'adult'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-4 h-4 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-sm font-semibold text-arabian-night">{t('common.type_adult', '成人业务')}</span>

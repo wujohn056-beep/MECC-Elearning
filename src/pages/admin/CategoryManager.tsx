@@ -10,7 +10,7 @@ interface Category {
     id: string;
     name: string;
     createdAt?: any;
-    businessType?: 'kid' | 'adult' | 'ss';
+    businessType?: 'kid' | 'adult' | 'ss' | 'leader';
 }
 
 export default function CategoryManager() {
@@ -22,8 +22,8 @@ export default function CategoryManager() {
     const [editName, setEditName] = useState('');
     const [pageError, setPageError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
-    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss'>('kid');
-    const { hasPermission, profile } = useAuth();
+    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
+    const { hasPermission, profile, isLeader } = useAuth();
     
     if (!hasPermission('manageCategories')) {
         return <Navigate to="/admin" replace />;
@@ -196,11 +196,7 @@ export default function CategoryManager() {
                             
                             <div>
                                 <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('common.business_type', '业务线')}</label>
-                                {profile?.dep === 'SS' ? (
-                                    <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-orange-400 select-none animate-pulse">
-                                        ✨ {t('common.type_ss', 'SS 业务')}
-                                    </div>
-                                ) : profile?.role === 'super_admin' ? (
+                                {profile?.role === 'super_admin' ? (
                                     <div className="flex flex-wrap gap-2.5 mt-1">
                                         <label className="flex items-center gap-1.5 cursor-pointer">
                                             <input
@@ -208,7 +204,7 @@ export default function CategoryManager() {
                                                 name="categoryBusinessType"
                                                 value="kid"
                                                 checked={businessType === 'kid'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-xs font-semibold text-arabian-night">{t('common.type_kid', '青少')}</span>
@@ -219,7 +215,7 @@ export default function CategoryManager() {
                                                 name="categoryBusinessType"
                                                 value="adult"
                                                 checked={businessType === 'adult'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-xs font-semibold text-arabian-night">{t('common.type_adult', '成人')}</span>
@@ -230,11 +226,89 @@ export default function CategoryManager() {
                                                 name="categoryBusinessType"
                                                 value="ss"
                                                 checked={businessType === 'ss'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-xs font-semibold text-arabian-night">{t('common.type_ss', 'SS 业务')}</span>
                                         </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryBusinessType"
+                                                value="leader"
+                                                checked={businessType === 'leader'}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('common.type_leader', 'Leader 学院')}</span>
+                                        </label>
+                                    </div>
+                                ) : isLeader ? (
+                                    profile?.dep === 'SS' ? (
+                                        <div className="flex flex-wrap gap-2.5 mt-1">
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="categoryBusinessType"
+                                                    value="ss"
+                                                    checked={businessType === 'ss'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-xs font-semibold text-arabian-night">{t('common.type_ss', 'SS 业务')}</span>
+                                            </label>
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="categoryBusinessType"
+                                                    value="leader"
+                                                    checked={businessType === 'leader'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-xs font-semibold text-arabian-night">{t('common.type_leader', 'Leader 学院')}</span>
+                                            </label>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2.5 mt-1">
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="categoryBusinessType"
+                                                    value="kid"
+                                                    checked={businessType === 'kid'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-xs font-semibold text-arabian-night">{t('common.type_kid', '青少')}</span>
+                                            </label>
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="categoryBusinessType"
+                                                    value="adult"
+                                                    checked={businessType === 'adult'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-xs font-semibold text-arabian-night">{t('common.type_adult', '成人')}</span>
+                                            </label>
+                                            <label className="flex items-center gap-1.5 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="categoryBusinessType"
+                                                    value="leader"
+                                                    checked={businessType === 'leader'}
+                                                    onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
+                                                    className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                                />
+                                                <span className="text-xs font-semibold text-arabian-night">{t('common.type_leader', 'Leader 学院')}</span>
+                                            </label>
+                                        </div>
+                                    )
+                                ) : profile?.dep === 'SS' ? (
+                                    <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-orange-400 select-none animate-pulse">
+                                        ✨ {t('common.type_ss', 'SS 业务')}
                                     </div>
                                 ) : (
                                     <div className="flex flex-wrap gap-2.5 mt-1">
@@ -244,7 +318,7 @@ export default function CategoryManager() {
                                                 name="categoryBusinessType"
                                                 value="kid"
                                                 checked={businessType === 'kid'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-xs font-semibold text-arabian-night">{t('common.type_kid', '青少')}</span>
@@ -255,7 +329,7 @@ export default function CategoryManager() {
                                                 name="categoryBusinessType"
                                                 value="adult"
                                                 checked={businessType === 'adult'}
-                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss')}
+                                                onChange={(e) => setBusinessType(e.target.value as 'kid' | 'adult' | 'ss' | 'leader')}
                                                 className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
                                             />
                                             <span className="text-xs font-semibold text-arabian-night">{t('common.type_adult', '成人')}</span>
