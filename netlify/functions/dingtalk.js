@@ -605,6 +605,122 @@ export const handler = async (event, context) => {
         }
 
         // ==========================================
+        // ACTION: NOTIFY COMMENT (Material Comment Alerts)
+        // ==========================================
+        if (action === 'notifyComment') {
+            const { materialTitle, uploaderCrmId, commenterName, commentText, recordingId } = body;
+            if (!uploaderCrmId || !materialTitle) {
+                return { statusCode: 400, body: JSON.stringify({ error: 'Missing uploaderCrmId or materialTitle' }) };
+            }
+
+            let sentSuccess = false;
+            let mockPayload = null;
+            let errorMessage = null;
+            let dingtalkApiResponse = null;
+
+            let uploaderData = null;
+            if (!isMockFirebase) {
+                try {
+                    const db = getFirestoreDb();
+                    const snapshot = await db.collection('users')
+                        .where('crmId', '==', uploaderCrmId)
+                        .limit(1)
+                        .get();
+                    if (!snapshot.empty) {
+                        uploaderData = snapshot.docs[0].data();
+                    } else {
+                        errorMessage = `Uploader user profile not found in database for CRM ID: ${uploaderCrmId}`;
+                    }
+                } catch (dbErr) {
+                    console.error("Firestore user lookup error in notifyComment:", dbErr);
+                    errorMessage = `Firestore lookup error: ${dbErr.message}`;
+                }
+            } else {
+                uploaderData = {
+                    crmId: uploaderCrmId,
+                    dingtalkUserId: 'mock_uploader_userid',
+                    role: 'user'
+                };
+            }
+
+            if (uploaderData && uploaderData.dingtalkUserId) {
+                const targetUserId = uploaderData.dingtalkUserId;
+                const isChinese = isUserChineseSpeaker(uploaderData);
+
+                const getMsgTitle = () => {
+                    return isChinese ? "💬 您的素材有新评论！" : "💬 New Comment on Your Recording!";
+                };
+
+                const getMsgMarkdown = () => {
+                    if (isChinese) {
+                        return `### 💬 **您的录音素材有新的评论！**\n\n---\n\n**📋 详情信息：**\n* 🎬 **录音素材：** ${materialTitle}\n* 👤 **评论用户：** \`${commenterName}\`\n* 💬 **评论内容：** \n> ${commentText}\n\n---\n\n*请点击下方按钮立即查看详情并进行回复互动。*`;
+                    }
+                    return `### 💬 **New Comment on Your Recording!**\n\n---\n\n**📋 Details:**\n* 🎬 **Recording:** ${materialTitle}\n* 👤 **Commenter:** \`${commenterName}\`\n* 💬 **Comment:** \n> ${commentText}\n\n---\n\n*Click the button below to view details and reply.*`;
+                };
+
+                const getMsgBtnText = () => {
+                    return isChinese ? "💬 立即在线查看评论" : "💬 View Comment Online";
+                };
+
+                if (!isMockDingTalk && !isMockFirebase) {
+                    try {
+                        const token = await getDingTalkToken();
+                        const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
+                        const notifyRes = await fetch(notifyUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                agent_id: parseInt(agentId),
+                                userid_list: targetUserId,
+                                msg: {
+                                    msgtype: "action_card",
+                                    action_card: {
+                                        title: getMsgTitle(),
+                                        markdown: getMsgMarkdown(),
+                                        single_title: getMsgBtnText(),
+                                        single_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub%3FrecordingId%3D${recordingId}`
+                                    }
+                                }
+                            })
+                        });
+                        const notifyData = await notifyRes.json();
+                        dingtalkApiResponse = notifyData;
+                        sentSuccess = (notifyData.errcode === 0);
+                        if (!sentSuccess) {
+                            errorMessage = `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}`;
+                        }
+                    } catch (pushErr) {
+                        console.error("DingTalk push error in notifyComment:", pushErr);
+                        errorMessage = pushErr.message;
+                    }
+                } else {
+                    sentSuccess = true;
+                    mockPayload = {
+                        targetUserId,
+                        title: getMsgTitle(),
+                        markdown: getMsgMarkdown(),
+                        btnText: getMsgBtnText(),
+                        url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub%3FrecordingId%3D${recordingId}`
+                    };
+                    console.log("[Mock Comment Notification sent]", mockPayload);
+                }
+            } else if (uploaderData && !uploaderData.dingtalkUserId) {
+                errorMessage = `Author profile exists, but dingtalkUserId is missing.`;
+            }
+
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    success: sentSuccess,
+                    error: errorMessage,
+                    mockPayload,
+                    dingtalkApiResponse
+                })
+            };
+        }
+
+        // ==========================================
         // ACTION: NOTIFY MATERIAL (Phase 2 Material Updates)
         // ==========================================
         if (action === 'notifyMaterial') {

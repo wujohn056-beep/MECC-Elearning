@@ -31,7 +31,7 @@ export default function RecordingsManager() {
     const { t } = useTranslation();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const { hasPermission, profile, isLeader } = useAuth();
+    const { hasPermission, profile, isLeader, user } = useAuth();
     const [transcribingIds, setTranscribingIds] = useState<Record<string, boolean>>({});
     
     // DingTalk Multi-Target Push States
@@ -547,7 +547,9 @@ export default function RecordingsManager() {
                 avatarUrl,
                 categoryId: category?.id || '',
                 categoryName: category?.name || t('common.uncategorized'),
-                businessType
+                businessType,
+                uploaderId: user?.uid || '',
+                uploaderCrmId: profile?.crmId || ''
             };
 
             if (editingId) {

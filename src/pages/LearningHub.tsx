@@ -20,6 +20,8 @@ interface Recording {
     playCount?: number;
     transcript?: string;
     transcriptStatus?: string;
+    uploaderId?: string;
+    uploaderCrmId?: string;
 }
 
 interface Category {
@@ -632,6 +634,40 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                 isPinned: false,
                 timestamp: attachTimestamp ? Math.round(modalCurrentTime) : null
             });
+
+            // Notify the uploader (author) of the material if uploaderId is present and not the commenter themselves
+            const uploaderId = rec.uploaderId;
+            const uploaderCrmId = rec.uploaderCrmId;
+            if (uploaderId && uploaderId !== user?.uid) {
+                // 1. Create in-app notification in Firestore
+                await addDoc(collection(db, 'user_notifications'), {
+                    recipientId: uploaderId,
+                    senderName: profile?.crmId || user?.displayName || '学堂伙伴',
+                    type: 'comment',
+                    titleKey: 'notifications.new_comment_title',
+                    content: newCommentText.trim().slice(0, 80),
+                    recordingId: rec.id,
+                    read: false,
+                    createdAt: serverTimestamp()
+                });
+
+                // 2. Trigger DingTalk Work Notification via Serverless Function
+                if (uploaderCrmId) {
+                    fetch('/.netlify/functions/dingtalk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'notifyComment',
+                            materialTitle: rec.title,
+                            uploaderCrmId: uploaderCrmId,
+                            commenterName: profile?.crmId || '学堂伙伴',
+                            commentText: newCommentText.trim().slice(0, 100),
+                            recordingId: rec.id
+                        })
+                    }).catch(err => console.error("DingTalk comment notification failed:", err));
+                }
+            }
+
             setNewCommentText('');
             setAttachTimestamp(false);
         } catch (error: any) {

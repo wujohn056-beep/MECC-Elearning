@@ -406,7 +406,8 @@
         "modal_desc": "您有 {{count}} 个未读的学习任务",
         "modal_subdesc": "请及时查看并完成您的任务目标，点击下方按钮前往任务列表。",
         "view_later": "稍后查看",
-        "view_now": "立即查看"
+        "view_now": "立即查看",
+        "new_comment_title": "{{commenter}} 评论了您的录音素材"
     },
     "team_tasks": {
         "title": "团队任务",

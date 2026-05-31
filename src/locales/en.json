@@ -407,7 +407,8 @@
         "modal_desc": "You have {{count}} unread learning tasks",
         "modal_subdesc": "Please review and complete your task goals in time. Click the button below to go to the task list.",
         "view_later": "View Later",
-        "view_now": "View Now"
+        "view_now": "View Now",
+        "new_comment_title": "{{commenter}} commented on your recording"
     },
     "team_tasks": {
         "title": "Team Tasks",

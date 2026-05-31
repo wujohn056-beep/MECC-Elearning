@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Bell, Clock, AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react';
+import { Bell, Clock, AlertTriangle, CheckCircle, ChevronRight, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
@@ -16,6 +16,35 @@ interface TaskNotification {
     status: 'pending' | 'completed';
     isUrgent: boolean; // < 3 hours
     isCritical: boolean; // < 1 hour
+    createdAt?: Date;
+}
+
+interface CommentNotification {
+    id: string;
+    recipientId: string;
+    senderName: string;
+    type: 'comment';
+    titleKey: string;
+    content: string;
+    recordingId: string;
+    read: boolean;
+    createdAt: any;
+}
+
+interface UnifiedNotification {
+    id: string;
+    type: 'task' | 'comment';
+    title: string;
+    description?: string;
+    senderName: string;
+    read: boolean;
+    createdAt: Date;
+    recordingId?: string; // for comment
+    taskId?: string; // for task
+    isCritical?: boolean;
+    isUrgent?: boolean;
+    status?: string;
+    deadline?: Date;
 }
 
 export default function NotificationBell() {
@@ -23,6 +52,7 @@ export default function NotificationBell() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [tasks, setTasks] = useState<TaskNotification[]>([]);
+    const [comments, setComments] = useState<CommentNotification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [showAlert, setShowAlert] = useState<{message: string, isCritical: boolean} | null>(null);
     const [showGlobalModal, setShowGlobalModal] = useState(false);
@@ -32,12 +62,13 @@ export default function NotificationBell() {
     useEffect(() => {
         if (!user) return;
 
-        const q = query(
+        // 1. Listen to learning tasks
+        const q1 = query(
             collection(db, 'learning_tasks'),
             where('assigneeIds', 'array-contains', user.uid)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribe1 = onSnapshot(q1, (snapshot) => {
             const now = new Date();
             const notifications: TaskNotification[] = [];
             let urgentTaskCount = 0;
@@ -65,15 +96,9 @@ export default function NotificationBell() {
                     read: myStatus.read,
                     status: myStatus.status,
                     isUrgent,
-                    isCritical
+                    isCritical,
+                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
                 });
-            });
-
-            // Sort: pending first, then unread, then by deadline
-            notifications.sort((a, b) => {
-                if (a.status !== b.status) return a.status === 'pending' ? -1 : 1;
-                if (a.read !== b.read) return a.read ? 1 : -1;
-                return (a.deadline?.getTime() || 0) - (b.deadline?.getTime() || 0);
             });
 
             setTasks(notifications);
@@ -91,8 +116,36 @@ export default function NotificationBell() {
             }
         });
 
-        return () => unsubscribe();
-    }, [user]);
+        // 2. Listen to comment notifications
+        const q2 = query(
+            collection(db, 'user_notifications'),
+            where('recipientId', '==', user.uid)
+        );
+
+        const unsubscribe2 = onSnapshot(q2, (snapshot) => {
+            const list: CommentNotification[] = [];
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                list.push({
+                    id: docSnap.id,
+                    recipientId: data.recipientId,
+                    senderName: data.senderName,
+                    type: data.type,
+                    titleKey: data.titleKey,
+                    content: data.content,
+                    recordingId: data.recordingId,
+                    read: data.read,
+                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+                });
+            });
+            setComments(list);
+        });
+
+        return () => {
+            unsubscribe1();
+            unsubscribe2();
+        };
+    }, [user, t]);
 
     // Handle outside click to close dropdown
     useEffect(() => {
@@ -105,16 +158,59 @@ export default function NotificationBell() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const unreadCount = tasks.filter(t => !t.read && t.status === 'pending').length;
-    const pendingCount = tasks.filter(t => t.status === 'pending').length;
+    // Memoize the combined list of notifications
+    const unifiedNotifications = useMemo(() => {
+        const unified: UnifiedNotification[] = [];
+        
+        tasks.forEach(t => {
+            unified.push({
+                id: t.id,
+                type: 'task',
+                title: t.title,
+                senderName: t.assignerName,
+                read: t.read,
+                createdAt: t.createdAt || new Date(),
+                taskId: t.id,
+                isCritical: t.isCritical,
+                isUrgent: t.isUrgent,
+                status: t.status,
+                deadline: t.deadline
+            });
+        });
+
+        comments.forEach(c => {
+            unified.push({
+                id: c.id,
+                type: 'comment',
+                title: t(c.titleKey || 'notifications.new_comment_title', { commenter: c.senderName }),
+                description: c.content,
+                senderName: c.senderName,
+                read: c.read,
+                createdAt: c.createdAt || new Date(),
+                recordingId: c.recordingId
+            });
+        });
+
+        // Sort: unread first, then by createdAt descending
+        return unified.sort((a, b) => {
+            if (a.read !== b.read) return a.read ? 1 : -1;
+            return b.createdAt.getTime() - a.createdAt.getTime();
+        });
+    }, [tasks, comments, t]);
+
+    const unreadTasksCount = tasks.filter(t => !t.read && t.status === 'pending').length;
+    const unreadCommentsCount = comments.filter(c => !c.read).length;
+    
+    const unreadCount = unreadTasksCount + unreadCommentsCount;
+    const pendingCount = tasks.filter(t => t.status === 'pending').length + unreadCommentsCount;
 
     useEffect(() => {
-        if (unreadCount > 0 && !hasSeenGlobalModal) {
+        if (unreadTasksCount > 0 && !hasSeenGlobalModal) {
             setShowGlobalModal(true);
         }
-    }, [unreadCount, hasSeenGlobalModal]);
+    }, [unreadTasksCount, hasSeenGlobalModal]);
 
-    const handleTaskClick = async (task: TaskNotification) => {
+    const handleTaskClick = async (task: UnifiedNotification) => {
         setIsOpen(false);
         if (!task.read && user) {
             try {
@@ -127,6 +223,22 @@ export default function NotificationBell() {
         }
         if (task.status === 'pending') {
             navigate(`/hub?taskId=${task.id}`);
+        }
+    };
+
+    const handleCommentClick = async (notif: UnifiedNotification) => {
+        setIsOpen(false);
+        if (!notif.read) {
+            try {
+                await updateDoc(doc(db, 'user_notifications', notif.id), {
+                    read: true
+                });
+            } catch (error) {
+                console.error("Error marking comment notification as read", error);
+            }
+        }
+        if (notif.recordingId) {
+            navigate(`/hub?recordingId=${notif.recordingId}`);
         }
     };
 
@@ -154,55 +266,85 @@ export default function NotificationBell() {
                     </div>
                     
                     <div className="max-h-96 overflow-y-auto">
-                        {tasks.length === 0 ? (
+                        {unifiedNotifications.length === 0 ? (
                             <div className="p-8 text-center text-arabian-night/40">
                                 <CheckCircle className="w-10 h-10 mx-auto mb-2 opacity-20" />
                                 <p className="text-sm">{t('notifications.no_new')}</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-gray-50">
-                                {tasks.map(task => (
-                                    <button 
-                                        key={task.id}
-                                        onClick={() => handleTaskClick(task)}
-                                        className={`w-full text-left p-4 hover:bg-gray-50 transition-colors flex gap-3 ${!task.read && task.status === 'pending' ? 'bg-blue-50/30' : ''}`}
-                                    >
-                                        <div className="mt-0.5 shrink-0">
-                                            {task.status === 'completed' ? (
-                                                <CheckCircle className="w-5 h-5 text-green-500" />
-                                            ) : task.isCritical ? (
-                                                <AlertTriangle className="w-5 h-5 text-red-500 animate-pulse" />
-                                            ) : task.isUrgent ? (
-                                                <Clock className="w-5 h-5 text-orange-500" />
-                                            ) : (
-                                                <div className="w-5 h-5 rounded-full border-2 border-blue-400"></div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-bold truncate ${task.status === 'completed' ? 'text-gray-400 line-through' : 'text-arabian-night'}`}>
-                                                {task.title}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {t('notifications.from', { assigner: task.assignerName })}
-                                            </p>
-                                            {task.status === 'pending' && task.deadline && (
-                                                <p className={`text-xs font-semibold mt-1 ${task.isCritical ? 'text-red-500' : task.isUrgent ? 'text-orange-500' : 'text-gray-400'}`}>
-                                                    {t('account.due')} {task.deadline.toLocaleString()}
-                                                </p>
-                                            )}
-                                        </div>
-                                        {task.status === 'pending' && (
-                                            <ChevronRight className="w-4 h-4 text-gray-300 self-center shrink-0" />
-                                        )}
-                                    </button>
-                                ))}
+                                {unifiedNotifications.map(item => {
+                                    if (item.type === 'task') {
+                                        return (
+                                            <button 
+                                                key={item.id}
+                                                onClick={() => handleTaskClick(item)}
+                                                className={`w-full text-left p-4 hover:bg-gray-50 transition-colors flex gap-3 ${!item.read && item.status === 'pending' ? 'bg-blue-50/30' : ''}`}
+                                            >
+                                                <div className="mt-0.5 shrink-0">
+                                                    {item.status === 'completed' ? (
+                                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                                    ) : item.isCritical ? (
+                                                        <AlertTriangle className="w-5 h-5 text-red-500 animate-pulse" />
+                                                    ) : item.isUrgent ? (
+                                                        <Clock className="w-5 h-5 text-orange-500" />
+                                                    ) : (
+                                                        <div className="w-5 h-5 rounded-full border-2 border-blue-400"></div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-sm font-bold truncate ${item.status === 'completed' ? 'text-gray-400 line-through' : 'text-arabian-night'}`}>
+                                                        {item.title}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {t('notifications.from', { assigner: item.senderName })}
+                                                    </p>
+                                                    {item.status === 'pending' && item.deadline && (
+                                                        <p className={`text-xs font-semibold mt-1 ${item.isCritical ? 'text-red-500' : item.isUrgent ? 'text-orange-500' : 'text-gray-400'}`}>
+                                                            {t('account.due')} {item.deadline.toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                {item.status === 'pending' && (
+                                                    <ChevronRight className="w-4 h-4 text-gray-300 self-center shrink-0" />
+                                                )}
+                                            </button>
+                                        );
+                                    } else {
+                                        return (
+                                            <button 
+                                                key={item.id}
+                                                onClick={() => handleCommentClick(item)}
+                                                className={`w-full text-left p-4 hover:bg-gray-50 transition-colors flex gap-3 ${!item.read ? 'bg-blue-50/30 font-bold' : ''}`}
+                                            >
+                                                <div className="mt-0.5 shrink-0">
+                                                    <MessageSquare className={`w-5 h-5 ${!item.read ? 'text-desert-gold' : 'text-gray-400'}`} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-sm ${!item.read ? 'font-extrabold text-arabian-night' : 'text-arabian-night/80 font-semibold'} truncate`}>
+                                                        {item.title}
+                                                    </p>
+                                                    {item.description && (
+                                                        <p className="text-xs text-arabian-night/60 italic truncate mt-1 pl-1.5 border-l-2 border-desert-gold/30">
+                                                            {item.description}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-[10px] text-gray-400 mt-1">
+                                                        {item.createdAt.toLocaleString()}
+                                                    </p>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 text-gray-300 self-center shrink-0" />
+                                            </button>
+                                        );
+                                    }
+                                })}
                             </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Floating Alert for Urgent/Critical tasks using Portal to escape parent stacking context */}
+            {/* Floating Alert for Urgent/Critical tasks using Portal */}
             {showAlert && createPortal(
                 <div className={`fixed top-24 right-6 p-4 rounded-xl shadow-xl flex items-center gap-3 animate-bounce max-w-sm border-l-4 z-[9999] ${showAlert.isCritical ? 'bg-red-50 border-red-500 text-red-800' : 'bg-orange-50 border-orange-500 text-orange-800'}`}>
                     <AlertTriangle className={`w-6 h-6 shrink-0 ${showAlert.isCritical ? 'text-red-500' : 'text-orange-500'}`} />
@@ -213,7 +355,7 @@ export default function NotificationBell() {
             )}
 
             {/* Global Task Alert Modal */}
-            {showGlobalModal && unreadCount > 0 && (
+            {showGlobalModal && unreadTasksCount > 0 && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-90 duration-300">
                         <div className="bg-gradient-to-r from-desert-gold to-yellow-600 p-6 flex flex-col items-center text-white">
@@ -221,7 +363,7 @@ export default function NotificationBell() {
                                 <Bell className="w-8 h-8 text-white animate-bounce" />
                             </div>
                             <h2 className="text-2xl font-bold mb-1">{t('notifications.modal_title')}</h2>
-                            <p className="text-white/80 text-sm">{t('notifications.modal_desc', { count: unreadCount })}</p>
+                            <p className="text-white/80 text-sm">{t('notifications.modal_desc', { count: unreadTasksCount })}</p>
                         </div>
                         <div className="p-6">
                             <p className="text-arabian-night/80 text-center mb-6 font-medium">{t('notifications.modal_subdesc')}</p>
@@ -241,8 +383,16 @@ export default function NotificationBell() {
                                         setHasSeenGlobalModal(true);
                                         const pendingTasks = tasks.filter(t => t.status === 'pending');
                                         if (pendingTasks.length > 0) {
-                                            // Always navigate to the first pending task (which is sorted by urgency/deadline)
-                                            handleTaskClick(pendingTasks[0]);
+                                            const item: UnifiedNotification = {
+                                                id: pendingTasks[0].id,
+                                                type: 'task',
+                                                title: pendingTasks[0].title,
+                                                senderName: pendingTasks[0].assignerName,
+                                                read: pendingTasks[0].read,
+                                                createdAt: pendingTasks[0].createdAt || new Date(),
+                                                status: pendingTasks[0].status
+                                            };
+                                            handleTaskClick(item);
                                         } else {
                                             navigate('/account');
                                         }
