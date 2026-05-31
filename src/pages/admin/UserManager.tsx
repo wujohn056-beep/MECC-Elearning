@@ -34,6 +34,7 @@ interface UserRecord {
         manageUsers?: boolean;
         manageDashboard?: boolean;
         manageTasks?: boolean;
+        manageComments?: boolean;
     };
     dingtalkUserId?: string;
     dingtalkSyncedAt?: string;
@@ -62,7 +63,7 @@ export default function UserManager() {
     const [formData, setFormData] = useState({ 
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         dingtalkUserId: '',
-        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false }
     });
 
     useEffect(() => {
@@ -604,7 +605,8 @@ export default function UserManager() {
                 manageRecordings: !!u.permissions?.manageRecordings,
                 manageUsers: !!u.permissions?.manageUsers,
                 manageDashboard: !!u.permissions?.manageDashboard,
-                manageTasks: !!u.permissions?.manageTasks
+                manageTasks: !!u.permissions?.manageTasks,
+                manageComments: !!u.permissions?.manageComments
             }
         });
         setSelectedUserId(u.id);
@@ -647,7 +649,8 @@ export default function UserManager() {
                     manageRecordings: false,
                     manageUsers: false,
                     manageDashboard: false,
-                    manageTasks: false
+                    manageTasks: false,
+                    manageComments: false
                 });
 
                 await updateDoc(doc(db, 'users', selectedUserId), {
@@ -703,7 +706,8 @@ export default function UserManager() {
                         manageRecordings: false,
                         manageUsers: false,
                         manageDashboard: false,
-                        manageTasks: false
+                        manageTasks: false,
+                        manageComments: false
                     },
                     createdAt: serverTimestamp()
                 });
@@ -749,7 +753,7 @@ export default function UserManager() {
                                     setFormData({ 
                                         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                         dingtalkUserId: '',
-                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
+                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false }
                                     }); 
                                     setShowModal(true); 
                                 }} 
@@ -822,7 +826,7 @@ export default function UserManager() {
                                             tl: profile?.role === 'tl' ? profile.crmId : '', 
                                             team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                             dingtalkUserId: '',
-                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
+                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false }
                                         }); 
                                         setShowModal(true); 
                                     }} 
@@ -1142,6 +1146,15 @@ export default function UserManager() {
                                                 onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageTasks: e.target.checked}})}
                                             />
                                             {t('user_manager.perm_manage_tasks', '任务中心访问')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageComments}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageComments: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_comments', '评论审核')}
                                         </label>
                                     </div>
                                 </div>

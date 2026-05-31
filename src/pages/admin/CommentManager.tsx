@@ -34,10 +34,14 @@ interface RecordingRecord {
 
 export default function CommentManager() {
     const { t } = useTranslation();
-    const { profile, hasPermission, hasAnyAdminPermission } = useAuth();
+    const { profile, hasPermission } = useAuth();
     
-    // Check permission - leader, super admin or manageUsers permission can access
-    const canModerate = hasAnyAdminPermission || profile?.role === 'super_admin';
+    // Redirect unauthorized users
+    if (!hasPermission('manageComments')) {
+        return <Navigate to="/admin" replace />;
+    }
+    
+    const canModerate = true;
 
     const [comments, setComments] = useState<CommentRecord[]>([]);
     const [recordings, setRecordings] = useState<Record<string, RecordingRecord>>({});
@@ -144,11 +148,6 @@ export default function CommentManager() {
             alert(t('common.save_fail', '操作失败：') + error.message);
         }
     };
-
-    // Redirect unauthorized users
-    if (!canModerate) {
-        return <Navigate to="/admin" replace />;
-    }
 
     // 4. Data Filter & Search
     const filteredComments = useMemo(() => {

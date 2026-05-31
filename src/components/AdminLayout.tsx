@@ -60,7 +60,7 @@ export default function AdminLayout() {
                     {hasPermission('manageUsers') && (
                         <Link to="/admin/users" className={getLinkClass('/admin/users')}>{t('admin_menu.users')}</Link>
                     )}
-                    {hasAnyAdminPermission && (
+                    {hasPermission('manageComments') && (
                         <Link to="/admin/comments" className={getLinkClass('/admin/comments')}>{t('admin_menu.comments', '互动审核')}</Link>
                     )}
                 </nav>
