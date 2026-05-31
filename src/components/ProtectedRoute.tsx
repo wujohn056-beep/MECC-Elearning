@@ -22,7 +22,7 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
     }
 
     if (!user || profile?.role === 'blocked') {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to="/portal" state={{ from: location }} replace />;
     }
 
     if (requireAdmin && !hasAnyAdminPermission) {

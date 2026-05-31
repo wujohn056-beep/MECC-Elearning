@@ -21,7 +21,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/portal" element={<Login />} />
 
           {/* User Routes */}
           <Route element={

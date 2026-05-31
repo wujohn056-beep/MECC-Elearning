@@ -85,6 +85,44 @@ export default function RecordingsManager() {
         return Array.from(sds).sort();
     }, [systemUsers]);
 
+    // Compute Non-sales departments list dynamically from systemUsers
+    const depList = React.useMemo(() => {
+        const deps = new Set<string>();
+        systemUsers.forEach(u => {
+            const hasSd = !!u.sd;
+            const isSd = u.role === 'sd';
+            if (!hasSd && !isSd && u.dep) {
+                deps.add(u.dep.trim().toUpperCase());
+            }
+        });
+        return Array.from(deps).sort();
+    }, [systemUsers]);
+
+    // Unified list of targets (SD Teams and Non-sales Departments)
+    const pushGroupList = React.useMemo(() => {
+        const groups: { id: string; name: string; type: 'sd' | 'dep'; rawId: string }[] = [];
+        
+        sdList.forEach(sd => {
+            groups.push({
+                id: `sd:${sd}`,
+                name: `${sd} ${t('recordings_manager.team_suffix', '团队')}`,
+                type: 'sd',
+                rawId: sd
+            });
+        });
+        
+        depList.forEach(dep => {
+            groups.push({
+                id: `dep:${dep}`,
+                name: `${dep} ${t('recordings_manager.dep_suffix', '部门')}`,
+                type: 'dep',
+                rawId: dep
+            });
+        });
+        
+        return groups;
+    }, [sdList, depList, t]);
+
     const filteredRecordings = recordings.filter(rec => {
         const isSuperAdmin = profile?.role === 'super_admin';
         if (!isSuperAdmin) {
@@ -1185,26 +1223,26 @@ export default function RecordingsManager() {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            if (selectedSdsForPush.length === sdList.length) {
+                                            if (selectedSdsForPush.length === pushGroupList.length) {
                                                 setSelectedSdsForPush([]);
                                             } else {
-                                                setSelectedSdsForPush([...sdList]);
+                                                setSelectedSdsForPush(pushGroupList.map(g => g.id));
                                             }
                                         }}
                                         className="text-deep-teal hover:text-desert-gold transition-colors"
                                     >
-                                        {selectedSdsForPush.length === sdList.length ? t('recordings_manager.deselect_all', '取消全选') : t('recordings_manager.select_all', '全选')}
+                                        {selectedSdsForPush.length === pushGroupList.length ? t('recordings_manager.deselect_all', '取消全选') : t('recordings_manager.select_all', '全选')}
                                     </button>
                                 </div>
                                 <div className="border border-gray-100 rounded-2xl bg-white/50 p-3 flex flex-col gap-1 max-h-40 overflow-y-auto mt-1 custom-scrollbar">
-                                    {sdList.length === 0 ? (
-                                        <p className="text-xs text-arabian-night/40 py-4 text-center">{t('recordings_manager.no_sds', '暂无可用销售总监 (SD)')}</p>
+                                    {pushGroupList.length === 0 ? (
+                                        <p className="text-xs text-arabian-night/40 py-4 text-center">{t('recordings_manager.no_sds', '暂无可用接收部门/团队')}</p>
                                     ) : (
-                                        sdList.map(sd => {
-                                            const isChecked = selectedSdsForPush.includes(sd);
+                                        pushGroupList.map(group => {
+                                            const isChecked = selectedSdsForPush.includes(group.id);
                                             return (
                                                 <label 
-                                                    key={sd} 
+                                                    key={group.id} 
                                                     className="flex items-center gap-2.5 text-xs font-bold hover:bg-deep-teal/5 p-2 rounded-xl transition-colors cursor-pointer select-none"
                                                 >
                                                     <input
@@ -1212,14 +1250,14 @@ export default function RecordingsManager() {
                                                         checked={isChecked}
                                                         onChange={() => {
                                                             if (isChecked) {
-                                                                setSelectedSdsForPush(selectedSdsForPush.filter(x => x !== sd));
+                                                                setSelectedSdsForPush(selectedSdsForPush.filter(x => x !== group.id));
                                                             } else {
-                                                                setSelectedSdsForPush([...selectedSdsForPush, sd]);
+                                                                setSelectedSdsForPush([...selectedSdsForPush, group.id]);
                                                             }
                                                         }}
                                                         className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all"
                                                     />
-                                                    <span>{sd} {t('recordings_manager.team_suffix', '团队')}</span>
+                                                    <span>{group.name}</span>
                                                 </label>
                                             );
                                         })

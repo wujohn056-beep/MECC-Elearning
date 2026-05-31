@@ -721,22 +721,38 @@ export const handler = async (event, context) => {
                                 const isEnglishSpeaker = !isUserChineseSpeaker(data);
                                 
                                 if (targetType === 'individuals' && Array.isArray(selectedSds)) {
-                                    // Segmented push strictly by selected SDs (case insensitive comparison)
+                                    // Parse prefixed selection list to resolve SD filters and Non-Sales Department filters
+                                    const sdFilters = selectedSds.map(s => {
+                                        const str = String(s);
+                                        if (str.startsWith('sd:')) return str.substring(3);
+                                        if (str.startsWith('dep:')) return null;
+                                        return str; // Legacy fallback
+                                    }).filter(Boolean).map(x => x.trim().toLowerCase());
+
+                                    const depFilters = selectedSds.filter(s => String(s).startsWith('dep:')).map(s => String(s).substring(4).trim().toLowerCase());
+
+                                    // Match Sales Director teams
                                     const userSd = String(data.sd || '').trim().toLowerCase();
                                     const userCrmId = String(data.crmId || '').trim().toLowerCase();
-                                    const sdMatched = selectedSds.some(sd => {
-                                        const sdLower = String(sd).trim().toLowerCase();
-                                        return sdLower === userSd || (data.role === 'sd' && sdLower === userCrmId);
-                                    });
-                                    if (sdMatched) {
+                                    const sdMatched = sdFilters.some(sd => sd === userSd || (data.role === 'sd' && sd === userCrmId));
+
+                                    // Match Non-Sales Department groups (only users without SD assignment who are not SDs themselves)
+                                    const userDep = String(data.dep || '').trim().toLowerCase();
+                                    const hasSd = !!data.sd;
+                                    const isSd = data.role === 'sd';
+                                    const depMatched = !hasSd && !isSd && depFilters.includes(userDep);
+
+                                    const isMatched = sdMatched || depMatched;
+
+                                    if (isMatched) {
                                         if (isEnglishSpeaker) {
                                             recipientsEn.push(data.dingtalkUserId);
                                         } else {
                                             recipientsZh.push(data.dingtalkUserId);
                                         }
-                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: true, lang: isEnglishSpeaker ? 'en' : 'zh' });
+                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, dep: data.dep, matched: true, lang: isEnglishSpeaker ? 'en' : 'zh' });
                                     } else {
-                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, matched: false });
+                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, sd: data.sd, dep: data.dep, matched: false });
                                     }
                                 } else {
                                     // Broadcast to all linked non-admin users
