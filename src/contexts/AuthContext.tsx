@@ -56,9 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (permission === 'manageUsers') {
             return isLeader || !!profile?.permissions?.[permission];
         }
+        if (permission === 'manageComments' && profile?.role === 'sd' && profile?.dep === 'SS') {
+            return true;
+        }
         return isSuperAdmin || !!profile?.permissions?.[permission];
     };
-    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments;
+    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments || (profile?.role === 'sd' && profile?.dep === 'SS');
 
     const canAccessTasks = isLeader || hasPermission('manageTasks');
     const canAccessDashboard = isLeader || hasPermission('manageDashboard');

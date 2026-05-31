@@ -45,12 +45,14 @@ export default function CommentManager() {
 
     const [comments, setComments] = useState<CommentRecord[]>([]);
     const [recordings, setRecordings] = useState<Record<string, RecordingRecord>>({});
+    const [usersInfo, setUsersInfo] = useState<Record<string, { dep?: string, sd?: string }>>({});
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<'all' | 'flagged' | 'pinned'>('flagged');
     const [loadingRecordings, setLoadingRecordings] = useState(true);
+    const [loadingUsers, setLoadingUsers] = useState(true);
 
-    // 1. Fetch all recordings for contextual mapping
+    // 1. Fetch all recordings and users mapping for contextual checks
     useEffect(() => {
         const fetchRecordings = async () => {
             try {
@@ -72,8 +74,28 @@ export default function CommentManager() {
             }
         };
 
+        const fetchUsersMap = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'users'));
+                const userMap: Record<string, { dep?: string, sd?: string }> = {};
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    userMap[doc.id] = {
+                        dep: data.dep,
+                        sd: data.sd
+                    };
+                });
+                setUsersInfo(userMap);
+            } catch (error) {
+                console.error("Error fetching users mapping for comments:", error);
+            } finally {
+                setLoadingUsers(false);
+            }
+        };
+
         if (canModerate) {
             fetchRecordings();
+            fetchUsersMap();
         }
     }, [canModerate]);
 
@@ -149,9 +171,29 @@ export default function CommentManager() {
         }
     };
 
-    // 4. Data Filter & Search
-    const filteredComments = useMemo(() => {
+    // 4. Allowed comments based on user boundaries (e.g. SS Sales SD Lily can only moderate SS department comments)
+    const allowedComments = useMemo(() => {
+        const isSsSd = profile?.role === 'sd' && profile?.dep === 'SS';
+        if (!isSsSd) return comments;
         return comments.filter((c) => {
+            const authorInfo = usersInfo[c.userId];
+            if (authorInfo) {
+                const matchesDep = authorInfo.dep === 'SS';
+                const matchesSd = (authorInfo.sd || '').trim().toLowerCase() === (profile.crmId || '').trim().toLowerCase();
+                const isSelf = c.userId === profile.crmId || c.userName?.toLowerCase() === profile.crmId?.toLowerCase();
+                return matchesDep || matchesSd || isSelf;
+            } else {
+                const teamLower = (c.userTeam || '').toLowerCase();
+                const nameLower = (c.userName || '').toLowerCase();
+                const isSelf = nameLower === profile.crmId?.toLowerCase();
+                return teamLower.includes('ss') || isSelf;
+            }
+        });
+    }, [comments, usersInfo, profile]);
+
+    // 5. Data Filter & Search
+    const filteredComments = useMemo(() => {
+        return allowedComments.filter((c) => {
             // Apply active tab filter
             if (activeTab === 'flagged' && c.status !== 'flagged') return false;
             if (activeTab === 'pinned' && !c.isPinned) return false;
@@ -173,16 +215,16 @@ export default function CommentManager() {
 
             return true;
         });
-    }, [comments, activeTab, searchQuery, recordings]);
+    }, [allowedComments, activeTab, searchQuery, recordings]);
 
     // Build comment map for parent content resolution
     const commentsMap = useMemo(() => {
         const map: Record<string, CommentRecord> = {};
-        comments.forEach(c => {
+        allowedComments.forEach(c => {
             map[c.id] = c;
         });
         return map;
-    }, [comments]);
+    }, [allowedComments]);
 
     const getRoleBadgeColor = (role: string) => {
         switch (role) {
@@ -214,7 +256,7 @@ export default function CommentManager() {
         }
     };
 
-    if (loading || loadingRecordings) {
+    if (loading || loadingRecordings || loadingUsers) {
         return (
             <div className="flex flex-col justify-center items-center h-64 gap-3">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-deep-teal"></div>
@@ -224,9 +266,9 @@ export default function CommentManager() {
     }
 
     // Counts for tab metrics
-    const flaggedCount = comments.filter(c => c.status === 'flagged').length;
-    const pinnedCount = comments.filter(c => c.isPinned).length;
-    const allCount = comments.length;
+    const flaggedCount = allowedComments.filter(c => c.status === 'flagged').length;
+    const pinnedCount = allowedComments.filter(c => c.isPinned).length;
+    const allCount = allowedComments.length;
 
     return (
         <div className="animate-in fade-in duration-500 space-y-6 pb-10">

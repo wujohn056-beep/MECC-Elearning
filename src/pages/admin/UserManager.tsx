@@ -220,11 +220,15 @@ export default function UserManager() {
                     }
                 }
 
-                if (sdValue) {
-                    const sdId = sdValue.toLowerCase();
+                // Enforce SS SD (Lily) boundaries during import if logged-in user is SS SD
+                const finalSdValue = (profile?.role === 'sd' && profile?.dep === 'SS') ? (profile.crmId || '') : sdValue;
+                const finalDepValue = (profile?.role === 'sd' && profile?.dep === 'SS') ? 'SS' : depValue;
+
+                if (finalSdValue) {
+                    const sdId = finalSdValue.toLowerCase();
                     if (!accountsToCreate.has(sdId)) {
                         accountsToCreate.set(sdId, {
-                            crmId: sdValue, role: 'sd', sd: '', sm: '', tl: '', team: '', dep: depValue, email: '', dingtalkUserId: ''
+                            crmId: finalSdValue, role: 'sd', sd: '', sm: '', tl: '', team: '', dep: finalDepValue, email: '', dingtalkUserId: ''
                         });
                     }
                 }
@@ -233,12 +237,12 @@ export default function UserManager() {
                     const smId = smValue.toLowerCase();
                     if (!accountsToCreate.has(smId)) {
                         accountsToCreate.set(smId, {
-                            crmId: smValue, role: 'sm', sd: sdValue, sm: '', tl: '', team: '', dep: depValue, email: '', dingtalkUserId: ''
+                            crmId: smValue, role: 'sm', sd: finalSdValue, sm: '', tl: '', team: '', dep: finalDepValue, email: '', dingtalkUserId: ''
                         });
                     } else {
                         const existing = accountsToCreate.get(smId);
-                        if (!existing.sd && sdValue) existing.sd = sdValue;
-                        if (!existing.dep) existing.dep = depValue;
+                        if (!existing.sd && finalSdValue) existing.sd = finalSdValue;
+                        if (!existing.dep) existing.dep = finalDepValue;
                     }
                 }
 
@@ -246,13 +250,13 @@ export default function UserManager() {
                     const tlId = tlValue.toLowerCase();
                     if (!accountsToCreate.has(tlId)) {
                         accountsToCreate.set(tlId, {
-                            crmId: tlValue, role: 'tl', sd: sdValue, sm: smValue, tl: '', team: '', dep: depValue, email: '', dingtalkUserId: ''
+                            crmId: tlValue, role: 'tl', sd: finalSdValue, sm: smValue, tl: '', team: '', dep: finalDepValue, email: '', dingtalkUserId: ''
                         });
                     } else {
                         const existing = accountsToCreate.get(tlId);
-                        if (!existing.sd && sdValue) existing.sd = sdValue;
+                        if (!existing.sd && finalSdValue) existing.sd = finalSdValue;
                         if (!existing.sm && smValue) existing.sm = smValue;
-                        if (!existing.dep) existing.dep = depValue;
+                        if (!existing.dep) existing.dep = finalDepValue;
                     }
                 }
 
@@ -270,11 +274,11 @@ export default function UserManager() {
                     accountsToCreate.set(crmIdLower, {
                         crmId: existing?.crmId || crmId,
                         role: role !== 'user' ? role : (existing?.role && existing.role !== 'user' ? existing.role : 'user'),
-                        sd: sdValue || existing?.sd || '',
+                        sd: finalSdValue || existing?.sd || '',
                         sm: smValue || existing?.sm || '',
                         tl: tlValue || existing?.tl || '',
                         team: teamValue || existing?.team || '',
-                        dep: depValue || existing?.dep || 'CC',
+                        dep: finalDepValue || existing?.dep || 'CC',
                         email: emailValue || existing?.email || '',
                         dingtalkUserId: dingtalkUserIdValue || existing?.dingtalkUserId || ''
                     });
@@ -739,9 +743,9 @@ export default function UserManager() {
                 </div>
             </div>
 
-            <div className={profile?.role === 'super_admin' ? "grid grid-cols-1 lg:grid-cols-2 gap-8" : "w-full"}>
+            <div className={(profile?.role === 'super_admin' || (profile?.role === 'sd' && profile?.dep === 'SS')) ? "grid grid-cols-1 lg:grid-cols-2 gap-8" : "w-full"}>
                 {/* Upload Section */}
-                {profile?.role === 'super_admin' && (
+                {(profile?.role === 'super_admin' || (profile?.role === 'sd' && profile?.dep === 'SS')) && (
                     <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20 h-fit">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
@@ -816,7 +820,7 @@ export default function UserManager() {
                             {t('user_manager.current_accounts')} ({filteredUsers.length})
                         </h2>
                         <div className="flex items-center gap-2">
-                            {profile?.role !== 'super_admin' && (
+                            {!(profile?.role === 'super_admin' || (profile?.role === 'sd' && profile?.dep === 'SS')) && (
                                 <button 
                                     onClick={() => { 
                                         setEditMode(false); 
