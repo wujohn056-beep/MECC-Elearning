@@ -1923,6 +1923,36 @@ export default function LearningHub() {
     const [selectedLecturer, setSelectedLecturer] = useState<string>('');
     const [showAllLecturers, setShowAllLecturers] = useState(false);
     
+    const allowedTabs = React.useMemo(() => {
+        const tabs: { type: 'kid' | 'adult' | 'ss' | 'leader'; label: string; gradient: string }[] = [];
+        
+        // 1. If super admin, they have access to all tabs
+        if (profile?.role === 'super_admin') {
+            tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
+            tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
+            tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
+            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+            return tabs;
+        }
+
+        // 2. If SS department
+        if (profile?.dep === 'SS') {
+            tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
+            if (isLeader) {
+                tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+            }
+            return tabs;
+        }
+
+        // 3. For CC / standard departments
+        tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
+        tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
+        if (isLeader) {
+            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+        }
+        return tabs;
+    }, [profile, isLeader, t]);
+    
     // Leaderboard state
     const [allFavoritesCount, setAllFavoritesCount] = useState<Record<string, number>>({});
     const [leaderboardTab, setLeaderboardTab] = useState<'favorites' | 'likes'>('favorites');
@@ -2398,69 +2428,28 @@ export default function LearningHub() {
                     {/* Actions Right Side */}
                     {!taskId && !targetRecordingId && (
                         <div className="flex flex-col gap-4 w-full md:w-auto items-end">
-                            {/* Business Type Header for SS / Segmented Control for CC */}
-                            {profile?.dep === 'SS' ? (
-                                <div className="bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-3 rounded-full font-extrabold text-base shadow-lg shadow-orange-500/20 flex items-center gap-2 select-none self-start md:self-end animate-pulse">
+                            {allowedTabs.length > 1 ? (
+                                <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
+                                    {allowedTabs.map(tab => (
+                                        <button
+                                            key={tab.type}
+                                            onClick={() => { setBusinessType(tab.type); setActiveTab('all'); setSelectedLecturer(''); }}
+                                            className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
+                                                businessType === tab.type 
+                                                    ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg shadow-black/10 scale-105` 
+                                                    : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : allowedTabs.length === 1 ? (
+                                <div className={`bg-gradient-to-r ${allowedTabs[0].gradient} text-white px-8 py-3 rounded-full font-extrabold text-base shadow-lg shadow-black/10 flex items-center gap-2 select-none self-start md:self-end`}>
                                     <span>✨</span>
-                                    <span>{t('common.type_ss', 'SS 业务')}</span>
+                                    <span>{allowedTabs[0].label}</span>
                                 </div>
-                            ) : profile?.role === 'super_admin' ? (
-                                <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
-                                    <button
-                                        onClick={() => { setBusinessType('kid'); setActiveTab('all'); setSelectedLecturer(''); }}
-                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
-                                            businessType === 'kid' 
-                                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' 
-                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
-                                        }`}
-                                    >
-                                        {t('common.type_kid', '青少业务')}
-                                    </button>
-                                    <button
-                                        onClick={() => { setBusinessType('adult'); setActiveTab('all'); setSelectedLecturer(''); }}
-                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
-                                            businessType === 'adult' 
-                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105' 
-                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
-                                        }`}
-                                    >
-                                        {t('common.type_adult', '成人业务')}
-                                    </button>
-                                    <button
-                                        onClick={() => { setBusinessType('ss'); setActiveTab('all'); setSelectedLecturer(''); }}
-                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
-                                            businessType === 'ss' 
-                                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-105' 
-                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
-                                        }`}
-                                    >
-                                        {t('common.type_ss', 'SS 业务')}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
-                                    <button
-                                        onClick={() => { setBusinessType('kid'); setActiveTab('all'); setSelectedLecturer(''); }}
-                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
-                                            businessType === 'kid' 
-                                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' 
-                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
-                                        }`}
-                                    >
-                                        {t('common.type_kid', '青少业务')}
-                                    </button>
-                                    <button
-                                        onClick={() => { setBusinessType('adult'); setActiveTab('all'); setSelectedLecturer(''); }}
-                                        className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
-                                            businessType === 'adult' 
-                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105' 
-                                                : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
-                                        }`}
-                                    >
-                                        {t('common.type_adult', '成人业务')}
-                                    </button>
-                                </div>
-                            )}
+                            ) : null}
 
                             {/* Search Bar */}
                             <div ref={searchRef} className="relative w-full md:w-80 lg:w-[420px] shrink-0 group z-50">
