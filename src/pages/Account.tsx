@@ -14,8 +14,10 @@ const TaskCard = ({ task }: { task: any }) => {
             <div className="flex justify-between items-start mb-2">
                 <div>
                     <h4 className="font-bold text-arabian-night text-base group-hover:text-deep-teal transition-colors">{task.title}</h4>
-                    <p className="text-xs font-semibold text-arabian-night/50 mt-1 flex items-center gap-1">
-                        {t('account.from')} {task.assignerName} · {t('account.due')} {task.deadline?.toDate().toLocaleString()}
+                    <p className="text-xs font-semibold text-arabian-night/50 mt-1 flex flex-wrap items-center gap-1">
+                        {t('account.from')} {task.assignerName} · 
+                        {t('account.start_time', 'Started')}: {task.createdAt?.toDate ? task.createdAt.toDate().toLocaleString() : (task.createdAt ? new Date(task.createdAt).toLocaleString() : '-')} · 
+                        {t('account.due')} {task.deadline?.toDate().toLocaleString()}
                     </p>
                 </div>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ml-2 ${

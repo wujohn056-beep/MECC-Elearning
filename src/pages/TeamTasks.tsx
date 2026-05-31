@@ -215,7 +215,8 @@ export default function TeamTasks() {
                         assignerName: profile?.crmId || 'Leader',
                         assigneeIds: selectedUserIds,
                         recordingIds: selectedRecordingIds,
-                        deadline: deadlineObj.toLocaleString()
+                        deadline: deadlineObj.toLocaleString(),
+                        startTime: new Date().toLocaleString()
                     })
                 }).catch(err => console.error("DingTalk task notification background error:", err));
             } catch (notifyErr) {
@@ -409,11 +410,19 @@ export default function TeamTasks() {
                                 
                                 <div className="flex justify-between items-start mb-4">
                                     <h3 className="font-bold text-xl text-deep-teal">{task.title}</h3>
-                                    <div className="text-right">
-                                        <p className="text-xs font-semibold text-arabian-night/50">{t('team_tasks.deadline')}</p>
-                                        <p className={`text-sm font-bold ${isExpired ? 'text-red-500' : 'text-desert-gold'}`}>
-                                            {task.deadline?.toDate().toLocaleString()}
-                                        </p>
+                                    <div className="text-right flex flex-col gap-1">
+                                        <div>
+                                            <p className="text-[10px] font-semibold text-arabian-night/50 uppercase tracking-wider leading-none mb-0.5">{t('team_tasks.start_time', 'Start Time')}</p>
+                                            <p className="text-xs font-medium text-arabian-night/75">
+                                                {task.createdAt?.toDate ? task.createdAt.toDate().toLocaleString() : (task.createdAt ? new Date(task.createdAt).toLocaleString() : '-')}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-semibold text-arabian-night/50 uppercase tracking-wider leading-none mb-0.5">{t('team_tasks.deadline', 'Deadline')}</p>
+                                            <p className={`text-sm font-bold ${isExpired ? 'text-red-500' : 'text-desert-gold'}`}>
+                                                {task.deadline?.toDate().toLocaleString()}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                                 

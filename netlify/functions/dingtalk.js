@@ -442,10 +442,12 @@ export const handler = async (event, context) => {
         // ACTION: NOTIFY TASK (Phase 2 Task Pushes)
         // ==========================================
         if (action === 'notifyTask') {
-            const { title, assignerName, assigneeIds, deadline } = body;
+            const { title, assignerName, assigneeIds, deadline, startTime } = body;
             if (!assigneeIds || !Array.isArray(assigneeIds)) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing assigneeIds' }) };
             }
+
+            const finalStartTime = startTime || new Date().toLocaleString();
 
             const recipientsZh = [];
             const recipientsEn = [];
@@ -494,9 +496,9 @@ export const handler = async (event, context) => {
 
             const getMsgMarkdown = (lang) => {
                 if (lang === 'en') {
-                    return `### 📚 **ME Cloud Academy - New Learning Task Assigned** \n\n **Task Name**: ${title} \n **Deadline**: ${deadline || '-'} \n **Assigner**: ${assignerName} \n\n Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline. \n\n [👉 Click Here to Start Learning](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fteam-tasks)`;
+                    return `### 📚 **ME Cloud Academy**\n**New Learning Task Assigned**\n\n---\n\n**📋 Task Details:**\n* 🏷️ **Task Name:** ${title}\n* 📅 **Start Time:** ${finalStartTime}\n* ⏰ **Deadline:** ${deadline || '-'}\n* 👤 **Assigner:** ${assignerName}\n\n---\n\n> 💡 *Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline.*\n\n[👉 Click Here to Start Learning](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fteam-tasks)`;
                 }
-                return `### 📚 **收到新的 ME 云学堂学习任务** \n\n **任务名称**：${title} \n **截止日期**：${deadline || '-'} \n **指派导师**：${assignerName} \n\n 优秀的销售录音复盘，能助推专业成长，请及时在截止日期前听完相关录音并提交心得感悟。 \n\n [👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fteam-tasks)`;
+                return `### 📚 **ME 云学堂**\n**收到新的学习任务**\n\n---\n\n**📋 任务详情：**\n* 🏷️ **任务名称**：${title}\n* 📅 **开始时间**：${finalStartTime}\n* ⏰ **截止时间**：${deadline || '-'}\n* 👤 **指派导师**：${assignerName}\n\n---\n\n> 💡 *优秀的销售录音复盘，能助推专业成长。请及时在截止日期前听完相关录音并提交心得感悟。*\n\n[👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fteam-tasks)`;
             };
 
             const getMsgTitle = (lang) => {
@@ -611,13 +613,13 @@ export const handler = async (event, context) => {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing material recordingId or title' }) };
             }
 
-            const markdownBilingual = `![cover](https://learning.mecloudhub.com/images/share-preview.png) \n\n ### **🔥 ME 云学堂新增精品录音素材 / ME Cloud Academy - New Premium Recording Released** \n\n **素材编号 / ID**：[${displayId || recordingId}] \n **录音标题 / Title**：${title} \n **主讲人 / Lecturer**：${lecturerName || '系统导师 / Mentor'} \n **分类线 / Category**：${categoryName || '精品推荐 / Featured'} \n\n **课程介绍 / Introduction**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。 / Highly recommended! Click the link below to listen.'} \n\n 欢迎收听！ / Happy listening!`;
+            const markdownBilingual = `![cover](https://learning.mecloudhub.com/images/share-preview.png) \n\n ### **🔥 ME 云学堂新增精品素材 / ME Cloud Academy - New Premium Recording Released** \n\n ---\n\n **📋 Material Details / 素材详情：**\n* 🏷️ **ID / 素材编号：** [${displayId || recordingId}]\n* 🎬 **Title / 录音标题：** ${title}\n* 👤 **Lecturer / 主讲人：** ${lecturerName || '系统导师 / Mentor'}\n* 📂 **Category / 分类线：** ${categoryName || '精品推荐 / Featured'}\n\n ---\n\n > 💡 **Introduction / 课程介绍：**\n> ${description || '导师倾情推荐！欢迎大家点击下方链接立即收听实战复盘。 / Highly recommended! Click the link below to listen to the recording.'}\n\n 欢迎收听！ / Happy listening!`;
 
             const getMsgMarkdown = (lang) => {
                 if (lang === 'en') {
-                    return `![cover](https://learning.mecloudhub.com/images/share-preview.png) \n\n ### **🔥 ME Cloud Academy - New Premium Recording Released** \n\n **ID**: [${displayId || recordingId}] \n **Title**: ${title} \n **Lecturer**: ${lecturerName || 'Mentor'} \n **Category**: ${categoryName || 'Featured'} \n\n **Introduction**: \n ${description || 'Highly recommended! Click the link below to listen to the recording.'} \n\n Happy listening!`;
+                    return `![cover](https://learning.mecloudhub.com/images/share-preview.png)\n\n### **🔥 ME Cloud Academy - New Premium Recording Released**\n\n---\n\n**📋 Material Details:**\n* 🏷️ **ID:** [${displayId || recordingId}]\n* 🎬 **Title:** ${title}\n* 👤 **Lecturer:** ${lecturerName || 'Mentor'}\n* 📂 **Category:** ${categoryName || 'Featured'}\n\n---\n\n> 💡 **Introduction:**\n> ${description || 'Highly recommended! Click the link below to listen to the recording.'}\n\nHappy listening!`;
                 }
-                return `![cover](https://learning.mecloudhub.com/images/share-preview.png) \n\n ### **🔥 ME 云学堂新增精品录音素材** \n\n **素材编号**：[${displayId || recordingId}] \n **录音标题**：${title} \n **主讲人**：${lecturerName || '系统导师'} \n **分类线**：${categoryName || '精品推荐'} \n\n **课程介绍**：\n ${description || '导师倾情推荐！欢迎大家点击链接立即收听实战复盘。'} \n\n 欢迎收听！`;
+                return `![cover](https://learning.mecloudhub.com/images/share-preview.png)\n\n### **🔥 ME 云学堂新增精品录音素材**\n\n---\n\n**📋 素材详情：**\n* 🏷️ **素材编号：** [${displayId || recordingId}]\n* 🎬 **录音标题：** ${title}\n* 👤 **主讲人：** ${lecturerName || '系统导师'}\n* 📂 **分类线：** ${categoryName || '精品推荐'}\n\n---\n\n> 💡 **课程介绍：**\n> ${description || '导师倾情推荐！欢迎大家点击下方链接立即收听实战复盘。'}\n\n欢迎收听！`;
             };
 
             const getMsgBtnText = (lang) => {

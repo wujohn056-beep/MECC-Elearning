@@ -205,10 +205,8 @@ const RecordingCard = ({
         <div className={`glass-panel rounded-2xl hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(26,43,60,0.06)] border border-white/60 overflow-hidden relative flex flex-col transition-all duration-500 ease-out group ${className}`}>
             {isDoc ? (
                 /* Premium Document Cover with sunset-to-indigo gradient and floating glassmorphic shapes */
-                <a 
-                    href={rec.audioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <div 
+                    onClick={() => onPlayVideo(rec, disableSeek)}
                     className="w-full h-28 bg-gradient-to-br from-amber-500 via-rose-500 to-indigo-600 relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-white/10 group/doc shrink-0 animate-in fade-in duration-500"
                 >
                     <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h24v24H0z\' fill=\'none\'/%3E%3Cpath d=\'M12 2L2 22h20L12 2z\' fill=\'%23ffffff\' fill-opacity=\'0.1\'/%3E%3C/svg%3E')]"></div>
@@ -216,13 +214,13 @@ const RecordingCard = ({
                     <div className="absolute top-0 -left-1/4 w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 group-hover/doc:translate-x-[250%] transition-transform duration-1000 ease-out" />
                     <div className="absolute inset-0 bg-slate-900/10 group-hover/doc:bg-slate-900/30 transition-colors duration-300 z-10" />
                     
-                    {/* Centered Glassmorphic Read Button */}
+                    {/* Centered Glassmorphic Comments Button */}
                     <div className="flex flex-col items-center justify-center gap-2 z-20">
-                        <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-lg transform group-hover/doc:scale-110 group-hover/doc:bg-white group-hover/doc:text-rose-500 transition-all duration-500">
-                            <FileText className="w-5 h-5 text-white group-hover/doc:text-rose-500 transition-colors duration-300" />
+                        <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-lg transform group-hover/doc:scale-110 group-hover/doc:bg-white group-hover/doc:text-[#008f99] transition-all duration-500">
+                            <MessageSquare className="w-5 h-5 text-white group-hover/doc:text-[#008f99] transition-colors duration-300" />
                         </div>
                         <span className="text-[10px] text-white font-extrabold tracking-wider bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 shadow-sm select-none">
-                            {t('learning_hub.read_document', '阅读学习文档')}
+                            {t('learning_hub.comments_btn', '参与互动交流与问答')}
                         </span>
                     </div>
                     
@@ -235,7 +233,7 @@ const RecordingCard = ({
                             💬 {commentCount}
                         </span>
                     )}
-                </a>
+                </div>
             ) : isVideo ? (
                 /* Premium Video Cover - Deep Aurora Gradient with glassmorphic pulse play button */
                 <div 
@@ -266,7 +264,7 @@ const RecordingCard = ({
             ) : (
                 /* Luxury Audio Cover - Deep Metallic Mesh with fine gold accent divider line */
                 <div 
-                    onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
+                    onClick={() => onPlayVideo(rec, disableSeek)}
                     className="h-14 w-full bg-gradient-to-r from-slate-950 via-slate-800 to-slate-950 absolute top-0 left-0 z-0 cursor-pointer shadow-inner"
                 >
                     <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'2\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'2\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
@@ -305,16 +303,16 @@ const RecordingCard = ({
                 
                 <div className="flex-1">
                     <h4 
-                        onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
-                        className={`font-black text-base mb-2 group-hover:text-deep-teal transition-all duration-300 line-clamp-1 text-slate-800 ${!isDoc ? 'cursor-pointer' : ''}`}
+                        onClick={() => onPlayVideo(rec, disableSeek)}
+                        className="font-black text-base mb-2 group-hover:text-deep-teal transition-all duration-300 line-clamp-1 text-slate-800 cursor-pointer"
                     >
                         {rec.displayId && <span className="bg-gradient-to-r from-desert-gold to-amber-500 text-white px-2 py-0.5 rounded text-[9.5px] font-black mr-2 uppercase shadow-sm select-none tracking-widest">[{rec.displayId}]</span>}
                         {rec.title}
                     </h4>
                     {rec.lecturerName && (
                         <div 
-                            onClick={() => !isDoc && onPlayVideo(rec, disableSeek)}
-                            className={`flex items-center gap-1.5 text-[11.5px] font-black text-desert-gold hover:text-amber-600 mb-2 transition-colors duration-300 ${!isDoc ? 'cursor-pointer hover:underline' : ''}`}
+                            onClick={() => onPlayVideo(rec, disableSeek)}
+                            className="flex items-center gap-1.5 text-[11.5px] font-black text-desert-gold hover:text-amber-600 mb-2 transition-colors duration-300 cursor-pointer hover:underline"
                         >
                             <User className="h-3.5 w-3.5 text-desert-gold shrink-0" />
                             <span>{rec.lecturerName}</span>
@@ -410,15 +408,29 @@ const RecordingCard = ({
                     )}
                     
                     {isDoc && (
-                        <a
-                            href={rec.audioUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2.5 w-full bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_6px_20px_rgba(0,109,119,0.25)] hover:scale-[1.01] text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-white/10 text-center"
-                        >
-                            <BookOpen className="w-4 h-4" />
-                            {t('learning_hub.open_document_btn', '打开并阅读文档')}
-                        </a>
+                        <div className="flex flex-col gap-2 pt-1">
+                            <button 
+                                onClick={() => onPlayVideo(rec, disableSeek)}
+                                className="w-full bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_6px_20px_rgba(0,109,119,0.25)] hover:scale-[1.01] text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/10"
+                            >
+                                <MessageSquare className="w-3.5 h-3.5 text-desert-gold fill-desert-gold/20" />
+                                <span>{t('learning_hub.comments_btn', '参与互动交流与问答')}</span>
+                                {commentCount > 0 && (
+                                    <span className="bg-desert-gold text-arabian-night text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md shrink-0 ml-1.5">
+                                        {commentCount}
+                                    </span>
+                                )}
+                            </button>
+                            <a
+                                href={rec.audioUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full bg-white hover:bg-deep-teal/5 border border-deep-teal/20 text-deep-teal hover:border-deep-teal/40 hover:shadow-md text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer text-center"
+                            >
+                                <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                                <span>{t('learning_hub.open_document_btn', '打开并阅读文档')}</span>
+                            </a>
+                        </div>
                     )}
                 </div>
             </div>
@@ -434,6 +446,11 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const isVideo = isVideoUrl(rec.audioUrl);
+    const isDoc = isDocUrl(rec.audioUrl) || 
+                  rec.categoryName?.toLowerCase() === 'doc' || 
+                  rec.categoryName === '文档' || 
+                  rec.categoryName === 'ss文档' || 
+                  rec.categoryName?.toLowerCase() === 'document';
 
     const { user, profile } = useAuth();
     const [comments, setComments] = useState<any[]>([]);
@@ -442,12 +459,12 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [replyText, setReplyText] = useState('');
     const [modalCurrentTime, setModalCurrentTime] = useState(0);
     const [attachTimestamp, setAttachTimestamp] = useState(false);
-    const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>(isVideo ? 'comments' : 'details');
+    const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>((isVideo || isDoc) ? 'comments' : 'details');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [recordingAnalysis, setRecordingAnalysis] = useState<any>(null);
 
     React.useEffect(() => {
-        if (isVideo) return;
+        if (isVideo || isDoc) return;
         const currentLang = i18n.language || 'en';
         if (rec.aiAnalysisMultilang?.[currentLang]) {
             setRecordingAnalysis(rec.aiAnalysisMultilang[currentLang]);
@@ -456,10 +473,10 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
         } else {
             setRecordingAnalysis(null);
         }
-    }, [rec.id, rec.aiAnalysis, rec.aiAnalysisMultilang, i18n.language, isVideo]);
+    }, [rec.id, rec.aiAnalysis, rec.aiAnalysisMultilang, i18n.language, isVideo, isDoc]);
 
     React.useEffect(() => {
-        if (isVideo) return;
+        if (isVideo || isDoc) return;
         const currentLang = i18n.language || 'en';
         const hasLangAnalysis = rec.aiAnalysisMultilang?.[currentLang] || (currentLang === 'zh' && rec.aiAnalysis);
         
@@ -467,7 +484,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
             console.log("Auto-triggering AI Analysis in the background for language:", currentLang, "and recording:", rec.id);
             handleTriggerAnalysis(true); // silent auto-trigger
         }
-    }, [rec.id, rec.transcriptStatus, rec.aiAnalysisMultilang, i18n.language, isVideo]);
+    }, [rec.id, rec.transcriptStatus, rec.aiAnalysisMultilang, i18n.language, isVideo, isDoc]);
 
     const handleTriggerAnalysis = async (isSilent = false) => {
         setIsAnalyzing(true);
@@ -703,11 +720,13 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <div className="flex items-center gap-2">
                         <span className={`text-[10px] border px-2 py-0.5 rounded-full font-bold shadow-sm ${
-                            isVideo 
-                                ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                : 'bg-amber-50 text-yellow-800 border-desert-gold/30'
+                            isDoc
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : isVideo 
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                    : 'bg-amber-50 text-yellow-800 border-desert-gold/30'
                         }`}>
-                            {isVideo ? '🎥' : '🎵'} {rec.categoryName || t('common.uncategorized')}
+                            {isDoc ? '📄' : isVideo ? '🎥' : '🎵'} {rec.categoryName || t('common.uncategorized')}
                         </span>
                         {rec.displayId && <span className="text-desert-gold text-xs font-extrabold">[{rec.displayId}]</span>}
                     </div>
@@ -721,7 +740,30 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
 
                 {/* Playback viewport */}
                 <div className="bg-black flex-1 flex items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-[400px]">
-                    {isVideo ? (
+                    {isDoc ? (
+                        <div className="flex flex-col items-center justify-center gap-6 py-12 w-full bg-gradient-to-br from-amber-500/10 via-rose-500/10 to-indigo-600/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-inner min-h-[300px] md:min-h-[400px] px-8 text-center animate-in fade-in duration-500">
+                            <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl relative overflow-hidden transform hover:scale-105 transition-all duration-300 group">
+                                <FileText className="w-12 h-12 text-white animate-pulse" />
+                            </div>
+                            <div className="space-y-3 max-w-md">
+                                <span className="inline-flex items-center gap-1.5 text-[10px] bg-black/40 backdrop-blur-md text-white border border-white/10 px-3.5 py-1 rounded-full font-black shadow-sm uppercase tracking-widest select-none">
+                                    📄 {t('learning_hub.doc_tag', '学习文档模式')}
+                                </span>
+                                <h4 className="text-white font-extrabold text-base leading-snug line-clamp-2 px-4">
+                                    {rec.title}
+                                </h4>
+                            </div>
+                            <a
+                                href={rec.audioUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:scale-105 active:scale-95 text-white text-xs font-black py-3.5 px-7 rounded-2xl shadow-xl border border-white/15 transition-all duration-300 cursor-pointer"
+                            >
+                                <BookOpen className="w-4 h-4 shrink-0 text-white fill-white/20 animate-bounce" />
+                                <span>{t('learning_hub.read_document', '阅读学习文档')}</span>
+                            </a>
+                        </div>
+                    ) : isVideo ? (
                         <video
                             ref={mediaRef as React.RefObject<HTMLVideoElement>}
                             src={rec.audioUrl}
@@ -770,7 +812,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                     setIsPlaying(false);
                                     onEnded(mediaRef.current?.duration || 0, actualListenedSeconds);
                                 }}
-                                onPlay={() => setIsPlaying(true)}
+                                  onPlay={() => setIsPlaying(true)}
                                 onPause={() => setIsPlaying(false)}
                                 preload="metadata"
                             />
@@ -833,51 +875,67 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                     <h3 className="text-lg font-extrabold text-arabian-night mb-2">
                         {rec.title}
                     </h3>
+
+                    {(isVideo || isDoc) && (
+                        <div className="mt-3 mb-5 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in duration-300">
+                            {rec.lecturerName && (
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-desert-gold mb-2 select-none">
+                                    <User className="h-3.5 w-3.5 shrink-0" />
+                                    <span>{rec.lecturerName}</span>
+                                </div>
+                            )}
+                            <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                                {rec.description}
+                            </p>
+                        </div>
+                    )}
                     
                     {/* Sleek Tabs Bar */}
-                    <div className="flex gap-2 border-b border-gray-100 pb-3 mb-5 mt-4">
-                        <button
-                            type="button"
-                            onClick={() => setActiveModalTab('details')}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
-                                activeModalTab === 'details' 
-                                    ? 'bg-deep-teal/10 text-deep-teal shadow-sm border border-deep-teal/20' 
-                                    : 'text-gray-500 hover:bg-gray-50 border border-transparent'
-                            }`}
-                        >
-                            📝 {t('learning_hub.course_details', '课程详情')}
-                        </button>
-                        {!isVideo && (
+                    {!(isVideo || isDoc) && (
+                        <div className="flex gap-2 border-b border-gray-100 pb-3 mb-5 mt-4">
                             <button
                                 type="button"
-                                onClick={() => setActiveModalTab('ai_analysis')}
+                                onClick={() => setActiveModalTab('details')}
                                 className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
-                                    activeModalTab === 'ai_analysis' 
-                                        ? 'bg-desert-gold/15 text-yellow-800 shadow-sm border border-desert-gold/30' 
+                                    activeModalTab === 'details' 
+                                        ? 'bg-deep-teal/10 text-deep-teal shadow-sm border border-deep-teal/20' 
                                         : 'text-gray-500 hover:bg-gray-50 border border-transparent'
                                 }`}
                             >
-                                ✨ {t('learning_hub.ai_call_portrait', 'AI 录音画像')}
-                                {recordingAnalysis && (
-                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                )}
+                                📝 {t('learning_hub.course_details', '课程详情')}
                             </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => setActiveModalTab('comments')}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
-                                activeModalTab === 'comments' 
-                                    ? 'bg-deep-teal/10 text-deep-teal shadow-sm border border-deep-teal/20' 
-                                    : 'text-gray-500 hover:bg-gray-50 border border-transparent'
-                            }`}
-                        >
-                            💬 {t('learning_hub.comments_and_qa', '互动问答')} ({comments.length})
-                        </button>
-                    </div>
+                            {!isVideo && (
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveModalTab('ai_analysis')}
+                                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
+                                        activeModalTab === 'ai_analysis' 
+                                            ? 'bg-desert-gold/15 text-yellow-800 shadow-sm border border-desert-gold/30' 
+                                            : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                                    }`}
+                                >
+                                    ✨ {t('learning_hub.ai_call_portrait', 'AI 录音画像')}
+                                    {recordingAnalysis && (
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                    )}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setActiveModalTab('comments')}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer ${
+                                    activeModalTab === 'comments' 
+                                        ? 'bg-deep-teal/10 text-deep-teal shadow-sm border border-deep-teal/20' 
+                                        : 'text-gray-500 hover:bg-gray-50 border border-transparent'
+                                }`}
+                            >
+                                💬 {t('learning_hub.comments_and_qa', '互动问答')} ({comments.length})
+                            </button>
+                        </div>
+                    )}
 
                     {/* Tab 1: Course Details */}
-                    {activeModalTab === 'details' && (
+                    {activeModalTab === 'details' && !(isVideo || isDoc) && (
                         <div className="space-y-4 animate-in fade-in duration-300">
                             {rec.lecturerName && (
                                 <div className="flex items-center gap-1.5 text-sm font-bold text-desert-gold mb-3">
@@ -972,7 +1030,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                     )}
 
                     {/* Tab 2: AI Call Analysis Portrait Dashboard */}
-                    {activeModalTab === 'ai_analysis' && (
+                    {activeModalTab === 'ai_analysis' && !(isVideo || isDoc) && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             {recordingAnalysis ? (
                                 <div className="space-y-6">
