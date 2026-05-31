@@ -51,6 +51,7 @@ export default function TeamTasks() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [allUsers, setAllUsers] = useState<UserRecord[]>([]);
     const [allRecordings, setAllRecordings] = useState<RecordingInfo[]>([]);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     
     // Tabs state
     const [activeTab, setActiveTab] = useState<'in_progress' | 'expired'>('in_progress');
@@ -324,6 +325,16 @@ export default function TeamTasks() {
         }
     };
 
+    const toggleSubGroupSelection = (subGroupUsers: UserRecord[]) => {
+        const subGroupUserIds = subGroupUsers.map(u => u.id);
+        const allSelected = subGroupUserIds.every(id => selectedUserIds.includes(id));
+        if (allSelected) {
+            setSelectedUserIds(prev => prev.filter(id => !subGroupUserIds.includes(id)));
+        } else {
+            setSelectedUserIds(prev => Array.from(new Set([...prev, ...subGroupUserIds])));
+        }
+    };
+
     const filteredRecordings = allRecordings.filter(r => 
         r.title.toLowerCase().includes(recordingSearchQuery.toLowerCase()) || 
         (r.displayId && r.displayId.toLowerCase().includes(recordingSearchQuery.toLowerCase()))
@@ -591,39 +602,98 @@ export default function TeamTasks() {
                                     <button onClick={selectAllUsers} className="text-xs text-desert-gold font-bold hover:underline">{t('team_tasks.select_all')}</button>
                                 </div>
                                 <div className="max-h-60 overflow-y-auto p-3 bg-white rounded-lg border border-gray-100 space-y-4">
-                                    {allUsers.length === 0 ? <p className="text-xs text-gray-400">{t('team_tasks.no_subordinates')}</p> : 
-                                     groupedUsers.map(([teamName, users]) => {
-                                        const teamUserIds = users.map(u => u.id);
-                                        const allSelected = teamUserIds.every(id => selectedUserIds.includes(id));
-                                        
-                                        return (
-                                            <div key={teamName} className="space-y-2">
-                                                <div className="flex justify-between items-center bg-gray-50 p-1.5 rounded">
-                                                    <span className="font-bold text-xs text-deep-teal">{teamName}</span>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => toggleTeamSelection(users)} 
-                                                        className="text-[10px] text-desert-gold font-bold hover:underline bg-white px-2 py-0.5 rounded shadow-sm"
-                                                    >
-                                                        {allSelected ? t('common.deselect_all', '取消全选') : t('common.select_all', '全选本组')}
-                                                    </button>
-                                                </div>
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-1">
-                                                    {users.map(u => (
-                                                        <label key={u.id} className="flex items-center gap-2 text-sm p-1 cursor-pointer hover:bg-gray-50 rounded border border-transparent hover:border-gray-200">
-                                                            <input 
-                                                                type="checkbox" 
-                                                                checked={selectedUserIds.includes(u.id)}
-                                                                onChange={() => toggleUserSelection(u.id)}
-                                                                className="rounded text-desert-gold focus:ring-desert-gold"
-                                                            />
-                                                            <span className="truncate flex-1" title={u.crmId}>{u.crmId}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        );
-                                     })}
+                                     {groupedUsers.map(([teamName, users]) => {
+                                         const teamUserIds = users.map(u => u.id);
+                                         const allSelected = teamUserIds.every(id => selectedUserIds.includes(id));
+                                         const isExpanded = !!expandedGroups[teamName];
+                                         
+                                         // Sub-grouping within the major group
+                                         const subGroups = {};
+                                         users.forEach(u => {
+                                             const hasSd = !!u.sd;
+                                             const isSd = u.role === 'sd';
+                                             const isSales = hasSd || isSd;
+                                             
+                                             let subName = '';
+                                             if (isSales) {
+                                                 subName = u.team || t('team_tasks.unassigned_team', '未分组');
+                                             } else {
+                                                 subName = ''; // List functional users directly
+                                             }
+                                             if (!subGroups[subName]) subGroups[subName] = [];
+                                             subGroups[subName].push(u);
+                                         });
+                                         
+                                         return (
+                                             <div key={teamName} className="space-y-2 border-b border-gray-100/80 pb-3 last:border-b-0">
+                                                 {/* Major Group Collapsible Header */}
+                                                 <div 
+                                                     onClick={() => setExpandedGroups(prev => ({ ...prev, [teamName]: !prev[teamName] }))}
+                                                     className="flex justify-between items-center bg-gray-50/80 p-2 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                                                 >
+                                                     <div className="flex items-center gap-2">
+                                                         <span className="text-[10px] text-gray-400 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>
+                                                             ▶
+                                                         </span>
+                                                         <span className="font-extrabold text-xs text-deep-teal">{teamName}</span>
+                                                         <span className="text-[9px] text-gray-400 font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-100">
+                                                             {users.length}
+                                                         </span>
+                                                     </div>
+                                                     <button 
+                                                         type="button"
+                                                         onClick={(e) => {
+                                                             e.stopPropagation();
+                                                             toggleTeamSelection(users);
+                                                         }} 
+                                                         className="text-[10px] text-desert-gold font-bold hover:underline bg-white px-2 py-0.5 rounded shadow-sm border border-gray-100 active:scale-95 transition-all"
+                                                     >
+                                                         {allSelected ? t('common.deselect_all', '取消全选') : t('common.select_all', '全选本组')}
+                                                     </button>
+                                                 </div>
+                                                 
+                                                 {/* Collapsible Content Body */}
+                                                 {isExpanded && (
+                                                     <div className="pl-3 pr-1 pt-1.5 pb-0.5 space-y-3 border-l border-dashed border-gray-200 ml-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                         {Object.entries(subGroups).map(([subName, subUsers]) => {
+                                                             const subUserIds = subUsers.map(u => u.id);
+                                                             const allSubSelected = subUserIds.every(id => selectedUserIds.includes(id));
+                                                             
+                                                             return (
+                                                                 <div key={subName} className="space-y-1.5">
+                                                                     {subName && (
+                                                                         <div className="flex justify-between items-center bg-gray-50/40 p-1.5 rounded-lg border border-gray-100/50">
+                                                                             <span className="font-extrabold text-[11px] text-arabian-night/70 pl-1">{subName}</span>
+                                                                             <button 
+                                                                                 type="button"
+                                                                                 onClick={() => toggleSubGroupSelection(subUsers)} 
+                                                                                 className="text-[9px] text-desert-gold font-bold hover:underline bg-white px-2 py-0.5 rounded shadow-sm border border-gray-100"
+                                                                             >
+                                                                                 {allSubSelected ? t('common.deselect_all', '取消本组') : t('common.select_all', '全选本组')}
+                                                                             </button>
+                                                                         </div>
+                                                                     )}
+                                                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-1">
+                                                                         {subUsers.map(u => (
+                                                                             <label key={u.id} className="flex items-center gap-2 text-xs p-1.5 cursor-pointer hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-200/50 transition-all select-none">
+                                                                                 <input 
+                                                                                     type="checkbox" 
+                                                                                     checked={selectedUserIds.includes(u.id)}
+                                                                                     onChange={() => toggleUserSelection(u.id)}
+                                                                                     className="rounded text-desert-gold focus:ring-desert-gold h-3.5 w-3.5"
+                                                                                 />
+                                                                                 <span className="truncate flex-1 font-semibold text-arabian-night/80" title={u.crmId}>{u.crmId}</span>
+                                                                             </label>
+                                                                         ))}
+                                                                     </div>
+                                                                 </div>
+                                                             );
+                                                         })}
+                                                     </div>
+                                                 )}
+                                             </div>
+                                         );
+                                      })}
                                 </div>
                             </div>
 
