@@ -178,6 +178,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return unsubscribe;
     }, []);
 
+    // iOS/Android Native Push Notifications Registration Hook
+    useEffect(() => {
+        const registerPushNotifications = async () => {
+            const { Capacitor } = await import('@capacitor/core');
+            if (Capacitor.isNativePlatform() && user && profile && profile.role !== 'blocked') {
+                try {
+                    const { PushNotifications } = await import('@capacitor/push-notifications');
+                    
+                    // Request notification permission from iOS/Android OS
+                    let permStatus = await PushNotifications.checkPermissions();
+                    if (permStatus.receive === 'prompt') {
+                        permStatus = await PushNotifications.requestPermissions();
+                    }
+                    
+                    if (permStatus.receive === 'granted') {
+                        // Register device with Apple APNs / Google FCM
+                        await PushNotifications.register();
+                        
+                        // Listen for successful registration and token return
+                        PushNotifications.addListener('registration', async (token) => {
+                            console.log('[Native Push] Registration successful, token:', token.value);
+                            
+                            // Save deviceToken in user's profile under Firestore 'users' collection for targeted pushes
+                            try {
+                                const { doc, updateDoc, arrayUnion } = await import('firebase/firestore');
+                                const userRef = doc(db, 'users', user.uid);
+                                await updateDoc(userRef, {
+                                    deviceTokens: arrayUnion(token.value),
+                                    lastActiveDevice: 'ios'
+                                });
+                                console.log('[Native Push] Associated token in Firestore.');
+                            } catch (e) {
+                                console.error('[Native Push] Failed to save token in Firestore:', e);
+                            }
+                        });
+
+                        // Listen for registration failures
+                        PushNotifications.addListener('registrationError', (err) => {
+                            console.error('[Native Push] Registration error:', err);
+                        });
+                    }
+                } catch (error) {
+                    console.error('[Native Push] Error during native push setup:', error);
+                }
+            }
+        };
+        registerPushNotifications();
+    }, [user, profile]);
+
     const logout = () => firebaseSignOut(auth);
 
     const value = {

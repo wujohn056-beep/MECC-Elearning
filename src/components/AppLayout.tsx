@@ -201,7 +201,7 @@ export default function AppLayout() {
             
             <div className="relative z-10">
                 {/* Navigation Bar */}
-            <nav className="glass-panel sticky top-0 z-50 p-4 flex justify-between items-center">
+            <nav className="glass-panel sticky top-0 z-50 p-4 pt-safe flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <img src="/logo.png" alt="" className="h-9 sm:h-11 object-contain drop-shadow-md" />
                     <h1 className="text-2xl font-extrabold text-gradient-gold tracking-wide hidden sm:block">
