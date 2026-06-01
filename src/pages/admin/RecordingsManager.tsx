@@ -67,6 +67,7 @@ export default function RecordingsManager() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
+    const [hasSetDefaultBusiness, setHasSetDefaultBusiness] = useState(false);
     
     // Upload States
     const [uploading, setUploading] = useState(false);
@@ -235,12 +236,11 @@ export default function RecordingsManager() {
     }, [recordings]);
 
     useEffect(() => {
-        if (profile?.dep === 'SS') {
-            setBusinessType('ss');
-        } else {
-            setBusinessType('kid');
+        if (profile && !hasSetDefaultBusiness) {
+            setBusinessType(profile.dep === 'SS' ? 'ss' : 'kid');
+            setHasSetDefaultBusiness(true);
         }
-    }, [profile]);
+    }, [profile, hasSetDefaultBusiness]);
 
     useEffect(() => {
         const activeCats = categories.filter(c => (c.businessType || 'kid') === businessType);
@@ -608,6 +608,14 @@ export default function RecordingsManager() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
+        if (uploading) return;
+        
+        // Prevent submission if attachments are still uploading
+        if (Object.keys(uploadingAttachments).length > 0) {
+            alert(t('recordings_manager.waiting_attachments', '正在等待附件讲义上传完成，请稍后提交...'));
+            return;
+        }
+        
         // Require file only if creating new
         if (!editingId && !file) return;
         if (!title) return;
@@ -649,6 +657,7 @@ export default function RecordingsManager() {
             }
 
             const category = categories.find(c => c.id === selectedCategoryId);
+            const resolvedBusinessType = category?.businessType || businessType;
             const dataToSave: any = {
                 title,
                 description,
@@ -657,7 +666,7 @@ export default function RecordingsManager() {
                 avatarUrl,
                 categoryId: category?.id || '',
                 categoryName: category?.name || t('common.uncategorized'),
-                businessType,
+                businessType: resolvedBusinessType,
                 uploaderId: user?.uid || '',
                 uploaderCrmId: profile?.crmId || '',
                 attachments: attachments || []
@@ -665,6 +674,20 @@ export default function RecordingsManager() {
 
             if (editingId) {
                 await updateDoc(doc(db, 'recordings', editingId), dataToSave);
+                
+                // Auto-trigger background transcription if a new media file was uploaded on edit
+                if (file) {
+                    try {
+                        console.log("Auto-triggering background transcription for edited recording:", editingId);
+                        fetch('/.netlify/functions/transcribe-background', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ recordingId: editingId })
+                        });
+                    } catch (transcribeErr) {
+                        console.error("Failed to auto-trigger transcription on edit:", transcribeErr);
+                    }
+                }
             } else {
                 let maxId = 0;
                 recordings.forEach(rec => {
@@ -677,10 +700,22 @@ export default function RecordingsManager() {
                 });
                 dataToSave.displayId = `RD${(maxId + 1).toString().padStart(4, '0')}`;
 
-                await addDoc(collection(db, 'recordings'), {
+                const docRef = await addDoc(collection(db, 'recordings'), {
                     ...dataToSave,
                     createdAt: serverTimestamp()
                 });
+
+                // Auto-trigger background transcription for new recording
+                try {
+                    console.log("Auto-triggering background transcription for new recording:", docRef.id);
+                    fetch('/.netlify/functions/transcribe-background', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ recordingId: docRef.id })
+                    });
+                } catch (transcribeErr) {
+                    console.error("Failed to auto-trigger transcription on create:", transcribeErr);
+                }
             }
             
             resetForm();
@@ -1083,8 +1118,22 @@ export default function RecordingsManager() {
                                         <input
                                             type="file"
                                             id="audioInput"
+                                            accept="audio/*,video/*"
                                             required={!editingId}
-                                            onChange={(e) => e.target.files && setFile(e.target.files[0])}
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                    const selectedFile = e.target.files[0];
+                                                    const ext = selectedFile.name.split('.').pop()?.toLowerCase();
+                                                    const allowedExtensions = ['mp3', 'wav', 'm4a', 'aac', 'flac', 'ogg', 'mp4', 'webm', 'mov', 'm4v', 'avi', 'mkv'];
+                                                    if (ext && !allowedExtensions.includes(ext)) {
+                                                        alert(t('recordings_manager.main_media_validation_error', "主学习资料只支持音频或视频格式。如果您想上传课件、PPT、PDF等配套文档，请将其上传至下方的 '配套讲义与附件' 区域！"));
+                                                        e.target.value = '';
+                                                        setFile(null);
+                                                        return;
+                                                    }
+                                                    setFile(selectedFile);
+                                                }
+                                            }}
                                             className="hidden"
                                         />
                                     </label>
@@ -1095,23 +1144,29 @@ export default function RecordingsManager() {
                             </div>
 
                             {/* Supplementary Attachments Upload Box */}
-                            <div className="mt-4 border-t border-gray-100 pt-4">
-                                <label className="block text-sm font-semibold text-deep-teal mb-1 flex items-center gap-1.5">
+                            <div className="mt-5 border border-desert-gold/25 rounded-2xl p-4.5 bg-gradient-to-br from-desert-gold/5 to-transparent relative overflow-hidden group/attachments">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-desert-gold/3 rounded-full blur-2xl pointer-events-none group-hover/attachments:bg-desert-gold/8 transition-all duration-700" />
+                                <label className="block text-sm font-bold text-deep-teal mb-1 flex items-center gap-1.5">
                                     <FileText className="w-4 h-4 text-desert-gold" />
                                     {t('common.attachments', '配套讲义与附件')}
                                 </label>
-                                <p className="text-[11px] text-arabian-night/50 mb-2">
-                                    {t('recordings_manager.attachments_tip', '可选。可上传启动会课件、PDF指南或脑图，单个大小上限 50MB。')}
+                                <p className="text-[11px] text-arabian-night/60 mb-3 leading-relaxed font-semibold">
+                                    💡 {t('recordings_manager.attachments_tip', '可选。可上传配套课件、PDF指南、脑图或附件压缩包，单个大小上限 50MB。')}
                                 </p>
                                 
                                 <div className="flex flex-col gap-2.5">
                                     {/* Upload Button */}
-                                    <label className="cursor-pointer border-2 border-dashed border-gray-200 hover:border-desert-gold/50 rounded-xl p-3 flex flex-col items-center justify-center gap-1 bg-gray-50/50 hover:bg-desert-gold/5 transition-all">
+                                    <label className={`border-2 border-dashed border-desert-gold/20 rounded-xl p-4 flex flex-col items-center justify-center gap-1 bg-white/40 transition-all duration-300 ${
+                                        uploading 
+                                            ? 'opacity-40 cursor-not-allowed pointer-events-none' 
+                                            : 'cursor-pointer hover:border-desert-gold/50 hover:bg-desert-gold/5 hover:-translate-y-0.5 shadow-sm hover:shadow-md active:translate-y-0 active:shadow-sm'
+                                    }`}>
                                         <UploadCloud className="w-5 h-5 text-desert-gold/80" />
                                         <span className="text-xs font-bold text-arabian-night/60">{t('common.add_attachment', '添加附件课件')}</span>
                                         <input
                                             type="file"
                                             multiple
+                                            disabled={uploading}
                                             onChange={handleAttachmentUpload}
                                             className="hidden"
                                         />
@@ -1179,10 +1234,20 @@ export default function RecordingsManager() {
 
                             <button
                                 type="submit"
-                                disabled={uploading || (!editingId && !file) || categories.length === 0}
-                                className={`w-full py-3 mt-4 rounded-xl font-bold text-white shadow-md transition-all ${uploading || (!editingId && !file) || categories.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-deep-teal to-teal-700 hover:-translate-y-0.5 hover:shadow-lg'}`}
+                                disabled={uploading || Object.keys(uploadingAttachments).length > 0 || (!editingId && !file) || categories.length === 0}
+                                className={`w-full py-3 mt-4 rounded-xl font-bold text-white shadow-md transition-all ${
+                                    uploading || Object.keys(uploadingAttachments).length > 0 || (!editingId && !file) || categories.length === 0 
+                                        ? 'bg-gray-400 cursor-not-allowed' 
+                                        : 'bg-gradient-to-r from-deep-teal to-teal-700 hover:-translate-y-0.5 hover:shadow-lg'
+                                }`}
                             >
-                                {categories.length === 0 ? t('recordings_manager.create_cat_first') : uploading ? t('common.processing') : (editingId ? t('recordings_manager.save_changes') : t('recordings_manager.start_upload'))}
+                                {categories.length === 0 
+                                    ? t('recordings_manager.create_cat_first') 
+                                    : Object.keys(uploadingAttachments).length > 0
+                                        ? t('recordings_manager.waiting_attachments', '正在等待附件讲义上传完成...')
+                                        : uploading 
+                                            ? t('common.processing') 
+                                            : (editingId ? t('recordings_manager.save_changes') : t('recordings_manager.start_upload'))}
                             </button>
                         </form>
                     </div>
@@ -1268,15 +1333,21 @@ export default function RecordingsManager() {
                                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                                                             (rec.businessType || 'kid') === 'ss'
                                                                 ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-orange-400'
-                                                                : (rec.businessType || 'kid') === 'kid' 
-                                                                    ? 'bg-blue-100 text-blue-700' 
-                                                                    : 'bg-purple-100 text-purple-700'
+                                                                : (rec.businessType || 'kid') === 'leader'
+                                                                    ? 'bg-amber-50 text-yellow-800 border border-desert-gold/30 font-bold'
+                                                                    : (rec.businessType || 'kid') === 'kid' 
+                                                                        ? 'bg-blue-100 text-blue-700' 
+                                                                        : (rec.businessType || 'kid') === 'adult'
+                                                                            ? 'bg-purple-100 text-purple-700'
+                                                                            : 'bg-gray-100 text-gray-600'
                                                         }`}>
                                                             {(rec.businessType || 'kid') === 'ss'
                                                                 ? t('common.type_ss')
-                                                                : (rec.businessType || 'kid') === 'kid'
-                                                                    ? t('common.type_kid')
-                                                                    : t('common.type_adult')
+                                                                : (rec.businessType || 'kid') === 'leader'
+                                                                    ? t('common.type_leader')
+                                                                    : (rec.businessType || 'kid') === 'kid'
+                                                                        ? t('common.type_kid')
+                                                                        : t('common.type_adult')
                                                             }
                                                         </span>
                                                         <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
@@ -1309,6 +1380,23 @@ export default function RecordingsManager() {
                                                         <p className="text-xs text-desert-gold mt-1 font-medium flex items-center gap-1">
                                                             <User className="h-3 w-3" /> {rec.lecturerName}
                                                         </p>
+                                                    )}
+                                                    {rec.attachments && rec.attachments.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1.5 mt-2 select-none">
+                                                            {rec.attachments.map((att: Attachment) => (
+                                                                <a 
+                                                                    key={att.id} 
+                                                                    href={att.url} 
+                                                                    target="_blank" 
+                                                                    rel="noopener noreferrer"
+                                                                    title={`${att.name} (${att.size})`}
+                                                                    className="inline-flex items-center gap-1 bg-desert-gold/10 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded-full hover:bg-desert-gold/20 transition-all border border-desert-gold/20 hover:scale-[1.03] shrink-0"
+                                                                >
+                                                                    <span>{att.type === 'ppt' ? '📊' : att.type === 'pdf' ? '📕' : att.type === 'image' ? '🖼️' : '📄'}</span>
+                                                                    <span className="max-w-[140px] truncate">{att.name}</span>
+                                                                </a>
+                                                            ))}
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>

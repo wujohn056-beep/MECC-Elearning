@@ -22,6 +22,7 @@ interface Recording {
     transcriptStatus?: string;
     uploaderId?: string;
     uploaderCrmId?: string;
+    attachments?: any[];
 }
 
 interface Category {
@@ -99,7 +100,7 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
     };
 
     return (
-        <div className="flex flex-col w-full gap-1 pt-1 pb-1">
+        <div className="flex flex-col w-full bg-slate-50/70 dark:bg-slate-900/35 border border-slate-100/70 dark:border-slate-800/60 rounded-2xl p-2.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.01),0_1px_3px_rgba(0,0,0,0.02)] select-none gap-0.5 my-1.5 animate-in fade-in duration-300">
             <audio 
                 ref={audioRef} 
                 src={src} 
@@ -111,10 +112,10 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
                 }}
                 className="hidden"
             />
-            <div className="flex items-center gap-3 w-full px-1.5 py-1">
+            <div className="flex items-center gap-2.5 w-full">
                 <button 
                     onClick={togglePlay}
-                    className="shrink-0 w-8.5 h-8.5 flex items-center justify-center bg-gradient-to-r from-deep-teal to-[#005f66] hover:from-[#005f66] hover:to-[#008f99] text-white rounded-full hover:shadow-[0_0_12px_rgba(0,109,119,0.35)] hover:scale-110 active:scale-95 transition-all duration-300 shadow-md focus:outline-none cursor-pointer border border-white/20"
+                    className="shrink-0 w-9 h-9 flex items-center justify-center bg-gradient-to-r from-deep-teal to-[#005f66] hover:from-[#005f66] hover:to-[#008f99] text-white rounded-full hover:shadow-[0_3px_10px_rgba(0,109,119,0.25)] hover:scale-105 active:scale-95 transition-all duration-300 shadow-sm focus:outline-none cursor-pointer border border-white/20"
                 >
                     {isPlaying ? (
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
@@ -122,7 +123,7 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
                         <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     )}
                 </button>
-                <div className="text-[10px] font-black text-slate-400 shrink-0 w-8 text-right tracking-tight select-none">
+                <div className="text-[10px] font-bold text-slate-400 shrink-0 w-8 text-right tracking-tight font-mono select-none">
                     {formatTime(currentTime)}
                 </div>
                 <input 
@@ -132,17 +133,17 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
                     step="0.1"
                     value={currentTime} 
                     onChange={handleSeek}
-                    className={`flex-1 h-1 bg-slate-100 rounded-lg appearance-none focus:outline-none ${disableSeek ? 'cursor-not-allowed opacity-70 pointer-events-none' : 'cursor-pointer hover:h-1.5 transition-all duration-300'}`}
+                    className={`flex-1 h-1 bg-slate-200/80 dark:bg-slate-700/60 rounded-full appearance-none focus:outline-none ${disableSeek ? 'cursor-not-allowed opacity-60 pointer-events-none' : 'cursor-pointer hover:bg-slate-300/80 transition-all'}`}
                     style={{ accentColor: '#d4af37' }}
                     readOnly={disableSeek}
                 />
-                <div className="text-[10px] font-black text-slate-400 shrink-0 w-8 tracking-tight select-none">
+                <div className="text-[10px] font-bold text-slate-400 shrink-0 w-8 tracking-tight font-mono select-none">
                     {formatTime(duration)}
                 </div>
                 <button 
                     onClick={cycleSpeed}
                     title={t('common.playback_speed', 'Playback Speed')}
-                    className="shrink-0 text-[10px] font-black text-amber-700 bg-amber-50/60 hover:bg-amber-100/80 border border-desert-gold/25 rounded-md px-2 py-0.5 transition-all duration-200 focus:outline-none active:scale-90 cursor-pointer shadow-sm"
+                    className="shrink-0 text-[10px] font-black text-amber-700 dark:text-amber-500 bg-amber-50/70 dark:bg-amber-950/40 hover:bg-amber-100/90 border border-desert-gold/25 rounded-lg px-2 py-0.5 transition-all duration-200 focus:outline-none active:scale-90 cursor-pointer shadow-sm"
                 >
                     {playbackRate}x
                 </button>
@@ -276,21 +277,47 @@ const RecordingCard = ({
                     )}
                 </div>
             ) : (
-                /* Luxury Audio Cover - Deep Metallic Mesh with fine gold accent divider line */
+                /* Premium Audio Cover - Dark Metallic Mesh with glowing audio wave & headphone */
                 <div 
                     onClick={() => onPlayVideo(rec, disableSeek)}
-                    className="h-14 w-full bg-gradient-to-r from-slate-950 via-slate-800 to-slate-950 absolute top-0 left-0 z-0 cursor-pointer shadow-inner"
+                    className="w-full h-28 bg-gradient-to-br from-slate-950 via-[#112226] to-[#0f2027] relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-white/10 group/audio shrink-0 animate-in fade-in duration-500"
                 >
-                    <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23d4af37\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'2\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'2\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
-                    <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-desert-gold/30 to-transparent"></div>
+                    <div className="absolute inset-0 opacity-15 bg-[url('data:image/svg+xml,%3Csvg width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h24v24H0z\' fill=\'none\'/%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'1\' fill=\'%23ffffff\'/%3E%3C/svg%3E')]"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/40 z-10 pointer-events-none" />
+                    
+                    {/* Glowing Audio Waves and Headphones Icon */}
+                    <div className="flex flex-col items-center justify-center gap-1.5 z-20 transition-transform duration-500 group-hover/audio:scale-105">
+                        <div className="w-10 h-10 rounded-full bg-white/5 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg transform group-hover/audio:bg-[#d4af37]/20 group-hover/audio:border-[#d4af37]/50 transition-all duration-500 relative">
+                            <Headphones className="w-5 h-5 text-desert-gold" />
+                            {/* Wave bar visualizer effect inside icon container */}
+                            <div className="absolute -bottom-1 flex gap-0.5 justify-center h-2.5">
+                                <span className="w-0.5 bg-[#d4af37] rounded-full animate-[bounce_0.8s_infinite] h-full" />
+                                <span className="w-0.5 bg-[#d4af37] rounded-full animate-[bounce_0.5s_infinite_0.15s] h-1.5" />
+                                <span className="w-0.5 bg-[#d4af37] rounded-full animate-[bounce_0.7s_infinite_0.3s] h-2" />
+                            </div>
+                        </div>
+                        <span className="text-[9px] text-[#d4af37]/80 font-black tracking-widest bg-black/40 backdrop-blur-sm px-2.5 py-0.5 rounded-full border border-white/5 shadow-inner mt-1">
+                            AUDIO CASE
+                        </span>
+                    </div>
+
+                    {/* Audio Badge Tag */}
+                    <span className="absolute top-2.5 right-2.5 bg-black/40 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none">
+                        🎵 {t('learning_hub.audio_tag', '音频')}
+                    </span>
+                    {commentCount > 0 && (
+                        <span className="absolute bottom-2.5 left-2.5 bg-black/40 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 flex items-center gap-1 z-20 select-none">
+                            💬 {commentCount}
+                        </span>
+                    )}
                 </div>
             )}
 
             {/* Card Content with Restored Avatar */}
-            <div className={`relative z-10 p-5 flex flex-col flex-1 ${(!isVideo && !isDoc) ? 'pt-6' : 'pt-4'}`}>
+            <div className="relative z-10 p-5 flex flex-col flex-1 pt-2">
                 {/* Circular Avatar & Category */}
-                <div className="relative mb-4 flex items-end justify-between">
-                    <div className="w-12 h-12 rounded-full border-2 border-white shadow-md bg-white flex items-center justify-center overflow-hidden ring-2 ring-deep-teal/10 group-hover:ring-desert-gold/50 transition-all duration-500 select-none shrink-0 transform group-hover:scale-105">
+                <div className="-mt-10 relative z-20 flex items-end justify-between px-1 mb-3.5">
+                    <div className="w-13 h-13 rounded-full border-2 border-white shadow-md bg-white flex items-center justify-center overflow-hidden ring-2 ring-deep-teal/10 group-hover:ring-desert-gold/50 transition-all duration-500 select-none shrink-0 transform group-hover:scale-105">
                         {rec.avatarUrl ? (
                             <img src={rec.avatarUrl} alt="Instructor" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         ) : (
@@ -299,12 +326,17 @@ const RecordingCard = ({
                             </div>
                         )}
                     </div>
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        <span className="text-[10px] bg-amber-50/70 border border-desert-gold/25 text-[#a88216] px-3 py-0.5 rounded-full font-black shadow-sm tracking-wider backdrop-blur-sm transition-all duration-300 hover:bg-[#a88216] hover:text-white hover:border-transparent select-none">
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="text-[9.5px] bg-desert-gold/10 border border-desert-gold/25 text-[#a88216] px-2.5 py-0.5 rounded-full font-extrabold shadow-sm tracking-wider backdrop-blur-md transition-all duration-300 hover:bg-[#a88216] hover:text-white hover:border-transparent select-none">
                             {rec.categoryName || t('common.uncategorized')}
                         </span>
+                        {rec.attachments && rec.attachments.length > 0 && (
+                            <span className="text-[9.5px] bg-amber-500/10 text-amber-700 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-extrabold shadow-sm flex items-center gap-1 shrink-0 select-none backdrop-blur-md transition-all duration-300">
+                                📊 {t('learning_hub.attachments_count', '含课件')} ({rec.attachments.length})
+                            </span>
+                        )}
                         {rec.transcript && !isVideo && (
-                            <span className="text-[9.5px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-3 py-0.5 rounded-full font-black shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-md transition-all duration-300">
+                            <span className="text-[9.5px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-extrabold shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-md transition-all duration-300">
                                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
@@ -324,7 +356,7 @@ const RecordingCard = ({
                                 : 'text-slate-800 group-hover:text-deep-teal'
                         }`}
                     >
-                        {rec.displayId && <span className="bg-gradient-to-r from-desert-gold to-amber-500 text-white px-2 py-0.5 rounded text-[9.5px] font-black mr-2 uppercase shadow-sm select-none tracking-widest">[{rec.displayId}]</span>}
+                        {rec.displayId && <span className="bg-desert-gold/10 border border-desert-gold/25 text-[#b58c14] dark:text-desert-gold px-1.5 py-0.5 rounded text-[9.5px] font-black mr-2 uppercase shadow-sm select-none tracking-widest">[{rec.displayId}]</span>}
                         {rec.title}
                     </h4>
                     {rec.lecturerName && (
@@ -343,7 +375,7 @@ const RecordingCard = ({
                     </p>
                 </div>
 
-                <div className={`mt-auto pt-4 border-t ${
+                <div className={`mt-auto pt-3 border-t ${
                     rec.businessType === 'leader' ? 'border-desert-gold/15' : 'border-slate-100'
                 }`}>
                     <div className="flex justify-between items-center mb-4 text-[11px] font-bold text-deep-teal">
@@ -412,7 +444,7 @@ const RecordingCard = ({
                     </div>
                     
                     {!isVideo && !isDoc && (
-                        <div className="flex flex-col gap-2.5 pt-1">
+                        <div className="flex flex-col gap-2 pt-1">
                             <CustomAudioPlayer 
                                 src={rec.audioUrl} 
                                 onEnded={(duration) => handleAudioEnded(rec, duration)} 
@@ -420,28 +452,30 @@ const RecordingCard = ({
                                 disableSeek={disableSeek}
                             />
                             
-                            <button 
-                                onClick={() => onPlayVideo(rec, disableSeek)}
-                                className="mt-1 w-full bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_6px_20px_rgba(0,109,119,0.25)] hover:scale-[1.01] text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/10"
-                            >
-                                <MessageSquare className="w-3.5 h-3.5 text-desert-gold fill-desert-gold/20" />
-                                <span>{t('learning_hub.comments_btn', '参与互动交流与问答')}</span>
-                                {commentCount > 0 && (
-                                    <span className="bg-desert-gold text-arabian-night text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md shrink-0 ml-1.5">
-                                        {commentCount}
-                                    </span>
-                                )}
-                            </button>
-                            
-                            {rec.transcript && (
+                            <div className="flex gap-2.5 mt-1.5 w-full">
                                 <button 
                                     onClick={() => onPlayVideo(rec, disableSeek)}
-                                    className="mt-1 w-full bg-white hover:bg-deep-teal/5 border border-deep-teal/20 text-deep-teal hover:border-deep-teal/40 hover:shadow-md text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                                    className="flex-1 bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_4px_12px_rgba(0,109,119,0.2)] hover:scale-[1.01] text-white text-[11px] font-bold py-2.5 px-2 rounded-xl shadow-sm flex items-center justify-center gap-1 active:scale-[0.98] transition-all cursor-pointer border border-white/10"
                                 >
-                                    <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
-                                    <span>{t('learning_hub.view_transcript_unlocked_btn', '查看阿语逐字稿')}</span>
+                                    <MessageSquare className="w-3.5 h-3.5 text-desert-gold fill-desert-gold/20" />
+                                    <span>{t('learning_hub.comments_btn', '参与互动交流与问答')}</span>
+                                    {commentCount > 0 && (
+                                        <span className="bg-desert-gold text-arabian-night text-[9px] font-extrabold px-1 rounded-full shadow-sm shrink-0">
+                                            {commentCount}
+                                        </span>
+                                    )}
                                 </button>
-                            )}
+                                
+                                {rec.transcript && (
+                                    <button 
+                                        onClick={() => onPlayVideo(rec, disableSeek)}
+                                        className="flex-1 bg-white hover:bg-deep-teal/5 border border-deep-teal/20 text-deep-teal hover:border-deep-teal/40 hover:shadow-sm text-[11px] font-bold py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                                    >
+                                        <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                                        <span>{t('learning_hub.view_transcript_unlocked_btn', '查看阿语逐字稿')}</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
                     
@@ -1275,11 +1309,23 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                             {isAnalyzing ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
-                                                    <span>{t('learning_hub.analyzing', '智能解析中...')}</span>
+                                                    <span>
+                                                        {i18n.language?.startsWith('ar')
+                                                            ? 'جاري التحليل الذكي...'
+                                                            : i18n.language?.startsWith('en')
+                                                                ? 'AI Analyzing...'
+                                                                : t('learning_hub.analyzing', '智能解析中...')}
+                                                    </span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <span>✨ {t('learning_hub.generate_analysis', '启动 AI 通话体检')}</span>
+                                                    <span>
+                                                        {i18n.language?.startsWith('ar')
+                                                            ? '✨ بدء تحليل المكالمة بالذكاء الاصطناعي'
+                                                            : i18n.language?.startsWith('en')
+                                                                ? '✨ Start AI Call Portrait'
+                                                                : t('learning_hub.generate_analysis', '启动 AI 通话体检')}
+                                                    </span>
                                                 </>
                                             )}
                                         </button>

@@ -127,6 +127,8 @@
         "no_recordings_for_task": "No recordings are associated with this task",
         "recording_deleted": "This recording may have been deleted",
         "video_tag": "Video",
+        "audio_tag": "Audio",
+        "attachments_count": "Slides Included",
         "see_more": "See More",
         "see_less": "See Less",
         "suggested_lecturers": "Suggested Lecturers",
@@ -206,7 +208,8 @@
         "analysis_objection_unhandled": "Unhandled",
         "analysis_score_label": "Score",
         "analysis_diagnose_summary": "Smart Diagnostic Summary",
-        "analysis_coaching_tips": "AI Coaching Tips"
+        "analysis_coaching_tips": "AI Coaching Tips",
+        "analyzing": "AI Analyzing..."
     },
     "category_manager": {
         "title": "Category Management",
@@ -262,8 +265,9 @@
         "recording_placeholder": "e.g. How to handle price objections",
         "desc_label": "Description",
         "desc_placeholder": "Simple case background explanation...",
-        "audio_label": "Learning Material (Audio, Video, Docs)",
-        "audio_tip": "Tip: Do not select a file if you do not want to modify the audio.",
+        "audio_label": "Main Video/Audio File (Media formats only)",
+        "audio_tip": "Tip: Do not select a file if you do not want to modify the main video/audio.",
+        "main_media_validation_error": "The main learning material only supports audio or video formats. If you want to upload courseware, PPT, PDF or other supplementary handouts, please upload them to the 'Accompanying Handouts & Attachments' section below!",
         "syncing": "Syncing to cloud...",
         "create_cat_first": "Please create a category first",
         "save_changes": "Save Changes",
@@ -298,7 +302,9 @@
         "transcript_ready": "Arabic Transcript Ready",
         "transcript_unlocked": "Arabic Transcript Unlocked",
         "transcribe_fail": "Arabic Speech-to-Text Transcription Failed",
-        "transcribe_success": "Arabic transcription completed! Automatically synced to database."
+        "transcribe_success": "Arabic transcription completed! Automatically synced to database.",
+        "attachments_tip": "Optional. You can upload courseware, PDF guides, mind maps, or attachment ZIP files (Max size: 50MB per file).",
+        "waiting_attachments": "Waiting for attachments to complete uploading, please submit later..."
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",

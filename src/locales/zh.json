@@ -126,6 +126,8 @@
         "no_recordings_for_task": "该任务没有关联录音",
         "recording_deleted": "录音可能已被删除",
         "video_tag": "视频",
+        "audio_tag": "音频",
+        "attachments_count": "含课件",
         "see_more": "展开更多",
         "see_less": "收起",
         "suggested_lecturers": "推荐讲师",
@@ -205,7 +207,8 @@
         "analysis_objection_unhandled": "未突破",
         "analysis_score_label": "得分",
         "analysis_diagnose_summary": "智能体检诊断总结",
-        "analysis_coaching_tips": "AI 高能优化建议 (Coaching Tips)"
+        "analysis_coaching_tips": "AI 高能优化建议 (Coaching Tips)",
+        "analyzing": "智能解析中..."
     },
     "category_manager": {
         "title": "目录分类管理",
@@ -261,8 +264,9 @@
         "recording_placeholder": "例如：如何处理价格异议",
         "desc_label": "描述内容",
         "desc_placeholder": "简单的案例背景说明...",
-        "audio_label": "学习资料 (音频, 视频, 文档)",
-        "audio_tip": "提示：如果不修改音频，请勿选择文件。",
+        "audio_label": "主视频/音频文件 (仅支持音视频格式)",
+        "audio_tip": "提示：如果不修改主视频/音频，请勿选择文件。",
+        "main_media_validation_error": "主学习资料只支持音频或视频格式。如果您想上传课件、PPT、PDF等配套文档，请将其上传至下方的 '配套讲义与附件' 区域！",
         "syncing": "正在同步至云端...",
         "create_cat_first": "请先创建分类",
         "save_changes": "保存修改",
@@ -297,7 +301,9 @@
         "transcript_ready": "阿语逐字稿已就绪",
         "transcript_unlocked": "阿语逐字稿已解锁",
         "transcribe_fail": "语音解析为逐字稿失败",
-        "transcribe_success": "阿语逐字稿解析完成！已成功同步至录音库。"
+        "transcribe_success": "阿语逐字稿解析完成！已成功同步至录音库。",
+        "attachments_tip": "可选。可上传配套课件、PDF指南、脑图或附件压缩包，单个大小上限 50MB。",
+        "waiting_attachments": "正在等待附件讲义上传完成，请稍后提交..."
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",
