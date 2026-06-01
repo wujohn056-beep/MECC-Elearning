@@ -322,12 +322,23 @@ export default function TeamTasks() {
             const isSales = hasSd || isSd;
             
             if (isSales) {
-                // Sales user: group by SD team
-                const sdName = (u.sd || (isSd ? u.crmId : '')).trim().toUpperCase();
-                if (sdName) {
-                    teamName = `${sdName} ${t('team_tasks.team_suffix', 'Team')}`;
+                // If logged-in user is SM or TL, write the SM's name instead of the SD's name (e.g. "JOHN Team")
+                const loggedInRole = String(profile?.role).trim().toLowerCase();
+                if (loggedInRole === 'sm' || loggedInRole === 'tl') {
+                    const smName = (profile?.role === 'sm' ? profile?.crmId : (profile?.sm || u.sm || '')).trim().toUpperCase();
+                    if (smName) {
+                        teamName = `${smName} Team`;
+                    } else {
+                        teamName = t('team_tasks.unassigned_team', '未分组');
+                    }
                 } else {
-                    teamName = t('team_tasks.unassigned_team', '未分组');
+                    // Sales user: group by SD team
+                    const sdName = (u.sd || (isSd ? u.crmId : '')).trim().toUpperCase();
+                    if (sdName) {
+                        teamName = `${sdName} ${t('team_tasks.team_suffix', 'Team')}`;
+                    } else {
+                        teamName = t('team_tasks.unassigned_team', '未分组');
+                    }
                 }
             } else {
                 // Non-sales user: group by functional team / department
@@ -343,7 +354,7 @@ export default function TeamTasks() {
             groups[teamName].push(u);
         });
         return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
-    }, [allUsers, t]);
+    }, [allUsers, t, profile]);
 
     const toggleTeamSelection = (teamUsers: UserRecord[]) => {
         const teamUserIds = teamUsers.map(u => u.id);
@@ -688,7 +699,10 @@ export default function TeamTasks() {
                                      {groupedUsers.map(([teamName, users]) => {
                                          const teamUserIds = users.map(u => u.id);
                                          const allSelected = teamUserIds.every(id => selectedUserIds.includes(id));
-                                         const isExpanded = !!expandedGroups[teamName];
+                                         // Auto-expand the group by default for SM or TL role, so they don't have to manually expand it every time
+                                         const isExpanded = (profile?.role === 'sm' || profile?.role === 'tl')
+                                             ? (expandedGroups[teamName] !== false)
+                                             : !!expandedGroups[teamName];
                                          
                                          // Sub-grouping within the major group
                                          const subGroups = {};
