@@ -53,7 +53,11 @@
         "select_business_type": "اختر العمل",
         "share": "مشاركة",
         "cancel": "إلغاء",
-        "download": "تحميل الملف"
+        "download": "تحميل الملف",
+        "attachments": "مرفقات وشرائح المحاضرة",
+        "add_attachment": "إضافة مواد تكميلية",
+        "download_attachment": "تحميل",
+        "unsupported_file_type": "تنسيق ملف غير مدعوم (يسمح فقط بـ PPT أو PDF أو DOC أو XLS أو ZIP أو الصور)"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",

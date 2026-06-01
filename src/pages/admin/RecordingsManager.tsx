@@ -7,6 +7,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
 import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw } from 'lucide-react';
 
+interface Attachment {
+    id: string;
+    name: string;
+    url: string;
+    type: 'ppt' | 'pdf' | 'doc' | 'excel' | 'zip' | 'image' | 'other';
+    size: string;
+    uploadedAt: any;
+}
+
 interface Recording {
     id: string;
     title: string;
@@ -19,6 +28,7 @@ interface Recording {
     createdAt: any;
     displayId?: string;
     businessType?: 'kid' | 'adult' | 'ss' | 'leader';
+    attachments?: Attachment[];
 }
 
 interface Category {
@@ -61,6 +71,10 @@ export default function RecordingsManager() {
     // Upload States
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
+
+    // Attachment States
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const [uploadingAttachments, setUploadingAttachments] = useState<Record<string, number>>({});
 
     const [pageError, setPageError] = useState<string | null>(null);
 
@@ -258,6 +272,8 @@ export default function RecordingsManager() {
         setAvatarFile(null);
         setAvatarPreview(null);
         setBusinessType(profile?.dep === 'SS' ? 'ss' : 'kid');
+        setAttachments([]);
+        setUploadingAttachments({});
         setProgress(0);
         setUploading(false);
         const targetBusType = profile?.dep === 'SS' ? 'ss' : 'kid';
@@ -273,6 +289,99 @@ export default function RecordingsManager() {
         if (audioInput) audioInput.value = '';
         const avatarInput = document.getElementById('avatarInput') as HTMLInputElement;
         if (avatarInput) avatarInput.value = '';
+    };
+
+    const getFileType = (fileName: string): Attachment['type'] => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        if (!ext) return 'other';
+        if (['ppt', 'pptx'].includes(ext)) return 'ppt';
+        if (['pdf'].includes(ext)) return 'pdf';
+        if (['doc', 'docx'].includes(ext)) return 'doc';
+        if (['xls', 'xlsx', 'csv'].includes(ext)) return 'excel';
+        if (['zip', 'rar', '7z'].includes(ext)) return 'zip';
+        if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) return 'image';
+        return 'other';
+    };
+
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setPageError(null);
+        const fileList = Array.from(files);
+
+        for (const file of fileList) {
+            if (file.size > 50 * 1024 * 1024) {
+                setPageError(`${t('common.unsupported_file_type', '不支持的文件类型（仅支持 PPT, PDF, DOC, XLS, ZIP, 图片）')}: ${file.name} - 最大支持 50MB`);
+                continue;
+            }
+
+            const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            try {
+                const storageRef = ref(storage, `attachments/${Date.now()}_${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+
+                setUploadingAttachments(prev => ({ ...prev, [tempId]: 0 }));
+
+                await new Promise<void>((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const prog = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            setUploadingAttachments(prev => ({ ...prev, [tempId]: Math.round(prog) }));
+                        },
+                        (error) => reject(error),
+                        async () => {
+                            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                            
+                            const newAttachment: Attachment = {
+                                id: `att_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                                name: file.name,
+                                url: downloadUrl,
+                                type: getFileType(file.name),
+                                size: formatFileSize(file.size),
+                                uploadedAt: new Date().toISOString()
+                            };
+
+                            setAttachments(prev => [...prev, newAttachment]);
+                            resolve();
+                        }
+                    );
+                });
+            } catch (error: any) {
+                console.error("Attachment upload failed:", error);
+                setPageError(`${t('common.process_fail', '处理失败:')} ${error.message}`);
+            } finally {
+                setUploadingAttachments(prev => {
+                    const copy = { ...prev };
+                    delete copy[tempId];
+                    return copy;
+                });
+            }
+        }
+    };
+
+    const handleRemoveAttachment = async (attId: string, attUrl: string) => {
+        if (!window.confirm(t('common.confirm_delete_attachment', '确定要移除此附件文件吗？'))) return;
+        
+        try {
+            if (attUrl.includes('firebasestorage')) {
+                const fileRef = ref(storage, attUrl);
+                await deleteObject(fileRef);
+            }
+        } catch (e) {
+            console.error("Failed to delete attachment file from Storage", e);
+        }
+
+        setAttachments(prev => prev.filter(att => att.id !== attId));
     };
 
     const handleTranscribe = async (rec: Recording) => {
@@ -371,6 +480,7 @@ export default function RecordingsManager() {
         setEditingId(rec.id);
         setTitle(rec.title);
         setDescription(rec.description);
+        setAttachments(rec.attachments || []);
         const name = rec.lecturerName || '';
         setLecturerName(name);
         
@@ -549,7 +659,8 @@ export default function RecordingsManager() {
                 categoryName: category?.name || t('common.uncategorized'),
                 businessType,
                 uploaderId: user?.uid || '',
-                uploaderCrmId: profile?.crmId || ''
+                uploaderCrmId: profile?.crmId || '',
+                attachments: attachments || []
             };
 
             if (editingId) {
@@ -980,6 +1091,72 @@ export default function RecordingsManager() {
                                     <span className="text-sm text-gray-500 truncate max-w-[200px]">
                                         {file ? file.name : t('common.no_file_chosen', '未选择任何文件')}
                                     </span>
+                                </div>
+                            </div>
+
+                            {/* Supplementary Attachments Upload Box */}
+                            <div className="mt-4 border-t border-gray-100 pt-4">
+                                <label className="block text-sm font-semibold text-deep-teal mb-1 flex items-center gap-1.5">
+                                    <FileText className="w-4 h-4 text-desert-gold" />
+                                    {t('common.attachments', '配套讲义与附件')}
+                                </label>
+                                <p className="text-[11px] text-arabian-night/50 mb-2">
+                                    {t('recordings_manager.attachments_tip', '可选。可上传启动会课件、PDF指南或脑图，单个大小上限 50MB。')}
+                                </p>
+                                
+                                <div className="flex flex-col gap-2.5">
+                                    {/* Upload Button */}
+                                    <label className="cursor-pointer border-2 border-dashed border-gray-200 hover:border-desert-gold/50 rounded-xl p-3 flex flex-col items-center justify-center gap-1 bg-gray-50/50 hover:bg-desert-gold/5 transition-all">
+                                        <UploadCloud className="w-5 h-5 text-desert-gold/80" />
+                                        <span className="text-xs font-bold text-arabian-night/60">{t('common.add_attachment', '添加附件课件')}</span>
+                                        <input
+                                            type="file"
+                                            multiple
+                                            onChange={handleAttachmentUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    
+                                    {/* Active Uploading Attachment Progresses */}
+                                    {Object.entries(uploadingAttachments).map(([tempId, prog]) => (
+                                        <div key={tempId} className="bg-desert-gold/5 border border-desert-gold/10 p-2.5 rounded-xl text-xs space-y-1.5 animate-pulse">
+                                            <div className="flex justify-between font-bold text-deep-teal">
+                                                <span>{t('common.loading', '加载中...')}</span>
+                                                <span className="text-desert-gold">{prog}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                                                <div className="bg-desert-gold h-full rounded-full transition-all duration-300" style={{ width: `${prog}%` }}></div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Uploaded Attachments List */}
+                                    {attachments.length > 0 && (
+                                        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                                            {attachments.map(att => (
+                                                <div key={att.id} className="flex justify-between items-center bg-white border border-gray-100 p-2 rounded-xl text-xs group shadow-sm">
+                                                    <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                                                        <span className="text-base shrink-0" role="img" aria-label="file">
+                                                            {att.type === 'ppt' ? '📊' : att.type === 'pdf' ? '📕' : att.type === 'image' ? '🖼️' : '📄'}
+                                                        </span>
+                                                        <span className="font-semibold text-arabian-night truncate" title={att.name}>
+                                                            {att.name}
+                                                        </span>
+                                                        <span className="text-[10px] text-arabian-night/40 scale-95 origin-left shrink-0">
+                                                            ({att.size})
+                                                        </span>
+                                                    </div>
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => handleRemoveAttachment(att.id, att.url)}
+                                                        className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 opacity-60 group-hover:opacity-100 transition-all shrink-0 cursor-pointer"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             

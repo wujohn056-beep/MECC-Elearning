@@ -53,7 +53,11 @@
         "select_business_type": "选择业务线",
         "share": "分享",
         "cancel": "取消",
-        "download": "下载文件"
+        "download": "下载文件",
+        "attachments": "配套讲义与附件",
+        "add_attachment": "添加附件课件",
+        "download_attachment": "下载附件",
+        "unsupported_file_type": "不支持的文件类型（仅支持 PPT, PDF, DOC, XLS, ZIP, 图片）"
     },
     "navbar": {
         "title": "ME 云学堂",

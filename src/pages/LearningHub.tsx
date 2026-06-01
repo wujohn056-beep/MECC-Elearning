@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Recording {
@@ -787,7 +787,9 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-300">
             {/* Modal Container */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 max-h-[90vh] relative">
+            <div className={`bg-white rounded-3xl border border-gray-100 shadow-2xl w-full ${
+                rec.attachments?.length ? 'max-w-6xl' : 'max-w-4xl'
+            } overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 max-h-[90vh] relative`}>
                 {/* Modal Header */}
                 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <div className="flex items-center gap-2">
@@ -810,8 +812,12 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                     </button>
                 </div>
 
-                {/* Playback viewport */}
-                <div className="bg-black flex-1 flex items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-[400px]">
+                {/* Main Body Split Layout */}
+                <div className={`flex-1 flex flex-col ${rec.attachments?.length ? 'lg:flex-row' : ''} overflow-hidden`}>
+                    {/* Left/Main Content Panel */}
+                    <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
+                        {/* Playback viewport */}
+                        <div className="bg-black flex-1 flex items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-[400px]">
                     {isDoc ? (
                         <div className="flex flex-col items-center justify-center gap-6 py-12 w-full bg-gradient-to-br from-amber-500/10 via-rose-500/10 to-indigo-600/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-inner min-h-[300px] md:min-h-[400px] px-8 text-center animate-in fade-in duration-500">
                             <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl relative overflow-hidden transform hover:scale-105 transition-all duration-300 group">
@@ -1547,6 +1553,47 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                         );
                                     })
                                 )}
+                            </div>
+                        </div>
+                    )}
+                    </div>
+                    </div>
+
+                    {/* Right Panel: Associated Attachments Sidebar */}
+                    {rec.attachments && rec.attachments.length > 0 && (
+                        <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-100 bg-gray-50/30 flex flex-col p-6 shrink-0 lg:max-h-[80vh] overflow-y-auto">
+                            <h3 className="text-sm font-extrabold text-deep-teal mb-4 flex items-center gap-1.5 shrink-0 select-none">
+                                <FileText className="w-4 h-4 text-desert-gold" />
+                                {t('common.attachments', '配套讲义与附件')}
+                            </h3>
+                            <div className="space-y-3">
+                                {rec.attachments.map((att: any) => (
+                                    <div key={att.id} className="bg-white border border-gray-100/80 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-desert-gold/20 transition-all group">
+                                        <div className="flex items-start gap-2.5 min-w-0">
+                                            <span className="text-2xl shrink-0 select-none" role="img" aria-label="file">
+                                                {att.type === 'ppt' ? '📊' : att.type === 'pdf' ? '📕' : att.type === 'image' ? '🖼️' : '📄'}
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-extrabold text-xs text-arabian-night line-clamp-2 pr-1" title={att.name}>
+                                                    {att.name}
+                                                </p>
+                                                <span className="text-[10px] font-bold text-arabian-night/40 mt-1 inline-block">
+                                                    {att.size || '-'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <a
+                                            href={att.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full bg-deep-teal/5 hover:bg-deep-teal hover:text-white text-deep-teal text-center py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                            <span>{t('common.download_attachment', '下载')}</span>
+                                        </a>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}

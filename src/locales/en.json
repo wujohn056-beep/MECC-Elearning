@@ -53,7 +53,11 @@
         "select_business_type": "Select Business",
         "share": "Share",
         "cancel": "Cancel",
-        "download": "Download File"
+        "download": "Download File",
+        "attachments": "Supporting Lecture Notes & Slides",
+        "add_attachment": "Add Supplemental Material",
+        "download_attachment": "Download",
+        "unsupported_file_type": "Unsupported file format (Only PPT, PDF, DOC, XLS, ZIP, or images allowed)"
     },
     "navbar": {
         "title": "ME Cloud Academy",
