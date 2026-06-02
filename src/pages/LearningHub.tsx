@@ -555,6 +555,32 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [recordingAnalysis, setRecordingAnalysis] = useState<any>(null);
 
+    // SD translation bypass states
+    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
+    const [activeVideoTab, setActiveVideoTab] = useState<'arabic' | 'chinese'>('arabic');
+    const [videoTranscriptZh, setVideoTranscriptZh] = useState<string>(rec.transcriptZh || '');
+    const [loadingVideoTranslation, setLoadingVideoTranslation] = useState(false);
+
+    React.useEffect(() => {
+        if (activeVideoTab === 'chinese' && !videoTranscriptZh && isSDLevel) {
+            setLoadingVideoTranslation(true);
+            fetch('/.netlify/functions/translate-transcript', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recordingId: rec.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.transcriptZh) {
+                    setVideoTranscriptZh(data.transcriptZh);
+                    rec.transcriptZh = data.transcriptZh;
+                }
+            })
+            .catch(err => console.error("Error loading video translation:", err))
+            .finally(() => setLoadingVideoTranslation(false));
+        }
+    }, [activeVideoTab, rec.id, videoTranscriptZh, isSDLevel]);
+
     React.useEffect(() => {
         if (isVideo || isDoc) return;
         const currentLang = i18n.language || 'en';
@@ -1085,27 +1111,80 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                 <div className="mt-6 border-t border-gray-100 pt-5">
                                     {isUnlocked ? (
                                         <div className="animate-in fade-in duration-700">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5">
-                                                    <FileText className="h-5 w-5 text-desert-gold" />
-                                                    {t('learning_hub.arabic_transcript', '阿语逐字稿')}
-                                                </h4>
+                                            <div className="flex flex-wrap justify-between items-center gap-4 mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-md font-extrabold text-deep-teal flex items-center gap-1.5">
+                                                        <FileText className="h-5 w-5 text-desert-gold" />
+                                                        {activeVideoTab === 'chinese' ? t('learning_hub.chinese_transcript', '中文翻译') : t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                                                    </h4>
+                                                </div>
+
+                                                {/* Bilingual Translation Toggle */}
+                                                {isSDLevel && (
+                                                    <div className="flex bg-gray-100 p-0.5 rounded-lg text-[10px] font-semibold border border-gray-200/50 select-none">
+                                                        <button
+                                                            onClick={() => setActiveVideoTab('arabic')}
+                                                            className={`px-2 py-1 rounded-md transition-all duration-200 cursor-pointer ${
+                                                                activeVideoTab === 'arabic'
+                                                                    ? 'bg-white text-deep-teal shadow-sm border border-gray-200/20'
+                                                                    : 'text-gray-400 hover:text-gray-600'
+                                                            }`}
+                                                        >
+                                                            🌐 Original
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setActiveVideoTab('chinese')}
+                                                            className={`px-2 py-1 rounded-md transition-all duration-200 flex items-center gap-0.5 cursor-pointer ${
+                                                                activeVideoTab === 'chinese'
+                                                                    ? 'bg-white text-deep-teal shadow-sm border border-gray-200/20'
+                                                                    : 'text-gray-400 hover:text-gray-600'
+                                                            }`}
+                                                        >
+                                                            🇨🇳 中文
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                                 <button 
                                                     onClick={() => {
-                                                        navigator.clipboard.writeText(rec.transcript);
-                                                        alert(t('common.copied', '已复制到剪贴板！'));
+                                                        const textToCopy = activeVideoTab === 'chinese' ? videoTranscriptZh : rec.transcript;
+                                                        if (textToCopy) {
+                                                            navigator.clipboard.writeText(textToCopy);
+                                                            alert(t('common.copied', '已复制到剪贴板！'));
+                                                        }
                                                     }}
-                                                    className="text-xs font-semibold text-desert-gold border border-desert-gold/30 hover:bg-yellow-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                                                    className="text-xs font-semibold text-desert-gold border border-desert-gold/30 hover:bg-yellow-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ml-auto sm:ml-0"
                                                 >
                                                     {t('common.copy', '复制')}
                                                 </button>
                                             </div>
-                                            <div 
-                                                className="bg-gray-50/75 border border-gray-100 rounded-2xl p-5 max-h-[300px] overflow-y-auto text-sm text-arabian-night/95 leading-relaxed whitespace-pre-line text-right font-medium" 
-                                                dir="rtl"
-                                            >
-                                                {rec.transcript}
-                                            </div>
+                                            
+                                            {activeVideoTab === 'chinese' && loadingVideoTranslation ? (
+                                                <div className="bg-gray-50/75 border border-gray-100 rounded-2xl p-5 flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
+                                                    <RefreshCw className="w-6 h-6 animate-spin text-desert-gold" />
+                                                    <span className="text-xs font-bold animate-pulse">正在智能生成中文对照翻译...</span>
+                                                </div>
+                                            ) : (
+                                                <div 
+                                                    className={`bg-gray-50/75 border border-gray-100 rounded-2xl p-5 max-h-[300px] overflow-y-auto text-sm text-arabian-night/95 leading-relaxed whitespace-pre-line ${
+                                                        activeVideoTab === 'chinese' ? 'text-left font-sans' : 'text-right font-medium'
+                                                    }`} 
+                                                    dir={activeVideoTab === 'chinese' ? 'ltr' : 'rtl'}
+                                                    style={{
+                                                        fontFamily: activeVideoTab === 'chinese' 
+                                                            ? "'Inter', 'Noto Sans SC', sans-serif" 
+                                                            : "'Noto Sans Arabic', 'Inter', sans-serif"
+                                                    }}
+                                                >
+                                                    {activeVideoTab === 'chinese' ? (videoTranscriptZh || t('learning_hub.no_translation_available', '暂无中文对照翻译')) : rec.transcript}
+                                                </div>
+                                            )}
+
+                                            {isSDLevel && (
+                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-2 text-center select-none">
+                                                    🔒 {t('learning_hub.sd_translation_notice', '🔒 SD 总监层级以上特权：中文对照翻译通道已激活')}
+                                                </p>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="animate-in fade-in duration-500">
@@ -2017,21 +2096,48 @@ interface DirectTranscriptModalProps {
 
 const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => {
     const { t } = useTranslation();
+    const { profile } = useAuth();
+    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
+    const [activeTab, setActiveTab] = useState<'arabic' | 'chinese'>('arabic');
+    const [transcriptZh, setTranscriptZh] = useState<string>(rec.transcriptZh || '');
+    const [loadingTranslation, setLoadingTranslation] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === 'chinese' && !transcriptZh && isSDLevel) {
+            setLoadingTranslation(true);
+            fetch('/.netlify/functions/translate-transcript', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recordingId: rec.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.transcriptZh) {
+                    setTranscriptZh(data.transcriptZh);
+                    rec.transcriptZh = data.transcriptZh;
+                }
+            })
+            .catch(err => console.error("Error loading translation:", err))
+            .finally(() => setLoadingTranslation(false));
+        }
+    }, [activeTab, rec.id, transcriptZh, isSDLevel]);
 
     const handleCopy = () => {
-        if (rec.transcript) {
-            navigator.clipboard.writeText(rec.transcript);
+        const textToCopy = activeTab === 'chinese' ? transcriptZh : rec.transcript;
+        if (textToCopy) {
+            navigator.clipboard.writeText(textToCopy);
             alert(t('common.copied', '已复制到剪贴板！'));
         }
     };
 
     const handleDownload = () => {
-        if (!rec.transcript) return;
+        const textToDownload = activeTab === 'chinese' ? transcriptZh : rec.transcript;
+        if (!textToDownload) return;
         const element = document.createElement("a");
-        const file = new Blob([rec.transcript], { type: 'text/plain;charset=utf-8' });
+        const file = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
         element.href = URL.createObjectURL(file);
-        element.download = `${rec.title}_transcript.txt`;
+        element.download = `${rec.title}_transcript_${activeTab}.txt`;
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
@@ -2107,6 +2213,32 @@ const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => 
                         ))}
                     </div>
 
+                    {/* Bilingual Translation Toggle */}
+                    {isSDLevel && (
+                        <div className="flex bg-gray-100 dark:bg-slate-700/60 p-0.5 rounded-lg text-xs font-semibold border border-gray-200/50 select-none">
+                            <button
+                                onClick={() => setActiveTab('arabic')}
+                                className={`px-3 py-1.5 rounded-md transition-all duration-200 cursor-pointer ${
+                                    activeTab === 'arabic'
+                                        ? 'bg-white dark:bg-slate-800 text-deep-teal shadow-sm border border-gray-200/20'
+                                        : 'text-gray-400 dark:text-slate-400 hover:text-gray-600'
+                                }`}
+                            >
+                                🌐 Original (العربية)
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('chinese')}
+                                className={`px-3 py-1.5 rounded-md transition-all duration-200 flex items-center gap-1 cursor-pointer ${
+                                    activeTab === 'chinese'
+                                        ? 'bg-white dark:bg-slate-800 text-deep-teal shadow-sm border border-gray-200/20'
+                                        : 'text-gray-400 dark:text-slate-400 hover:text-gray-600'
+                                }`}
+                            >
+                                🇨🇳 中文翻译
+                            </button>
+                        </div>
+                    )}
+
                     {/* Action buttons */}
                     <div className="flex items-center gap-2">
                         <button
@@ -2128,20 +2260,33 @@ const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => 
                 </div>
                 
                 {/* Transcript Body */}
-                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 dark:bg-slate-950/20">
-                    <div 
-                        className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-sm leading-relaxed whitespace-pre-line text-right font-medium text-slate-800 dark:text-slate-100 ${fontSizeClasses[fontSize]}`}
-                        dir="rtl"
-                        style={{ fontFamily: "'Noto Sans Arabic', 'Inter', sans-serif" }}
-                    >
-                        {rec.transcript}
-                    </div>
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 dark:bg-slate-950/20 flex flex-col">
+                    {activeTab === 'chinese' && loadingTranslation ? (
+                        <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500 gap-3">
+                            <RefreshCw className="w-8 h-8 animate-spin text-desert-gold" />
+                            <span className="text-xs font-bold animate-pulse">正在智能生成中文对照翻译...</span>
+                        </div>
+                    ) : (
+                        <div 
+                            className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-sm leading-relaxed whitespace-pre-line ${
+                                activeTab === 'chinese' ? 'text-left text-slate-800 dark:text-slate-100 font-sans' : 'text-right font-medium text-slate-800 dark:text-slate-100'
+                            } ${fontSizeClasses[fontSize]}`}
+                            dir={activeTab === 'chinese' ? 'ltr' : 'rtl'}
+                            style={{ 
+                                fontFamily: activeTab === 'chinese' 
+                                    ? "'Inter', 'Noto Sans SC', sans-serif" 
+                                    : "'Noto Sans Arabic', 'Inter', sans-serif" 
+                            }}
+                        >
+                            {activeTab === 'chinese' ? (transcriptZh || t('learning_hub.no_translation_available', '暂无中文对照翻译')) : rec.transcript}
+                        </div>
+                    )}
                 </div>
                 
                 {/* Footer warning */}
                 <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 text-center select-none">
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold tracking-wide flex items-center justify-center gap-1">
-                        🔒 {t('learning_hub.tl_bypass_notice', 'TL/SM 管理层免审阅直看通道已激活')}
+                        🔒 {isSDLevel ? t('learning_hub.sd_translation_notice', '🔒 SD 总监层级以上特权：中文对照翻译通道已激活') : t('learning_hub.tl_bypass_notice', 'TL/SM 管理层免审阅直看通道已激活')}
                     </p>
                 </div>
             </div>

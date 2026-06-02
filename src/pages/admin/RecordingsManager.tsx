@@ -56,6 +56,40 @@ export default function RecordingsManager() {
 
     // Direct Transcript View State
     const [viewingTranscriptRecording, setViewingTranscriptRecording] = useState<Recording | null>(null);
+    const [adminActiveTab, setAdminActiveTab] = useState<'arabic' | 'chinese'>('arabic');
+    const [adminTranscriptZh, setAdminTranscriptZh] = useState<string>('');
+    const [loadingAdminTranslation, setLoadingAdminTranslation] = useState(false);
+    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
+
+    useEffect(() => {
+        if (viewingTranscriptRecording) {
+            setAdminActiveTab('arabic');
+            setAdminTranscriptZh((viewingTranscriptRecording as any).transcriptZh || '');
+        } else {
+            setAdminActiveTab('arabic');
+            setAdminTranscriptZh('');
+        }
+    }, [viewingTranscriptRecording]);
+
+    useEffect(() => {
+        if (adminActiveTab === 'chinese' && !adminTranscriptZh && viewingTranscriptRecording && isSDLevel) {
+            setLoadingAdminTranslation(true);
+            fetch('/.netlify/functions/translate-transcript', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recordingId: viewingTranscriptRecording.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.transcriptZh) {
+                    setAdminTranscriptZh(data.transcriptZh);
+                    (viewingTranscriptRecording as any).transcriptZh = data.transcriptZh;
+                }
+            })
+            .catch(err => console.error("Error loading admin translation:", err))
+            .finally(() => setLoadingAdminTranslation(false));
+        }
+    }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, isSDLevel]);
 
     if (!hasPermission('manageRecordings')) {
         return <Navigate to="/admin" replace />;
@@ -1673,7 +1707,7 @@ export default function RecordingsManager() {
                                 <div className="flex items-center gap-2 text-deep-teal">
                                     <FileText className="w-5 h-5 text-desert-gold shrink-0 animate-pulse" />
                                     <span className="text-xs font-black tracking-widest uppercase bg-desert-gold/10 px-2 py-0.5 rounded border border-desert-gold/25 select-none">
-                                        {t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                                        {adminActiveTab === 'chinese' ? t('learning_hub.chinese_transcript', '中文翻译') : t('learning_hub.arabic_transcript', '阿语逐字稿')}
                                     </span>
                                 </div>
                                 <h3 className="text-lg font-black text-slate-800 line-clamp-1 leading-snug">
@@ -1701,8 +1735,9 @@ export default function RecordingsManager() {
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => {
-                                        if (viewingTranscriptRecording.transcript) {
-                                            navigator.clipboard.writeText(viewingTranscriptRecording.transcript);
+                                        const textToCopy = adminActiveTab === 'chinese' ? adminTranscriptZh : viewingTranscriptRecording.transcript;
+                                        if (textToCopy) {
+                                            navigator.clipboard.writeText(textToCopy);
                                             alert(t('common.copied', '已复制到剪贴板！'));
                                         }
                                     }}
@@ -1714,11 +1749,12 @@ export default function RecordingsManager() {
                                 
                                 <button
                                     onClick={() => {
-                                        if (!viewingTranscriptRecording.transcript) return;
+                                        const textToDownload = adminActiveTab === 'chinese' ? adminTranscriptZh : viewingTranscriptRecording.transcript;
+                                        if (!textToDownload) return;
                                         const element = document.createElement("a");
-                                        const file = new Blob([viewingTranscriptRecording.transcript], { type: 'text/plain;charset=utf-8' });
+                                        const file = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
                                         element.href = URL.createObjectURL(file);
-                                        element.download = `${viewingTranscriptRecording.title}_transcript.txt`;
+                                        element.download = `${viewingTranscriptRecording.title}_transcript_${adminActiveTab}.txt`;
                                         document.body.appendChild(element);
                                         element.click();
                                         document.body.removeChild(element);
@@ -1729,6 +1765,32 @@ export default function RecordingsManager() {
                                     <span>{t('common.download', '下载')}</span>
                                 </button>
                             </div>
+
+                            {/* Bilingual Translation Toggle */}
+                            {isSDLevel && (
+                                <div className="flex bg-gray-200 p-0.5 rounded-lg text-xs font-semibold border border-gray-300/30 select-none">
+                                    <button
+                                        onClick={() => setAdminActiveTab('arabic')}
+                                        className={`px-3 py-1.5 rounded-md transition-all duration-200 cursor-pointer ${
+                                            adminActiveTab === 'arabic'
+                                                ? 'bg-white text-deep-teal shadow-sm border border-gray-200/20'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                        }`}
+                                    >
+                                        🌐 Original
+                                    </button>
+                                    <button
+                                        onClick={() => setAdminActiveTab('chinese')}
+                                        className={`px-3 py-1.5 rounded-md transition-all duration-200 flex items-center gap-1 cursor-pointer ${
+                                            adminActiveTab === 'chinese'
+                                                ? 'bg-white text-deep-teal shadow-sm border border-gray-200/20'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                        }`}
+                                    >
+                                        🇨🇳 中文
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Trigger Regeneration inside viewer */}
                             <button
@@ -1746,18 +1808,36 @@ export default function RecordingsManager() {
                         </div>
                         
                         {/* Transcript Body */}
-                        <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30 rounded-2xl border border-gray-100 max-h-[40vh] my-1">
-                            <div 
-                                className="bg-white border border-slate-100 rounded-xl p-5 md:p-6 shadow-sm text-sm leading-relaxed whitespace-pre-line text-right font-medium text-slate-800"
-                                dir="rtl"
-                                style={{ fontFamily: "'Noto Sans Arabic', 'Inter', sans-serif" }}
-                            >
-                                {(viewingTranscriptRecording as any).transcript}
-                            </div>
+                        <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30 rounded-2xl border border-gray-100 max-h-[40vh] my-1 flex flex-col">
+                            {adminActiveTab === 'chinese' && loadingAdminTranslation ? (
+                                <div className="flex-1 flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
+                                    <RefreshCw className="w-6 h-6 animate-spin text-desert-gold" />
+                                    <span className="text-xs font-bold animate-pulse">正在智能生成中文对照翻译...</span>
+                                </div>
+                            ) : (
+                                <div 
+                                    className={`bg-white border border-slate-100 rounded-xl p-5 md:p-6 shadow-sm text-sm leading-relaxed whitespace-pre-line ${
+                                        adminActiveTab === 'chinese' ? 'text-left font-sans' : 'text-right font-medium'
+                                    } text-slate-800`}
+                                    dir={adminActiveTab === 'chinese' ? 'ltr' : 'rtl'}
+                                    style={{ 
+                                        fontFamily: adminActiveTab === 'chinese' 
+                                            ? "'Inter', 'Noto Sans SC', sans-serif" 
+                                            : "'Noto Sans Arabic', 'Inter', sans-serif" 
+                                    }}
+                                >
+                                    {adminActiveTab === 'chinese' ? (adminTranscriptZh || t('learning_hub.no_translation_available', '暂无中文对照翻译')) : viewingTranscriptRecording.transcript}
+                                </div>
+                            )}
                         </div>
                         
                         {/* Footer */}
                         <div className="pt-4 border-t border-gray-100 text-center select-none mt-4">
+                            {isSDLevel && (
+                                <p className="text-[10px] text-slate-400 font-bold mb-2">
+                                    🔒 {t('learning_hub.sd_translation_notice', '🔒 SD 总监层级以上特权：中文对照翻译通道已激活')}
+                                </p>
+                            )}
                             <p className="text-[10px] text-slate-400 font-bold tracking-wide">
                                 ME 云学堂 · 管理控制台
                             </p>
