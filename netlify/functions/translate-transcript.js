@@ -1,5 +1,5 @@
-const admin = require('firebase-admin');
-const fetch = require('node-fetch');
+import admin from 'firebase-admin';
+import fetch from 'node-fetch';
 
 if (!admin.apps.length) {
     try {
@@ -36,7 +36,7 @@ function getFirestoreDb() {
     return dbInstance;
 }
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     // Enable CORS
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -97,7 +97,7 @@ exports.handler = async (event, context) => {
         const transcriptText = recordingData.transcript || clientTranscript || "";
         const displayId = recordingData.displayId || clientDisplayId || 'RD';
         const title = recordingData.title || clientTitle || 'Sales Call';
-        const desc = recordingData.description || clientDescription || 'فهم احتياجات العميل وتقديم الحلول المناسبة لمساعدته في تحقيق أهدافه المهنية وتسريع تطوره';
+        const desc = recordingData.description || clientDescription || 'فهم احتياجات العميل وتقديم الحلول المناسبة لمساعدته在实现职业目标和加速发展中提供支持';
         const lecturer = recordingData.lecturerName || clientLecturerName || 'مستشار مبيعات';
         const category = recordingData.categoryName || clientCategoryName || 'مبيعات';
 
@@ -169,7 +169,7 @@ ${desc}
 客户/受训销售：您好，${lecturer} 老师。我非常认真地听了“${title}”的相关录音和细节，感觉这方面内容对我们真的非常关键。但我很想请教您：我们如何在日常的实际销售工作中具体融入这些方法，从而提高成单率呢？
 培训师 (${lecturer})：这是一个非常棒且极其核心的问题！这正是我们在“${title}”模块中重点关注的内容。核心思想是关于“${desc}”。成功的秘诀不仅在于理论理解，更在于打磨现场演示能力以及应对客户异议时的机敏反应。
 客户/受训销售：是的，完全正确。我们在谈判过程中，有时确实很难保持对话的顺畅流动和临场反应，您有什么具体的实战框架推荐吗？
-培训师 (${lecturer})：当然有。在“${title}”课程中，我们采用基于真实场景和即时角色扮演的互动教学法。这种高强度的模拟训练将为大家提供超越单纯说教的“超值价值”（Extra Value），让大家能够针对不同类型的客户定制出最具说服力的应答方案。
+培训师 (${lecturer})：当然有。在“${title}”课程中，我们采用基于真实场景 and 即时角色扮演的互动教学法。这种高强度的模拟训练将为大家提供超越单纯说教的“超值价值”（Extra Value），让大家能够针对不同类型的客户定制出最具说服力的应答方案。
 客户/受训销售：太棒了！我觉得这种循序渐进的方法能够给我们的业绩带来实实在在的提升，非常期待接下来的课程和实际演练。
 培训师 (${lecturer})：这正是 ME Cloud Academy 的最高目标！我这就把本次课程的完整指导手册和配套参考附件发送给你，希望能全力支持你的职业发展。欢迎加入我们，让我们立刻开启卓越之旅！`;
         }
@@ -198,32 +198,6 @@ ${desc}
             statusCode: 500,
             headers,
             body: JSON.stringify({ error: err.message || "Internal server error" })
-        };
-    }
-};��实战框架推荐吗？
-培训师 (${lecturer})：当然有。在“${title}”课程中，我们采用基于真实场景和即时角色扮演的互动教学法。这种高强度的模拟训练将为大家提供超越单纯说教的“超值价值”（Extra Value），让大家能够针对不同类型的客户定制出最具说服力的应答方案。
-客户/受训销售：太棒了！我觉得这种循序渐进的方法能够给我们的业绩带来实实在在的提升，非常期待接下来的课程和实际演练。
-培训师 (${lecturer})：这正是 ME Cloud Academy 的最高目标！我这就把本次课程的完整指导手册和配套参考附件发送给你，希望能全力支持你的职业发展。欢迎加入我们，让我们立刻开启卓越之旅！`;
-        }
-
-        if (translatedText) {
-            await recordingRef.update({
-                transcriptZh: translatedText
-            });
-        }
-
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({ success: true, transcriptZh: translatedText })
-        };
-
-    } catch (err) {
-        console.error("Translate error:", err);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: err.message })
         };
     }
 };
