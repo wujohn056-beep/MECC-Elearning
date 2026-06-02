@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight, BookOpen } from 'lucide-react';
 
 interface Attachment {
     id: string;
@@ -53,6 +53,9 @@ export default function RecordingsManager() {
     const [pushWebhookLang, setPushWebhookLang] = useState<'bilingual' | 'en' | 'zh'>('bilingual');
     const [pushingToDingTalk, setPushingToDingTalk] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+    // Direct Transcript View State
+    const [viewingTranscriptRecording, setViewingTranscriptRecording] = useState<Recording | null>(null);
 
     if (!hasPermission('manageRecordings')) {
         return <Navigate to="/admin" replace />;
@@ -1537,8 +1540,12 @@ export default function RecordingsManager() {
                                                         <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
                                                             {rec.categoryName || t('common.uncategorized')}
                                                         </span>
-                                                        {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && !isVideo && (
-                                                             <span className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
+                                                                                        {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && (
+                                                             <span 
+                                                                 onClick={() => setViewingTranscriptRecording(rec)}
+                                                                 className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold cursor-pointer hover:bg-green-600 hover:text-white hover:border-transparent transition-all active:scale-95 flex items-center shrink-0"
+                                                                 title={t('learning_hub.click_to_view_direct', '点击直接查看阿语逐字稿')}
+                                                             >
                                                                  📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
                                                              </span>
                                                          )}
@@ -1587,16 +1594,22 @@ export default function RecordingsManager() {
                                             <div className="flex flex-col items-end gap-2 ml-4">
                                                 <div className="flex gap-2">
                                                     {/* Temporarily hidden transcription generation button */}
-                                                    {isWriteAllowed && !isVideo && (
+                                                    {isWriteAllowed && (
                                                         <button 
-                                                            onClick={() => handleTranscribe(rec)} 
+                                                            onClick={() => {
+                                                                if ((rec as any).transcript) {
+                                                                    setViewingTranscriptRecording(rec);
+                                                                } else {
+                                                                    handleTranscribe(rec);
+                                                                }
+                                                            }} 
                                                             disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
                                                             className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
                                                                 (rec as any).transcript 
                                                                     ? 'text-green-600 hover:bg-green-50' 
                                                                     : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
                                                             }`} 
-                                                            title={(rec as any).transcript ? t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
+                                                            title={(rec as any).transcript ? t('learning_hub.click_to_view_direct', '点击直接查看阿语逐字稿') : t('recordings_manager.generate_transcript', '自动生成阿语逐字稿')}
                                                         >
                                                             {transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' ? (
                                                                 <RefreshCw className="h-4 w-4 animate-spin text-desert-gold" />
@@ -1646,6 +1659,112 @@ export default function RecordingsManager() {
                     </div>
                 </div>
             </div>
+
+            {/* Direct Transcript View Modal for Admin */}
+            {viewingTranscriptRecording && (
+                <div className="fixed inset-0 bg-arabian-night/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
+                    <div className="bg-white/95 rounded-3xl shadow-2xl border border-white/60 p-6 md:p-8 max-w-2xl w-full mx-4 transform transition-all animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh] text-arabian-night relative">
+                        {/* Gold header accent line */}
+                        <div className="h-1.5 w-full bg-gradient-to-r from-deep-teal via-desert-gold to-deep-teal absolute top-0 left-0 right-0 rounded-t-3xl" />
+                        
+                        {/* Header */}
+                        <div className="flex items-start justify-between border-b border-gray-100 pb-4 mt-1">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-deep-teal">
+                                    <FileText className="w-5 h-5 text-desert-gold shrink-0 animate-pulse" />
+                                    <span className="text-xs font-black tracking-widest uppercase bg-desert-gold/10 px-2 py-0.5 rounded border border-desert-gold/25 select-none">
+                                        {t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                                    </span>
+                                </div>
+                                <h3 className="text-lg font-black text-slate-800 line-clamp-1 leading-snug">
+                                    {viewingTranscriptRecording.title}
+                                </h3>
+                                {viewingTranscriptRecording.lecturerName && (
+                                    <p className="text-xs text-desert-gold font-bold flex items-center gap-1">
+                                        <User className="w-3.5 h-3.5 shrink-0" />
+                                        <span>{viewingTranscriptRecording.lecturerName}</span>
+                                    </p>
+                                )}
+                            </div>
+                            
+                            <button 
+                                onClick={() => setViewingTranscriptRecording(null)}
+                                className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shadow-sm cursor-pointer active:scale-95 shrink-0"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        {/* Control Toolbar */}
+                        <div className="bg-slate-50/80 px-4 py-3 rounded-xl border border-gray-100 flex flex-wrap justify-between items-center gap-4 select-none my-3">
+                            {/* Actions */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        if (viewingTranscriptRecording.transcript) {
+                                            navigator.clipboard.writeText(viewingTranscriptRecording.transcript);
+                                            alert(t('common.copied', '已复制到剪贴板！'));
+                                        }
+                                    }}
+                                    className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                                >
+                                    <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                                    <span>{t('common.copy', '复制')}</span>
+                                </button>
+                                
+                                <button
+                                    onClick={() => {
+                                        if (!viewingTranscriptRecording.transcript) return;
+                                        const element = document.createElement("a");
+                                        const file = new Blob([viewingTranscriptRecording.transcript], { type: 'text/plain;charset=utf-8' });
+                                        element.href = URL.createObjectURL(file);
+                                        element.download = `${viewingTranscriptRecording.title}_transcript.txt`;
+                                        document.body.appendChild(element);
+                                        element.click();
+                                        document.body.removeChild(element);
+                                    }}
+                                    className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                                >
+                                    <Download className="w-3.5 h-3.5 text-desert-gold" />
+                                    <span>{t('common.download', '下载')}</span>
+                                </button>
+                            </div>
+
+                            {/* Trigger Regeneration inside viewer */}
+                            <button
+                                onClick={() => {
+                                    if (window.confirm(t('recordings_manager.regenerate_confirm', '确定要重新生成阿语逐字稿吗？这可能需要几分钟。'))) {
+                                        handleTranscribe(viewingTranscriptRecording);
+                                        setViewingTranscriptRecording(null);
+                                    }
+                                }}
+                                className="bg-amber-50 hover:bg-amber-100 border border-desert-gold/25 text-yellow-800 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                            >
+                                <RefreshCw className="w-3.5 h-3.5 text-desert-gold animate-spin-hover" />
+                                <span>{t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿')}</span>
+                            </button>
+                        </div>
+                        
+                        {/* Transcript Body */}
+                        <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30 rounded-2xl border border-gray-100 max-h-[40vh] my-1">
+                            <div 
+                                className="bg-white border border-slate-100 rounded-xl p-5 md:p-6 shadow-sm text-sm leading-relaxed whitespace-pre-line text-right font-medium text-slate-800"
+                                dir="rtl"
+                                style={{ fontFamily: "'Noto Sans Arabic', 'Inter', sans-serif" }}
+                            >
+                                {(viewingTranscriptRecording as any).transcript}
+                            </div>
+                        </div>
+                        
+                        {/* Footer */}
+                        <div className="pt-4 border-t border-gray-100 text-center select-none mt-4">
+                            <p className="text-[10px] text-slate-400 font-bold tracking-wide">
+                                ME 云学堂 · 管理控制台
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Custom Glassmorphic DingTalk Push Modal */}
             {showPushModal && selectedRecordingForPush && (
