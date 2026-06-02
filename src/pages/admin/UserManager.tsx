@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from 'react';
+
+
+
+
+
+import React, { useState, useEffect, useMemo } from 'react';
 import * as xlsx from 'xlsx';
 import { collection, getDocs, doc, setDoc, serverTimestamp, deleteDoc, updateDoc } from 'firebase/firestore';
 import { initializeApp, deleteApp } from 'firebase/app';
@@ -156,6 +161,115 @@ export default function UserManager() {
     const uniqueSMs = Array.from(new Set(users.map(u => u.sm).filter(Boolean))).sort();
     const uniqueTLs = Array.from(new Set(users.map(u => u.tl).filter(Boolean))).sort();
     const uniqueTeams = Array.from(new Set(users.map(u => u.team).filter(Boolean))).sort();
+
+    // Filtered lists for hierarchical dropdowns in the Add/Edit form
+    const filteredSDs = useMemo(() => {
+        const depUsers = users.filter(u => (u.dep || 'CC') === (formData.dep || 'CC'));
+        const sds = new Set<string>();
+        depUsers.forEach(u => {
+            if (u.sd) sds.add(u.sd.trim());
+            if (u.role === 'sd' && u.crmId) sds.add(u.crmId.trim());
+        });
+        return Array.from(sds).sort();
+    }, [users, formData.dep]);
+
+    const filteredSMs = useMemo(() => {
+        const depUsers = users.filter(u => (u.dep || 'CC') === (formData.dep || 'CC'));
+        
+        if (formData.sd) {
+            const smsUnderSd = new Set<string>();
+            depUsers.forEach(u => {
+                if (u.sd && u.sd.trim().toLowerCase() === formData.sd.trim().toLowerCase()) {
+                    if (u.sm) smsUnderSd.add(u.sm.trim());
+                    if (u.role === 'sm' && u.crmId) smsUnderSd.add(u.crmId.trim());
+                }
+            });
+            return Array.from(smsUnderSd).sort();
+        }
+        
+        const sms = new Set<string>();
+        depUsers.forEach(u => {
+            if (u.sm) sms.add(u.sm.trim());
+            if (u.role === 'sm' && u.crmId) sms.add(u.crmId.trim());
+        });
+        return Array.from(sms).sort();
+    }, [users, formData.sd, formData.dep]);
+
+    const filteredTLs = useMemo(() => {
+        const depUsers = users.filter(u => (u.dep || 'CC') === (formData.dep || 'CC'));
+        const tls = new Set<string>();
+
+        if (formData.sm) {
+            // Always append the SM themselves as a TL option for SM direct manage case
+            tls.add(formData.sm.trim());
+
+            depUsers.forEach(u => {
+                if (u.sm && u.sm.trim().toLowerCase() === formData.sm.trim().toLowerCase()) {
+                    if (u.tl) tls.add(u.tl.trim());
+                    if (u.role === 'tl' && u.crmId) tls.add(u.crmId.trim());
+                }
+            });
+            return Array.from(tls).sort();
+        }
+
+        if (formData.sd) {
+            depUsers.forEach(u => {
+                if (u.sd && u.sd.trim().toLowerCase() === formData.sd.trim().toLowerCase()) {
+                    if (u.tl) tls.add(u.tl.trim());
+                    if (u.role === 'tl' && u.crmId) tls.add(u.crmId.trim());
+                }
+            });
+            return Array.from(tls).sort();
+        }
+
+        depUsers.forEach(u => {
+            if (u.tl) tls.add(u.tl.trim());
+            if (u.role === 'tl' && u.crmId) tls.add(u.crmId.trim());
+        });
+        return Array.from(tls).sort();
+    }, [users, formData.sd, formData.sm, formData.dep]);
+
+    const filteredTeams = useMemo(() => {
+        const depUsers = users.filter(u => (u.dep || 'CC') === (formData.dep || 'CC'));
+        const teams = new Set<string>();
+
+        if (formData.tl) {
+            depUsers.forEach(u => {
+                if (
+                    (u.tl && u.tl.trim().toLowerCase() === formData.tl.trim().toLowerCase()) ||
+                    (u.crmId && u.crmId.trim().toLowerCase() === formData.tl.trim().toLowerCase() && u.role === 'tl')
+                ) {
+                    if (u.team) teams.add(u.team.trim());
+                }
+            });
+            depUsers.forEach(u => {
+                if (u.sm && u.sm.trim().toLowerCase() === formData.tl.trim().toLowerCase()) {
+                    if (u.team) teams.add(u.team.trim());
+                }
+            });
+            if (teams.size > 0) return Array.from(teams).sort();
+        }
+
+        if (formData.sm) {
+            depUsers.forEach(u => {
+                if (u.sm && u.sm.trim().toLowerCase() === formData.sm.trim().toLowerCase()) {
+                    if (u.team) teams.add(u.team.trim());
+                }
+            });
+            if (teams.size > 0) return Array.from(teams).sort();
+        }
+
+        if (formData.sd) {
+            depUsers.forEach(u => {
+                if (u.sd && u.sd.trim().toLowerCase() === formData.sd.trim().toLowerCase()) {
+                    if (u.team) teams.add(u.team.trim());
+                }
+            });
+            if (teams.size > 0) return Array.from(teams).sort();
+        }
+
+        return Array.from(new Set(depUsers.map(u => u.team).filter(Boolean))).sort();
+    }, [users, formData.sd, formData.sm, formData.tl, formData.dep]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -1043,10 +1157,10 @@ export default function UserManager() {
                                         onChange={e => setFormData({...formData, sd: e.target.value})}
                                         disabled={isSdDisabled}
                                         className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSdDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
-                                        placeholder="选择或输入 SD"
+                                        placeholder={t('user_manager.placeholder_sd_select_input', '选择或输入 SD')}
                                     />
                                     <datalist id="sd-options">
-                                        {uniqueSDs.map(sd => <option key={sd} value={sd} />)}
+                                        {filteredSDs.map(sd => <option key={sd} value={sd} />)}
                                     </datalist>
                                 </div>
                             )}
@@ -1058,13 +1172,31 @@ export default function UserManager() {
                                         type="text" 
                                         list="sm-options"
                                         value={formData.sm} 
-                                        onChange={e => setFormData({...formData, sm: e.target.value})}
+                                        onChange={e => {
+                                            const newSm = e.target.value;
+                                            let derivedSd = formData.sd;
+                                            
+                                            if (newSm.trim()) {
+                                                const match = users.find(u => 
+                                                    (u.sm && u.sm.trim().toLowerCase() === newSm.trim().toLowerCase()) ||
+                                                    (u.role === 'sm' && u.crmId && u.crmId.trim().toLowerCase() === newSm.trim().toLowerCase())
+                                                );
+                                                if (match && match.sd) {
+                                                    derivedSd = match.sd;
+                                                }
+                                            }
+                                            setFormData({
+                                                ...formData,
+                                                sm: newSm,
+                                                sd: derivedSd
+                                            });
+                                        }}
                                         disabled={isSmDisabled}
                                         className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSmDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
-                                        placeholder="选择或输入 SM"
+                                        placeholder={t('user_manager.placeholder_sm_select_input', '选择或输入 SM')}
                                     />
                                     <datalist id="sm-options">
-                                        {uniqueSMs.map(sm => <option key={sm} value={sm} />)}
+                                        {filteredSMs.map(sm => <option key={sm} value={sm} />)}
                                     </datalist>
                                 </div>
                             )}
@@ -1076,13 +1208,56 @@ export default function UserManager() {
                                         type="text" 
                                         list="tl-options"
                                         value={formData.tl} 
-                                        onChange={e => setFormData({...formData, tl: e.target.value})}
+                                        onChange={e => {
+                                            const newTl = e.target.value;
+                                            let derivedSm = formData.sm;
+                                            let derivedSd = formData.sd;
+                                            let derivedTeam = formData.team;
+                                            
+                                            if (newTl.trim()) {
+                                                const isSmDirect = users.some(u => 
+                                                    (u.sm && u.sm.trim().toLowerCase() === newTl.trim().toLowerCase()) ||
+                                                    (u.role === 'sm' && u.crmId && u.crmId.trim().toLowerCase() === newTl.trim().toLowerCase())
+                                                );
+                                                
+                                                if (isSmDirect) {
+                                                    derivedSm = newTl;
+                                                    const match = users.find(u => 
+                                                        (u.sm && u.sm.trim().toLowerCase() === newTl.trim().toLowerCase()) ||
+                                                        (u.role === 'sm' && u.crmId && u.crmId.trim().toLowerCase() === newTl.trim().toLowerCase())
+                                                    );
+                                                    if (match && match.sd) {
+                                                        derivedSd = match.sd;
+                                                    }
+                                                    if (match && match.team && !derivedTeam) {
+                                                        derivedTeam = match.team;
+                                                    }
+                                                } else {
+                                                    const match = users.find(u => 
+                                                        (u.tl && u.tl.trim().toLowerCase() === newTl.trim().toLowerCase()) ||
+                                                        (u.role === 'tl' && u.crmId && u.crmId.trim().toLowerCase() === newTl.trim().toLowerCase())
+                                                    );
+                                                    if (match) {
+                                                        if (match.sm) derivedSm = match.sm;
+                                                        if (match.sd) derivedSd = match.sd;
+                                                        if (match.team && !derivedTeam) derivedTeam = match.team;
+                                                    }
+                                                }
+                                            }
+                                            setFormData({
+                                                ...formData,
+                                                tl: newTl,
+                                                sm: derivedSm,
+                                                sd: derivedSd,
+                                                team: derivedTeam
+                                            });
+                                        }}
                                         disabled={isTlDisabled}
                                         className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isTlDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
-                                        placeholder="选择或输入 TL"
+                                        placeholder={t('user_manager.placeholder_tl_select_input', '选择或输入 TL')}
                                     />
                                     <datalist id="tl-options">
-                                        {uniqueTLs.map(tl => <option key={tl} value={tl} />)}
+                                        {filteredTLs.map(tl => <option key={tl} value={tl} />)}
                                     </datalist>
                                 </div>
                             )}
@@ -1094,12 +1269,33 @@ export default function UserManager() {
                                         type="text" 
                                         list="team-options"
                                         value={formData.team} 
-                                        onChange={e => setFormData({...formData, team: e.target.value})}
+                                        onChange={e => {
+                                            const newTeam = e.target.value;
+                                            let derivedTl = formData.tl;
+                                            let derivedSm = formData.sm;
+                                            let derivedSd = formData.sd;
+                                            
+                                            if (newTeam.trim()) {
+                                                const match = users.find(u => u.team && u.team.trim().toLowerCase() === newTeam.trim().toLowerCase());
+                                                if (match) {
+                                                    if (!derivedTl && match.tl) derivedTl = match.tl;
+                                                    if (!derivedSm && match.sm) derivedSm = match.sm;
+                                                    if (!derivedSd && match.sd) derivedSd = match.sd;
+                                                }
+                                            }
+                                            setFormData({
+                                                ...formData,
+                                                team: newTeam,
+                                                tl: derivedTl,
+                                                sm: derivedSm,
+                                                sd: derivedSd
+                                            });
+                                        }}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
-                                        placeholder="选择或输入 Team"
+                                        placeholder={t('user_manager.placeholder_team_select_input', '选择或输入 Team')}
                                     />
                                     <datalist id="team-options">
-                                        {uniqueTeams.map(team => <option key={team} value={team} />)}
+                                        {filteredTeams.map(team => <option key={team} value={team} />)}
                                     </datalist>
                                 </div>
                             )}
