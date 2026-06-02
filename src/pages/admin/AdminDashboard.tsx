@@ -327,6 +327,14 @@ export default function AdminDashboard() {
         })).sort((a, b) => b.duration - a.duration);
     }, [displayedUsers, userStats]);
 
+    const smUserRankings = useMemo(() => {
+        return userRankings.filter(u => u.role === 'sm');
+    }, [userRankings]);
+
+    const tlUserRankings = useMemo(() => {
+        return userRankings.filter(u => u.role === 'tl');
+    }, [userRankings]);
+
     // Group Aggregations (Team, SM, SD)
     const aggregateByField = (field: 'team' | 'sm' | 'sd') => {
         const groups: Record<string, { count: number; duration: number; assigned: number; completed: number; published: number }> = {};
@@ -895,6 +903,95 @@ export default function AdminDashboard() {
                             )}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* SM & TL Individual Rankings Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 my-8 export-ignore">
+                {/* Card 1: SM Individual Learning Ranking */}
+                <div id="chart-sm-user-duration" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold text-deep-teal">{t('dashboard.sm_user_duration_ranking', 'SM 个人学习排行榜')}</h2>
+                        <button onClick={() => handleDownload('chart-sm-user-duration', 'SM_User_Ranking')} className="export-ignore p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-desert-gold" title={t('dashboard.download_report', '导出报表')}>
+                            <Download className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <div className="max-h-[400px] overflow-y-auto overflow-x-auto pr-2">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50 text-arabian-night/70 font-bold sticky top-0 bg-white z-10 shadow-sm">
+                                <tr>
+                                    <th className="p-3 rounded-tl-lg">#</th>
+                                    <th className="p-3">CRM ID</th>
+                                    <th className="p-3">SD (大区)</th>
+                                    <th className="p-3 text-right">{t('dashboard.total_duration', '总时长')}</th>
+                                    <th className="p-3 text-right rounded-tr-lg">{t('dashboard.completion_rate', '任务完成率')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {smUserRankings.map((u, i) => (
+                                    <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                        <td className="p-3 font-bold text-gray-400">{i + 1}</td>
+                                        <td className="p-3 font-bold text-deep-teal">{u.crmId}</td>
+                                        <td className="p-3 text-gray-500">{u.sd || '-'}</td>
+                                        <td className="p-3 text-right font-bold text-desert-gold">{(u.duration / 3600).toFixed(1)} h</td>
+                                        <td className="p-3 text-right">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${u.completionRate >= 80 ? 'bg-green-100 text-green-700' : u.completionRate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                                {u.completionRate}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {smUserRankings.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="p-8 text-center text-gray-400">No data available for this period</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Card 2: TL Individual Learning Ranking */}
+                <div id="chart-tl-user-duration" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold text-deep-teal">{t('dashboard.tl_user_duration_ranking', 'TL 个人学习排行榜')}</h2>
+                        <button onClick={() => handleDownload('chart-tl-user-duration', 'TL_User_Ranking')} className="export-ignore p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-desert-gold" title={t('dashboard.download_report', '导出报表')}>
+                            <Download className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <div className="max-h-[400px] overflow-y-auto overflow-x-auto pr-2">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50 text-arabian-night/70 font-bold sticky top-0 bg-white z-10 shadow-sm">
+                                <tr>
+                                    <th className="p-3 rounded-tl-lg">#</th>
+                                    <th className="p-3">CRM ID</th>
+                                    <th className="p-3">Team</th>
+                                    <th className="p-3 text-right">{t('dashboard.total_duration', '总时长')}</th>
+                                    <th className="p-3 text-right rounded-tr-lg">{t('dashboard.completion_rate', '任务完成率')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tlUserRankings.map((u, i) => (
+                                    <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                        <td className="p-3 font-bold text-gray-400">{i + 1}</td>
+                                        <td className="p-3 font-bold text-deep-teal">{u.crmId}</td>
+                                        <td className="p-3 text-gray-500">{u.team || '-'}</td>
+                                        <td className="p-3 text-right font-bold text-desert-gold">{(u.duration / 3600).toFixed(1)} h</td>
+                                        <td className="p-3 text-right">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${u.completionRate >= 80 ? 'bg-green-100 text-green-700' : u.completionRate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                                {u.completionRate}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {tlUserRankings.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="p-8 text-center text-gray-400">No data available for this period</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

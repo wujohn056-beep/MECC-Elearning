@@ -30,7 +30,7 @@ interface Category {
     name: string;
 }
 
-const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { src: string, onEnded: (duration: number, actualSec?: number) => void, onUnlock?: () => void, disableSeek?: boolean }) => {
+const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { src: string, onEnded: (duration: number, actualSec?: number) => void, onUnlock?: (duration: number) => void, disableSeek?: boolean }) => {
     const { t } = useTranslation();
     const audioRef = React.useRef<HTMLAudioElement>(null);
     const lastTimeRef = React.useRef(0);
@@ -60,7 +60,7 @@ const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { sr
                     const target = duration / 3;
                     if (target > 0 && prev < target && next >= target && onUnlock) {
                         // Trigger unlock!
-                        setTimeout(() => onUnlock(), 0);
+                        setTimeout(() => onUnlock(duration), 0);
                     }
                     return next;
                 });
@@ -188,11 +188,13 @@ const RecordingCard = ({
     handleToggleLike, 
     handleAudioEnded,
     onPlayVideo,
+    onViewTranscript,
     onShare,
     disableSeek = false,
     className = "",
     isUnlocked = false,
-    commentCount = 0
+    commentCount = 0,
+    isLeader = false
 }: any) => {
     const { t } = useTranslation();
     const isLiked = rec.likes?.includes(user?.uid || '');
@@ -335,8 +337,19 @@ const RecordingCard = ({
                                 📊 {t('learning_hub.attachments_count', '含课件')} ({rec.attachments.length})
                             </span>
                         )}
-                        {rec.transcript && !isVideo && (
-                            <span className="text-[9.5px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-extrabold shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-md transition-all duration-300">
+                        {rec.transcript && (
+                            <span 
+                                onClick={(e) => {
+                                    if (isLeader) {
+                                        e.stopPropagation();
+                                        onViewTranscript && onViewTranscript(rec);
+                                    }
+                                }}
+                                className={`text-[9.5px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-extrabold shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-md transition-all duration-300 ${
+                                    isLeader ? 'cursor-pointer hover:bg-emerald-600 hover:text-white hover:border-transparent active:scale-95' : ''
+                                }`}
+                                title={isLeader ? t('learning_hub.click_to_view_direct', '点击直接查看阿语逐字稿') : ''}
+                            >
                                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
@@ -448,7 +461,7 @@ const RecordingCard = ({
                             <CustomAudioPlayer 
                                 src={rec.audioUrl} 
                                 onEnded={(duration) => handleAudioEnded(rec, duration)} 
-                                onUnlock={() => handleAudioEnded(rec, 0)}
+                                onUnlock={(dur) => handleAudioEnded(rec, dur)}
                                 disableSeek={disableSeek}
                             />
                             
@@ -468,7 +481,14 @@ const RecordingCard = ({
                                 
                                 {rec.transcript && (
                                     <button 
-                                        onClick={() => onPlayVideo(rec, disableSeek)}
+                                        onClick={(e) => {
+                                            if (isLeader) {
+                                                e.stopPropagation();
+                                                onViewTranscript && onViewTranscript(rec);
+                                            } else {
+                                                onPlayVideo(rec, disableSeek);
+                                            }
+                                        }}
                                         className="flex-1 bg-white hover:bg-deep-teal/5 border border-deep-teal/20 text-deep-teal hover:border-deep-teal/40 hover:shadow-sm text-[11px] font-bold py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 active:scale-[0.98] transition-all duration-300 cursor-pointer"
                                     >
                                         <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
@@ -788,7 +808,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                     const target = duration / 3;
                     if (target > 0 && prev < target && next >= target && onUnlock) {
                         // Just crossed the threshold! Trigger unlock!
-                        setTimeout(() => onUnlock(), 0);
+                        setTimeout(() => onUnlock(duration), 0);
                     }
                     return next;
                 });
@@ -1990,6 +2010,145 @@ const SharePosterModal = ({ rec, onClose }: any) => {
     );
 };
 
+interface DirectTranscriptModalProps {
+    rec: Recording;
+    onClose: () => void;
+}
+
+const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => {
+    const { t } = useTranslation();
+    const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
+
+    const handleCopy = () => {
+        if (rec.transcript) {
+            navigator.clipboard.writeText(rec.transcript);
+            alert(t('common.copied', '已复制到剪贴板！'));
+        }
+    };
+
+    const handleDownload = () => {
+        if (!rec.transcript) return;
+        const element = document.createElement("a");
+        const file = new Blob([rec.transcript], { type: 'text/plain;charset=utf-8' });
+        element.href = URL.createObjectURL(file);
+        element.download = `${rec.title}_transcript.txt`;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    const fontSizeClasses = {
+        sm: 'text-xs md:text-sm',
+        base: 'text-sm md:text-base',
+        lg: 'text-base md:text-lg',
+        xl: 'text-lg md:text-xl'
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop with rich blur */}
+            <div 
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-300"
+                onClick={onClose}
+            />
+            
+            {/* Modal Container */}
+            <div className="relative w-full max-w-2xl bg-white/95 dark:bg-slate-900/95 rounded-3xl border border-desert-gold/30 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300">
+                {/* Gold header accent line */}
+                <div className="h-1.5 w-full bg-gradient-to-r from-deep-teal via-desert-gold to-deep-teal" />
+                
+                {/* Header */}
+                <div className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start gap-4">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-deep-teal dark:text-desert-gold">
+                            <FileText className="w-5 h-5 text-desert-gold shrink-0 animate-pulse" />
+                            <span className="text-xs font-black tracking-widest uppercase bg-desert-gold/10 px-2 py-0.5 rounded border border-desert-gold/25 select-none">
+                                {t('learning_hub.arabic_transcript', '阿语逐字稿')}
+                            </span>
+                        </div>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-white line-clamp-1 leading-snug">
+                            {rec.title}
+                        </h3>
+                        {rec.lecturerName && (
+                            <p className="text-xs text-desert-gold font-bold flex items-center gap-1">
+                                <User className="w-3.5 h-3.5 shrink-0" />
+                                <span>{rec.lecturerName}</span>
+                            </p>
+                        )}
+                    </div>
+                    
+                    <button 
+                        onClick={onClose}
+                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors shadow-sm cursor-pointer active:scale-95 shrink-0"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                
+                {/* Font Size & Action Toolbar */}
+                <div className="bg-slate-50/80 dark:bg-slate-800/40 px-6 py-3 border-b border-slate-100 dark:border-slate-800/60 flex flex-wrap justify-between items-center gap-4 select-none">
+                    {/* Font size picker */}
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1">
+                            {t('learning_hub.font_size', '字体大小')}:
+                        </span>
+                        {(['sm', 'base', 'lg', 'xl'] as const).map((size) => (
+                            <button
+                                key={size}
+                                onClick={() => setFontSize(size)}
+                                className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                                    fontSize === size
+                                        ? 'bg-deep-teal border-deep-teal text-white shadow-sm'
+                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                }`}
+                            >
+                                {size === 'sm' ? 'A-' : size === 'base' ? 'A' : size === 'lg' ? 'A+' : 'A++'}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleCopy}
+                            className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                        >
+                            <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                            <span>{t('common.copy', '复制')}</span>
+                        </button>
+                        
+                        <button
+                            onClick={handleDownload}
+                            className="bg-gradient-to-r from-deep-teal to-[#005f66] hover:shadow-[0_3px_10px_rgba(0,109,119,0.15)] text-white text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer border border-white/10"
+                        >
+                            <Download className="w-3.5 h-3.5 text-white" />
+                            <span>{t('common.download', '下载')}</span>
+                        </button>
+                    </div>
+                </div>
+                
+                {/* Transcript Body */}
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 dark:bg-slate-950/20">
+                    <div 
+                        className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-sm leading-relaxed whitespace-pre-line text-right font-medium text-slate-800 dark:text-slate-100 ${fontSizeClasses[fontSize]}`}
+                        dir="rtl"
+                        style={{ fontFamily: "'Noto Sans Arabic', 'Inter', sans-serif" }}
+                    >
+                        {rec.transcript}
+                    </div>
+                </div>
+                
+                {/* Footer warning */}
+                <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 text-center select-none">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold tracking-wide flex items-center justify-center gap-1">
+                        🔒 {t('learning_hub.tl_bypass_notice', 'TL/SM 管理层免审阅直看通道已激活')}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function LearningHub() {
     const { t } = useTranslation();
     const { user, profile, isLeader } = useAuth();
@@ -2053,6 +2212,9 @@ export default function LearningHub() {
     // Video Modal States
     const [activeVideoRecording, setActiveVideoRecording] = useState<Recording | null>(null);
     const [activeVideoDisableSeek, setActiveVideoDisableSeek] = useState(false);
+
+    // Direct Transcript Modal State
+    const [activeTranscriptRecording, setActiveTranscriptRecording] = useState<Recording | null>(null);
 
     // Share Poster Modal State
     const [shareRecording, setShareRecording] = useState<Recording | null>(null);
@@ -2875,11 +3037,13 @@ export default function LearningHub() {
                                                                 setActiveVideoRecording(videoRec);
                                                                 setActiveVideoDisableSeek(isSeekDisabled);
                                                             }}
+                                                            onViewTranscript={setActiveTranscriptRecording}
                                                             onShare={setShareRecording}
                                                             disableSeek={!isTaskCompleted}
                                                             isUnlocked={completedAudioIds.includes(rec.id)}
                                                             className="w-full h-full"
                                                             commentCount={globalCommentCounts[recId] || 0}
+                                                            isLeader={isLeader}
                                                         />
                                                     </div>
                                                     <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-desert-gold/30 flex flex-col relative overflow-hidden">
@@ -2930,10 +3094,12 @@ export default function LearningHub() {
                                                     setActiveVideoRecording(videoRec);
                                                     setActiveVideoDisableSeek(isSeekDisabled);
                                                 }}
+                                                onViewTranscript={setActiveTranscriptRecording}
                                                 onShare={setShareRecording}
                                                 isUnlocked={completedAudioIds.includes(rec.id)}
                                                 className="w-full h-full"
                                                 commentCount={globalCommentCounts[rec.id] || 0}
+                                                isLeader={isLeader}
                                             />
                                         </div>
                                     ))
@@ -3015,8 +3181,8 @@ export default function LearningHub() {
                 <VideoPlayerModal
                     rec={activeVideoRecording}
                     disableSeek={activeVideoDisableSeek}
-                    isUnlocked={completedAudioIds.includes(activeVideoRecording.id)}
-                    onUnlock={() => handleAudioEnded(activeVideoRecording, 0)}
+                    isUnlocked={isLeader || completedAudioIds.includes(activeVideoRecording.id)}
+                    onUnlock={(dur) => handleAudioEnded(activeVideoRecording, dur)}
                     onClose={() => {
                         setActiveVideoRecording(null);
                         if (targetRecordingId && activeVideoRecording.id === targetRecordingId) {
@@ -3030,6 +3196,12 @@ export default function LearningHub() {
                     onEnded={(duration, actualSec) => {
                         handleAudioEnded(activeVideoRecording, duration, actualSec);
                     }}
+                />
+            )}
+            {activeTranscriptRecording && (
+                <DirectTranscriptModal
+                    rec={activeTranscriptRecording}
+                    onClose={() => setActiveTranscriptRecording(null)}
                 />
             )}
             {shareRecording && (

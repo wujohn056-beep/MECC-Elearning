@@ -22,6 +22,7 @@
     "html-to-image": "^1.11.13",
     "i18next": "^25.7.4",
     "lucide-react": "^0.562.0",
+    "music-metadata": "^11.12.3",
     "node-fetch": "^2.7.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
