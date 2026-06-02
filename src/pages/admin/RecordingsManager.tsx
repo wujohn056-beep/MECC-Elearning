@@ -120,32 +120,25 @@ export default function RecordingsManager() {
         return Array.from(deps).sort();
     }, [systemUsers]);
 
-    // Unified list of targets (SD Teams and Non-sales Departments + Custom Roles)
+    // Unified list of targets (SD Teams, SM Teams, TL Teams and Non-sales Departments)
     const pushGroupList = React.useMemo(() => {
-        const groups: { id: string; name: string; type: 'sd' | 'dep'; rawId: string }[] = [];
+        const groups: { id: string; name: string; type: 'sd' | 'sm' | 'tl' | 'dep'; rawId: string }[] = [];
         const isSuper = profile?.role === 'super_admin';
+        const userRole = profile?.role || 'user';
+        const userCrmId = (profile?.crmId || '').toUpperCase();
         
-        let allowedSd = '';
-        if (!isSuper) {
-            if (profile?.role === 'sd') {
-                allowedSd = (profile.crmId || '').toUpperCase();
-            } else {
-                allowedSd = (profile?.sd || '').toUpperCase();
-            }
-        }
-
-        sdList.forEach(sd => {
-            if (isSuper || sd.toUpperCase() === allowedSd) {
+        if (isSuper) {
+            // Super Admin sees SD Teams
+            sdList.forEach(sd => {
                 groups.push({
                     id: `sd:${sd}`,
                     name: `${sd} ${t('recordings_manager.team_suffix', '团队')}`,
                     type: 'sd',
                     rawId: sd
                 });
-            }
-        });
-        
-        if (isSuper) {
+            });
+            
+            // Super Admin also sees Non-Sales Departments (for back-office)
             depList.forEach(dep => {
                 groups.push({
                     id: `dep:${dep}`,
@@ -154,37 +147,93 @@ export default function RecordingsManager() {
                     rawId: dep
                 });
             });
-        }
 
-        if (isSuper) {
-            groups.push({
-                id: 'role:cctl',
-                name: 'CCTL',
-                type: 'dep',
-                rawId: 'cctl'
+            // Super Admin sees custom roles
+            groups.push({ id: 'role:cctl', name: 'CCTL', type: 'dep', rawId: 'cctl' });
+            groups.push({ id: 'role:ccsm', name: 'CCSM', type: 'dep', rawId: 'ccsm' });
+            groups.push({ id: 'role:sstl', name: 'SSTL', type: 'dep', rawId: 'sstl' });
+            groups.push({ id: 'role:sssm', name: 'SSSM', type: 'dep', rawId: 'sssm' });
+        } 
+        else if (userRole === 'sd') {
+            // SD logs in: show SM Teams under this SD
+            const sms = new Set<string>();
+            systemUsers.forEach(u => {
+                const uSd = (u.sd || '').toUpperCase();
+                // If user is under this SD and has an SM
+                if (uSd === userCrmId && u.sm) {
+                    sms.add(u.sm.toUpperCase());
+                }
+                // If user is an SM under this SD
+                if (u.role === 'sm' && uSd === userCrmId && u.crmId) {
+                    sms.add(u.crmId.toUpperCase());
+                }
             });
-            groups.push({
-                id: 'role:ccsm',
-                name: 'CCSM',
-                type: 'dep',
-                rawId: 'ccsm'
+            
+            Array.from(sms).sort().forEach(sm => {
+                groups.push({
+                    id: `sm:${sm}`,
+                    name: `${sm} ${t('recordings_manager.team_suffix', '团队')}`,
+                    type: 'sm',
+                    rawId: sm
+                });
             });
-            groups.push({
-                id: 'role:sstl',
-                name: 'SSTL',
-                type: 'dep',
-                rawId: 'sstl'
+            
+            // Add a fallback for SD's direct management team if any exists
+            const hasSdDirect = systemUsers.some(u => (u.sd || '').toUpperCase() === userCrmId && !u.sm);
+            if (hasSdDirect) {
+                groups.push({
+                    id: `sd:${profile.crmId}`,
+                    name: `${profile.crmId} (${t('recordings_manager.direct_team', '直带团队')})`,
+                    type: 'sd',
+                    rawId: profile.crmId
+                });
+            }
+        } 
+        else if (userRole === 'sm') {
+            // SM logs in: show TL Teams under this SM
+            const tls = new Set<string>();
+            systemUsers.forEach(u => {
+                const uSm = (u.sm || '').toUpperCase();
+                if (uSm === userCrmId && u.tl) {
+                    tls.add(u.tl.toUpperCase());
+                }
+                if (u.role === 'tl' && uSm === userCrmId && u.crmId) {
+                    tls.add(u.crmId.toUpperCase());
+                }
             });
+            
+            Array.from(tls).sort().forEach(tl => {
+                groups.push({
+                    id: `tl:${tl}`,
+                    name: `${tl} ${t('recordings_manager.team_suffix', '团队')}`,
+                    type: 'tl',
+                    rawId: tl
+                });
+            });
+            
+            // Add fallback for SM's direct management team if any exists
+            const hasSmDirect = systemUsers.some(u => (u.sm || '').toUpperCase() === userCrmId && !u.tl);
+            if (hasSmDirect) {
+                groups.push({
+                    id: `sm:${profile.crmId}`,
+                    name: `${profile.crmId} (${t('recordings_manager.direct_team', '直带团队')})`,
+                    type: 'sm',
+                    rawId: profile.crmId
+                });
+            }
+        } 
+        else if (userRole === 'tl') {
+            // TL logs in: show only their own TL Team
             groups.push({
-                id: 'role:sssm',
-                name: 'SSSM',
-                type: 'dep',
-                rawId: 'sssm'
+                id: `tl:${profile.crmId}`,
+                name: `${profile.crmId} ${t('recordings_manager.team_suffix', '团队')}`,
+                type: 'tl',
+                rawId: profile.crmId
             });
         }
         
         return groups;
-    }, [sdList, depList, profile, t]);
+    }, [sdList, depList, systemUsers, profile, t]);
 
     const filteredRecordings = recordings.filter(rec => {
         const isSuperAdmin = profile?.role === 'super_admin';

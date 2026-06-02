@@ -290,6 +290,7 @@
         "push_btn_individuals": "Push to Selected Teams ({{count}} total)",
         "team_suffix": "Team",
         "dep_suffix": "Dept",
+        "direct_team": "Directly Managed Team",
         "no_sds": "No Sales Directors (SD) available",
         "deselect_all": "Deselect All",
         "pushing": "Pushing...",

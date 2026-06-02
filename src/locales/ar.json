@@ -289,6 +289,7 @@
         "push_btn_individuals": "دفع إلى الفرق المحددة (إجمالي {{count}})",
         "team_suffix": "فريق",
         "dep_suffix": "قسم",
+        "direct_team": "الفريق المدار مباشرة",
         "no_sds": "لا يوجد مديرين مبيعات (SD) متاحين",
         "deselect_all": "إلغاء تحديد الكل",
         "pushing": "جاري الدفع...",
