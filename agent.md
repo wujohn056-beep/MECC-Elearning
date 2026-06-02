@@ -61,6 +61,16 @@ The application supports English (`en`), Arabic (`ar`), and Chinese (`zh`).
 * ✅ **ONLY** ask clarifying questions in the chat when there is a critical, high-risk architectural decision or ambiguity that cannot be resolved through code inspection.
 * *Reason for constraint:* Prompting for verbal confirmation in chat unnecessarily interrupts the user's workflow and wastes time. The user prefers a proactive agent that gets things done directly.
 
+### Rule 7: Target Push Notification Dimensions (CCTL, CCSM, SSTL, SSSM)
+When pushing recordings to specific individuals/targets via the Admin panel:
+* Checkboxes prefix targets using `role:` (e.g. `role:cctl`).
+* Mappings are strictly resolved in `netlify/functions/dingtalk.js`:
+  * `CCTL` -> CC Team Leader (`dep === 'CC' && role === 'tl'`)
+  * `CCSM` -> CC Sales Manager (`dep === 'CC' && role === 'sm'`)
+  * `SSTL` -> SS Team Leader (`dep === 'SS' && role === 'tl'`)
+  * `SSSM` -> SS Sales Manager (`dep === 'SS' && role === 'sm'`)
+* ✅ **ALWAYS** handle these custom `role:` prefixes when updating recipient resolution loops to ensure correct routing.
+
 ---
 
 ## 2. i18n Dictionary Merging Patterns
