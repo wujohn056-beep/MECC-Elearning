@@ -30,6 +30,25 @@ function getFirestoreDb() {
     return dbInstance;
 }
 
+function adjustAnalysisScores(analysis) {
+    if (!analysis) return null;
+    const adjusted = { ...analysis };
+    if (typeof adjusted.overallScore === 'number' && adjusted.overallScore < 80) {
+        // Linearly scale scores below 80 so they fit naturally into [80, 100]
+        adjusted.overallScore = Math.round(80 + (adjusted.overallScore * 0.2));
+    }
+    if (Array.isArray(adjusted.objectionsHandled)) {
+        adjusted.objectionsHandled = adjusted.objectionsHandled.map(obj => {
+            const newObj = { ...obj };
+            if (typeof newObj.score === 'number' && newObj.score < 80) {
+                newObj.score = Math.round(80 + (newObj.score * 0.2));
+            }
+            return newObj;
+        });
+    }
+    return adjusted;
+}
+
 function detectLanguage(text, title) {
     const combined = (text || '') + ' ' + (title || '');
     // Check if contains Arabic characters
@@ -88,22 +107,24 @@ export const handler = async (event, context) => {
         const recData = recordingSnap.data();
         const apiKey = process.env.GEMINI_API_KEY;
 
-        // 1. Check if the target language already exists in Firestore cache
+        // 1. Check if the target language already exists in Firestore cache (with score adjustment check)
         if (recData.aiAnalysisMultilang && recData.aiAnalysisMultilang[cleanTargetLang]) {
+            const adjusted = adjustAnalysisScores(recData.aiAnalysisMultilang[cleanTargetLang]);
             return {
                 statusCode: 200,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ success: true, aiAnalysis: recData.aiAnalysisMultilang[cleanTargetLang] })
+                body: JSON.stringify({ success: true, aiAnalysis: adjusted })
             };
         }
 
         // 2. Check if cleanTargetLang is Chinese and legacy analysis already exists
         if (cleanTargetLang === 'zh' && recData.aiAnalysis && (!recData.aiAnalysisMultilang || !recData.aiAnalysisMultilang.zh)) {
+            const adjusted = adjustAnalysisScores(recData.aiAnalysis);
             const updatedMultilang = recData.aiAnalysisMultilang || {};
-            updatedMultilang.zh = recData.aiAnalysis;
+            updatedMultilang.zh = adjusted;
             await db.collection('recordings').doc(recordingId).update({
                 aiAnalysisMultilang: updatedMultilang
             }).catch(e => console.error("Failed to migrate legacy zh analysis:", e));
@@ -114,7 +135,7 @@ export const handler = async (event, context) => {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ success: true, aiAnalysis: recData.aiAnalysis })
+                body: JSON.stringify({ success: true, aiAnalysis: adjusted })
             };
         }
 
@@ -179,12 +200,12 @@ ${transcriptText}
 
 You MUST return a JSON object strictly matching this schema. All text fields (summary, tips, objections, feedback) MUST be written in the requested target language: "${targetLangName}".
 {
-  "overallScore": number (0 to 100),
+  "overallScore": number (80 to 100. IMPORTANT: Since this platform only hosts selected high-quality sales recordings, the score MUST NOT be lower than 80. Adjust your scoring rubric so that even if there are areas of improvement, the overallScore remains within 80 to 100),
   "talkRatio": { "sales": number (0 to 100), "customer": number (0 to 100) },
   "speechRate": { "sales": number (words per minute), "customer": number (words per minute) },
   "sentimentTrend": [array of exactly 5 numbers representing customer sentiment percentage (0 to 100) at 5 equal intervals of the call],
   "objectionsHandled": [
-    { "objection": "objection name in ${targetLangName}", "handled": boolean, "score": number (0 to 100), "feedback": "brief critique in ${targetLangName}" }
+    { "objection": "objection name in ${targetLangName}", "handled": boolean, "score": number (80 to 100), "feedback": "brief critique in ${targetLangName}" }
   ],
   "summary": "a comprehensive review and summary of the call in ${targetLangName} (2-3 sentences)",
   "tips": [
@@ -202,7 +223,7 @@ Description: "${desc}"
 Simulate a realistic sales call performance where the agent handles objections related to "${category}".
 You MUST return a JSON object strictly matching this schema. All text fields (summary, tips, objections, feedback) MUST be written in the requested target language: "${targetLangName}".
 {
-  "overallScore": number (60 to 95),
+  "overallScore": number (80 to 95),
   "talkRatio": { "sales": number (0 to 100), "customer": number (0 to 100) },
   "speechRate": { "sales": number (110 to 150), "customer": number (95 to 130) },
   "sentimentTrend": [array of exactly 5 numbers representing customer sentiment percentage (0 to 100) at 5 equal intervals of the call],
@@ -338,9 +359,12 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
             };
         }
 
-        // 6. Save the new language analysis under the specific language key
+        // 6. Adjust the score of the newly generated analysis result (safety pass)
+        const adjustedResult = adjustAnalysisScores(analysisResult);
+
+        // 7. Save the new language analysis under the specific language key
         const updatedMultilang = recData.aiAnalysisMultilang || {};
-        updatedMultilang[cleanTargetLang] = analysisResult;
+        updatedMultilang[cleanTargetLang] = adjustedResult;
 
         const updatePayload = {
             aiAnalysisMultilang: updatedMultilang,
@@ -349,7 +373,7 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
         };
 
         if (!recData.aiAnalysis) {
-            updatePayload.aiAnalysis = analysisResult;
+            updatePayload.aiAnalysis = adjustedResult;
         }
 
         await db.collection('recordings').doc(recordingId).update(updatePayload);
@@ -360,7 +384,7 @@ Return ONLY the raw JSON block without markdown formatting or code blocks.`;
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ success: true, aiAnalysis: analysisResult })
+            body: JSON.stringify({ success: true, aiAnalysis: adjustedResult })
         };
 
     } catch (error) {
