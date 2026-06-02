@@ -846,6 +846,7 @@ export const handler = async (event, context) => {
                                     }).filter(Boolean).map(x => x.trim().toLowerCase());
 
                                     const depFilters = selectedSds.filter(s => String(s).startsWith('dep:')).map(s => String(s).substring(4).trim().toLowerCase());
+                                    const roleFilters = selectedSds.filter(s => String(s).startsWith('role:')).map(s => String(s).substring(5).trim().toLowerCase());
 
                                     // Match Sales Director teams
                                     const userSd = String(data.sd || '').trim().toLowerCase();
@@ -859,7 +860,16 @@ export const handler = async (event, context) => {
                                     const isSd = data.role === 'sd';
                                     const depMatched = !hasSd && !isSd && (depFilters.includes(userDep) || depFilters.includes(userTeam));
 
-                                    const isMatched = sdMatched || depMatched;
+                                    // Match custom role + department combinations (CCTL, CCSM, SSTL, SSSM)
+                                    const userDepUpper = String(data.dep || '').trim().toUpperCase();
+                                    const userRoleLower = String(data.role || '').trim().toLowerCase();
+                                    let roleMatched = false;
+                                    if (roleFilters.includes('cctl') && userDepUpper === 'CC' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('ccsm') && userDepUpper === 'CC' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
+
+                                    const isMatched = sdMatched || depMatched || roleMatched;
 
                                     if (isMatched) {
                                         if (isEnglishSpeaker) {

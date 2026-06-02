@@ -119,7 +119,7 @@ export default function RecordingsManager() {
         return Array.from(deps).sort();
     }, [systemUsers]);
 
-    // Unified list of targets (SD Teams and Non-sales Departments)
+    // Unified list of targets (SD Teams and Non-sales Departments + Custom Roles)
     const pushGroupList = React.useMemo(() => {
         const groups: { id: string; name: string; type: 'sd' | 'dep'; rawId: string }[] = [];
         
@@ -139,6 +139,32 @@ export default function RecordingsManager() {
                 type: 'dep',
                 rawId: dep
             });
+        });
+
+        // Add user-requested dimensions (CCTL, CCSM, SSTL, SSSM)
+        groups.push({
+            id: 'role:cctl',
+            name: 'CCTL',
+            type: 'dep',
+            rawId: 'cctl'
+        });
+        groups.push({
+            id: 'role:ccsm',
+            name: 'CCSM',
+            type: 'dep',
+            rawId: 'ccsm'
+        });
+        groups.push({
+            id: 'role:sstl',
+            name: 'SSTL',
+            type: 'dep',
+            rawId: 'sstl'
+        });
+        groups.push({
+            id: 'role:sssm',
+            name: 'SSSM',
+            type: 'dep',
+            rawId: 'sssm'
         });
         
         return groups;
