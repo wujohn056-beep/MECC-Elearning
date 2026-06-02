@@ -41,7 +41,8 @@ export default function RecordingsManager() {
     const { t } = useTranslation();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const { hasPermission, profile, isLeader, user } = useAuth();
+    const { hasPermission, profile, isLeader, user, isSuperAdmin } = useAuth();
+    const isWriteAllowed = isSuperAdmin;
     const [transcribingIds, setTranscribingIds] = useState<Record<string, boolean>>({});
     
     // DingTalk Multi-Target Push States
@@ -122,53 +123,68 @@ export default function RecordingsManager() {
     // Unified list of targets (SD Teams and Non-sales Departments + Custom Roles)
     const pushGroupList = React.useMemo(() => {
         const groups: { id: string; name: string; type: 'sd' | 'dep'; rawId: string }[] = [];
+        const isSuper = profile?.role === 'super_admin';
         
-        sdList.forEach(sd => {
-            groups.push({
-                id: `sd:${sd}`,
-                name: `${sd} ${t('recordings_manager.team_suffix', '团队')}`,
-                type: 'sd',
-                rawId: sd
-            });
-        });
-        
-        depList.forEach(dep => {
-            groups.push({
-                id: `dep:${dep}`,
-                name: `${dep} ${t('recordings_manager.dep_suffix', '部门')}`,
-                type: 'dep',
-                rawId: dep
-            });
-        });
+        let allowedSd = '';
+        if (!isSuper) {
+            if (profile?.role === 'sd') {
+                allowedSd = (profile.crmId || '').toUpperCase();
+            } else {
+                allowedSd = (profile?.sd || '').toUpperCase();
+            }
+        }
 
-        // Add user-requested dimensions (CCTL, CCSM, SSTL, SSSM)
-        groups.push({
-            id: 'role:cctl',
-            name: 'CCTL',
-            type: 'dep',
-            rawId: 'cctl'
+        sdList.forEach(sd => {
+            if (isSuper || sd.toUpperCase() === allowedSd) {
+                groups.push({
+                    id: `sd:${sd}`,
+                    name: `${sd} ${t('recordings_manager.team_suffix', '团队')}`,
+                    type: 'sd',
+                    rawId: sd
+                });
+            }
         });
-        groups.push({
-            id: 'role:ccsm',
-            name: 'CCSM',
-            type: 'dep',
-            rawId: 'ccsm'
-        });
-        groups.push({
-            id: 'role:sstl',
-            name: 'SSTL',
-            type: 'dep',
-            rawId: 'sstl'
-        });
-        groups.push({
-            id: 'role:sssm',
-            name: 'SSSM',
-            type: 'dep',
-            rawId: 'sssm'
-        });
+        
+        if (isSuper) {
+            depList.forEach(dep => {
+                groups.push({
+                    id: `dep:${dep}`,
+                    name: `${dep} ${t('recordings_manager.dep_suffix', '部门')}`,
+                    type: 'dep',
+                    rawId: dep
+                });
+            });
+        }
+
+        if (isSuper) {
+            groups.push({
+                id: 'role:cctl',
+                name: 'CCTL',
+                type: 'dep',
+                rawId: 'cctl'
+            });
+            groups.push({
+                id: 'role:ccsm',
+                name: 'CCSM',
+                type: 'dep',
+                rawId: 'ccsm'
+            });
+            groups.push({
+                id: 'role:sstl',
+                name: 'SSTL',
+                type: 'dep',
+                rawId: 'sstl'
+            });
+            groups.push({
+                id: 'role:sssm',
+                name: 'SSSM',
+                type: 'dep',
+                rawId: 'sssm'
+            });
+        }
         
         return groups;
-    }, [sdList, depList, t]);
+    }, [sdList, depList, profile, t]);
 
     const filteredRecordings = recordings.filter(rec => {
         const isSuperAdmin = profile?.role === 'super_admin';
@@ -451,8 +467,14 @@ export default function RecordingsManager() {
 
     const handlePushToDingTalkClick = (rec: Recording) => {
         setSelectedRecordingForPush(rec);
-        setPushTargetType('group');
-        setSelectedSdsForPush([]);
+        const targetType = isSuperAdmin ? 'group' : 'individuals';
+        setPushTargetType(targetType);
+        
+        if (targetType === 'individuals' && pushGroupList.length === 1) {
+            setSelectedSdsForPush([pushGroupList[0].id]);
+        } else {
+            setSelectedSdsForPush([]);
+        }
         setShowPushModal(true);
     };
 
@@ -768,11 +790,12 @@ export default function RecordingsManager() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className={isWriteAllowed ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : "w-full"}>
                 {/* Left Column: Category & Upload Form */}
-                <div className="lg:col-span-1 space-y-6">
-                    {/* Upload Form */}
-                    <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20">
+                {isWriteAllowed && (
+                    <div className="lg:col-span-1 space-y-6">
+                        {/* Upload Form */}
+                        <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
                                 {editingId ? <Pencil className="text-desert-gold h-5 w-5" /> : <UploadCloud className="text-desert-gold h-5 w-5" />}
@@ -1278,9 +1301,10 @@ export default function RecordingsManager() {
                         </form>
                     </div>
                 </div>
+                )}
 
                 {/* Right Column: Recordings List */}
-                <div className="lg:col-span-2">
+                <div className={isWriteAllowed ? "lg:col-span-2" : "w-full"}>
                     <div className="glass-panel rounded-2xl p-6 border border-white/40 min-h-[500px]">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                             <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
@@ -1301,7 +1325,7 @@ export default function RecordingsManager() {
                                         className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none transition-all"
                                     />
                                 </div>
-                                {selectedIds.length > 0 && (
+                                {selectedIds.length > 0 && isWriteAllowed && (
                                     <button
                                         onClick={handleBatchDelete}
                                         disabled={uploading}
@@ -1314,7 +1338,7 @@ export default function RecordingsManager() {
                             </div>
                         </div>
 
-                        {filteredRecordings.length > 0 && (
+                        {filteredRecordings.length > 0 && isWriteAllowed && (
                             <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gray-50 rounded-lg border border-gray-100">
                                 <input
                                     type="checkbox"
@@ -1341,12 +1365,14 @@ export default function RecordingsManager() {
                                     return (
                                         <div key={rec.id} className={`bg-white/60 p-4 rounded-xl flex items-center justify-between hover:bg-white transition-colors border ${editingId === rec.id ? 'border-desert-gold shadow-md' : 'border-transparent hover:border-desert-gold/30'} group`}>
                                             <div className="flex items-start gap-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedIds.includes(rec.id)}
-                                                    onChange={() => toggleSelect(rec.id)}
-                                                    className="mt-3.5 w-4 h-4 text-desert-gold border-gray-300 rounded focus:ring-desert-gold cursor-pointer shrink-0"
-                                                />
+                                                {isWriteAllowed && (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.includes(rec.id)}
+                                                        onChange={() => toggleSelect(rec.id)}
+                                                        className="mt-3.5 w-4 h-4 text-desert-gold border-gray-300 rounded focus:ring-desert-gold cursor-pointer shrink-0"
+                                                    />
+                                                )}
                                                 <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0 bg-gradient-to-br from-light-teal to-deep-teal">
                                                     {rec.avatarUrl ? (
                                                         <img src={rec.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
@@ -1429,7 +1455,7 @@ export default function RecordingsManager() {
                                             <div className="flex flex-col items-end gap-2 ml-4">
                                                 <div className="flex gap-2">
                                                     {/* Temporarily hidden transcription generation button */}
-                                                    {!isVideo && (
+                                                    {isWriteAllowed && !isVideo && (
                                                         <button 
                                                             onClick={() => handleTranscribe(rec)} 
                                                             disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
@@ -1450,12 +1476,16 @@ export default function RecordingsManager() {
                                                     <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
                                                         <Send className="h-4 w-4" />
                                                     </button>
-                                                    <button onClick={() => handleEdit(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-deep-teal hover:bg-gray-100 transition-colors shadow-sm border border-gray-100" title="编辑">
-                                                        <Pencil className="h-4 w-4" />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(rec)} disabled={uploading} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm border border-gray-100 disabled:opacity-50" title="删除">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
+                                                    {isWriteAllowed && (
+                                                        <button onClick={() => handleEdit(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-deep-teal hover:bg-gray-100 transition-colors shadow-sm border border-gray-100" title="编辑">
+                                                            <Pencil className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                    {isWriteAllowed && (
+                                                        <button onClick={() => handleDelete(rec)} disabled={uploading} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm border border-gray-100 disabled:opacity-50" title="删除">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             {(() => {
                                                 const url = rec.audioUrl?.toLowerCase() || '';
@@ -1527,30 +1557,32 @@ export default function RecordingsManager() {
                         </div>
 
                         {/* Push Segment Toggle */}
-                        <div className="flex bg-gray-100/80 p-1 rounded-xl gap-1">
-                            <button
-                                type="button"
-                                onClick={() => setPushTargetType('group')}
-                                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                                    pushTargetType === 'group'
-                                        ? 'bg-white text-deep-teal shadow-md border border-gray-100'
-                                        : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
-                                }`}
-                            >
-                                {t('recordings_manager.push_to_group', '👥 推送至工作群机器人')}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPushTargetType('individuals')}
-                                className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                                    pushTargetType === 'individuals'
-                                        ? 'bg-white text-deep-teal shadow-md border border-gray-100'
-                                        : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
-                                }`}
-                            >
-                                {t('recordings_manager.push_to_individuals', '👤 精确推送给个人')}
-                            </button>
-                        </div>
+                        {isSuperAdmin && (
+                            <div className="flex bg-gray-100/80 p-1 rounded-xl gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setPushTargetType('group')}
+                                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                        pushTargetType === 'group'
+                                            ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                            : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                    }`}
+                                >
+                                    {t('recordings_manager.push_to_group', '👥 推送至工作群机器人')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPushTargetType('individuals')}
+                                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                        pushTargetType === 'individuals'
+                                            ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                            : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                    }`}
+                                >
+                                    {t('recordings_manager.push_to_individuals', '👤 精确推送给个人')}
+                                </button>
+                            </div>
+                        )}
 
                         {/* Webhook Push Language Selector */}
                         {pushTargetType === 'group' && (

@@ -56,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (permission === 'manageUsers') {
             return isLeader || !!profile?.permissions?.[permission];
         }
+        if (permission === 'manageRecordings') {
+            return isLeader || !!profile?.permissions?.[permission];
+        }
         if (permission === 'manageComments' && profile?.role === 'sd' && profile?.dep === 'SS') {
             return true;
         }
