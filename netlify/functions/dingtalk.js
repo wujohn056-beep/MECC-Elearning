@@ -841,12 +841,13 @@ export const handler = async (event, context) => {
                                     const sdFilters = selectedSds.map(s => {
                                         const str = String(s);
                                         if (str.startsWith('sd:')) return str.substring(3);
-                                        if (str.startsWith('sm:') || str.startsWith('tl:') || str.startsWith('dep:') || str.startsWith('role:')) return null;
+                                        if (str.startsWith('sm:') || str.startsWith('tl:') || str.startsWith('cc:') || str.startsWith('dep:') || str.startsWith('role:')) return null;
                                         return str; // Legacy fallback
                                     }).filter(Boolean).map(x => x.trim().toLowerCase());
 
                                     const smFilters = selectedSds.filter(s => String(s).startsWith('sm:')).map(s => String(s).substring(3).trim().toLowerCase());
                                     const tlFilters = selectedSds.filter(s => String(s).startsWith('tl:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const ccFilters = selectedSds.filter(s => String(s).startsWith('cc:')).map(s => String(s).substring(3).trim().toLowerCase());
                                     const depFilters = selectedSds.filter(s => String(s).startsWith('dep:')).map(s => String(s).substring(4).trim().toLowerCase());
                                     const roleFilters = selectedSds.filter(s => String(s).startsWith('role:')).map(s => String(s).substring(5).trim().toLowerCase());
 
@@ -862,6 +863,9 @@ export const handler = async (event, context) => {
                                     // Match Team Leader teams
                                     const userTl = String(data.tl || '').trim().toLowerCase();
                                     const tlMatched = tlFilters.some(tl => tl === userTl || (data.role === 'tl' && tl === userCrmId));
+
+                                    // Match individual CCs/users directly
+                                    const ccMatched = ccFilters.includes(userCrmId);
 
                                     // Match Non-Sales Department groups (only users without SD assignment who are not SDs themselves)
                                     const userDep = String(data.dep || '').trim().toLowerCase();
@@ -879,7 +883,7 @@ export const handler = async (event, context) => {
                                     if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
                                     if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
 
-                                    const isMatched = sdMatched || smMatched || tlMatched || depMatched || roleMatched;
+                                    const isMatched = sdMatched || smMatched || tlMatched || ccMatched || depMatched || roleMatched;
 
                                     if (isMatched) {
                                         if (isEnglishSpeaker) {

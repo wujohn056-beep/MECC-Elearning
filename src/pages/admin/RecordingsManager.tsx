@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface Attachment {
     id: string;
@@ -52,6 +52,7 @@ export default function RecordingsManager() {
     const [selectedSdsForPush, setSelectedSdsForPush] = useState<string[]>([]);
     const [pushWebhookLang, setPushWebhookLang] = useState<'bilingual' | 'en' | 'zh'>('bilingual');
     const [pushingToDingTalk, setPushingToDingTalk] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
     if (!hasPermission('manageRecordings')) {
         return <Navigate to="/admin" replace />;
@@ -118,6 +119,16 @@ export default function RecordingsManager() {
             }
         });
         return Array.from(deps).sort();
+    }, [systemUsers]);
+
+    const getTlTeamName = React.useCallback((tlCrmId: string) => {
+        const match = systemUsers.find(u => {
+            const uTl = (u.tl || '').toUpperCase();
+            const uCrmId = (u.crmId || '').toUpperCase();
+            const search = tlCrmId.toUpperCase();
+            return (uTl === search || (u.role === 'tl' && uCrmId === search)) && u.team && u.team.trim();
+        });
+        return match ? match.team.trim() : tlCrmId;
     }, [systemUsers]);
 
     // Unified list of targets (SD Teams, SM Teams, TL Teams and Non-sales Departments)
@@ -203,9 +214,10 @@ export default function RecordingsManager() {
             });
             
             Array.from(tls).sort().forEach(tl => {
+                const teamName = getTlTeamName(tl);
                 groups.push({
                     id: `tl:${tl}`,
-                    name: `${tl} ${t('recordings_manager.team_suffix', '团队')}`,
+                    name: `${teamName} ${t('recordings_manager.team_suffix', '团队')}`,
                     type: 'tl',
                     rawId: tl
                 });
@@ -224,16 +236,17 @@ export default function RecordingsManager() {
         } 
         else if (userRole === 'tl') {
             // TL logs in: show only their own TL Team
+            const teamName = getTlTeamName(profile.crmId);
             groups.push({
                 id: `tl:${profile.crmId}`,
-                name: `${profile.crmId} ${t('recordings_manager.team_suffix', '团队')}`,
+                name: `${teamName} ${t('recordings_manager.team_suffix', '团队')}`,
                 type: 'tl',
                 rawId: profile.crmId
             });
         }
         
         return groups;
-    }, [sdList, depList, systemUsers, profile, t]);
+    }, [sdList, depList, systemUsers, profile, t, getTlTeamName]);
 
     const filteredRecordings = recordings.filter(rec => {
         const isSuperAdmin = profile?.role === 'super_admin';
@@ -823,6 +836,76 @@ export default function RecordingsManager() {
             setUploading(false);
         }
     };
+
+    const getGroupCcs = React.useCallback((group: { id: string; type: string; rawId: string }) => {
+        return systemUsers.filter(u => {
+            if (u.role !== 'user') return false; // Only CCs
+            const rawIdUpper = group.rawId.toUpperCase();
+            if (group.type === 'tl') {
+                return (u.tl || '').toUpperCase() === rawIdUpper;
+            }
+            if (group.type === 'sm') {
+                return (u.sm || '').toUpperCase() === rawIdUpper;
+            }
+            if (group.type === 'sd') {
+                return (u.sd || '').toUpperCase() === rawIdUpper;
+            }
+            return false;
+        });
+    }, [systemUsers]);
+
+    const handleCcToggle = React.useCallback((ccCrmId: string, group: { id: string; type: string; rawId: string }) => {
+        const ccId = `cc:${ccCrmId.toLowerCase()}`;
+        const groupCcs = getGroupCcs(group);
+        const isGroupSelected = selectedSdsForPush.includes(group.id);
+        
+        if (isGroupSelected) {
+            // Remove group and add all other CCs in this group
+            const otherCcIds = groupCcs
+                .filter(u => u.crmId.toLowerCase() !== ccCrmId.toLowerCase())
+                .map(u => `cc:${u.crmId.toLowerCase()}`);
+            setSelectedSdsForPush(prev => [
+                ...prev.filter(x => x !== group.id),
+                ...otherCcIds
+            ]);
+        } else {
+            const isCcSel = selectedSdsForPush.includes(ccId);
+            if (isCcSel) {
+                setSelectedSdsForPush(prev => prev.filter(x => x !== ccId));
+            } else {
+                const nextCcIds = [...selectedSdsForPush.filter(x => x.startsWith('cc:')), ccId];
+                const allCcsSelected = groupCcs.every(u => nextCcIds.includes(`cc:${u.crmId.toLowerCase()}`));
+                if (allCcsSelected && groupCcs.length > 0) {
+                    const groupCcIds = groupCcs.map(u => `cc:${u.crmId.toLowerCase()}`);
+                    setSelectedSdsForPush(prev => [
+                        ...prev.filter(x => !groupCcIds.includes(x)),
+                        group.id
+                    ]);
+                } else {
+                    setSelectedSdsForPush(prev => [...prev, ccId]);
+                }
+            }
+        }
+    }, [selectedSdsForPush, getGroupCcs]);
+
+    const handleGroupToggle = React.useCallback((group: { id: string; type: string; rawId: string }) => {
+        const isGroupSelected = selectedSdsForPush.includes(group.id);
+        const groupCcs = getGroupCcs(group);
+        const groupCcIds = groupCcs.map(u => `cc:${u.crmId.toLowerCase()}`);
+        
+        if (isGroupSelected) {
+            setSelectedSdsForPush(prev => prev.filter(x => x !== group.id && !groupCcIds.includes(x)));
+        } else {
+            setSelectedSdsForPush(prev => [
+                ...prev.filter(x => !groupCcIds.includes(x)),
+                group.id
+            ]);
+        }
+    }, [selectedSdsForPush, getGroupCcs]);
+
+    const toggleGroupExpand = React.useCallback((groupId: string) => {
+        setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
+    }, []);
 
     return (
         <div className="animate-in fade-in duration-500 space-y-8">
@@ -1696,31 +1779,73 @@ export default function RecordingsManager() {
                                         {selectedSdsForPush.length === pushGroupList.length ? t('recordings_manager.deselect_all', '取消全选') : t('recordings_manager.select_all', '全选')}
                                     </button>
                                 </div>
-                                <div className="border border-gray-100 rounded-2xl bg-white/50 p-3 flex flex-col gap-1 max-h-40 overflow-y-auto mt-1 custom-scrollbar">
+                                <div className="border border-gray-100 rounded-2xl bg-white/50 p-3 flex flex-col gap-2 max-h-60 overflow-y-auto mt-1 custom-scrollbar">
                                     {pushGroupList.length === 0 ? (
                                         <p className="text-xs text-arabian-night/40 py-4 text-center">{t('recordings_manager.no_sds', '暂无可用接收部门/团队')}</p>
                                     ) : (
                                         pushGroupList.map(group => {
                                             const isChecked = selectedSdsForPush.includes(group.id);
+                                            const groupCcs = getGroupCcs(group);
+                                            const isExpanded = !!expandedGroups[group.id];
+                                            
                                             return (
-                                                <label 
-                                                    key={group.id} 
-                                                    className="flex items-center gap-2.5 text-xs font-bold hover:bg-deep-teal/5 p-2 rounded-xl transition-colors cursor-pointer select-none"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isChecked}
-                                                        onChange={() => {
-                                                            if (isChecked) {
-                                                                setSelectedSdsForPush(selectedSdsForPush.filter(x => x !== group.id));
-                                                            } else {
-                                                                setSelectedSdsForPush([...selectedSdsForPush, group.id]);
-                                                            }
-                                                        }}
-                                                        className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all"
-                                                    />
-                                                    <span>{group.name}</span>
-                                                </label>
+                                                <div key={group.id} className="flex flex-col gap-1 bg-white/30 rounded-xl p-1.5 border border-gray-100/50 shadow-sm">
+                                                    {/* Group Header Row */}
+                                                    <div className="flex items-center justify-between group/row">
+                                                        <label className="flex items-center gap-2.5 text-xs font-bold hover:bg-deep-teal/5 p-1.5 rounded-lg transition-colors cursor-pointer select-none flex-1 min-w-0">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isChecked}
+                                                                onChange={() => handleGroupToggle(group)}
+                                                                ref={el => {
+                                                                    if (el) {
+                                                                        // Indeterminate state if some but not all CCs are checked
+                                                                        const selectedCount = groupCcs.filter(u => selectedSdsForPush.includes(`cc:${u.crmId.toLowerCase()}`)).length;
+                                                                        el.indeterminate = !isChecked && selectedCount > 0 && selectedCount < groupCcs.length;
+                                                                    }
+                                                                }}
+                                                                className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all"
+                                                            />
+                                                            <span className="truncate">{group.name}</span>
+                                                        </label>
+                                                        
+                                                        {groupCcs.length > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleGroupExpand(group.id)}
+                                                                className="p-1 hover:bg-deep-teal/10 rounded-lg text-deep-teal transition-colors shrink-0 mr-1 flex items-center gap-0.5"
+                                                                title="查看成员"
+                                                            >
+                                                                <span className="text-[10px] text-gray-400 font-medium">({groupCcs.length})</span>
+                                                                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Expanded CC Checklist */}
+                                                    {isExpanded && groupCcs.length > 0 && (
+                                                        <div className="pl-8 pr-2 py-1 flex flex-col gap-1 border-t border-gray-100/50 bg-white/20 rounded-b-xl animate-in slide-in-from-top-1 duration-200">
+                                                            {groupCcs.map(cc => {
+                                                                const isCcChecked = isChecked || selectedSdsForPush.includes(`cc:${cc.crmId.toLowerCase()}`);
+                                                                return (
+                                                                    <label 
+                                                                        key={cc.id} 
+                                                                        className="flex items-center gap-2 py-1.5 px-2 hover:bg-deep-teal/5 rounded-md text-[11px] font-semibold text-arabian-night/80 cursor-pointer select-none transition-colors"
+                                                                    >
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isCcChecked}
+                                                                            onChange={() => handleCcToggle(cc.crmId, group)}
+                                                                            className="h-3.5 w-3.5 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
+                                                                        />
+                                                                        <span className="truncate">{cc.name || cc.crmId}</span>
+                                                                        {cc.crmId && <span className="text-[9px] text-gray-400 font-medium font-mono">({cc.crmId})</span>}
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             );
                                         })
                                     )}

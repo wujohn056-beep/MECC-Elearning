@@ -283,7 +283,7 @@
         "push_modal_title": "推送精品素材至钉钉",
         "push_to_group": "👥 推送至工作群机器人",
         "push_to_individuals": "👤 精确推送给个人",
-        "select_sd_teams": "选择接收部门 (按 SD 维度及职能部门)",
+        "select_sd_teams": "选择接收团队",
         "select_all": "全选",
         "push_btn_group": "广播推送至工作群",
         "push_btn_individuals": "推送给选定团队 (共 {{count}} 个)",
