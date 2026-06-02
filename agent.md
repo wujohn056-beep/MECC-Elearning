@@ -71,6 +71,12 @@ When pushing recordings to specific individuals/targets via the Admin panel:
   * `SSSM` -> SS Sales Manager (`dep === 'SS' && role === 'sm'`)
 * ✅ **ALWAYS** handle these custom `role:` prefixes when updating recipient resolution loops to ensure correct routing.
 
+### Rule 8: AI Call Scoring Lower Bound (>= 80)
+* ❌ **NEVER** return or output an AI overall score (`overallScore`) or individual objection score (`score` under `objectionsHandled`) below 80.
+* ✅ **ALWAYS** apply linear score scaling `Math.round(80 + (originalScore * 0.2))` to map the original `0-100` scores beautifully into the `[80, 100]` high-performing bracket.
+* *Reason for constraint:* Since all uploaded recordings are pre-selected high-quality recordings, low scores look bad and confuse users. The linear scaling maps the original score gracefully to maintain relative differences while ensuring a premium 80+ score bracket.
+* Apply this mapping in `netlify/functions/analyze-audio.js` for both newly generated analyses and cached returns (retroactive coverage).
+
 ---
 
 ## 2. i18n Dictionary Merging Patterns
