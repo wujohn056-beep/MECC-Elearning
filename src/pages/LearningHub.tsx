@@ -5,6 +5,7 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 
 interface Recording {
     id: string;
@@ -344,9 +345,9 @@ const RecordingCard = ({
             )}
 
             {/* Card Content with Restored Avatar */}
-            <div className="relative z-10 p-5 flex flex-col flex-1 pt-2">
+            <div className="relative z-10 p-4 sm:p-5 flex flex-col flex-1 pt-2">
                 {/* Circular Avatar & Category */}
-                <div className="-mt-10 relative z-20 flex items-end justify-between px-1 mb-3.5">
+                <div className="-mt-10 relative z-20 flex items-end justify-between px-1 mb-2.5 sm:mb-3.5">
                     <div className="w-13 h-13 rounded-full border-2 border-white shadow-md bg-white flex items-center justify-center overflow-hidden ring-2 ring-deep-teal/10 group-hover:ring-desert-gold/50 transition-all duration-500 select-none shrink-0 transform group-hover:scale-105">
                         {rec.avatarUrl ? (
                             <img src={rec.avatarUrl} alt="Instructor" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -391,7 +392,7 @@ const RecordingCard = ({
                 <div className="flex-1">
                     <h4 
                         onClick={() => onPlayVideo(rec, disableSeek)}
-                        className={`font-black text-base mb-2 transition-all duration-300 line-clamp-1 cursor-pointer ${
+                        className={`font-black text-base mb-1.5 sm:mb-2 transition-all duration-300 line-clamp-1 cursor-pointer ${
                             rec.businessType === 'leader'
                                 ? 'text-white group-hover:text-desert-gold'
                                 : 'text-slate-800 group-hover:text-deep-teal'
@@ -403,13 +404,13 @@ const RecordingCard = ({
                     {rec.lecturerName && (
                         <div 
                             onClick={() => onPlayVideo(rec, disableSeek)}
-                            className="flex items-center gap-1.5 text-[11.5px] font-black text-desert-gold hover:text-amber-600 mb-2 transition-colors duration-300 cursor-pointer hover:underline"
+                            className="flex items-center gap-1.5 text-[11.5px] font-black text-desert-gold hover:text-amber-600 mb-1.5 sm:mb-2 transition-colors duration-300 cursor-pointer hover:underline"
                         >
                             <User className="h-3.5 w-3.5 text-desert-gold shrink-0" />
                             <span>{rec.lecturerName}</span>
                         </div>
                     )}
-                    <p className={`text-[12px] mb-4 line-clamp-2 leading-relaxed font-semibold ${
+                    <p className={`text-[12px] mb-2 sm:mb-4 line-clamp-2 leading-relaxed font-semibold ${
                         rec.businessType === 'leader' ? 'text-white/60' : 'text-slate-500'
                     }`}>
                         {rec.description}
@@ -419,7 +420,7 @@ const RecordingCard = ({
                 <div className={`mt-auto pt-3 border-t ${
                     rec.businessType === 'leader' ? 'border-desert-gold/15' : 'border-slate-100'
                 }`}>
-                    <div className="flex justify-between items-center mb-4 text-[11px] font-bold text-deep-teal">
+                    <div className="flex justify-between items-center mb-2.5 sm:mb-4 text-[11px] font-bold text-deep-teal">
                         <div className="flex items-center gap-3.5">
                             <div className={`flex items-center gap-1 transition-colors cursor-default select-none ${
                                 rec.businessType === 'leader' ? 'text-white/45' : 'text-slate-400 hover:text-slate-500'
@@ -626,6 +627,13 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
             .finally(() => setLoadingVideoTranslation(false));
         }
     }, [activeVideoTab, rec.id, videoTranscriptZh, isSDLevel]);
+
+    React.useEffect(() => {
+        if ((isDoc || !rec.audioUrl) && onUnlock && !isUnlocked) {
+            // Auto-unlock document learning progress
+            onUnlock(0);
+        }
+    }, [isDoc, rec.audioUrl, onUnlock, isUnlocked]);
 
     React.useEffect(() => {
         if (isVideo || isDoc) return;
@@ -966,6 +974,23 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                 <BookOpen className="w-4 h-4 shrink-0 text-white fill-white/20 animate-bounce" />
                                 <span>{t('learning_hub.read_document', '阅读学习文档')}</span>
                             </a>
+                        </div>
+                    ) : !rec.audioUrl ? (
+                        <div className="flex flex-col items-center justify-center gap-6 py-12 w-full bg-gradient-to-br from-amber-500/10 via-rose-500/10 to-indigo-600/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-inner min-h-[300px] md:min-h-[400px] px-8 text-center animate-in fade-in duration-500">
+                            <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl relative overflow-hidden transform hover:scale-105 transition-all duration-300 group">
+                                <FileText className="w-12 h-12 text-white animate-pulse" />
+                            </div>
+                            <div className="space-y-3 max-w-md">
+                                <span className="inline-flex items-center gap-1.5 text-[10px] bg-black/40 backdrop-blur-md text-white border border-white/10 px-3.5 py-1 rounded-full font-black shadow-sm uppercase tracking-widest select-none">
+                                    📂 {t('learning_hub.attachment_package_mode', '配套讲义与附件模式')}
+                                </span>
+                                <h4 className="text-white font-extrabold text-base leading-snug line-clamp-2 px-4">
+                                    {rec.title}
+                                </h4>
+                                <p className="text-xs text-white/60">
+                                    {t('learning_hub.download_sidebar_tip', '请在右侧面板查看并下载此课程的配套讲义与文档。')}
+                                </p>
+                            </div>
                         </div>
                     ) : isVideo ? (
                         <video
@@ -2361,6 +2386,7 @@ const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => 
 export default function LearningHub() {
     const { t } = useTranslation();
     const { user, profile, isLeader } = useAuth();
+    const isNative = Capacitor.isNativePlatform();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
@@ -2699,7 +2725,11 @@ export default function LearningHub() {
         if (completedAudioIds.includes(rec.id)) return;
         
         // Show success alert for new unlock
-        alert(t('learning_hub.unlocked_success', '恭喜！您已成功解锁该录音的阿语逐字稿！'));
+        if (!rec.audioUrl) {
+            alert(t('learning_hub.doc_unlocked_success', '恭喜！您已成功开始该文档的学习，学习记录已保存！'));
+        } else {
+            alert(t('learning_hub.unlocked_success', '恭喜！您已成功解锁该录音的阿语逐字稿！'));
+        }
         
         // Mark that user has completed this audio
         setCompletedAudioIds(prev => prev.includes(rec.id) ? prev : [...prev, rec.id]);
@@ -2834,35 +2864,97 @@ export default function LearningHub() {
         })
         .slice(0, 10);
 
+    const renderLeaderboardWidget = (isFullWidth = false) => {
+        return (
+            <div className={`glass-panel rounded-2xl border border-white p-5 ${isFullWidth ? 'w-full max-w-2xl mx-auto shadow-sm bg-white/70 backdrop-blur-md' : 'xl:sticky xl:top-28 bg-white/60 backdrop-blur-md'}`}>
+                <h3 className="text-lg font-bold text-deep-teal mb-4 flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-desert-gold" />
+                    {t('learning_hub.leaderboard')}
+                </h3>
+                
+                <div className="flex bg-gray-100/80 p-1 rounded-lg mb-4 border border-gray-200/30">
+                    <button 
+                        onClick={() => setLeaderboardTab('favorites')}
+                        className={`flex-1 text-xs font-bold py-1.5 rounded-md transition-all ${leaderboardTab === 'favorites' ? 'bg-white text-red-500 shadow-sm' : 'text-arabian-night/50 hover:text-arabian-night'}`}
+                    >
+                        {t('learning_hub.most_favorited')}
+                    </button>
+                    <button 
+                        onClick={() => setLeaderboardTab('likes')}
+                        className={`flex-1 text-xs font-bold py-1.5 rounded-md transition-all ${leaderboardTab === 'likes' ? 'bg-white text-desert-gold shadow-sm' : 'text-arabian-night/50 hover:text-arabian-night'}`}
+                    >
+                        {t('learning_hub.most_liked')}
+                    </button>
+                </div>
+
+                <div className="space-y-1">
+                    {(leaderboardTab === 'favorites' ? displayTopFavorited : displayTopLiked).map((rec, idx) => (
+                        <div 
+                            key={rec.id} 
+                            className="flex items-center gap-3 group cursor-pointer hover:bg-white p-2.5 rounded-xl transition-all border border-transparent hover:border-white/60 hover:shadow-sm" 
+                            onClick={() => setSearchParams({ recordingId: rec.id })}
+                        >
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600 shadow-sm' : idx === 1 ? 'bg-gray-200 text-gray-600 shadow-sm' : idx === 2 ? 'bg-orange-100 text-orange-600 shadow-sm' : 'bg-gray-50 text-gray-400'}`}>
+                                {idx + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-arabian-night line-clamp-2 leading-tight group-hover:text-desert-gold transition-colors" title={rec.title}>
+                                    {rec.displayId && <span className="text-desert-gold mr-1 text-xs inline-block font-black">[{rec.displayId}]</span>}
+                                    {rec.title}
+                                </h4>
+                                <div className="text-[10px] text-arabian-night/50 flex items-center gap-2 mt-0.5">
+                                    <span className="truncate font-semibold">{rec.lecturerName || t('learning_hub.unknown_lecturer')}</span>
+                                    <span className="flex items-center gap-0.5 font-semibold">
+                                        {leaderboardTab === 'favorites' ? <Heart className="w-3 h-3 text-red-400 fill-red-400"/> : <Moon className="w-3 h-3 text-desert-gold fill-desert-gold"/>}
+                                        {leaderboardTab === 'favorites' ? (allFavoritesCount[rec.id] || 0) : (rec.likes?.length || 0)}
+                                    </span>
+                                </div>
+                            </div>
+                            <button className="w-7 h-7 rounded-full bg-deep-teal/5 flex items-center justify-center text-deep-teal opacity-0 group-hover:opacity-100 group-hover:bg-deep-teal/10 transition-all shrink-0">
+                                <PlayCircle className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     // Leaderboard should only show on the main tab without active searches
     const showLeaderboard = activeTab === 'all' && !searchQuery && !taskId && !targetRecordingId;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-12 overflow-x-hidden">
+        <div className={`space-y-8 animate-in fade-in duration-500 pb-12 overflow-x-hidden ${isNative ? 'pt-2' : ''}`}>
             {/* Control Center Card */}
-            <div className={`backdrop-blur-xl rounded-[2rem] border p-6 sm:p-8 md:p-10 relative overflow-hidden transition-all duration-700 ${
-                businessType === 'leader'
-                    ? 'bg-gradient-to-r from-teal-950 via-deep-teal to-desert-gold/20 shadow-[0_12px_50px_rgba(203,161,53,0.15)] border-desert-gold/30'
-                    : 'bg-white/80 border-white shadow-[0_8px_40px_rgb(0,0,0,0.04)]'
+            <div className={`relative transition-all duration-700 ${
+                isNative 
+                    ? 'p-0 border-0 bg-transparent shadow-none'
+                    : `backdrop-blur-xl rounded-[2rem] border p-6 sm:p-8 md:p-10 overflow-hidden ${
+                        businessType === 'leader'
+                            ? 'bg-gradient-to-r from-teal-950 via-deep-teal to-desert-gold/20 shadow-[0_12px_50px_rgba(203,161,53,0.15)] border-desert-gold/30'
+                            : 'bg-white/80 border-white shadow-[0_8px_40px_rgb(0,0,0,0.04)]'
+                      }`
             }`}>
                 {/* Premium Decorative Background Elements */}
-                {businessType === 'leader' ? (
-                    <>
-                        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/30 via-yellow-500/10 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[8000ms]"></div>
-                        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-yellow-600/15 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
-                    </>
-                ) : (
-                    <>
-                        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/10 via-teal-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl"></div>
-                        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-deep-teal/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
-                    </>
+                {!isNative && (
+                    businessType === 'leader' ? (
+                        <>
+                            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/30 via-yellow-500/10 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[8000ms]"></div>
+                            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-yellow-600/15 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/10 via-teal-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-deep-teal/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
+                        </>
+                    )
                 )}
                 
                 <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-30">
                     <div>
                         {taskId ? (
                             <>
-                                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.task_exclusive')}</h2>
+                                <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.task_exclusive')}</h2>
                                 <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.task_need_listen')} <span className="font-bold text-arabian-night">{taskTitle}</span></p>
                                 <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
                                     <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
@@ -2870,7 +2962,7 @@ export default function LearningHub() {
                             </>
                         ) : targetRecordingId ? (
                             <>
-                                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.shared_recording_title', '推荐学习素材')}</h2>
+                                <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.shared_recording_title', '推荐学习素材')}</h2>
                                 <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.shared_recording_desc', '正在播放为您推荐的精品销售实战录音，助推专业成长！')}</p>
                                 <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
                                     <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
@@ -2878,13 +2970,15 @@ export default function LearningHub() {
                             </>
                         ) : (
                             <div className="flex flex-col">
-                                <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight">{t('learning_hub.explore')}</h2>
-                                <div className="mt-3 flex items-center gap-3">
-                                    <span className="w-10 h-1 bg-gradient-to-r from-desert-gold to-yellow-500 rounded-full shadow-sm"></span>
-                                    <p className="text-base font-extrabold text-desert-gold tracking-wide italic bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-yellow-600">
-                                        "{t('learning_hub.slogan')}"
-                                    </p>
-                                </div>
+                                <h2 className={isNative ? "text-3xl font-black text-slate-800 tracking-tight" : "text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight"}>{t('learning_hub.explore')}</h2>
+                                {!isNative && (
+                                    <div className="mt-3 flex items-center gap-3">
+                                        <span className="w-10 h-1 bg-gradient-to-r from-desert-gold to-yellow-500 rounded-full shadow-sm"></span>
+                                        <p className="text-base font-extrabold text-desert-gold tracking-wide italic bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-yellow-600">
+                                            "{t('learning_hub.slogan')}"
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -2893,15 +2987,15 @@ export default function LearningHub() {
                     {!taskId && !targetRecordingId && (
                         <div className="flex flex-col gap-4 w-full md:w-auto items-end">
                             {allowedTabs.length > 1 ? (
-                                <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-gray-200/60 shadow-md flex items-center w-full md:w-auto self-start md:self-end">
+                                <div className="p-1 rounded-full flex items-center w-full md:w-auto self-start md:self-end overflow-x-auto whitespace-nowrap scrollbar-none bg-white/70 backdrop-blur-md border border-white/50 shadow-sm">
                                     {allowedTabs.map(tab => (
                                         <button
                                             key={tab.type}
                                             onClick={() => { setBusinessType(tab.type); setActiveTab('all'); setSelectedLecturer(''); }}
-                                            className={`flex-1 md:flex-none px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 ${
+                                            className={`flex-1 md:flex-none px-4 md:px-6 py-2 md:py-2.5 rounded-full font-extrabold transition-all duration-300 text-xs sm:text-sm select-none cursor-pointer ${
                                                 businessType === tab.type 
-                                                    ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg shadow-black/10 scale-105` 
-                                                    : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                                    ? `bg-gradient-to-r ${tab.gradient} text-white shadow-md shadow-slate-900/10 scale-[1.02] transform`
+                                                    : 'text-arabian-night/65 hover:text-arabian-night hover:bg-white/40'
                                             }`}
                                         >
                                             {tab.label}
@@ -2909,7 +3003,7 @@ export default function LearningHub() {
                                     ))}
                                 </div>
                             ) : allowedTabs.length === 1 ? (
-                                <div className={`bg-gradient-to-r ${allowedTabs[0].gradient} text-white px-8 py-3 rounded-full font-extrabold text-base shadow-lg shadow-black/10 flex items-center gap-2 select-none self-start md:self-end`}>
+                                <div className={`bg-gradient-to-r ${allowedTabs[0].gradient} text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-extrabold text-xs sm:text-sm md:text-base shadow-lg shadow-black/10 flex items-center gap-2 select-none self-start md:self-end`}>
                                     <span>✨</span>
                                     <span>{allowedTabs[0].label}</span>
                                 </div>
@@ -3068,10 +3162,10 @@ export default function LearningHub() {
                     <div className={`mt-10 pt-6 border-t relative z-10 ${
                         businessType === 'leader' ? 'border-desert-gold/20' : 'border-gray-100/60'
                     }`}>
-                        <div className="flex flex-wrap gap-3 py-2">
+                        <div className={`flex gap-2.5 py-2 overflow-x-auto scrollbar-none ${isNative ? 'w-full pb-3' : 'flex-wrap'}`}>
                             <button
                                 onClick={() => { setActiveTab('all'); setSelectedLecturer(''); }}
-                                className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
+                                className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
                                     activeTab === 'all' 
                                         ? businessType === 'leader'
                                             ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent'
@@ -3087,7 +3181,7 @@ export default function LearningHub() {
                                 <button
                                     key={cat.id}
                                     onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); }}
-                                    className={`px-6 py-2.5 rounded-full font-bold transition-all duration-300 whitespace-nowrap ${
+                                    className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
                                         activeTab === cat.id 
                                             ? businessType === 'leader'
                                                 ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent'
@@ -3100,13 +3194,27 @@ export default function LearningHub() {
                                     {cat.name}
                                 </button>
                             ))}
+                            <button
+                                onClick={() => { setActiveTab('leaderboard'); setSelectedLecturer(''); }}
+                                className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
+                                    activeTab === 'leaderboard' 
+                                        ? businessType === 'leader'
+                                            ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent'
+                                            : 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
+                                        : businessType === 'leader'
+                                            ? 'bg-teal-950/40 backdrop-blur-sm text-white/70 border border-desert-gold/30 hover:border-desert-gold hover:text-white hover:bg-teal-900/60 hover:-translate-y-0.5 hover:shadow-md'
+                                            : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
+                                }`}
+                            >
+                                {t('learning_hub.leaderboard')}
+                            </button>
                         </div>
                     </div>
                 )}
 
 
                 {/* Lecturers Filter */}
-                {!taskId && !targetRecordingId && sortedLecturers.length > 0 && (
+                {!taskId && !targetRecordingId && activeTab !== 'leaderboard' && sortedLecturers.length > 0 && (
                     <div className={`mt-2 pt-5 border-t relative z-10 animate-in fade-in duration-700 ${
                         businessType === 'leader' ? 'border-desert-gold/20' : 'border-gray-100/60'
                     }`}>
@@ -3120,12 +3228,12 @@ export default function LearningHub() {
                             </span>
                             {t('learning_hub.popular_lecturers', 'Top Lecturers')}
                         </h4>
-                        <div className="flex flex-wrap gap-3 py-2 pb-4">
+                        <div className={`flex gap-3 py-2 pb-4 overflow-x-auto scrollbar-none ${isNative ? 'w-full pb-3' : 'flex-wrap'}`}>
                             {(showAllLecturers ? sortedLecturers : sortedLecturers.slice(0, 10)).map(lecturer => (
                                 <button
                                     key={lecturer}
                                     onClick={() => setSelectedLecturer(selectedLecturer === lecturer ? '' : lecturer)}
-                                    className={`flex items-center gap-2 pr-5 pl-1.5 py-1.5 rounded-full font-bold transition-all duration-300 group cursor-pointer ${
+                                    className={`flex shrink-0 items-center gap-2 pr-5 pl-1.5 py-1.5 rounded-full font-bold transition-all duration-300 group cursor-pointer ${
                                         selectedLecturer === lecturer 
                                             ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white scale-105 shadow-lg shadow-yellow-600/20 border-transparent ring-2 ring-yellow-400/30 ring-offset-1' 
                                             : businessType === 'leader'
@@ -3155,7 +3263,7 @@ export default function LearningHub() {
                                 <button
                                     type="button"
                                     onClick={() => setShowAllLecturers(!showAllLecturers)}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-full font-extrabold text-sm transition-all duration-300 bg-white/80 backdrop-blur-sm text-desert-gold border border-gray-200/80 hover:border-desert-gold/50 hover:bg-white hover:-translate-y-1 hover:shadow-md cursor-pointer group shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                                    className="flex shrink-0 items-center gap-2 px-5 py-2.5 rounded-full font-extrabold text-sm transition-all duration-300 bg-white/80 backdrop-blur-sm text-desert-gold border border-gray-200/80 hover:border-desert-gold/50 hover:bg-white hover:-translate-y-1 hover:shadow-md cursor-pointer group shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
                                 >
                                     {showAllLecturers ? (
                                         <>
@@ -3182,7 +3290,7 @@ export default function LearningHub() {
                 <div className="flex justify-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-desert-gold"></div>
                 </div>
-            ) : filteredRecordings.length === 0 && !taskId ? (
+            ) : filteredRecordings.length === 0 && !taskId && activeTab !== 'leaderboard' ? (
                 <div className="text-center py-20 glass-panel rounded-2xl border border-white">
                     <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <PlayCircle className="text-gray-400 h-8 w-8" />
@@ -3196,8 +3304,13 @@ export default function LearningHub() {
                 </div>
             ) : (
                 <div className="pt-2">
-                    {/* Main Grid & Leaderboard */}
-                    <div className={showLeaderboard ? "flex flex-col xl:flex-row gap-8 items-start animate-in slide-in-from-bottom-4 duration-700" : "animate-in slide-in-from-bottom-4 duration-700"}>
+                    {activeTab === 'leaderboard' ? (
+                        <div className="w-full py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {renderLeaderboardWidget(true)}
+                        </div>
+                    ) : (
+                        /* Main Grid & Leaderboard */
+                        <div className={showLeaderboard ? "flex flex-col xl:flex-row gap-8 items-start animate-in slide-in-from-bottom-4 duration-700" : "animate-in slide-in-from-bottom-4 duration-700"}>
                         <div className={showLeaderboard ? "flex-1 w-full min-w-0" : ""}>
                             {!taskId && (
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4 pb-2 border-b border-gray-100">
@@ -3329,61 +3442,12 @@ export default function LearningHub() {
 
                         {/* Leaderboard Widget */}
                         {showLeaderboard && (
-                            <div className="w-full xl:w-[320px] 2xl:w-[360px] shrink-0 order-last xl:order-none">
-                                <div className="glass-panel rounded-2xl border border-white p-5 sticky top-24">
-                                    <h3 className="text-lg font-bold text-deep-teal mb-4 flex items-center gap-2">
-                                        <Trophy className="w-5 h-5 text-desert-gold" />
-                                        {t('learning_hub.leaderboard')}
-                                    </h3>
-                                    
-                                    <div className="flex bg-gray-100/80 p-1 rounded-lg mb-4">
-                                        <button 
-                                            onClick={() => setLeaderboardTab('favorites')}
-                                            className={`flex-1 text-xs font-bold py-1.5 rounded-md transition-all ${leaderboardTab === 'favorites' ? 'bg-white text-red-500 shadow-sm' : 'text-arabian-night/50 hover:text-arabian-night'}`}
-                                        >
-                                            {t('learning_hub.most_favorited')}
-                                        </button>
-                                        <button 
-                                            onClick={() => setLeaderboardTab('likes')}
-                                            className={`flex-1 text-xs font-bold py-1.5 rounded-md transition-all ${leaderboardTab === 'likes' ? 'bg-white text-desert-gold shadow-sm' : 'text-arabian-night/50 hover:text-arabian-night'}`}
-                                        >
-                                            {t('learning_hub.most_liked')}
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        {(leaderboardTab === 'favorites' ? displayTopFavorited : displayTopLiked).map((rec, idx) => (
-                                            <div 
-                                                key={rec.id} 
-                                                className="flex items-center gap-3 group cursor-pointer hover:bg-white p-2.5 rounded-xl transition-all border border-transparent hover:border-white/60 hover:shadow-sm" 
-                                                onClick={() => setSearchParams({ recordingId: rec.id })}
-                                            >
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600 shadow-sm' : idx === 1 ? 'bg-gray-200 text-gray-600 shadow-sm' : idx === 2 ? 'bg-orange-100 text-orange-600 shadow-sm' : 'bg-gray-50 text-gray-400'}`}>
-                                                    {idx + 1}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm font-bold text-arabian-night line-clamp-2 leading-tight group-hover:text-desert-gold transition-colors" title={rec.title}>
-                                                        {rec.displayId && <span className="text-desert-gold mr-1 text-xs inline-block">[{rec.displayId}]</span>}
-                                                        {rec.title}
-                                                    </h4>
-                                                    <div className="text-[10px] text-arabian-night/50 flex items-center gap-2 mt-0.5">
-                                                        <span className="truncate">{rec.lecturerName || t('learning_hub.unknown_lecturer')}</span>
-                                                        <span className="flex items-center gap-0.5 font-semibold">
-                                                            {leaderboardTab === 'favorites' ? <Heart className="w-3 h-3 text-red-400 fill-red-400"/> : <Moon className="w-3 h-3 text-desert-gold fill-desert-gold"/>}
-                                                            {leaderboardTab === 'favorites' ? (allFavoritesCount[rec.id] || 0) : (rec.likes?.length || 0)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <button className="w-7 h-7 rounded-full bg-deep-teal/5 flex items-center justify-center text-deep-teal opacity-0 group-hover:opacity-100 group-hover:bg-deep-teal/10 transition-all shrink-0">
-                                                    <PlayCircle className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                            <div className="hidden xl:block xl:w-[320px] 2xl:w-[360px] shrink-0">
+                                {renderLeaderboardWidget(false)}
                             </div>
                         )}
                     </div>
+                    )}
                 </div>
             )}
             {activeVideoRecording && (

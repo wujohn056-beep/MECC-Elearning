@@ -809,8 +809,8 @@ export default function RecordingsManager() {
             return;
         }
         
-        // Require file only if creating new
-        if (!editingId && !file) return;
+        // Require file only if creating new and no attachments exist
+        if (!editingId && !file && attachments.length === 0) return;
         if (!title) return;
 
         setUploading(true);
@@ -1498,9 +1498,9 @@ export default function RecordingsManager() {
 
                             <button
                                 type="submit"
-                                disabled={uploading || Object.keys(uploadingAttachments).length > 0 || (!editingId && !file) || categories.length === 0}
+                                disabled={uploading || Object.keys(uploadingAttachments).length > 0 || (!editingId && !file && attachments.length === 0) || categories.length === 0}
                                 className={`w-full py-3 mt-4 rounded-xl font-bold text-white shadow-md transition-all ${
-                                    uploading || Object.keys(uploadingAttachments).length > 0 || (!editingId && !file) || categories.length === 0 
+                                    uploading || Object.keys(uploadingAttachments).length > 0 || (!editingId && !file && attachments.length === 0) || categories.length === 0 
                                         ? 'bg-gray-400 cursor-not-allowed' 
                                         : 'bg-gradient-to-r from-deep-teal to-teal-700 hover:-translate-y-0.5 hover:shadow-lg'
                                 }`}
@@ -1718,6 +1718,13 @@ export default function RecordingsManager() {
                                                 const isVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.m4v') || cleanUrl.endsWith('.avi') || cleanUrl.endsWith('.mkv');
                                                 const isAudio = cleanUrl.endsWith('.mp3') || cleanUrl.endsWith('.wav') || cleanUrl.endsWith('.m4a') || cleanUrl.endsWith('.ogg') || cleanUrl.endsWith('.aac') || cleanUrl.endsWith('.flac');
                                                 
+                                                if (!rec.audioUrl) {
+                                                    return (
+                                                        <span className="inline-flex items-center gap-1 text-xs text-arabian-night/60 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200 mt-1 font-semibold select-none">
+                                                            📄 {t('recordings_manager.attachments_only', '仅含附件/课件')} ({rec.attachments?.length || 0})
+                                                        </span>
+                                                    );
+                                                }
                                                 if (isVideo) {
                                                     return <video src={rec.audioUrl} controls className="h-10 w-48 mt-1 rounded bg-black" />;
                                                 }

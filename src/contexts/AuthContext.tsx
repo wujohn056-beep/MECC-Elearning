@@ -70,19 +70,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const canAccessDashboard = isLeader || hasPermission('manageDashboard');
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
+        // If auth is null (e.g. config not set or running mocked services), skip and clear loading immediately
+        if (!auth) {
+            console.warn("[AuthContext] Firebase Auth is null/uninitialized. Forcing loading to false.");
+            setLoading(false);
+            return;
+        }
 
-            if (currentUser) {
-                // Hardcoded super admin or Mock SSO test account
-                if (currentUser.email === 'wuchuan@51talk.com') {
-                    setProfile({
-                        crmId: 'wuchuan',
-                        role: 'super_admin'
-                    });
-                } else if (currentUser.email === 'test-sso@mecc.com') {
-                    const mockCrmId = localStorage.getItem('mock_sso_crm_id') || 'wuchuan';
-                    if (mockCrmId.toLowerCase() === 'serdah') {
+        // Set a fallback timeout (3.5 seconds) to prevent permanent loading state / black screen
+        const timeoutId = setTimeout(() => {
+            console.warn("[AuthContext] Auth listener initialization timed out. Forcing loading to false.");
+            setLoading(false);
+        }, 3500);
+
+        let unsubscribe = () => {};
+
+        try {
+            unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+                setUser(currentUser);
+
+                if (currentUser) {
+                    // Hardcoded super admin or Mock SSO test account
+                    if (currentUser.email === 'wuchuan@51talk.com') {
+                        setProfile({
+                            crmId: 'wuchuan',
+                            role: 'super_admin'
+                        });
+                    } else if (currentUser.email === 'test-sso@mecc.com') {
+                        const mockCrmId = localStorage.getItem('mock_sso_crm_id') || 'wuchuan';
+                        if (mockCrmId.toLowerCase() === 'serdah') {
+                            setProfile({
+                                crmId: 'Serdah',
+                                role: 'sm',
+                                dep: 'CC',
+                                sd: 'JOHN',
+                                team: '',
+                                realUid: 'hBhX4w7gqOQZEEiytqKe3FTDhAT2'
+                            });
+                        } else {
+                            setProfile({
+                                crmId: 'wuchuan',
+                                role: 'super_admin'
+                            });
+                        }
+                    } else if (currentUser.email === 'mohserdah@51talk.com') {
                         setProfile({
                             crmId: 'Serdah',
                             role: 'sm',
@@ -92,93 +123,87 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             realUid: 'hBhX4w7gqOQZEEiytqKe3FTDhAT2'
                         });
                     } else {
-                        setProfile({
-                            crmId: 'wuchuan',
-                            role: 'super_admin'
-                        });
-                    }
-                } else if (currentUser.email === 'mohserdah@51talk.com') {
-                    setProfile({
-                        crmId: 'Serdah',
-                        role: 'sm',
-                        dep: 'CC',
-                        sd: 'JOHN',
-                        team: '',
-                        realUid: 'hBhX4w7gqOQZEEiytqKe3FTDhAT2'
-                    });
-                } else {
-                    // Fetch user profile from Firestore
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-                        if (userDoc.exists()) {
-                            setProfile({
-                                ...(userDoc.data() as UserProfile),
-                                realUid: userDoc.id
-                            });
-                        } else {
-                            // Try querying by crmId as a fallback to support different UIDs across auth/database in test environment
-                            const emailPrefix = currentUser.email?.split('@')[0] || '';
-                            let targetCrmId = emailPrefix;
-                            
-                            // Specific mappings
-                            if (emailPrefix.toLowerCase() === 'mohserdah' || emailPrefix.toLowerCase() === 'serdah') {
-                                targetCrmId = 'Serdah';
-                            }
-                            
-                            console.log(`[AuthContext] UID document not found. Attempting query by crmId: ${targetCrmId}`);
-                            const { collection, query, where, getDocs } = await import('firebase/firestore');
-                            const q = query(collection(db, 'users'), where('crmId', '==', targetCrmId));
-                            const querySnapshot = await getDocs(q);
-                            
-                            if (!querySnapshot.empty) {
-                                const matchedDoc = querySnapshot.docs[0];
-                                console.log(`[AuthContext] Successfully resolved user profile via crmId query:`, matchedDoc.data());
+                        // Fetch user profile from Firestore
+                        try {
+                            const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                            if (userDoc.exists()) {
                                 setProfile({
-                                    ...(matchedDoc.data() as UserProfile),
-                                    realUid: matchedDoc.id
+                                    ...(userDoc.data() as UserProfile),
+                                    realUid: userDoc.id
                                 });
                             } else {
-                                // Try case-insensitive or partial match
-                                const allUsersSnap = await getDocs(collection(db, 'users'));
-                                let found = false;
-                                allUsersSnap.forEach((doc) => {
-                                    const data = doc.data();
-                                    const dbCrmId = String(data.crmId || '').toLowerCase();
-                                    const searchPrefix = targetCrmId.toLowerCase();
-                                    if (dbCrmId === searchPrefix || dbCrmId.includes(searchPrefix) || searchPrefix.includes(dbCrmId)) {
-                                        console.log(`[AuthContext] Successfully resolved user profile via fallback scan:`, data);
-                                        setProfile({
-                                            ...(data as UserProfile),
-                                            realUid: doc.id
-                                        });
-                                        found = true;
-                                    }
-                                });
+                                // Try querying by crmId as a fallback to support different UIDs across auth/database in test environment
+                                const emailPrefix = currentUser.email?.split('@')[0] || '';
+                                let targetCrmId = emailPrefix;
                                 
-                                if (!found) {
-                                    console.warn("User has Auth account but no Firestore profile. Force logging out.");
-                                    sessionStorage.setItem('auth_blocked_reason', 'deleted');
+                                // Specific mappings
+                                if (emailPrefix.toLowerCase() === 'mohserdah' || emailPrefix.toLowerCase() === 'serdah') {
+                                    targetCrmId = 'Serdah';
+                                }
+                                
+                                console.log(`[AuthContext] UID document not found. Attempting query by crmId: ${targetCrmId}`);
+                                const { collection, query, where, getDocs } = await import('firebase/firestore');
+                                const q = query(collection(db, 'users'), where('crmId', '==', targetCrmId));
+                                const querySnapshot = await getDocs(q);
+                                
+                                if (!querySnapshot.empty) {
+                                    const matchedDoc = querySnapshot.docs[0];
+                                    console.log(`[AuthContext] Successfully resolved user profile via crmId query:`, matchedDoc.data());
                                     setProfile({
-                                        crmId: 'blocked',
-                                        role: 'blocked'
-                                    } as any);
-                                    await firebaseSignOut(auth);
+                                        ...(matchedDoc.data() as UserProfile),
+                                        realUid: matchedDoc.id
+                                    });
+                                } else {
+                                    // Try case-insensitive or partial match
+                                    const allUsersSnap = await getDocs(collection(db, 'users'));
+                                    let found = false;
+                                    allUsersSnap.forEach((doc) => {
+                                        const data = doc.data();
+                                        const dbCrmId = String(data.crmId || '').toLowerCase();
+                                        const searchPrefix = targetCrmId.toLowerCase();
+                                        if (dbCrmId === searchPrefix || dbCrmId.includes(searchPrefix) || searchPrefix.includes(dbCrmId)) {
+                                            console.log(`[AuthContext] Successfully resolved user profile via fallback scan:`, data);
+                                            setProfile({
+                                                ...(data as UserProfile),
+                                                realUid: doc.id
+                                            });
+                                            found = true;
+                                        }
+                                    });
+                                    
+                                    if (!found) {
+                                        console.warn("User has Auth account but no Firestore profile. Force logging out.");
+                                        sessionStorage.setItem('auth_blocked_reason', 'deleted');
+                                        setProfile({
+                                            crmId: 'blocked',
+                                            role: 'blocked'
+                                        } as any);
+                                        await firebaseSignOut(auth);
+                                    }
                                 }
                             }
+                        } catch (error) {
+                            console.error("Error fetching user profile:", error);
+                            setProfile(null);
                         }
-                    } catch (error) {
-                        console.error("Error fetching user profile:", error);
-                        setProfile(null);
                     }
+                } else {
+                    setProfile(null);
                 }
-            } else {
-                setProfile(null);
-            }
 
+                clearTimeout(timeoutId);
+                setLoading(false);
+            });
+        } catch (err) {
+            console.error("[AuthContext] Failed to setup onAuthStateChanged:", err);
+            clearTimeout(timeoutId);
             setLoading(false);
-        });
+        }
 
-        return unsubscribe;
+        return () => {
+            clearTimeout(timeoutId);
+            unsubscribe();
+        };
     }, []);
 
     // iOS/Android Native Push Notifications Registration Hook
@@ -248,7 +273,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {loading ? (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-[#1A2B3C] to-[#0A1520] p-4 text-center">
+                    {/* Decorative background gradients */}
+                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-48 h-48 bg-desert-gold/15 blur-[60px] rounded-full pointer-events-none"></div>
+                    <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-deep-teal/10 blur-[80px] rounded-full pointer-events-none"></div>
+                    
+                    {/* Premium Glassmorphic Container */}
+                    <div className="relative glass-panel-dark max-w-sm w-full py-10 px-8 rounded-3xl flex flex-col items-center border border-white/5 shadow-2xl">
+                        {/* Animated Outer Ring */}
+                        <div className="relative w-20 h-20 mb-6 flex items-center justify-center">
+                            <div className="absolute inset-0 rounded-full border border-desert-gold/30 animate-pulse-ring"></div>
+                            <div className="absolute inset-2 rounded-full border border-deep-teal/20"></div>
+                            
+                            {/* Spinning Gold Loader */}
+                            <svg className="w-12 h-12 text-desert-gold animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+
+                        <img src="/logo.png" alt="MECC" className="h-8 mb-4 object-contain opacity-90 drop-shadow-md" />
+                        
+                        <h3 className="text-xl font-extrabold text-white tracking-wide mb-1.5">
+                            MECC E-Learning
+                        </h3>
+                        <p className="text-xs font-semibold text-desert-gold/80 uppercase tracking-widest animate-gold-pulse">
+                            Loading Experience...
+                        </p>
+                    </div>
+                </div>
+            ) : (
+                children
+            )}
         </AuthContext.Provider>
     );
 }

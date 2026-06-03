@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { Capacitor } from '@capacitor/core';
 
 export const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,7 +24,18 @@ export let storage: any = null;
 
 if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your_api_key') {
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+    
+    // Use indexedDBLocalPersistence on native mobile platforms, with browserLocalPersistence as fallback
+    if (Capacitor.isNativePlatform()) {
+        auth = initializeAuth(app, {
+            persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+        });
+    } else {
+        auth = initializeAuth(app, {
+            persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence]
+        });
+    }
+    
     db = getFirestore(app, "default");
     storage = getStorage(app);
 } else {

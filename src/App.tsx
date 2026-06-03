@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import AdminLayout from './components/AdminLayout';
@@ -15,6 +16,8 @@ import UserManager from './pages/admin/UserManager';
 import CategoryManager from './pages/admin/CategoryManager';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CommentManager from './pages/admin/CommentManager';
+
+const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
 
 function App() {
   return (

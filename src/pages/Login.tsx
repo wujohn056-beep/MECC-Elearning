@@ -10,6 +10,7 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showDevPanel, setShowDevPanel] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -64,6 +65,27 @@ export default function Login() {
         setLoading(true);
         setError('');
         try {
+            if (code && code.startsWith('mock_auth_code_')) {
+                const username = code.replace('mock_auth_code_', '');
+                console.log(`[Mock SSO] Detected local development mock code. Bypassing Netlify API for ${username}`);
+                localStorage.setItem('mock_sso_crm_id', username);
+                
+                try {
+                    await signInWithEmailAndPassword(auth, 'test-sso@mecc.com', '123456');
+                } catch (ssoErr: any) {
+                    if (ssoErr.code === 'auth/user-not-found' || ssoErr.code === 'auth/invalid-credential') {
+                        // Automatically register test-sso@mecc.com on the fly if it doesn't exist
+                        const { createUserWithEmailAndPassword } = await import('firebase/auth');
+                        await createUserWithEmailAndPassword(auth, 'test-sso@mecc.com', '123456');
+                        await signInWithEmailAndPassword(auth, 'test-sso@mecc.com', '123456');
+                    } else {
+                        throw ssoErr;
+                    }
+                }
+                navigate(from, { replace: true });
+                return;
+            }
+
             const res = await fetch('/.netlify/functions/dingtalk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -181,108 +203,144 @@ export default function Login() {
 
     return (
         <div 
-            className="min-h-screen text-arabian-night flex items-center justify-center p-4 relative bg-cover bg-center bg-no-repeat"
+            className="min-h-screen text-white flex flex-col justify-between md:justify-center items-center relative bg-cover bg-top bg-no-repeat overflow-y-auto pt-safe pb-safe"
             style={{ backgroundImage: `url('/images/login-bg.jpg')` }}
         >
-            <div className="absolute inset-0 bg-black/10"></div> {/* Subtle overlay to ensure text readability */}
-            
-            <button 
-                onClick={toggleLanguage} 
-                className="absolute top-6 right-6 z-10 bg-white/20 backdrop-blur-md border border-white/30 hover:bg-desert-gold hover:text-white text-white px-5 py-2 rounded-full text-sm font-bold transition-all shadow-sm"
-            >
-                {t('common.language', 'Language')} ({i18n.language?.toUpperCase() || 'EN'})
-            </button>
-            <div className="relative z-10 max-w-[420px] w-full bg-white/10 backdrop-blur-md rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-6 sm:p-8 border border-white/20 mt-[22vh] sm:mt-[25vh]">
-                <div className="text-center mb-6 sm:mb-8 relative">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-desert-gold/30 blur-[30px] rounded-full -z-10 pointer-events-none"></div>
-                    <img src="/logo.png" alt="" className="h-20 sm:h-24 mx-auto mb-6 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
-                    <h2 className="text-3xl font-extrabold text-deep-teal mb-2">{t('common.login')}</h2>
-                    <p className="text-arabian-night/60 text-sm font-medium tracking-wide">{t('login.subtitle')}</p>
-                </div>
+            {/* Dark gradient overlay for readability and premium feel */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/60 z-0 pointer-events-none"></div>
 
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm flex items-center">
-                        <span>{error}</span>
-                    </div>
-                )}
+            {/* Language Switcher */}
+            <div className="w-full max-w-5xl mx-auto px-6 py-4 flex justify-end items-center z-10">
+                <button 
+                    onClick={toggleLanguage} 
+                    className="bg-white/10 backdrop-blur-md border border-white/20 hover:bg-desert-gold hover:text-arabian-night text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 shadow-sm active:scale-95 cursor-pointer"
+                >
+                    {t('common.language', 'Language')} ({i18n.language?.toUpperCase() || 'EN'})
+                </button>
+            </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-                    <div>
-                        <label className="block text-sm font-semibold text-deep-teal mb-1.5">
-                            {t('login.email_label')}
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-arabian-night/40" />
-                            </div>
-                            <input
-                                type="text"
-                                required
-                                className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-desert-gold focus:border-transparent transition-all bg-white/50 backdrop-blur-sm"
-                                placeholder={t('login.email_placeholder')}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                    </div>
+            {/* Spacer for mobile to shift card down so background text remains visible */}
+            <div className="flex-1 md:hidden h-24 min-h-[90px]"></div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-deep-teal mb-1.5">
-                            {t('common.password')}
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-arabian-night/40" />
-                            </div>
-                            <input
-                                type="password"
-                                required
-                                className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-desert-gold focus:border-transparent transition-all bg-white/50 backdrop-blur-sm"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-teal transition-all ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5'
-                            }`}
-                    >
-                        {loading ? t('common.loading') : t('common.submit')}
-                    </button>
-                </form>
-
-                {/* DingTalk SSO test button for development/testing */}
-                {(import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
-                    <div className="mt-4 pt-4 border-t border-white/10 flex flex-col items-center gap-2">
-                        <div className="text-[10px] text-teal-200/60 mb-1 text-center font-bold tracking-wide">
-                            🔒 钉钉免登测试 (Mock SSO - 本地专用)
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => handleDingTalkLogin('mock_auth_code_wuchuan')}
-                            disabled={loading}
-                            className="w-full py-2 px-4 rounded-xl text-xs font-bold text-teal-300 hover:text-white border border-teal-500/40 bg-teal-950/20 hover:bg-teal-700/30 transition-all hover:scale-[1.02] cursor-pointer"
-                        >
-                            🔑 超级管理员 (wuchuan) 免密登录
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleDingTalkLogin('mock_auth_code_Serdah')}
-                            disabled={loading}
-                            className="w-full py-2 px-4 rounded-xl text-xs font-bold text-orange-300 hover:text-white border border-orange-500/40 bg-orange-950/20 hover:bg-orange-700/30 transition-all hover:scale-[1.02] cursor-pointer"
-                        >
-                            🔑 CC 部门经理 (Serdah) 免密登录
-                        </button>
-                        <p className="text-[10px] text-teal-200/50 mt-1 text-center leading-normal">
-                            点击上述按钮将直接以真实账号身份登录，无需输入密码，完美支持本地环境测试。
+            {/* Login Card Container */}
+            <div className="w-full max-w-[440px] px-0 sm:px-6 z-10">
+                <div className="bg-[#0f1d2e]/90 backdrop-blur-2xl rounded-t-[36px] sm:rounded-[28px] border-t sm:border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-6 sm:p-8 flex flex-col transition-all duration-500">
+                    <div className="text-center mb-6 relative">
+                        {/* Gold Ambient Glow */}
+                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-28 h-28 bg-desert-gold/10 blur-[40px] rounded-full -z-10 pointer-events-none"></div>
+                        
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-1.5 tracking-wide">
+                            {t('common.login')}
+                        </h2>
+                        <p className="text-white/55 text-xs font-semibold tracking-wider uppercase">
+                            {t('login.subtitle')}
                         </p>
                     </div>
-                )}
+
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-2.5 rounded-xl mb-5 text-xs flex items-center gap-2 animate-in fade-in duration-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></span>
+                            <span>{error}</span>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Email/CRM ID Field */}
+                        <div>
+                            <label className="block text-[11px] font-bold text-desert-gold uppercase tracking-widest mb-1.5">
+                                {t('login.email_label')}
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
+                                    <Mail className="h-4.5 w-4.5" />
+                                </div>
+                                <input
+                                    type="text"
+                                    required
+                                    className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/35 text-sm focus:outline-none focus:ring-2 focus:ring-desert-gold/50 focus:border-desert-gold transition-all duration-300"
+                                    placeholder={t('login.email_placeholder')}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Password Field */}
+                        <div>
+                            <label className="block text-[11px] font-bold text-desert-gold uppercase tracking-widest mb-1.5">
+                                {t('common.password')}
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/40">
+                                    <Lock className="h-4.5 w-4.5" />
+                                </div>
+                                <input
+                                    type="password"
+                                    required
+                                    className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/35 text-sm focus:outline-none focus:ring-2 focus:ring-desert-gold/50 focus:border-desert-gold transition-all duration-300"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-teal transition-all duration-300 active:scale-[0.98] ${
+                                loading ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5 glow-gold-hover cursor-pointer'
+                            }`}
+                        >
+                            {loading ? (
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : t('common.submit')}
+                        </button>
+                    </form>
+
+                    {/* Developer Mock SSO drawer */}
+                    {(import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                        <div className="mt-5 pt-4 border-t border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => setShowDevPanel(!showDevPanel)}
+                                className="w-full flex items-center justify-between text-[10px] text-teal-300/60 hover:text-teal-300 font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                            >
+                                <span>🔒 Mock SSO Bypass</span>
+                                <span>{showDevPanel ? '▲' : '▼'}</span>
+                            </button>
+                            
+                            {showDevPanel && (
+                                <div className="mt-3 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDingTalkLogin('mock_auth_code_wuchuan')}
+                                        disabled={loading}
+                                        className="w-full py-2 px-3 rounded-lg text-xs font-bold text-teal-300 hover:text-white border border-teal-500/20 bg-teal-950/20 hover:bg-teal-700/30 transition-all cursor-pointer"
+                                    >
+                                        🔑 超级管理员 (wuchuan)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDingTalkLogin('mock_auth_code_Serdah')}
+                                        disabled={loading}
+                                        className="w-full py-2 px-3 rounded-lg text-xs font-bold text-orange-300 hover:text-white border border-orange-500/20 bg-orange-950/20 hover:bg-orange-700/30 transition-all cursor-pointer"
+                                    >
+                                        🔑 CC 部门经理 (Serdah)
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
+
+            {/* Bottom Spacer */}
+            <div className="hidden md:block h-8"></div>
         </div>
     );
 }
