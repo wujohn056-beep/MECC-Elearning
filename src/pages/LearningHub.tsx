@@ -566,6 +566,8 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [actualListenedSeconds, setActualListenedSeconds] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isThresholdReached, setIsThresholdReached] = useState(false);
+    const isUnlockedLocal = isUnlocked || isThresholdReached;
     const isVideo = isVideoUrl(rec.audioUrl);
     const isDoc = isDocUrl(rec.audioUrl) || 
                   rec.categoryName?.toLowerCase() === 'doc' || 
@@ -886,9 +888,8 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                 setActualListenedSeconds(prev => {
                     const next = prev + diff;
                     const target = duration / 3;
-                    if (target > 0 && prev < target && next >= target && onUnlock) {
-                        // Just crossed the threshold! Trigger unlock!
-                        setTimeout(() => onUnlock(duration), 0);
+                    if (target > 0 && next >= target) {
+                        setIsThresholdReached(true);
                     }
                     return next;
                 });
@@ -910,13 +911,20 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
         if (mediaRef.current) setDuration(mediaRef.current.duration);
     };
 
+    const handleClose = React.useCallback(() => {
+        if (!isDoc && rec.audioUrl && duration > 0 && actualListenedSeconds >= duration / 3 && !isUnlocked && onUnlock) {
+            onUnlock(duration);
+        }
+        onClose();
+    }, [isDoc, rec.audioUrl, duration, actualListenedSeconds, isUnlocked, onUnlock, onClose]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') handleClose();
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onClose]);
+    }, [handleClose]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-300">
@@ -939,7 +947,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                         {rec.displayId && <span className="text-desert-gold text-xs font-extrabold">[{rec.displayId}]</span>}
                     </div>
                     <button 
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-700 outline-none"
                     >
                         <X className="w-5 h-5" />
@@ -1180,7 +1188,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                             {/* Arabic Transcript Document with Anti-Cheating Unlock */}
                             {rec.transcript && !isVideo && (
                                 <div className="mt-6 border-t border-gray-100 pt-5">
-                                    {isUnlocked ? (
+                                    {isUnlockedLocal ? (
                                         <div className="animate-in fade-in duration-700">
                                             <div className="flex flex-wrap justify-between items-center gap-4 mb-3">
                                                 <div className="flex items-center gap-2">
@@ -2393,7 +2401,7 @@ export default function LearningHub() {
 
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [loading, setLoading] = useState(true);
-    const [sortType, setSortType] = useState<'latest' | 'popular'>('latest');
+    const [sortType, setSortType] = useState<'latest' | 'popular' | 'leaderboard'>('latest');
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
     const [displayCount, setDisplayCount] = useState(12);
     
@@ -2921,7 +2929,7 @@ export default function LearningHub() {
     };
 
     // Leaderboard should only show on the main tab without active searches
-    const showLeaderboard = activeTab === 'all' && !searchQuery && !taskId && !targetRecordingId;
+    const showLeaderboard = activeTab === 'all' && sortType !== 'leaderboard' && !searchQuery && !taskId && !targetRecordingId;
 
     return (
         <div className={`space-y-8 animate-in fade-in duration-500 pb-12 overflow-x-hidden ${isNative ? 'pt-2' : ''}`}>
@@ -3164,7 +3172,7 @@ export default function LearningHub() {
                     }`}>
                         <div className={`flex gap-2.5 py-2 overflow-x-auto scrollbar-none ${isNative ? 'w-full pb-3' : 'flex-wrap'}`}>
                             <button
-                                onClick={() => { setActiveTab('all'); setSelectedLecturer(''); }}
+                                onClick={() => { setActiveTab('all'); setSelectedLecturer(''); if (sortType === 'leaderboard') setSortType('latest'); }}
                                 className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
                                     activeTab === 'all' 
                                         ? businessType === 'leader'
@@ -3180,7 +3188,7 @@ export default function LearningHub() {
                             {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
                                 <button
                                     key={cat.id}
-                                    onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); }}
+                                    onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); if (sortType === 'leaderboard') setSortType('latest'); }}
                                     className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
                                         activeTab === cat.id 
                                             ? businessType === 'leader'
@@ -3194,20 +3202,6 @@ export default function LearningHub() {
                                     {cat.name}
                                 </button>
                             ))}
-                            <button
-                                onClick={() => { setActiveTab('leaderboard'); setSelectedLecturer(''); }}
-                                className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
-                                    activeTab === 'leaderboard' 
-                                        ? businessType === 'leader'
-                                            ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent'
-                                            : 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
-                                        : businessType === 'leader'
-                                            ? 'bg-teal-950/40 backdrop-blur-sm text-white/70 border border-desert-gold/30 hover:border-desert-gold hover:text-white hover:bg-teal-900/60 hover:-translate-y-0.5 hover:shadow-md'
-                                            : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
-                                }`}
-                            >
-                                {t('learning_hub.leaderboard')}
-                            </button>
                         </div>
                     </div>
                 )}
@@ -3290,7 +3284,7 @@ export default function LearningHub() {
                 <div className="flex justify-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-desert-gold"></div>
                 </div>
-            ) : filteredRecordings.length === 0 && !taskId && activeTab !== 'leaderboard' ? (
+            ) : filteredRecordings.length === 0 && !taskId && sortType !== 'leaderboard' ? (
                 <div className="text-center py-20 glass-panel rounded-2xl border border-white">
                     <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <PlayCircle className="text-gray-400 h-8 w-8" />
@@ -3304,12 +3298,6 @@ export default function LearningHub() {
                 </div>
             ) : (
                 <div className="pt-2">
-                    {activeTab === 'leaderboard' ? (
-                        <div className="w-full py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {renderLeaderboardWidget(true)}
-                        </div>
-                    ) : (
-                        /* Main Grid & Leaderboard */
                         <div className={showLeaderboard ? "flex flex-col xl:flex-row gap-8 items-start animate-in slide-in-from-bottom-4 duration-700" : "animate-in slide-in-from-bottom-4 duration-700"}>
                         <div className={showLeaderboard ? "flex-1 w-full min-w-0" : ""}>
                             {!taskId && (
@@ -3321,23 +3309,35 @@ export default function LearningHub() {
                                                 : categories.find(c => c.id === activeTab)?.name || t('learning_hub.discover_content', '发现内容')}
                                         </h3>
                                     </div>
-                                    <div className="flex bg-gray-100/70 p-1.5 rounded-xl shrink-0 border border-gray-200/50 shadow-inner">
+                                    <div className="flex bg-gray-100/70 p-1.5 rounded-xl shrink-0 border border-gray-200/50 shadow-inner max-w-full overflow-x-auto scrollbar-none">
                                         <button 
                                             onClick={() => setSortType('latest')}
-                                            className={`px-5 py-2 rounded-lg text-[15px] font-extrabold transition-all flex items-center gap-2 ${sortType === 'latest' ? 'bg-white text-deep-teal shadow-md border border-gray-200/50 scale-105' : 'text-arabian-night/60 hover:text-deep-teal hover:bg-white/50'}`}
+                                            className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-[15px] font-extrabold transition-all flex items-center gap-1.5 ${sortType === 'latest' ? 'bg-white text-deep-teal shadow-md border border-gray-200/50 scale-105' : 'text-arabian-night/60 hover:text-deep-teal hover:bg-white/50'}`}
                                         >
                                             <span className="text-lg">🆕</span> {t('common.sort_newest', '最新排序')}
                                         </button>
                                         <button 
                                             onClick={() => setSortType('popular')}
-                                            className={`px-5 py-2 rounded-lg text-[15px] font-extrabold transition-all flex items-center gap-2 ${sortType === 'popular' ? 'bg-white text-desert-gold shadow-md border border-gray-200/50 scale-105' : 'text-arabian-night/60 hover:text-desert-gold hover:bg-white/50'}`}
+                                            className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-[15px] font-extrabold transition-all flex items-center gap-1.5 ${sortType === 'popular' ? 'bg-white text-desert-gold shadow-md border border-gray-200/50 scale-105' : 'text-arabian-night/60 hover:text-desert-gold hover:bg-white/50'}`}
                                         >
                                             <span className="text-lg">🔥</span> {t('common.sort_popular', '最热排行')}
+                                        </button>
+                                        <button 
+                                            onClick={() => setSortType('leaderboard')}
+                                            className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-[15px] font-extrabold transition-all flex items-center gap-1.5 ${sortType === 'leaderboard' ? 'bg-white text-desert-gold shadow-md border border-gray-200/50 scale-105' : 'text-arabian-night/60 hover:text-desert-gold hover:bg-white/50'}`}
+                                        >
+                                            <span className="text-lg">🏆</span> {t('learning_hub.leaderboard')}
                                         </button>
                                     </div>
                                 </div>
                             )}
-                            <div className={taskId ? "flex flex-col gap-6" : "grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] 2xl:grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6"}>
+                            {sortType === 'leaderboard' ? (
+                                <div className="w-full py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    {renderLeaderboardWidget(true)}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className={taskId ? "flex flex-col gap-6" : "grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] 2xl:grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6"}>
                                 {taskId ? (
                                     validTaskRecordingIds.length === 0 ? (
                                         <div className="text-center py-10 text-arabian-night/50 font-bold col-span-full">{t('learning_hub.no_recordings_for_task', '该任务没有关联录音，或录音已被管理员删除')}</div>
@@ -3438,6 +3438,8 @@ export default function LearningHub() {
                                     </button>
                                 </div>
                             )}
+                            </>
+                            )}
                         </div>
 
                         {/* Leaderboard Widget */}
@@ -3447,7 +3449,6 @@ export default function LearningHub() {
                             </div>
                         )}
                     </div>
-                    )}
                 </div>
             )}
             {activeVideoRecording && (
