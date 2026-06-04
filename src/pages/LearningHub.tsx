@@ -1209,7 +1209,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                                                     : 'text-gray-400 hover:text-gray-600'
                                                             }`}
                                                         >
-                                                            🌐 Original
+                                                            🌐 {t('learning_hub.original_transcript', 'Original')}
                                                         </button>
                                                         <button
                                                             onClick={() => setActiveVideoTab('chinese')}
@@ -1219,7 +1219,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                                                     : 'text-gray-400 hover:text-gray-600'
                                                             }`}
                                                         >
-                                                            🇨🇳 中文
+                                                            🇨🇳 {t('learning_hub.chinese_transcript', '中文')}
                                                         </button>
                                                     </div>
                                                 )}
@@ -1241,7 +1241,7 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                             {activeVideoTab === 'chinese' && loadingVideoTranslation ? (
                                                 <div className="bg-gray-50/75 border border-gray-100 rounded-2xl p-5 flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
                                                     <RefreshCw className="w-6 h-6 animate-spin text-desert-gold" />
-                                                    <span className="text-xs font-bold animate-pulse">正在智能生成中文对照翻译...</span>
+                                                    <span className="text-xs font-bold animate-pulse">{t('learning_hub.generating_translation', '正在智能生成中文对照翻译...')}</span>
                                                 </div>
                                             ) : (
                                                 <div 
@@ -2321,7 +2321,7 @@ const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => 
                                         : 'text-gray-400 dark:text-slate-400 hover:text-gray-600'
                                 }`}
                             >
-                                🌐 Original (العربية)
+                                🌐 {t('learning_hub.original_transcript_ar', 'Original (العربية)')}
                             </button>
                             <button
                                 onClick={() => setActiveTab('chinese')}
@@ -2331,7 +2331,7 @@ const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => 
                                         : 'text-gray-400 dark:text-slate-400 hover:text-gray-600'
                                 }`}
                             >
-                                🇨🇳 中文翻译
+                                🇨🇳 {t('learning_hub.chinese_transcript_zh', '中文翻译')}
                             </button>
                         </div>
                     )}
@@ -2361,7 +2361,7 @@ const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => 
                     {activeTab === 'chinese' && loadingTranslation ? (
                         <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500 gap-3">
                             <RefreshCw className="w-8 h-8 animate-spin text-desert-gold" />
-                            <span className="text-xs font-bold animate-pulse">正在智能生成中文对照翻译...</span>
+                            <span className="text-xs font-bold animate-pulse">{t('learning_hub.generating_translation', '正在智能生成中文对照翻译...')}</span>
                         </div>
                     ) : (
                         <div 

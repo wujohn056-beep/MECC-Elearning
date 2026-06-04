@@ -57,7 +57,9 @@
         "attachments": "مرفقات وشرائح المحاضرة",
         "add_attachment": "إضافة مواد تكميلية",
         "download_attachment": "تحميل",
-        "unsupported_file_type": "تنسيق ملف غير مدعوم (يسمح فقط بـ PPT أو PDF أو DOC أو XLS أو ZIP أو الصور)"
+        "unsupported_file_type": "تنسيق ملف غير مدعوم (يسمح فقط بـ PPT أو PDF أو DOC أو XLS أو ZIP أو الصور)",
+        "copy": "نسخ",
+        "copied": "تم النسخ إلى الحافظة!"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",
@@ -211,7 +213,14 @@
         "analysis_score_label": "النتيجة",
         "analysis_diagnose_summary": "ملخص التشخيص الذكي",
         "analysis_coaching_tips": "نصائح التوجيه بالذكاء الاصطناعي",
-        "analyzing": "جاري التحليل الذكي..."
+        "analyzing": "جاري التحليل الذكي...",
+        "original_transcript": "الأصل",
+        "chinese_transcript": "الصينية",
+        "original_transcript_ar": "الأصل (العربية)",
+        "chinese_transcript_zh": "الترجمة الصينية",
+        "generating_translation": "جاري توليد الترجمة الصينية ذكياً...",
+        "no_translation_available": "الترجمة الصينية غير متوفرة",
+        "sd_translation_notice": "🔒 ميزة SD: تم تفعيل قناة الترجمة الصينية"
     },
     "category_manager": {
         "title": "إدارة التصنيفات",
@@ -307,7 +316,9 @@
         "transcribe_fail": "فشل توليد النص التوضيحي الصوتي",
         "transcribe_success": "اكتمل توليد النص التوضيحي الصوتي بنجاح وتمت مزامنته تلقائياً!",
         "attachments_tip": "اختياري. يمكنك تحميل الكورسات، أو أدلة PDF، أو الخرائط الذهنية، أو ملفات ZIP المرفقة (الحد الأقصى للحجم: 50 ميجابايت للملف).",
-        "waiting_attachments": "جاري انتظار تحميل المرفقات، يرجى تقديم الطلب لاحقاً..."
+        "waiting_attachments": "جاري انتظار تحميل المرفقات، يرجى تقديم الطلب لاحقاً...",
+        "lang_en": "الإنجليزية",
+        "lang_zh": "الصينية"
     },
     "admin_dashboard_page": {
         "title": "نظرة عامة على لوحة القيادة",

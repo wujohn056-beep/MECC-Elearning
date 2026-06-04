@@ -57,7 +57,9 @@
         "attachments": "Supporting Lecture Notes & Slides",
         "add_attachment": "Add Supplemental Material",
         "download_attachment": "Download",
-        "unsupported_file_type": "Unsupported file format (Only PPT, PDF, DOC, XLS, ZIP, or images allowed)"
+        "unsupported_file_type": "Unsupported file format (Only PPT, PDF, DOC, XLS, ZIP, or images allowed)",
+        "copy": "Copy",
+        "copied": "Copied to clipboard!"
     },
     "navbar": {
         "title": "ME Cloud Academy",
@@ -212,7 +214,14 @@
         "analysis_score_label": "Score",
         "analysis_diagnose_summary": "Smart Diagnostic Summary",
         "analysis_coaching_tips": "AI Coaching Tips",
-        "analyzing": "AI Analyzing..."
+        "analyzing": "AI Analyzing...",
+        "original_transcript": "Original",
+        "chinese_transcript": "Chinese",
+        "original_transcript_ar": "Original (Arabic)",
+        "chinese_transcript_zh": "Chinese Translation",
+        "generating_translation": "Intelligently generating Chinese translation...",
+        "no_translation_available": "No Chinese translation available",
+        "sd_translation_notice": "🔒 SD privilege: Chinese translation channel activated"
     },
     "category_manager": {
         "title": "Category Management",
@@ -308,7 +317,9 @@
         "transcribe_fail": "Arabic Speech-to-Text Transcription Failed",
         "transcribe_success": "Arabic transcription completed! Automatically synced to database.",
         "attachments_tip": "Optional. You can upload courseware, PDF guides, mind maps, or attachment ZIP files (Max size: 50MB per file).",
-        "waiting_attachments": "Waiting for attachments to complete uploading, please submit later..."
+        "waiting_attachments": "Waiting for attachments to complete uploading, please submit later...",
+        "lang_en": "English",
+        "lang_zh": "Chinese"
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",

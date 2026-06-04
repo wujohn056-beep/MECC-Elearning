@@ -57,7 +57,9 @@
         "attachments": "配套讲义与附件",
         "add_attachment": "添加附件课件",
         "download_attachment": "下载附件",
-        "unsupported_file_type": "不支持的文件类型（仅支持 PPT, PDF, DOC, XLS, ZIP, 图片）"
+        "unsupported_file_type": "不支持的文件类型（仅支持 PPT, PDF, DOC, XLS, ZIP, 图片）",
+        "copy": "复制",
+        "copied": "已复制到剪贴板！"
     },
     "navbar": {
         "title": "ME 云学堂",
@@ -211,7 +213,14 @@
         "analysis_score_label": "得分",
         "analysis_diagnose_summary": "智能体检诊断总结",
         "analysis_coaching_tips": "AI 高能优化建议 (Coaching Tips)",
-        "analyzing": "智能解析中..."
+        "analyzing": "智能解析中...",
+        "original_transcript": "原文",
+        "chinese_transcript": "中文",
+        "original_transcript_ar": "阿语原文",
+        "chinese_transcript_zh": "中文翻译",
+        "generating_translation": "正在智能生成中文对照翻译...",
+        "no_translation_available": "暂无中文对照翻译",
+        "sd_translation_notice": "🔒 SD 总监层级以上特权：中文对照翻译通道已激活"
     },
     "category_manager": {
         "title": "目录分类管理",
@@ -307,7 +316,9 @@
         "transcribe_fail": "语音解析为逐字稿失败",
         "transcribe_success": "阿语逐字稿解析完成！已成功同步至录音库。",
         "attachments_tip": "可选。可上传配套课件、PDF指南、脑图或附件压缩包，单个大小上限 50MB。",
-        "waiting_attachments": "正在等待附件讲义上传完成，请稍后提交..."
+        "waiting_attachments": "正在等待附件讲义上传完成，请稍后提交...",
+        "lang_en": "英文",
+        "lang_zh": "中文"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",

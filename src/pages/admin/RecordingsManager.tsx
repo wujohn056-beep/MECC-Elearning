@@ -1830,7 +1830,7 @@ export default function RecordingsManager() {
                                                 : 'text-gray-400 hover:text-gray-600'
                                         }`}
                                     >
-                                        🌐 Original
+                                        🌐 {t('learning_hub.original_transcript', 'Original')}
                                     </button>
                                     <button
                                         onClick={() => setAdminActiveTab('chinese')}
@@ -1840,7 +1840,7 @@ export default function RecordingsManager() {
                                                 : 'text-gray-400 hover:text-gray-600'
                                         }`}
                                     >
-                                        🇨🇳 中文
+                                        🇨🇳 {t('learning_hub.chinese_transcript', '中文')}
                                     </button>
                                 </div>
                             )}
@@ -1865,7 +1865,7 @@ export default function RecordingsManager() {
                             {adminActiveTab === 'chinese' && loadingAdminTranslation ? (
                                 <div className="flex-1 flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
                                     <RefreshCw className="w-6 h-6 animate-spin text-desert-gold" />
-                                    <span className="text-xs font-bold animate-pulse">正在智能生成中文对照翻译...</span>
+                                    <span className="text-xs font-bold animate-pulse">{t('learning_hub.generating_translation', '正在智能生成中文对照翻译...')}</span>
                                 </div>
                             ) : (
                                 <div 
@@ -1995,7 +1995,7 @@ export default function RecordingsManager() {
                                                 : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
                                         }`}
                                     >
-                                        🇬🇧 English
+                                        🇬🇧 {t('recordings_manager.lang_en', 'English')}
                                     </button>
                                     <button
                                         type="button"
@@ -2006,7 +2006,7 @@ export default function RecordingsManager() {
                                                 : 'text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
                                         }`}
                                     >
-                                        🇨🇳 中文
+                                        🇨🇳 {t('recordings_manager.lang_zh', '中文')}
                                     </button>
                                 </div>
                             </div>
