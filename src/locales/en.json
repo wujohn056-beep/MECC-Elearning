@@ -221,7 +221,9 @@
         "chinese_transcript_zh": "Chinese Translation",
         "generating_translation": "Intelligently generating Chinese translation...",
         "no_translation_available": "No Chinese translation available",
-        "sd_translation_notice": "🔒 SD privilege: Chinese translation channel activated"
+        "sd_translation_notice": "🔒 SD privilege: Chinese translation channel activated",
+        "analysis_generating_title": "AI Smart Diagnostic Analyzing...",
+        "analysis_generating_desc": "The system is automatically generating the recording diagnosis in the background. The AI will analyze the talk-to-listen ratio, speech rate, objection handling check, and sentiment trends. It will display automatically once completed."
     },
     "category_manager": {
         "title": "Category Management",

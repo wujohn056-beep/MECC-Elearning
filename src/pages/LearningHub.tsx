@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -559,7 +559,7 @@ const RecordingCard = ({
     );
 };
 
-const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUnlock }: any) => {
+const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, onEnded, onUnlock }: any) => {
     const { t, i18n } = useTranslation();
     const mediaRef = React.useRef<HTMLMediaElement>(null);
     const lastTimeRef = React.useRef(0);
@@ -568,12 +568,12 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [isPlaying, setIsPlaying] = useState(false);
     const [isThresholdReached, setIsThresholdReached] = useState(false);
     const isUnlockedLocal = isUnlocked || isThresholdReached;
-    const isVideo = isVideoUrl(rec.audioUrl);
-    const isDoc = isDocUrl(rec.audioUrl) || 
-                  rec.categoryName?.toLowerCase() === 'doc' || 
-                  rec.categoryName === '文档' || 
-                  rec.categoryName === 'ss文档' || 
-                  rec.categoryName?.toLowerCase() === 'document';
+    const isVideo = isVideoUrl(initialRec.audioUrl);
+    const isDoc = isDocUrl(initialRec.audioUrl) || 
+                  initialRec.categoryName?.toLowerCase() === 'doc' || 
+                  initialRec.categoryName === '文档' || 
+                  initialRec.categoryName === 'ss文档' || 
+                  initialRec.categoryName?.toLowerCase() === 'document';
 
     const { user, profile } = useAuth();
     const [comments, setComments] = useState<any[]>([]);
@@ -586,10 +586,30 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [recordingAnalysis, setRecordingAnalysis] = useState<any>(null);
 
+    const [rec, setRec] = useState<any>(initialRec);
+
+    React.useEffect(() => {
+        setRec(initialRec);
+    }, [initialRec]);
+
+    React.useEffect(() => {
+        if (!initialRec?.id) return;
+        const unsub = onSnapshot(doc(db, 'recordings', initialRec.id), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                setRec({ id: snapshot.id, ...data });
+                if (data && data.transcriptZh) {
+                    setVideoTranscriptZh(data.transcriptZh);
+                }
+            }
+        });
+        return () => unsub();
+    }, [initialRec?.id]);
+
     // SD translation bypass states
     const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const [activeVideoTab, setActiveVideoTab] = useState<'arabic' | 'chinese'>('arabic');
-    const [videoTranscriptZh, setVideoTranscriptZh] = useState<string>(rec.transcriptZh || '');
+    const [videoTranscriptZh, setVideoTranscriptZh] = useState<string>(initialRec.transcriptZh || '');
     const [loadingVideoTranslation, setLoadingVideoTranslation] = useState(false);
 
     React.useEffect(() => {
@@ -1461,6 +1481,21 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                         </div>
                                     </div>
                                 </div>
+                            ) : (isAnalyzing || rec.transcriptStatus === 'transcribing' || rec.aiAnalysisStatus === 'analyzing') ? (
+                                <div className="text-center py-16 px-6 rounded-3xl border border-light-teal/20 bg-gradient-to-br from-light-teal/5 to-deep-teal/5 flex flex-col items-center justify-center gap-5 shadow-sm animate-in fade-in duration-300">
+                                    <div className="relative w-16 h-16 flex items-center justify-center">
+                                        <div className="absolute inset-0 rounded-full border-4 border-desert-gold/10 border-t-desert-gold animate-spin" />
+                                        <Sparkles className="w-6 h-6 text-desert-gold animate-pulse" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="text-sm font-black text-deep-teal uppercase tracking-wider animate-pulse">
+                                            {t('learning_hub.analysis_generating_title', 'AI 智能体检诊断中...')}
+                                        </h4>
+                                        <p className="text-xs text-arabian-night/60 max-w-sm font-bold leading-relaxed px-4">
+                                            {t('learning_hub.analysis_generating_desc', '系统正在后台自动生成录音诊断画像，AI 将深入诊断说话比例、平均语速、异议突破及情绪走势，完成后将自动呈现，请稍候。')}
+                                        </p>
+                                    </div>
+                                </div>
                             ) : (
                                 // Empty / Prompt generate state
                                 <div className="text-center py-12 px-4 rounded-3xl border border-dashed border-gray-200 bg-gray-50/25 flex flex-col items-center justify-center gap-4">
@@ -1484,28 +1519,13 @@ const VideoPlayerModal = ({ rec, disableSeek, isUnlocked, onClose, onEnded, onUn
                                             disabled={isAnalyzing}
                                             className="bg-gradient-to-r from-desert-gold to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 cursor-pointer focus:outline-none"
                                         >
-                                            {isAnalyzing ? (
-                                                <>
-                                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
-                                                    <span>
-                                                        {i18n.language?.startsWith('ar')
-                                                            ? 'جاري التحليل الذكي...'
-                                                            : i18n.language?.startsWith('en')
-                                                                ? 'AI Analyzing...'
-                                                                : t('learning_hub.analyzing', '智能解析中...')}
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span>
-                                                        {i18n.language?.startsWith('ar')
-                                                            ? '✨ بدء تحليل المكالمة بالذكاء الاصطناعي'
-                                                            : i18n.language?.startsWith('en')
-                                                                ? '✨ Start AI Call Portrait'
-                                                                : t('learning_hub.generate_analysis', '启动 AI 通话体检')}
-                                                    </span>
-                                                </>
-                                            )}
+                                            <span>
+                                                {i18n.language?.startsWith('ar')
+                                                    ? '✨ بدء تحليل المكالمة بالذكاء الاصطناعي'
+                                                    : i18n.language?.startsWith('en')
+                                                        ? '✨ Start AI Call Portrait'
+                                                        : t('learning_hub.generate_analysis', '启动 AI 通话体检')}
+                                            </span>
                                         </button>
                                     )}
                                 </div>
@@ -2173,14 +2193,34 @@ interface DirectTranscriptModalProps {
     onClose: () => void;
 }
 
-const DirectTranscriptModal = ({ rec, onClose }: DirectTranscriptModalProps) => {
+const DirectTranscriptModal = ({ rec: initialRec, onClose }: DirectTranscriptModalProps) => {
     const { t } = useTranslation();
     const { profile } = useAuth();
     const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
     const [activeTab, setActiveTab] = useState<'arabic' | 'chinese'>('arabic');
-    const [transcriptZh, setTranscriptZh] = useState<string>(rec.transcriptZh || '');
+    const [transcriptZh, setTranscriptZh] = useState<string>(initialRec.transcriptZh || '');
     const [loadingTranslation, setLoadingTranslation] = useState(false);
+
+    const [rec, setRec] = useState<any>(initialRec);
+
+    React.useEffect(() => {
+        setRec(initialRec);
+    }, [initialRec]);
+
+    React.useEffect(() => {
+        if (!initialRec?.id) return;
+        const unsub = onSnapshot(doc(db, 'recordings', initialRec.id), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                setRec({ id: snapshot.id, ...data });
+                if (data && data.transcriptZh) {
+                    setTranscriptZh(data.transcriptZh);
+                }
+            }
+        });
+        return () => unsub();
+    }, [initialRec?.id]);
 
     useEffect(() => {
         if (activeTab === 'chinese' && !transcriptZh && isSDLevel) {

@@ -220,7 +220,9 @@
         "chinese_transcript_zh": "中文翻译",
         "generating_translation": "正在智能生成中文对照翻译...",
         "no_translation_available": "暂无中文对照翻译",
-        "sd_translation_notice": "🔒 SD 总监层级以上特权：中文对照翻译通道已激活"
+        "sd_translation_notice": "🔒 SD 总监层级以上特权：中文对照翻译通道已激活",
+        "analysis_generating_title": "AI 智能体检诊断中...",
+        "analysis_generating_desc": "系统正在后台自动生成录音诊断画像，AI 将深入诊断说话比例、平均语速、异议突破及情绪走势，完成后将自动呈现，请稍候。"
     },
     "category_manager": {
         "title": "目录分类管理",
