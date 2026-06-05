@@ -112,70 +112,68 @@ export const handler = async (event, context) => {
 
         const apiKey = process.env.GEMINI_API_KEY;
         let translatedText = "";
-        let isMock = false;
 
         if (!apiKey) {
-            console.warn("GEMINI_API_KEY not found. Fallback mock active.");
-            isMock = true;
-        } else if (!transcriptText) {
-            console.warn("No transcript text available for translation. Fallback mock active.");
-            isMock = true;
-        } else {
-            try {
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-                const response = await fetch(geminiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [
-                                    {
-                                        text: `Please translate the following sales recording transcript into highly professional and natural Simplified Chinese. Maintain the paragraph breaks, speaker names, and labels exactly:\n\n${transcriptText}`
-                                    }
-                                ]
-                            }
-                        ]
-                    })
-                });
+            console.warn("GEMINI_API_KEY not found in environment.");
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Translation service is not configured (missing GEMINI_API_KEY on server).' })
+            };
+        }
 
-                if (response.ok) {
-                    const data = await response.json();
-                    translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                } else {
-                    throw new Error("Gemini API call failed with status: " + response.status);
-                }
-            } catch (geminiErr) {
-                console.error("Gemini call failed, using mock translator:", geminiErr.message);
-                isMock = true;
+        if (!transcriptText) {
+            console.warn("No transcript text available for translation.");
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'No transcript text available to translate.' })
+            };
+        }
+
+        try {
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const response = await fetch(geminiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: `Please translate the following recording transcript into highly professional and natural Simplified Chinese. Maintain the paragraph breaks, speaker names, and labels exactly:\n\n${transcriptText}`
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            } else {
+                throw new Error("Gemini API call failed with status: " + response.status);
             }
+        } catch (geminiErr) {
+            console.error("Gemini call failed:", geminiErr.message);
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Gemini translation service failed: ' + geminiErr.message })
+            };
         }
 
-        // Generate dynamic mock translation if Gemini is disabled/fails or translatedText is empty
-        if (isMock || !translatedText) {
-            translatedText = `[专业销售培训文档 - 中文对照翻译]
-编号：[${displayId}]
-培训分类：${category}
-主讲人/培训师：${lecturer} 老师
-课程主题：${title}
-
-会话背景介绍：
-${desc}
-
---------------------------------------------------
-完整对话与互动转写（中文翻译）：
-
-培训师 (${lecturer})：大家好，感谢大家加入 ME Cloud Academy 学习平台。我是你们的培训顾问 ${lecturer}。今天很高兴能和大家一起讨论我们非常重要的实战案例：“${title}”。首先，大家对于这部分内容有什么需要特别关注的吗？
-客户/受训销售：您好，${lecturer} 老师。我非常认真地听了“${title}”的相关录音和细节，感觉这方面内容对我们真的非常关键。但我很想请教您：我们如何在日常的实际销售工作中具体融入这些方法，从而提高成单率呢？
-培训师 (${lecturer})：这是一个非常棒且极其核心的问题！这正是我们在“${title}”模块中重点关注的内容。核心思想是关于“${desc}”。成功的秘诀不仅在于理论理解，更在于打磨现场演示能力以及应对客户异议时的机敏反应。
-客户/受训销售：是的，完全正确。我们在谈判过程中，有时确实很难保持对话的顺畅流动和临场反应，您有什么具体的实战框架推荐吗？
-培训师 (${lecturer})：当然有。在“${title}”课程中，我们采用基于真实场景 and 即时角色扮演的互动教学法。这种高强度的模拟训练将为大家提供超越单纯说教的“超值价值”（Extra Value），让大家能够针对不同类型的客户定制出最具说服力的应答方案。
-客户/受训销售：太棒了！我觉得这种循序渐进的方法能够给我们的业绩带来实实在在的提升，非常期待接下来的课程和实际演练。
-培训师 (${lecturer})：这正是 ME Cloud Academy 的最高目标！我这就把本次课程的完整指导手册和配套参考附件发送给你，希望能全力支持你的职业发展。欢迎加入我们，让我们立刻开启卓越之旅！`;
+        if (!translatedText) {
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Translation returned empty result.' })
+            };
         }
 
-        // Try saving the translation to database if write access is available; do not block or crash if it fails
-        if (translatedText && recordingRef) {
+        // Save the valid translation to database if write access is available; do not block or crash if it fails
+        if (recordingRef) {
             try {
                 await recordingRef.update({
                     transcriptZh: translatedText

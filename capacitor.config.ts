@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.mecccloud.elearning',
-  appName: 'MECC Elearning',
+  appName: 'ME Cloud Academy',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

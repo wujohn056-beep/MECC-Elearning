@@ -16,6 +16,7 @@ import UserManager from './pages/admin/UserManager';
 import CategoryManager from './pages/admin/CategoryManager';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CommentManager from './pages/admin/CommentManager';
+import PolicyManager from './pages/admin/PolicyManager';
 
 const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
 
@@ -62,6 +63,7 @@ function App() {
             <Route path="recordings" element={<RecordingsManager />} />
             <Route path="users" element={<UserManager />} />
             <Route path="comments" element={<CommentManager />} />
+            <Route path="policies" element={<PolicyManager />} />
 
           </Route>
         </Routes>

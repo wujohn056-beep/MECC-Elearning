@@ -76,6 +76,7 @@
         "uploads": "Uploads",
         "users": "Users",
         "comments": "Q&A Moderation",
+        "policies": "Policy Operations",
         "return_hub": "Return to Hub"
     },
     "login": {
@@ -223,7 +224,10 @@
         "no_translation_available": "No Chinese translation available",
         "sd_translation_notice": "🔒 SD privilege: Chinese translation channel activated",
         "analysis_generating_title": "AI Smart Diagnostic Analyzing...",
-        "analysis_generating_desc": "The system is automatically generating the recording diagnosis in the background. The AI will analyze the talk-to-listen ratio, speech rate, objection handling check, and sentiment trends. It will display automatically once completed."
+        "analysis_generating_desc": "The system is automatically generating the recording diagnosis in the background. The AI will analyze the talk-to-listen ratio, speech rate, objection handling check, and sentiment trends. It will display automatically once completed.",
+        "operations_policies_title": "Operations Policies & Incentives",
+        "operations_policies_desc": "Latest sales incentive schemes and operational guidelines",
+        "no_policies_showcase": "No operation policies for this business line at the moment."
     },
     "category_manager": {
         "title": "Category Management",
@@ -389,6 +393,7 @@
         "perm_manage_dashboard": "Dashboard Access",
         "perm_manage_tasks": "Task Center Access",
         "perm_manage_comments": "Q&A Moderation",
+        "perm_manage_policies": "Policy Operations",
         "sync_dingtalk": "Sync DingTalk",
         "syncing_dingtalk": "Syncing accounts with DingTalk, please wait...",
         "sync_success": "DingTalk synchronization complete! {{count}} sales accounts linked successfully.",
@@ -539,5 +544,42 @@
         "sd_avg_published": "SD Avg Published Ranking",
         "sm_avg_published": "SM Avg Published Ranking",
         "team_avg_published": "Team Avg Published Ranking"
+    },
+    "policy_manager": {
+        "title": "Sales Operations Policies & Incentives",
+        "desc": "Manage operation policies, incentives posters, and video materials for the homepage",
+        "new_item": "Publish Policy",
+        "edit_form_title": "Edit Policy Item",
+        "create_form_title": "Publish New Policy Item",
+        "form_title": "Policy Title",
+        "title_placeholder": "e.g., June 2026 GCC Sales Incentive Policy",
+        "form_desc": "Policy Description",
+        "desc_placeholder": "Brief description of the policy or incentives...",
+        "form_type": "Display Format",
+        "type_doc": "Document (PDF/URL)",
+        "type_poster": "Poster (Image)",
+        "type_video": "Video (MP4)",
+        "file_source": "Resource File Config",
+        "click_to_upload": "Click to select or drag file to upload",
+        "file_url": "Web Resource URL",
+        "thumbnail_url": "Video Cover Image URL",
+        "sort_order": "Sort Order",
+        "visible_status": "Visible to Sales",
+        "list_title": "Published Policies",
+        "no_policies": "No policies published yet. Publish the first one on the left.",
+        "delete_confirm": "Are you sure you want to delete this policy? This action cannot be undone.",
+        "view_source": "View Source",
+        "invisible": "Hidden",
+        "hide": "Hide",
+        "show": "Show",
+        "fetch_fail": "Failed to fetch policies:",
+        "save_fail": "Failed to save policy:",
+        "delete_fail": "Failed to delete policy:",
+        "delete_success": "Deleted successfully!",
+        "save_success": "Saved successfully!",
+        "update_success": "Updated successfully!",
+        "create_success": "Published successfully!",
+        "title_required": "Please enter a title!",
+        "url_required": "Please upload a file or provide a valid resource URL!"
     }
 }

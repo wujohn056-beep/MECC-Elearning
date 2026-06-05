@@ -390,7 +390,7 @@ export default function CategoryManager() {
                                             </div>
                                         )}
                                         
-                                        <div className="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center gap-1 opacity-100 md:opacity-50 md:group-hover:opacity-100 transition-opacity">
                                             {editingId === cat.id ? (
                                                 <>
                                                     <button onClick={() => handleUpdate(cat.id, cat.name)} disabled={actionLoading} className="p-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200">

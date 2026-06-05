@@ -1,13 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 
 export default function AdminLayout() {
     const { t, i18n } = useTranslation();
-    const { logout, hasPermission, hasAnyAdminPermission, isLeader, isSuperAdmin } = useAuth();
+    const { logout, hasPermission, hasAnyAdminPermission, isLeader, isSuperAdmin, profile } = useAuth();
     const location = useLocation();
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     // Dynamically update document title based on selected language
     useEffect(() => {
@@ -34,48 +35,100 @@ export default function AdminLayout() {
 
     return (
         <div 
-            className="h-screen flex overflow-hidden font-sans text-arabian-night bg-cover bg-center bg-fixed"
+            className="h-screen flex flex-col md:flex-row overflow-hidden font-sans text-arabian-night bg-cover bg-center bg-fixed"
             style={{ backgroundImage: "url('/images/app-bg.jpg')" }}
         >
             {/* Subtle glass overlay for readability */}
             <div className="fixed inset-0 bg-white/50 backdrop-blur-sm pointer-events-none z-0"></div>
 
-            <aside className="w-64 flex-shrink-0 bg-deep-teal/95 backdrop-blur-md text-white shadow-xl flex flex-col z-10 border-r border-white/20">
-                <div className="p-6 border-b border-white/10 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-desert-gold flex items-center justify-center font-bold text-deep-teal">
+            {/* Mobile Top Header */}
+            <header className="md:hidden w-full bg-deep-teal text-white flex items-center justify-between px-4 pb-3.5 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] z-20 shadow-md shrink-0 border-b border-white/10">
+                <div className="flex items-center gap-3 min-w-0">
+                    <button 
+                        onClick={() => setIsDrawerOpen(true)}
+                        className="p-1.5 rounded-lg hover:bg-white/10 active:scale-95 transition-all text-white focus:outline-none cursor-pointer shrink-0"
+                        aria-label="Open menu"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+                    <div className="w-8 h-8 rounded bg-desert-gold flex items-center justify-center font-bold text-deep-teal shrink-0 hidden xs:flex">
                         A
                     </div>
-                    <h2 className="text-xl font-bold tracking-wide">{t('admin_menu.title')}</h2>
+                    <h2 className="text-lg font-bold tracking-wide truncate">{t('admin_menu.title')}</h2>
                 </div>
-                <nav className="flex-1 p-4 flex flex-col gap-2">
+                <span className="text-[10px] bg-white/15 px-2.5 py-1 rounded-full font-bold border border-white/10 tracking-wider shrink-0">
+                    {profile?.role?.toUpperCase()}
+                </span>
+            </header>
+
+            {/* Sidebar drawer */}
+            <aside 
+                className={`fixed md:relative inset-y-0 left-0 w-64 bg-deep-teal/95 backdrop-blur-md text-white shadow-2xl md:shadow-xl flex flex-col z-30 border-r border-white/20 transition-transform duration-300 md:transform-none ${
+                    isDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+                }`}
+            >
+                <div className="px-6 pb-6 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] md:pt-6 border-b border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-desert-gold flex items-center justify-center font-bold text-deep-teal">
+                            A
+                        </div>
+                        <h2 className="text-xl font-bold tracking-wide">{t('admin_menu.title')}</h2>
+                    </div>
+                    <button 
+                        onClick={() => setIsDrawerOpen(false)}
+                        className="md:hidden p-1.5 rounded-lg hover:bg-white/10 active:scale-95 transition-all text-white/85 hover:text-white focus:outline-none cursor-pointer"
+                        aria-label="Close menu"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <nav className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto">
                     {isSuperAdmin && (
-                        <Link to="/admin" className={getLinkClass('/admin', true)}>{t('admin_menu.dashboard')}</Link>
+                        <Link to="/admin" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin', true)}>{t('admin_menu.dashboard')}</Link>
                     )}
                     {hasPermission('manageCategories') && (
-                        <Link to="/admin/categories" className={getLinkClass('/admin/categories')}>{t('admin_menu.categories')}</Link>
+                        <Link to="/admin/categories" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/categories')}>{t('admin_menu.categories')}</Link>
                     )}
                     {hasPermission('manageRecordings') && (
-                        <Link to="/admin/recordings" className={getLinkClass('/admin/recordings')}>{t('admin_menu.uploads')}</Link>
+                        <Link to="/admin/recordings" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/recordings')}>{t('admin_menu.uploads')}</Link>
                     )}
                     {hasPermission('manageUsers') && (
-                        <Link to="/admin/users" className={getLinkClass('/admin/users')}>{t('admin_menu.users')}</Link>
+                        <Link to="/admin/users" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/users')}>{t('admin_menu.users')}</Link>
                     )}
                     {hasPermission('manageComments') && (
-                        <Link to="/admin/comments" className={getLinkClass('/admin/comments')}>{t('admin_menu.comments', '互动审核')}</Link>
+                        <Link to="/admin/comments" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/comments')}>{t('admin_menu.comments', '互动审核')}</Link>
+                    )}
+                    {hasPermission('managePolicies') && (
+                        <Link to="/admin/policies" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/policies')}>{t('admin_menu.policies', '政策运营')}</Link>
                     )}
                 </nav>
-                <div className="p-4 border-t border-white/10 space-y-2">
-                    <Link to="/hub" className="flex items-center justify-center w-full py-2 bg-white/10 hover:bg-desert-gold hover:text-deep-teal rounded-lg transition-colors font-semibold text-sm">
+                <div className="px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:pb-4 border-t border-white/10 space-y-2">
+                    <Link to="/hub" onClick={() => setIsDrawerOpen(false)} className="flex items-center justify-center w-full py-2 bg-white/10 hover:bg-desert-gold hover:text-deep-teal rounded-lg transition-colors font-semibold text-sm">
                         {t('admin_menu.return_hub')}
                     </Link>
-                    <button onClick={logout} className="flex items-center justify-center gap-2 w-full py-2 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 rounded-lg transition-colors font-semibold text-sm">
+                    <button 
+                        onClick={() => {
+                            setIsDrawerOpen(false);
+                            logout();
+                        }} 
+                        className="flex items-center justify-center gap-2 w-full py-2 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 rounded-lg transition-colors font-semibold text-sm cursor-pointer"
+                    >
                         <LogOut className="w-4 h-4" />
                         {t('common.logout') || 'Logout'}
                     </button>
                 </div>
             </aside>
-            <main className="flex-1 p-8 overflow-auto relative z-10">
-                <div className="max-w-6xl mx-auto bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 p-8 min-h-[80vh]">
+
+            {/* Sidebar backdrop overlay for mobile */}
+            {isDrawerOpen && (
+                <div 
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 md:hidden animate-in fade-in duration-300"
+                />
+            )}
+
+            <main className="flex-1 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] sm:p-8 overflow-auto relative z-10">
+                <div className="max-w-6xl mx-auto bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 p-4 sm:p-8 min-h-[80vh]">
                     <Outlet />
                 </div>
             </main>

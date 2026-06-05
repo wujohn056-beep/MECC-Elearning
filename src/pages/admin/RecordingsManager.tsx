@@ -37,32 +37,6 @@ interface Category {
     businessType?: 'kid' | 'adult' | 'ss' | 'leader';
 }
 
-const generateMockTranslation = (rec: any) => {
-    const displayId = rec.displayId || 'RD';
-    const title = rec.title || 'Sales Call';
-    const desc = rec.description || 'فهم احتياجات العميل وتقديم الحلول المناسبة لمساعدته في تحقيق أهدافه المهنية وتسريع تطوره';
-    const lecturer = rec.lecturerName || 'مستشار مبيعات';
-    const category = rec.categoryName || 'مبيعات';
-
-    return `[专业销售培训文档 - 中文对照翻译]
-编号：[${displayId}]
-培训分类：${category}
-主讲人/培训师：${lecturer} 老师
-课程主题：${title}
-
-会话背景介绍：
-${desc}
-
---------------------------------------------------
-完整对话与互动转写（中文翻译）：
-
-培训师 (${lecturer})：大家好，感谢大家加入 ME Cloud Academy 学习平台。我是你们的培训顾问 ${lecturer}。今天很高兴能和大家一起讨论我们非常重要的实战案例：“${title}”。首先，大家对于这部分内容有什么需要特别关注的吗？
-客户/受训销售：您好，${lecturer} 老师。我非常认真地听了“${title}”的相关录音和细节，感觉这方面内容对我们真的非常关键。但我很想请教您：我们如何在日常的实际销售工作中具体融入这些方法，从而提高成单率呢？
-培训师 (${lecturer})：这是一个非常棒且极其核心的问题！这正是我们在“${title}”模块中重点关注的内容。核心思想是关于“${desc}”。成功的秘诀不仅在于理论理解，更在于打磨现场演示能力以及应对客户异议时的机敏反应。
-客户/受训销售：是的，完全正确。我们在谈判过程中，有时确实很难保持对话的顺畅流动和临场反应，您有什么具体的实战框架推荐吗？
-培训师 (${lecturer})：当然有。在“${title}”课程中，我们采用基于真实场景和即时角色扮演的互动教学法。这种高强度的模拟训练将为大家提供超越单纯说教的“超值价值”（Extra Value），让大家能够针对不同类型的客户定制出最具说服力的应答方案。
-客户/受训销售：太棒了！我觉得这种循序渐进的方法能够给我们的业绩带来实实在在的提升，非常期待接下来的课程和实际演练。
-培训师 (${lecturer})：这正是 ME Cloud Academy 的最高目标！我这就把本次课程的完整指导手册和配套参考附件发送给你，希望能全力支持你的职业发展。欢迎加入我们，让我们立刻开启卓越之旅！`;
 };
 
 export default function RecordingsManager() {
@@ -100,7 +74,12 @@ export default function RecordingsManager() {
     }, [viewingTranscriptRecording]);
 
     useEffect(() => {
-        if (adminActiveTab === 'chinese' && !adminTranscriptZh && viewingTranscriptRecording && isSDLevel) {
+        if (viewingTranscriptRecording && (viewingTranscriptRecording as any).transcriptZh && !adminTranscriptZh) {
+            setAdminTranscriptZh((viewingTranscriptRecording as any).transcriptZh);
+            return;
+        }
+
+        if (adminActiveTab === 'chinese' && !adminTranscriptZh && viewingTranscriptRecording && !((viewingTranscriptRecording as any).transcriptZh) && isSDLevel) {
             setLoadingAdminTranslation(true);
             fetch('/.netlify/functions/translate-transcript', {
                 method: 'POST',
@@ -128,14 +107,12 @@ export default function RecordingsManager() {
                 }
             })
             .catch(err => {
-                console.error("Error loading admin translation, executing client fallback:", err);
-                const mockZh = generateMockTranslation(viewingTranscriptRecording);
-                setAdminTranscriptZh(mockZh);
-                (viewingTranscriptRecording as any).transcriptZh = mockZh;
+                console.error("Error loading admin translation:", err);
+                setAdminTranscriptZh(t('learning_hub.no_translation_available', '暂无中文对照翻译（翻译生成失败，请检查 API 配置或重试）'));
             })
             .finally(() => setLoadingAdminTranslation(false));
         }
-    }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, isSDLevel]);
+    }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, isSDLevel, t]);
 
     if (!hasPermission('manageRecordings')) {
         return <Navigate to="/admin" replace />;

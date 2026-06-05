@@ -76,6 +76,7 @@
         "uploads": "资料上传",
         "users": "用户管理",
         "comments": "互动审核",
+        "policies": "政策运营",
         "return_hub": "返回学习广场"
     },
     "login": {
@@ -222,7 +223,10 @@
         "no_translation_available": "暂无中文对照翻译",
         "sd_translation_notice": "🔒 SD 总监层级以上特权：中文对照翻译通道已激活",
         "analysis_generating_title": "AI 智能体检诊断中...",
-        "analysis_generating_desc": "系统正在后台自动生成录音诊断画像，AI 将深入诊断说话比例、平均语速、异议突破及情绪走势，完成后将自动呈现，请稍候。"
+        "analysis_generating_desc": "系统正在后台自动生成录音诊断画像，AI 将深入诊断说话比例、平均语速、异议突破及情绪走势，完成后将自动呈现，请稍候。",
+        "operations_policies_title": "运营政策与激励展示",
+        "operations_policies_desc": "最新销售激励方案与运营规范，一键掌握",
+        "no_policies_showcase": "当前暂无本业务线相关的运营政策"
     },
     "category_manager": {
         "title": "目录分类管理",
@@ -388,6 +392,7 @@
         "perm_manage_dashboard": "仪表盘访问",
         "perm_manage_tasks": "任务中心访问",
         "perm_manage_comments": "评论审核",
+        "perm_manage_policies": "政策运营",
         "sync_dingtalk": "同步钉钉账号",
         "syncing_dingtalk": "正在与钉钉同步账号信息，请稍候...",
         "sync_success": "钉钉账号同步完成！共成功关联 {{count}} 个销售账户。",
@@ -538,5 +543,42 @@
         "sd_avg_published": "大区人均发布榜",
         "sm_avg_published": "大组人均发布榜",
         "team_avg_published": "小组人均发布榜"
+    },
+    "policy_manager": {
+        "title": "运营政策与激励展示管理",
+        "desc": "在销售首页展示文档、激励海报或宣导视频，激励团队业绩",
+        "new_item": "发布新政策",
+        "edit_form_title": "编辑政策项目",
+        "create_form_title": "发布新政策项目",
+        "form_title": "政策标题",
+        "title_placeholder": "如：2026年6月GCC销售激励政策",
+        "form_desc": "政策简介",
+        "desc_placeholder": "简短介绍政策或激励内容...",
+        "form_type": "展示形式",
+        "type_doc": "文档 (PDF/网页)",
+        "type_poster": "海报 (图片)",
+        "type_video": "视频 (MP4)",
+        "file_source": "资源文件设置",
+        "click_to_upload": "点击选择或拖拽文件上传",
+        "file_url": "网络资源链接",
+        "thumbnail_url": "视频封面图片链接",
+        "sort_order": "排序权重",
+        "visible_status": "上架可见",
+        "list_title": "已发布政策列表",
+        "no_policies": "暂无政策展示，在左侧表单发布第一条政策吧",
+        "delete_confirm": "确定要删除此政策展示吗？此操作不可恢复。",
+        "view_source": "查看资源",
+        "invisible": "已隐藏",
+        "hide": "隐藏",
+        "show": "显示",
+        "fetch_fail": "获取政策列表失败:",
+        "save_fail": "保存政策失败:",
+        "delete_fail": "删除政策失败:",
+        "delete_success": "删除成功！",
+        "save_success": "保存成功！",
+        "update_success": "更新成功！",
+        "create_success": "发布成功！",
+        "title_required": "请输入标题！",
+        "url_required": "请上传文件或提供有效的资源链接！"
     }
 }

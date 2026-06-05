@@ -259,7 +259,7 @@ export default function NotificationBell() {
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="fixed md:absolute right-4 left-4 md:right-0 md:left-auto top-[calc(env(safe-area-inset-top,0px)+3.75rem)] md:top-auto mt-2 w-auto md:w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
                     <div className="bg-deep-teal text-white px-4 py-3 flex justify-between items-center">
                         <h3 className="font-bold">{t('notifications.title')}</h3>
                         <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{t('notifications.pending_count', { count: pendingCount })}</span>

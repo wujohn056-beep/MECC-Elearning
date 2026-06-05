@@ -10,6 +10,7 @@ export interface UserPermissions {
     manageDashboard?: boolean;
     manageTasks?: boolean;
     manageComments?: boolean;
+    managePolicies?: boolean;
 }
 
 export interface UserProfile {
@@ -62,9 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (permission === 'manageComments' && profile?.role === 'sd' && profile?.dep === 'SS') {
             return true;
         }
+        if (permission === 'managePolicies') {
+            return isSuperAdmin || !!profile?.permissions?.[permission];
+        }
         return isSuperAdmin || !!profile?.permissions?.[permission];
     };
-    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments || (profile?.role === 'sd' && profile?.dep === 'SS');
+    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments || !!profile?.permissions?.managePolicies || (profile?.role === 'sd' && profile?.dep === 'SS');
 
     const canAccessTasks = isLeader || hasPermission('manageTasks');
     const canAccessDashboard = isLeader || hasPermission('manageDashboard');
@@ -296,7 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         <img src="/logo.png" alt="MECC" className="h-8 mb-4 object-contain opacity-90 drop-shadow-md" />
                         
                         <h3 className="text-xl font-extrabold text-white tracking-wide mb-1.5">
-                            MECC E-Learning
+                            ME-Elearning
                         </h3>
                         <p className="text-xs font-semibold text-desert-gold/80 uppercase tracking-widest animate-gold-pulse">
                             Loading Experience...

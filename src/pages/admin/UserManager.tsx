@@ -40,6 +40,7 @@ interface UserRecord {
         manageDashboard?: boolean;
         manageTasks?: boolean;
         manageComments?: boolean;
+        managePolicies?: boolean;
     };
     dingtalkUserId?: string;
     dingtalkSyncedAt?: string;
@@ -68,7 +69,7 @@ export default function UserManager() {
     const [formData, setFormData] = useState({ 
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         dingtalkUserId: '',
-        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false }
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false }
     });
 
     useEffect(() => {
@@ -724,7 +725,8 @@ export default function UserManager() {
                 manageUsers: !!u.permissions?.manageUsers,
                 manageDashboard: !!u.permissions?.manageDashboard,
                 manageTasks: !!u.permissions?.manageTasks,
-                manageComments: !!u.permissions?.manageComments
+                manageComments: !!u.permissions?.manageComments,
+                managePolicies: !!u.permissions?.managePolicies
             }
         });
         setSelectedUserId(u.id);
@@ -768,7 +770,8 @@ export default function UserManager() {
                     manageUsers: false,
                     manageDashboard: false,
                     manageTasks: false,
-                    manageComments: false
+                    manageComments: false,
+                    managePolicies: false
                 });
 
                 await updateDoc(doc(db, 'users', selectedUserId), {
@@ -861,7 +864,7 @@ export default function UserManager() {
                 {/* Upload Section */}
                 {(profile?.role === 'super_admin' || (profile?.role === 'sd' && profile?.dep === 'SS')) && (
                     <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20 h-fit">
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
                             <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
                                 <Upload className="text-desert-gold" />
                                 {t('user_manager.upload_excel')}
@@ -872,11 +875,11 @@ export default function UserManager() {
                                     setFormData({ 
                                         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                         dingtalkUserId: '',
-                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false }
+                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false }
                                     }); 
                                     setShowModal(true); 
                                 }} 
-                                className="text-sm bg-desert-gold text-white px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-yellow-600 transition-colors cursor-pointer"
+                                className="text-sm bg-desert-gold text-white px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-yellow-600 transition-colors cursor-pointer self-start sm:self-auto"
                             >
                                 <Plus className="w-4 h-4" /> {t('user_manager.add_account', '新增账号')}
                             </button>
@@ -928,12 +931,12 @@ export default function UserManager() {
 
                 {/* Users List Section */}
                 <div className="glass-panel rounded-2xl p-6 border border-white/40 h-[650px] flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start sm:items-center gap-4 mb-4">
                         <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
                             <Users className="text-desert-gold" />
                             {t('user_manager.current_accounts')} ({filteredUsers.length})
                         </h2>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             {!(profile?.role === 'super_admin' || (profile?.role === 'sd' && profile?.dep === 'SS')) && (
                                 <button 
                                     onClick={() => { 
@@ -945,7 +948,7 @@ export default function UserManager() {
                                             tl: profile?.role === 'tl' ? profile.crmId : '', 
                                             team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                             dingtalkUserId: '',
-                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false }
+                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false }
                                         }); 
                                         setShowModal(true); 
                                     }} 
@@ -1021,7 +1024,7 @@ export default function UserManager() {
                                         <span>Team: {u.team || '-'}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => openEditModal(u)} title={t('user_manager.edit_account', '编辑')} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded">
                                         <Edit className="w-4 h-4" />
                                     </button>
@@ -1357,6 +1360,15 @@ export default function UserManager() {
                                                 onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageComments: e.target.checked}})}
                                             />
                                             {t('user_manager.perm_manage_comments', '评论审核')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.managePolicies || false}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, managePolicies: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_policies', '政策运营')}
                                         </label>
                                     </div>
                                 </div>

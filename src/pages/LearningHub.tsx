@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -30,34 +30,6 @@ interface Category {
     id: string;
     name: string;
 }
-
-const generateMockTranslation = (rec: any) => {
-    const displayId = rec.displayId || 'RD';
-    const title = rec.title || 'Sales Call';
-    const desc = rec.description || 'فهم احتياجات العميل وتقديم الحلول المناسبة لمساعدته في تحقيق أهدافه المهنية وتسريع تطوره';
-    const lecturer = rec.lecturerName || 'مستشار مبيعات';
-    const category = rec.categoryName || 'مبيعات';
-
-    return `[专业销售培训文档 - 中文对照翻译]
-编号：[${displayId}]
-培训分类：${category}
-主讲人/培训师：${lecturer} 老师
-课程主题：${title}
-
-会话背景介绍：
-${desc}
-
---------------------------------------------------
-完整对话与互动转写（中文翻译）：
-
-培训师 (${lecturer})：大家好，感谢大家加入 ME Cloud Academy 学习平台。我是你们的培训顾问 ${lecturer}。今天很高兴能和大家一起讨论我们非常重要的实战案例：“${title}”。首先，大家对于这部分内容有什么需要特别关注的吗？
-客户/受训销售：您好，${lecturer} 老师。我非常认真地听了“${title}”的相关录音和细节，感觉这方面内容对我们真的非常关键。但我很想请教您：我们如何在日常的实际销售工作中具体融入这些方法，从而提高成单率呢？
-培训师 (${lecturer})：这是一个非常棒且极其核心的问题！这正是我们在“${title}”模块中重点关注的内容。核心思想是关于“${desc}”。成功的秘诀不仅在于理论理解，更在于打磨现场演示能力以及应对客户异议时的机敏反应。
-客户/受训销售：是的，完全正确。我们在谈判过程中，有时确实很难保持对话的顺畅流动和临场反应，您有什么具体的实战框架推荐吗？
-培训师 (${lecturer})：当然有。在“${title}”课程中，我们采用基于真实场景和即时角色扮演的互动教学法。这种高强度的模拟训练将为大家提供超越单纯说教的“超值价值”（Extra Value），让大家能够针对不同类型的客户定制出最具说服力的应答方案。
-客户/受训销售：太棒了！我觉得这种循序渐进的方法能够给我们的业绩带来实实在在的提升，非常期待接下来的课程和实际演练。
-培训师 (${lecturer})：这正是 ME Cloud Academy 的最高目标！我这就把本次课程的完整指导手册和配套参考附件发送给你，希望能全力支持你的职业发展。欢迎加入我们，让我们立刻开启卓越之旅！`;
-};
 
 const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { src: string, onEnded: (duration: number, actualSec?: number) => void, onUnlock?: (duration: number) => void, disableSeek?: boolean }) => {
     const { t } = useTranslation();
@@ -613,7 +585,12 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
     const [loadingVideoTranslation, setLoadingVideoTranslation] = useState(false);
 
     React.useEffect(() => {
-        if (activeVideoTab === 'chinese' && !videoTranscriptZh && isSDLevel) {
+        if (rec.transcriptZh && !videoTranscriptZh) {
+            setVideoTranscriptZh(rec.transcriptZh);
+            return;
+        }
+
+        if (activeVideoTab === 'chinese' && !videoTranscriptZh && !rec.transcriptZh && isSDLevel) {
             setLoadingVideoTranslation(true);
             fetch('/.netlify/functions/translate-transcript', {
                 method: 'POST',
@@ -641,14 +618,12 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                 }
             })
             .catch(err => {
-                console.error("Error loading video translation, executing client fallback:", err);
-                const mockZh = generateMockTranslation(rec);
-                setVideoTranscriptZh(mockZh);
-                rec.transcriptZh = mockZh;
+                console.error("Error loading video translation:", err);
+                setVideoTranscriptZh(t('learning_hub.no_translation_available', '暂无中文对照翻译（翻译生成失败，请检查 API 配置或重试）'));
             })
             .finally(() => setLoadingVideoTranslation(false));
         }
-    }, [activeVideoTab, rec.id, videoTranscriptZh, isSDLevel]);
+    }, [activeVideoTab, rec.id, videoTranscriptZh, rec.transcriptZh, isSDLevel, t]);
 
     React.useEffect(() => {
         if ((isDoc || !rec.audioUrl) && onUnlock && !isUnlocked) {
@@ -2223,7 +2198,12 @@ const DirectTranscriptModal = ({ rec: initialRec, onClose }: DirectTranscriptMod
     }, [initialRec?.id]);
 
     useEffect(() => {
-        if (activeTab === 'chinese' && !transcriptZh && isSDLevel) {
+        if (rec.transcriptZh && !transcriptZh) {
+            setTranscriptZh(rec.transcriptZh);
+            return;
+        }
+
+        if (activeTab === 'chinese' && !transcriptZh && !rec.transcriptZh && isSDLevel) {
             setLoadingTranslation(true);
             fetch('/.netlify/functions/translate-transcript', {
                 method: 'POST',
@@ -2251,14 +2231,12 @@ const DirectTranscriptModal = ({ rec: initialRec, onClose }: DirectTranscriptMod
                 }
             })
             .catch(err => {
-                console.error("Error loading translation, executing client fallback:", err);
-                const mockZh = generateMockTranslation(rec);
-                setTranscriptZh(mockZh);
-                rec.transcriptZh = mockZh;
+                console.error("Error loading translation:", err);
+                setTranscriptZh(t('learning_hub.no_translation_available', '暂无中文对照翻译（翻译生成失败，请检查 API 配置或重试）'));
             })
             .finally(() => setLoadingTranslation(false));
         }
-    }, [activeTab, rec.id, transcriptZh, isSDLevel]);
+    }, [activeTab, rec.id, transcriptZh, rec.transcriptZh, isSDLevel, t]);
 
     const handleCopy = () => {
         const textToCopy = activeTab === 'chinese' ? transcriptZh : rec.transcript;
@@ -2431,6 +2409,103 @@ const DirectTranscriptModal = ({ rec: initialRec, onClose }: DirectTranscriptMod
     );
 };
 
+const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => void }) => {
+    const { t } = useTranslation();
+    const isVideo = policy.type === 'video';
+    const isPoster = policy.type === 'poster';
+
+    return (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 dark:border-slate-800/60 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative">
+                {/* Close Button */}
+                <button 
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-50 p-2 bg-black/10 hover:bg-black/25 dark:bg-white/10 dark:hover:bg-white/20 text-arabian-night dark:text-white rounded-full transition-colors cursor-pointer"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+
+                {/* Modal Header */}
+                <div className="p-6 border-b border-gray-100 dark:border-slate-800/80 pr-16 bg-white/50 dark:bg-slate-950/20">
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-desert-gold/15 text-[#a88216] border border-desert-gold/20 select-none">
+                            {policy.type === 'document' ? '📄 文档政策' : policy.type === 'poster' ? '🖼️ 激励海报' : '🎥 宣导视频'}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 bg-deep-teal/10 text-deep-teal font-bold rounded-full">
+                            {policy.businessType === 'all' ? '全部业务线' : policy.businessType === 'kid' ? '青少' : policy.businessType === 'adult' ? '成人' : policy.businessType === 'ss' ? 'SS 业务' : 'Leader 学院'}
+                        </span>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 dark:text-white leading-snug">{policy.title}</h3>
+                    {policy.description && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">{policy.description}</p>
+                    )}
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 overflow-auto bg-slate-950 flex items-center justify-center min-h-[350px]">
+                    {isPoster ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-4 relative group">
+                            <img 
+                                src={policy.url} 
+                                alt={policy.title} 
+                                className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-2xl"
+                            />
+                            <a 
+                                href={policy.url} 
+                                download 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="absolute bottom-6 bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md px-6 py-2.5 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95"
+                            >
+                                <Download className="w-4 h-4" />
+                                下载原图海报
+                            </a>
+                        </div>
+                    ) : isVideo ? (
+                        <div className="w-full h-full flex items-center justify-center p-4">
+                            <video 
+                                src={policy.url} 
+                                controls 
+                                autoPlay
+                                className="max-w-full max-h-[60vh] rounded-xl object-contain bg-black shadow-2xl border border-white/5"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-slate-900 text-center gap-6">
+                            <div className="w-20 h-20 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                                <FileText className="w-10 h-10 text-blue-500" />
+                            </div>
+                            <div className="space-y-2 max-w-md">
+                                <h4 className="text-white font-bold text-lg">运营文档政策资料</h4>
+                                <p className="text-slate-400 text-xs leading-relaxed">该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。</p>
+                            </div>
+                            <a 
+                                href={policy.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="bg-gradient-to-r from-deep-teal to-[#005f66] hover:shadow-[0_4px_15px_rgba(0,109,119,0.3)] text-white px-8 py-3.5 rounded-xl font-extrabold shadow-md flex items-center gap-2 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer border border-white/10"
+                            >
+                                <BookOpen className="w-5 h-5 text-desert-gold" />
+                                打开政策文档
+                            </a>
+                        </div>
+                    )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border-t border-gray-100 dark:border-slate-800/80 flex justify-end">
+                    <button 
+                        onClick={onClose}
+                        className="px-6 py-2 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition-all text-xs cursor-pointer"
+                    >
+                        关闭窗口
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function LearningHub() {
     const { t } = useTranslation();
     const { user, profile, isLeader } = useAuth();
@@ -2504,6 +2579,8 @@ export default function LearningHub() {
 
     // Global Comments Count Aggregator
     const [globalCommentCounts, setGlobalCommentCounts] = useState<Record<string, number>>({});
+    const [policies, setPolicies] = useState<any[]>([]);
+    const [activePolicyItem, setActivePolicyItem] = useState<any | null>(null);
 
     // Suggestions Autocomplete States
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -2711,6 +2788,27 @@ export default function LearningHub() {
             setGlobalCommentCounts(counts);
         }, (error) => {
             console.error("Error loading global comment counts:", error);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Real-time policies listener
+    useEffect(() => {
+        const q = query(
+            collection(db, 'policies'),
+            orderBy('sortOrder', 'asc')
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((docSnapshot) => {
+                const data = docSnapshot.data();
+                if (data.visible !== false) {
+                    list.push({ id: docSnapshot.id, ...data });
+                }
+            });
+            setPolicies(list);
+        }, (error) => {
+            console.error("Error loading policies in Hub:", error);
         });
         return () => unsubscribe();
     }, []);
@@ -3205,6 +3303,137 @@ export default function LearningHub() {
                     </div>
                 )}
 
+                {/* Operations Policy Showcase Section */}
+                {!taskId && !targetRecordingId && (
+                    <div className="mt-8 relative z-10 animate-in fade-in duration-700">
+                        {/* Title Header with a glowing gradient badge */}
+                        <div className="flex items-center justify-between mb-5 px-1">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-desert-gold to-amber-500 flex items-center justify-center shadow-md shrink-0">
+                                    <Sparkles className="h-5 w-5 text-white animate-pulse" />
+                                </div>
+                                <div>
+                                    <h3 className={`font-black text-lg sm:text-xl tracking-tight ${
+                                        businessType === 'leader' ? 'text-white' : 'text-slate-800'
+                                    }`}>
+                                        {t('learning_hub.operations_policies_title', '运营政策与激励展示')}
+                                    </h3>
+                                    <p className={`text-xs ${
+                                        businessType === 'leader' ? 'text-white/50' : 'text-slate-400'
+                                    }`}>
+                                        {t('learning_hub.operations_policies_desc', '最新销售激励方案与运营规范，一键掌握')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Showcase List */}
+                        {policies.filter(p => p.businessType === 'all' || p.businessType === businessType).length === 0 ? (
+                            <div className={`p-8 rounded-2xl border text-center transition-all ${
+                                businessType === 'leader'
+                                    ? 'bg-teal-950/20 border-desert-gold/10 text-white/40'
+                                    : 'bg-white/40 border-gray-100 text-slate-450'
+                            }`}>
+                                <FileText className="h-10 w-10 mx-auto mb-2.5 opacity-20" />
+                                <p className="text-xs font-bold">{t('learning_hub.no_policies_showcase', '暂无本业务线相关的运营政策')}</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                {policies
+                                    .filter(p => p.businessType === 'all' || p.businessType === businessType)
+                                    .slice(0, 4) // Show top 4 items on the hub
+                                    .map(policy => {
+                                        const isVideo = policy.type === 'video';
+                                        const isPoster = policy.type === 'poster';
+                                        
+                                        return (
+                                            <div 
+                                                key={policy.id}
+                                                onClick={() => setActivePolicyItem(policy)}
+                                                className={`group cursor-pointer glass-panel rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lg flex flex-col ${
+                                                    businessType === 'leader'
+                                                        ? 'border-desert-gold/25 hover:border-desert-gold/50 bg-teal-950/20 hover:bg-teal-950/30'
+                                                        : 'border-white/60 hover:border-desert-gold/30 bg-white/60 hover:bg-white/90 shadow-sm'
+                                                }`}
+                                            >
+                                                {/* Preview Area */}
+                                                <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
+                                                    {isPoster ? (
+                                                        <img 
+                                                            src={policy.url} 
+                                                            alt={policy.title} 
+                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                        />
+                                                    ) : isVideo ? (
+                                                        <>
+                                                            {policy.thumbnailUrl ? (
+                                                                <img 
+                                                                    src={policy.thumbnailUrl} 
+                                                                    alt={policy.title} 
+                                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                />
+                                                            ) : (
+                                                                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 to-red-950/80 flex items-center justify-center">
+                                                                    <VideoIcon className="h-10 w-10 text-red-500/80 group-hover:scale-110 transition-transform" />
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/45 transition-colors z-10 flex items-center justify-center">
+                                                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center transform group-hover:scale-110 transition-all shadow-md">
+                                                                    <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+                                                            <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                                                                    <FileText className="h-5 w-5 text-blue-400" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* Format Tag */}
+                                                    <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
+                                                        {policy.type === 'document' ? '📄 文档' : policy.type === 'poster' ? '🖼️ 海报' : '🎥 视频'}
+                                                    </span>
+                                                </div>
+
+                                                {/* Text Info */}
+                                                <div className="p-4 flex-1 flex flex-col justify-between">
+                                                    <div>
+                                                        <h4 className={`font-black text-sm line-clamp-1 group-hover:text-desert-gold transition-colors ${
+                                                            businessType === 'leader' ? 'text-white' : 'text-slate-800'
+                                                        }`}>
+                                                            {policy.title}
+                                                        </h4>
+                                                        {policy.description && (
+                                                            <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${
+                                                                businessType === 'leader' ? 'text-white/50' : 'text-slate-500'
+                                                            }`}>
+                                                                {policy.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Action footer */}
+                                                    <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-white/5">
+                                                        <span className={`text-[10px] font-bold ${
+                                                            businessType === 'leader' ? 'text-white/30' : 'text-slate-400'
+                                                        }`}>
+                                                            排序: {policy.sortOrder}
+                                                        </span>
+                                                        <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
+                                                            {policy.type === 'document' ? '立即阅读' : policy.type === 'poster' ? '查看海报' : '播放视频'} →
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Category Tabs */}
                 {!taskId && !targetRecordingId && (
                     <div className={`mt-10 pt-6 border-t relative z-10 ${
@@ -3522,6 +3751,12 @@ export default function LearningHub() {
                 <SharePosterModal
                     rec={shareRecording}
                     onClose={() => setShareRecording(null)}
+                />
+            )}
+            {activePolicyItem && (
+                <PolicyPreviewModal
+                    policy={activePolicyItem}
+                    onClose={() => setActivePolicyItem(null)}
                 />
             )}
         </div>
