@@ -37,8 +37,6 @@ interface Category {
     businessType?: 'kid' | 'adult' | 'ss' | 'leader';
 }
 
-};
-
 export default function RecordingsManager() {
     const { t } = useTranslation();
     const [recordings, setRecordings] = useState<Recording[]>([]);
