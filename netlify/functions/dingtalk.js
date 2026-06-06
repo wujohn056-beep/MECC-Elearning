@@ -439,6 +439,116 @@ export const handler = async (event, context) => {
         }
 
         // ==========================================
+        // ACTION: NOTIFY LOGIN (Security Login Alerts)
+        // ==========================================
+        if (action === 'notifyLogin') {
+            const { crmId, loginType } = body;
+            if (!crmId) {
+                return { statusCode: 400, body: JSON.stringify({ error: 'Missing crmId' }) };
+            }
+
+            let sentSuccess = false;
+            let mockPayload = null;
+            let errorMessage = null;
+            let dingtalkApiResponse = null;
+
+            let userData = null;
+            if (!isMockFirebase) {
+                try {
+                    const db = getFirestoreDb();
+                    const snapshot = await db.collection('users')
+                        .where('crmId', '==', crmId)
+                        .limit(1)
+                        .get();
+                    if (!snapshot.empty) {
+                        userData = snapshot.docs[0].data();
+                    } else {
+                        errorMessage = `User profile not found in database for CRM ID: ${crmId}`;
+                    }
+                } catch (dbErr) {
+                    console.error("Firestore user lookup error in notifyLogin:", dbErr);
+                    errorMessage = `Firestore lookup error: ${dbErr.message}`;
+                }
+            } else {
+                userData = {
+                    crmId,
+                    dingtalkUserId: 'mock_user_userid',
+                    role: 'user'
+                };
+            }
+
+            if (userData && userData.dingtalkUserId) {
+                const targetUserId = userData.dingtalkUserId;
+                const isChinese = isUserChineseSpeaker(userData);
+
+                const getMsgTitle = () => {
+                    return isChinese ? "🔒 安全登录提醒" : "🔒 Secure Login Alert";
+                };
+
+                const getMsgMarkdown = () => {
+                    const timeStr = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+                    const methodStr = loginType === 'sso' ? (isChinese ? '钉钉免登' : 'DingTalk SSO') : (isChinese ? '账号密码' : 'Password');
+                    if (isChinese) {
+                        return `### 🔒 **安全登录提醒**\n\n---\n\n您的账号已成功登录 **ME 云学堂** APP。\n\n**📋 登录详情：**\n* 👤 **登录账号：** \`${crmId}\`\n* ⏰ **登录时间：** ${timeStr} (北京时间)\n* 🔑 **登录方式：** ${methodStr}\n\n---\n\n> 💡 *若此操作非您本人发起，请立即联系管理员并修改密码。*`;
+                    }
+                    return `### 🔒 **Secure Login Alert**\n\n---\n\nYour account has successfully logged into **ME Cloud Academy** APP.\n\n**📋 Login Details:**\n* 👤 **Account:** \`${crmId}\`\n* ⏰ **Time:** ${timeStr} (Beijing Time)\n* 🔑 **Method:** ${methodStr}\n\n---\n\n> 💡 *If this was not you, please contact the administrator and change your password immediately.*`;
+                };
+
+                if (!isMockDingTalk && !isMockFirebase) {
+                    try {
+                        const token = await getDingTalkToken();
+                        const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
+                        const notifyRes = await fetch(notifyUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                agent_id: parseInt(agentId),
+                                userid_list: targetUserId,
+                                msg: {
+                                    msgtype: "markdown",
+                                    markdown: {
+                                        title: getMsgTitle(),
+                                        text: getMsgMarkdown()
+                                    }
+                                }
+                            })
+                        });
+                        const notifyData = await notifyRes.json();
+                        dingtalkApiResponse = notifyData;
+                        sentSuccess = (notifyData.errcode === 0);
+                        if (!sentSuccess) {
+                            errorMessage = `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}`;
+                        }
+                    } catch (pushErr) {
+                        console.error("DingTalk push error in notifyLogin:", pushErr);
+                        errorMessage = pushErr.message;
+                    }
+                } else {
+                    sentSuccess = true;
+                    mockPayload = {
+                        targetUserId,
+                        title: getMsgTitle(),
+                        markdown: getMsgMarkdown()
+                    };
+                    console.log("[Mock Login Notification sent]", mockPayload);
+                }
+            } else if (userData && !userData.dingtalkUserId) {
+                errorMessage = `User profile exists, but dingtalkUserId is missing.`;
+            }
+
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    success: sentSuccess,
+                    error: errorMessage,
+                    mockPayload,
+                    dingtalkApiResponse
+                })
+            };
+        }
+
+        // ==========================================
         // ACTION: NOTIFY TASK (Phase 2 Task Pushes)
         // ==========================================
         if (action === 'notifyTask') {
@@ -994,6 +1104,293 @@ export const handler = async (event, context) => {
                         errorMessage = "DingTalk Agent ID (DINGTALK_AGENT_ID) is not configured in Netlify environment variables.";
                     } else if (recipientsZh.length === 0 && recipientsEn.length === 0) {
                         errorMessage = "您选择的接收部门（按 SD 维度）中，没有任何成员关联了钉钉账号。请确保团队成员已完成账号同步，或管理员已手动绑定其工号。 / No team members in the selected teams have bound their DingTalk accounts. Please ensure members have synced their profiles or their UserID is manually bound.";
+                    }
+                }
+            }
+
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    success: sentSuccess,
+                    error: errorMessage,
+                    pushType: pushType,
+                    mockPayload: mockPayload
+                })
+            };
+        }
+
+        // ==========================================
+        // ACTION: NOTIFY POLICY (Policy Pushes)
+        // ==========================================
+        if (action === 'notifyPolicy') {
+            const { policyId, title, description, type, targetTeam, targetType, selectedSds, webhookLang } = body;
+            if (!policyId || !title) {
+                return { statusCode: 400, body: JSON.stringify({ error: 'Missing policyId or title' }) };
+            }
+
+            const getMsgMarkdown = (lang) => {
+                const typeStr = type === 'document' 
+                    ? (lang === 'zh' ? '📄 文档政策' : '📄 Document Policy') 
+                    : type === 'poster' 
+                        ? (lang === 'zh' ? '🖼️ 激励海报' : '🖼️ Incentive Poster') 
+                        : (lang === 'zh' ? '🎥 宣导视频' : '🎥 Promo Video');
+                
+                const audienceStr = targetTeam === 'all'
+                    ? (lang === 'zh' ? '🌍 全部业务线' : '🌍 All Business Lines')
+                    : (lang === 'zh' ? `${targetTeam} 团队专属` : `${targetTeam} Team Exclusive`);
+
+                if (lang === 'en') {
+                    return `### 📢 **ME Cloud Academy**\n**New Operations Policy / Incentive Published**\n\n---\n\n**📋 Policy Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}\n\n[👉 Click Here to View Policy](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
+                }
+                return `### 📢 **ME 云学堂**\n**发布了新的运营政策/激励方案**\n\n---\n\n**📋 政策详情：**\n* 🎬 **政策标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '运营团队发布了最新的提成激励或运营政策，请及时查看并研读。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
+            };
+
+            const getMsgBtnText = (lang) => {
+                return lang === 'en' ? "📢 View Policy Online" : "📢 立即查看政策";
+            };
+
+            const getMsgTitle = (lang) => {
+                return lang === 'en' ? "📢 ME Cloud Academy - New Policy" : "📢 ME 云学堂新政策发布";
+            };
+
+            let sentSuccess = false;
+            let pushType = 'none';
+            let mockPayload = null;
+            let errorMessage = null;
+
+            const isPushToGroup = !targetType || targetType === 'group';
+
+            if (isPushToGroup) {
+                // Group Webhook push
+                if (webhookUrl && !webhookUrl.includes('your_')) {
+                    try {
+                        pushType = 'webhook';
+                        const urls = webhookUrl.split(',').map(url => url.trim()).filter(Boolean);
+                        
+                        let webhookTitle = "📢 ME 云学堂新政策发布 / ME Cloud Academy - New Operations Policy Published";
+                        let webhookText = `### **📢 ME 云学堂新增运营政策 / ME Cloud Academy - New Policy Released** \n\n ---\n\n **📋 Details / 政策详情：**\n* 🎬 **Title / 政策标题：** ${title}\n* 📂 **Type / 展示类型：** ${type === 'document' ? '📄 文档政策' : type === 'poster' ? '🖼️ 激励海报' : '🎥 宣导视频'}\n* 👥 **Audience / 团队：** ${targetTeam === 'all' ? '全部可见' : targetTeam + ' 团队专属'}\n\n ---\n\n > 💡 **Introduction / 内容介绍：**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}`;
+                        let webhookBtnText = "📢 查看政策 / View Policy";
+                        
+                        if (webhookLang === 'en') {
+                            webhookTitle = "📢 ME Cloud Academy - New Policy Released";
+                            webhookText = getMsgMarkdown('en');
+                            webhookBtnText = "📢 View Policy";
+                        } else if (webhookLang === 'zh') {
+                            webhookTitle = "📢 ME 云学堂新政策发布";
+                            webhookText = getMsgMarkdown('zh');
+                            webhookBtnText = "📢 立即查看政策";
+                        }
+
+                        const pushPromises = urls.map(async (url) => {
+                            const webhookRes = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    msgtype: "actionCard",
+                                    actionCard: {
+                                        title: webhookTitle,
+                                        text: webhookText,
+                                        btnOrientation: "0",
+                                        btns: [
+                                            {
+                                                title: webhookBtnText,
+                                                actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies`
+                                            }
+                                        ]
+                                    }
+                                })
+                            });
+                            const resText = await webhookRes.text();
+                            let parsed;
+                            try {
+                                parsed = JSON.parse(resText);
+                            } catch (e) {
+                                parsed = { errcode: webhookRes.ok ? 0 : -1, errmsg: resText };
+                            }
+                            return parsed;
+                        });
+
+                        const results = await Promise.all(pushPromises);
+                        const failed = results.filter(r => r.errcode !== 0);
+                        
+                        if (failed.length === 0) {
+                            sentSuccess = true;
+                        } else {
+                            errorMessage = `Pushed to ${results.length} bots. ${failed.length} failed. Sample Error: ${JSON.stringify(failed[0])}`;
+                        }
+                    } catch (webErr) {
+                        console.error("DingTalk Webhook Policy Push Error:", webErr);
+                        errorMessage = `Webhook connection error: ${webErr.message}`;
+                    }
+                } else {
+                    errorMessage = "DingTalk Group Webhook URL (DINGTALK_WEBHOOK_URL) is not configured in Netlify environment variables.";
+                }
+            } else {
+                // Broadcast/Targeted Push via Work Notification
+                pushType = targetType === 'individuals' ? 'targeted_broadcast' : 'broadcast';
+                const recipientsZh = [];
+                const recipientsEn = [];
+                const queryLogs = [];
+
+                if (!isMockFirebase) {
+                    try {
+                        const db = getFirestoreDb();
+                        const snapshot = await db.collection('users').where('role', '!=', 'super_admin').get();
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (data.dingtalkUserId) {
+                                const isEnglishSpeaker = !isUserChineseSpeaker(data);
+                                
+                                if (targetType === 'individuals' && Array.isArray(selectedSds)) {
+                                    const sdFilters = selectedSds.map(s => {
+                                        const str = String(s);
+                                        if (str.startsWith('sd:')) return str.substring(3);
+                                        if (str.startsWith('sm:') || str.startsWith('tl:') || str.startsWith('cc:') || str.startsWith('dep:') || str.startsWith('role:')) return null;
+                                        return str;
+                                    }).filter(Boolean).map(x => x.trim().toLowerCase());
+
+                                    const smFilters = selectedSds.filter(s => String(s).startsWith('sm:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const tlFilters = selectedSds.filter(s => String(s).startsWith('tl:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const ccFilters = selectedSds.filter(s => String(s).startsWith('cc:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const depFilters = selectedSds.filter(s => String(s).startsWith('dep:')).map(s => String(s).substring(4).trim().toLowerCase());
+                                    const roleFilters = selectedSds.filter(s => String(s).startsWith('role:')).map(s => String(s).substring(5).trim().toLowerCase());
+
+                                    const userSd = String(data.sd || '').trim().toLowerCase();
+                                    const userCrmId = String(data.crmId || '').trim().toLowerCase();
+                                    const sdMatched = sdFilters.some(sd => sd === userSd || (data.role === 'sd' && sd === userCrmId));
+
+                                    const userSm = String(data.sm || '').trim().toLowerCase();
+                                    const smMatched = smFilters.some(sm => sm === userSm || (data.role === 'sm' && sm === userCrmId));
+
+                                    const userTl = String(data.tl || '').trim().toLowerCase();
+                                    const tlMatched = tlFilters.some(tl => tl === userTl || (data.role === 'tl' && tl === userCrmId));
+
+                                    const ccMatched = ccFilters.includes(userCrmId);
+
+                                    const userDep = String(data.dep || '').trim().toLowerCase();
+                                    const userTeam = String(data.team || '').trim().toLowerCase();
+                                    const hasSd = !!data.sd;
+                                    const isSd = data.role === 'sd';
+                                    const depMatched = !hasSd && !isSd && (depFilters.includes(userDep) || depFilters.includes(userTeam));
+
+                                    const userDepUpper = String(data.dep || '').trim().toUpperCase();
+                                    const userRoleLower = String(data.role || '').trim().toLowerCase();
+                                    let roleMatched = false;
+                                    if (roleFilters.includes('cctl') && userDepUpper === 'CC' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('ccsm') && userDepUpper === 'CC' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
+
+                                    const isMatched = sdMatched || smMatched || tlMatched || ccMatched || depMatched || roleMatched;
+
+                                    if (isMatched) {
+                                        if (isEnglishSpeaker) {
+                                            recipientsEn.push(data.dingtalkUserId);
+                                        } else {
+                                            recipientsZh.push(data.dingtalkUserId);
+                                        }
+                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, matched: true, lang: isEnglishSpeaker ? 'en' : 'zh' });
+                                    } else {
+                                        queryLogs.push({ uid: doc.id, crmId: data.crmId, matched: false });
+                                    }
+                                } else {
+                                    // Broadcast to all linked non-admin users
+                                    if (isEnglishSpeaker) {
+                                        recipientsEn.push(data.dingtalkUserId);
+                                    } else {
+                                        recipientsZh.push(data.dingtalkUserId);
+                                    }
+                                    queryLogs.push({ uid: doc.id, crmId: data.crmId, matched: true, lang: isEnglishSpeaker ? 'en' : 'zh' });
+                                }
+                            }
+                        });
+                        console.log(`[Policy Push] Recipients: ZH=${recipientsZh.length}, EN=${recipientsEn.length}. TargetType: ${targetType}. Filters: ${JSON.stringify(selectedSds)}`);
+                    } catch (err) {
+                        console.error("Failed to query linked user ids for policy push:", err);
+                    }
+                } else {
+                    recipientsEn.push('dd_mock_sales1');
+                    recipientsZh.push('dd_mock_sales2');
+                }
+
+                const uniqueRecipientsZh = Array.from(new Set(recipientsZh));
+                const uniqueRecipientsEn = Array.from(new Set(recipientsEn)).filter(uid => !uniqueRecipientsZh.includes(uid));
+
+                if (!isMockDingTalk && (uniqueRecipientsZh.length > 0 || uniqueRecipientsEn.length > 0) && agentId) {
+                    try {
+                        const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
+                        const tokenData = await tokenRes.json();
+                        if (tokenData.errcode === 0) {
+                            const token = tokenData.access_token;
+                            
+                            const sendNotification = async (recipientsList, lang) => {
+                                if (recipientsList.length === 0) return { success: true };
+                                
+                                const notifyRes = await fetch(`https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        agent_id: parseInt(agentId),
+                                        userid_list: recipientsList.join(','),
+                                        msg: {
+                                            msgtype: "action_card",
+                                            action_card: {
+                                                title: getMsgTitle(lang),
+                                                markdown: getMsgMarkdown(lang),
+                                                btn_orientation: "0",
+                                                btn_json_list: [
+                                                    {
+                                                        title: getMsgBtnText(lang),
+                                                        action_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies`
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    })
+                                });
+                                const notifyData = await notifyRes.json();
+                                if (notifyData.errcode === 0) {
+                                    return { success: true };
+                                } else {
+                                    return { success: false, error: `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}` };
+                                }
+                            };
+
+                            const enResult = await sendNotification(uniqueRecipientsEn, 'en');
+                            const zhResult = await sendNotification(uniqueRecipientsZh, 'zh');
+                            
+                            sentSuccess = enResult.success && zhResult.success;
+                            if (!sentSuccess) {
+                                errorMessage = [
+                                    !enResult.success ? `English Push: ${enResult.error}` : null,
+                                    !zhResult.success ? `Chinese Push: ${zhResult.error}` : null
+                                ].filter(Boolean).join(" | ");
+                            }
+                        } else {
+                            errorMessage = `DingTalk Token exchange failed: [${tokenData.errcode}] ${tokenData.errmsg}`;
+                        }
+                    } catch (broadcastErr) {
+                        console.error("DingTalk policy broadcast error:", broadcastErr);
+                        errorMessage = `DingTalk Broadcast connection failed: ${broadcastErr.message}`;
+                    }
+                } else {
+                    if (isMockDingTalk) {
+                        sentSuccess = true;
+                        mockPayload = {
+                            recipientsZh: uniqueRecipientsZh,
+                            recipientsEn: uniqueRecipientsEn,
+                            pushType: pushType,
+                            markdownZh: getMsgMarkdown('zh'),
+                            markdownEn: getMsgMarkdown('en'),
+                            actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies`,
+                            queryLogs: queryLogs
+                        };
+                        console.log("[Mock Policy Push sent]", mockPayload);
+                    } else if (!agentId) {
+                        errorMessage = "DingTalk Agent ID (DINGTALK_AGENT_ID) is not configured in Netlify environment variables.";
+                    } else if (recipientsZh.length === 0 && recipientsEn.length === 0) {
+                        errorMessage = "No team members in the selected teams have bound their DingTalk accounts.";
                     }
                 }
             }

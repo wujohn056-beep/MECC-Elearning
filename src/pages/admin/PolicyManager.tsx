@@ -25,7 +25,9 @@ import {
     Folder,
     FolderPlus,
     ChevronRight,
-    ChevronDown
+    ChevronDown,
+    Send,
+    User
 } from 'lucide-react';
 
 interface PolicyItem {
@@ -115,6 +117,16 @@ export default function PolicyManager() {
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [uploading, setUploading] = useState(false);
 
+    // DingTalk push states
+    const [showPushModal, setShowPushModal] = useState(false);
+    const [selectedPolicyForPush, setSelectedPolicyForPush] = useState<PolicyItem | null>(null);
+    const [pushTargetType, setPushTargetType] = useState<'group' | 'individuals'>('group');
+    const [selectedSdsForPush, setSelectedSdsForPush] = useState<string[]>([]);
+    const [pushWebhookLang, setPushWebhookLang] = useState<'bilingual' | 'en' | 'zh'>('bilingual');
+    const [pushingToDingTalk, setPushingToDingTalk] = useState(false);
+    const [systemUsers, setSystemUsers] = useState<any[]>([]);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
     if (!hasPermission('managePolicies')) {
         return <Navigate to="/admin" replace />;
     }
@@ -178,10 +190,24 @@ export default function PolicyManager() {
         }
     };
 
+    const fetchUsers = async () => {
+        try {
+            const q = query(collection(db, 'users'));
+            const snapshot = await getDocs(q);
+            const data: any[] = [];
+            snapshot.forEach((doc) => {
+                data.push({ id: doc.id, ...doc.data() });
+            });
+            setSystemUsers(data);
+        } catch (err: any) {
+            console.error("Error fetching users:", err);
+        }
+    };
+
     const loadData = async () => {
         setLoading(true);
         setError(null);
-        await Promise.all([fetchPolicies(), fetchDirectories()]);
+        await Promise.all([fetchPolicies(), fetchDirectories(), fetchUsers()]);
         setLoading(false);
     };
 
@@ -235,6 +261,279 @@ export default function PolicyManager() {
         
         return result;
     }, [filteredDirectories]);
+
+    const isSuperAdmin = profile?.role === 'super_admin';
+
+    // Compute SDs list dynamically from systemUsers
+    const sdList = useMemo(() => {
+        const sds = new Set<string>();
+        systemUsers.forEach(u => {
+            if (u.role === 'sd' && u.crmId) {
+                sds.add(u.crmId.toUpperCase());
+            }
+            if (u.sd) {
+                sds.add(u.sd.toUpperCase());
+            }
+        });
+        return Array.from(sds).sort();
+    }, [systemUsers]);
+
+    // Compute Non-sales departments list dynamically from systemUsers
+    const depList = useMemo(() => {
+        const deps = new Set<string>();
+        systemUsers.forEach(u => {
+            const hasSd = !!u.sd;
+            const isSd = u.role === 'sd';
+            const isSuper = u.role === 'super_admin';
+            if (!hasSd && !isSd && !isSuper) {
+                if (u.team && u.team.trim()) {
+                    deps.add(u.team.trim().toUpperCase());
+                } else if (u.dep && u.dep.trim()) {
+                    deps.add(u.dep.trim().toUpperCase());
+                }
+            }
+        });
+        return Array.from(deps).sort();
+    }, [systemUsers]);
+
+    const getTlTeamName = React.useCallback((tlCrmId: string) => {
+        const match = systemUsers.find(u => {
+            const uTl = (u.tl || '').toUpperCase();
+            const uCrmId = (u.crmId || '').toUpperCase();
+            const search = tlCrmId.toUpperCase();
+            return (uTl === search || (u.role === 'tl' && uCrmId === search)) && u.team && u.team.trim();
+        });
+        return match ? match.team.trim() : tlCrmId;
+    }, [systemUsers]);
+
+    // Unified list of targets (SD Teams, SM Teams, TL Teams and Non-sales Departments)
+    const pushGroupList = useMemo(() => {
+        const groups: { id: string; name: string; type: 'sd' | 'sm' | 'tl' | 'dep'; rawId: string }[] = [];
+        const userRole = profile?.role || 'user';
+        const userCrmId = (profile?.crmId || '').toUpperCase();
+        
+        if (isSuperAdmin) {
+            sdList.forEach(sd => {
+                groups.push({
+                    id: `sd:${sd}`,
+                    name: `${sd} ${t('policy_manager.team_suffix', '团队')}`,
+                    type: 'sd',
+                    rawId: sd
+                });
+            });
+            
+            depList.forEach(dep => {
+                groups.push({
+                    id: `dep:${dep}`,
+                    name: `${dep} ${t('policy_manager.dep_suffix', '部门')}`,
+                    type: 'dep',
+                    rawId: dep
+                });
+            });
+
+            groups.push({ id: 'role:cctl', name: 'CCTL', type: 'dep', rawId: 'cctl' });
+            groups.push({ id: 'role:ccsm', name: 'CCSM', type: 'dep', rawId: 'ccsm' });
+            groups.push({ id: 'role:sstl', name: 'SSTL', type: 'dep', rawId: 'sstl' });
+            groups.push({ id: 'role:sssm', name: 'SSSM', type: 'dep', rawId: 'sssm' });
+        } 
+        else if (userRole === 'sd') {
+            const sms = new Set<string>();
+            systemUsers.forEach(u => {
+                const uSd = (u.sd || '').toUpperCase();
+                if (uSd === userCrmId && u.sm) {
+                    sms.add(u.sm.toUpperCase());
+                }
+                if (u.role === 'sm' && uSd === userCrmId && u.crmId) {
+                    sms.add(u.crmId.toUpperCase());
+                }
+            });
+            
+            Array.from(sms).sort().forEach(sm => {
+                groups.push({
+                    id: `sm:${sm}`,
+                    name: `${sm} ${t('policy_manager.team_suffix', '团队')}`,
+                    type: 'sm',
+                    rawId: sm
+                });
+            });
+            
+            groups.push({
+                id: `sd:${userCrmId}`,
+                name: `${userCrmId} ${t('policy_manager.sd_direct_suffix', '直属')}`,
+                type: 'sd',
+                rawId: userCrmId
+            });
+        }
+        else if (userRole === 'sm') {
+            const tls = new Set<string>();
+            systemUsers.forEach(u => {
+                const uSm = (u.sm || '').toUpperCase();
+                if (uSm === userCrmId && u.tl) {
+                    tls.add(u.tl.toUpperCase());
+                }
+                if (u.role === 'tl' && uSm === userCrmId && u.crmId) {
+                    tls.add(u.crmId.toUpperCase());
+                }
+            });
+            
+            Array.from(tls).sort().forEach(tl => {
+                const tlTeam = getTlTeamName(tl);
+                groups.push({
+                    id: `tl:${tl}`,
+                    name: `${tlTeam} (${tl})`,
+                    type: 'tl',
+                    rawId: tl
+                });
+            });
+        }
+        else if (userRole === 'tl') {
+            groups.push({
+                id: `tl:${userCrmId}`,
+                name: `${getTlTeamName(userCrmId)} (${userCrmId})`,
+                type: 'tl',
+                rawId: userCrmId
+            });
+        }
+        
+        return groups;
+    }, [sdList, depList, systemUsers, profile, t, getTlTeamName, isSuperAdmin]);
+
+    const getGroupCcs = React.useCallback((group: { id: string; type: string; rawId: string }) => {
+        const raw = group.rawId.toUpperCase();
+        return systemUsers.filter(u => {
+            if (u.role === 'super_admin') return false;
+            const uCrmId = (u.crmId || '').toUpperCase();
+            
+            if (group.type === 'sd') {
+                return (u.sd || '').toUpperCase() === raw || (u.role === 'sd' && uCrmId === raw);
+            }
+            if (group.type === 'sm') {
+                return (u.sm || '').toUpperCase() === raw || (u.role === 'sm' && uCrmId === raw);
+            }
+            if (group.type === 'tl') {
+                return (u.tl || '').toUpperCase() === raw || (u.role === 'tl' && uCrmId === raw) || uCrmId === raw;
+            }
+            if (group.type === 'dep') {
+                if (group.id.startsWith('role:')) {
+                    const userDepUpper = String(u.dep || '').trim().toUpperCase();
+                    const userRoleLower = String(u.role || '').trim().toLowerCase();
+                    if (group.rawId === 'cctl' && userDepUpper === 'CC' && userRoleLower === 'tl') return true;
+                    if (group.rawId === 'ccsm' && userDepUpper === 'CC' && userRoleLower === 'sm') return true;
+                    if (group.rawId === 'sstl' && userDepUpper === 'SS' && userRoleLower === 'tl') return true;
+                    if (group.rawId === 'sssm' && userDepUpper === 'SS' && userRoleLower === 'sm') return true;
+                    return false;
+                }
+                const hasSd = !!u.sd;
+                const isSd = u.role === 'sd';
+                const userDep = String(u.dep || '').trim().toUpperCase();
+                const userTeam = String(u.team || '').trim().toUpperCase();
+                return !hasSd && !isSd && (userDep === raw || userTeam === raw);
+            }
+            return false;
+        }).sort((a, b) => (a.name || a.crmId || '').localeCompare(b.name || b.crmId || ''));
+    }, [systemUsers]);
+
+    const handleGroupToggle = (group: any) => {
+        const groupCcs = getGroupCcs(group);
+        const ccIds = groupCcs.map(cc => `cc:${cc.crmId.toLowerCase()}`);
+        const isGroupSelected = selectedSdsForPush.includes(group.id);
+        
+        let newSelection = [...selectedSdsForPush];
+        
+        if (isGroupSelected) {
+            newSelection = newSelection.filter(id => id !== group.id && !ccIds.includes(id));
+        } else {
+            newSelection.push(group.id);
+            ccIds.forEach(id => {
+                if (!newSelection.includes(id)) {
+                    newSelection.push(id);
+                }
+            });
+        }
+        setSelectedSdsForPush(newSelection);
+    };
+
+    const handleCcToggle = (ccCrmId: string, group: any) => {
+        const ccId = `cc:${ccCrmId.toLowerCase()}`;
+        const isCcChecked = selectedSdsForPush.includes(ccId);
+        let newSelection = [...selectedSdsForPush];
+        
+        if (isCcChecked) {
+            newSelection = newSelection.filter(id => id !== ccId && id !== group.id);
+        } else {
+            newSelection.push(ccId);
+            const groupCcs = getGroupCcs(group);
+            const allCcsChecked = groupCcs.every(cc => 
+                cc.crmId.toLowerCase() === ccCrmId.toLowerCase() || 
+                newSelection.includes(`cc:${cc.crmId.toLowerCase()}`)
+            );
+            if (allCcsChecked && !newSelection.includes(group.id)) {
+                newSelection.push(group.id);
+            }
+        }
+        setSelectedSdsForPush(newSelection);
+    };
+
+    const toggleGroupExpand = (groupId: string) => {
+        setExpandedGroups(prev => ({
+            ...prev,
+            [groupId]: !prev[groupId]
+        }));
+    };
+
+    const handlePushToDingTalkClick = (item: PolicyItem) => {
+        setSelectedPolicyForPush(item);
+        const targetType = adminScope === 'all' ? 'group' : 'individuals';
+        setPushTargetType(targetType);
+        
+        if (targetType === 'individuals' && pushGroupList.length === 1) {
+            setSelectedSdsForPush([pushGroupList[0].id]);
+        } else {
+            setSelectedSdsForPush([]);
+        }
+        setShowPushModal(true);
+    };
+
+    const handleExecutePush = async () => {
+        if (!selectedPolicyForPush) return;
+        
+        if (pushTargetType === 'individuals' && selectedSdsForPush.length === 0) {
+            alert(t('policy_manager.select_at_least_one_team', '请选择至少一个接收部门或团队！'));
+            return;
+        }
+
+        setPushingToDingTalk(true);
+        try {
+            const response = await fetch('/.netlify/functions/dingtalk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'notifyPolicy',
+                    policyId: selectedPolicyForPush.id,
+                    title: selectedPolicyForPush.title,
+                    description: selectedPolicyForPush.description || '',
+                    type: selectedPolicyForPush.type,
+                    targetTeam: selectedPolicyForPush.targetTeam,
+                    targetType: pushTargetType,
+                    selectedSds: selectedSdsForPush,
+                    webhookLang: pushWebhookLang
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+                alert(t('policy_manager.push_success', '政策素材已成功推送至钉钉！'));
+                setShowPushModal(false);
+            } else {
+                throw new Error(data.error || t('policy_manager.push_fail', '推送到钉钉失败，请检查通道凭证或网络配置。'));
+            }
+        } catch (err: any) {
+            console.error('DingTalk policy push error:', err);
+            alert(err.message || t('policy_manager.push_fail', '推送到钉钉失败，请检查通道凭证或网络配置。'));
+        } finally {
+            setPushingToDingTalk(false);
+        }
+    };
 
     const resetForm = () => {
         setEditingId(null);
@@ -1007,6 +1306,14 @@ export default function PolicyManager() {
                                                     <div className="flex flex-col gap-1 items-end self-start shrink-0">
                                                         <div className="flex gap-1">
                                                             <button 
+                                                                onClick={() => handlePushToDingTalkClick(item)}
+                                                                className="p-2 hover:bg-white text-deep-teal rounded-lg transition-colors border border-transparent hover:border-gray-200 cursor-pointer"
+                                                                title={t('policy_manager.push_dingtalk', '推送至钉钉')}
+                                                            >
+                                                                <Send className="h-4 w-4" />
+                                                            </button>
+                                                            
+                                                            <button 
                                                                 onClick={() => handleToggleVisible(item)}
                                                                 className="p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200 cursor-pointer"
                                                                 title={item.visible ? t('policy_manager.hide', '隐藏') : t('policy_manager.show', '显示')}
@@ -1236,6 +1543,236 @@ export default function PolicyManager() {
                     </>
                 )}
             </div>
+
+            {/* Custom Glassmorphic DingTalk Push Modal */}
+            {showPushModal && selectedPolicyForPush && (
+                <div className="fixed inset-0 bg-arabian-night/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 p-6 md:p-8 max-w-lg w-full mx-4 transform transition-all animate-in zoom-in-95 duration-300 flex flex-col gap-4 text-arabian-night">
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                            <div className="flex items-center gap-2">
+                                <Send className="h-5 w-5 text-deep-teal" />
+                                <h3 className="text-lg font-bold text-arabian-night">
+                                    {t('policy_manager.push_modal_title', '推送政策/激励至钉钉')}
+                                </h3>
+                            </div>
+                            <button 
+                                onClick={() => setShowPushModal(false)}
+                                className="p-1 hover:bg-gray-100 rounded-lg transition-colors border-0 bg-transparent cursor-pointer"
+                            >
+                                <X className="h-5 w-5 text-arabian-night/40 hover:text-arabian-night/80" />
+                            </button>
+                        </div>
+
+                        {/* Material Info Card */}
+                        <div className="bg-deep-teal/5 border border-deep-teal/10 rounded-2xl p-4 flex gap-3 items-start">
+                            <div className="bg-deep-teal/10 p-2.5 rounded-xl text-deep-teal">
+                                <FileText className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-arabian-night">
+                                    {selectedPolicyForPush.title}
+                                </h4>
+                                <p className="text-xs text-arabian-night/60 mt-1 line-clamp-1">
+                                    {selectedPolicyForPush.description || t('policy_manager.no_description', '无背景介绍')}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Push Segment Toggle */}
+                        {isSuperAdmin && (
+                            <div className="flex bg-gray-100/80 p-1 rounded-xl gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setPushTargetType('group')}
+                                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+                                        pushTargetType === 'group'
+                                            ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                            : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                    }`}
+                                >
+                                    {t('policy_manager.push_to_group', '👥 推送至工作群机器人')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPushTargetType('individuals')}
+                                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+                                        pushTargetType === 'individuals'
+                                            ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                            : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                    }`}
+                                >
+                                    {t('policy_manager.push_to_individuals', '👤 精确推送给个人')}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Webhook Push Language Selector */}
+                        {pushTargetType === 'group' && (
+                            <div className="animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col gap-2">
+                                <label className="text-xs font-bold text-arabian-night/70">
+                                    {t('policy_manager.push_language', '群助手推送语言')}
+                                </label>
+                                <div className="flex bg-gray-100/40 border border-gray-200/50 p-1 rounded-xl gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPushWebhookLang('bilingual')}
+                                        className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer border-0 ${
+                                            pushWebhookLang === 'bilingual'
+                                                ? 'bg-deep-teal text-white shadow-sm'
+                                                : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        🌐 Bilingual
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPushWebhookLang('en')}
+                                        className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer border-0 ${
+                                            pushWebhookLang === 'en'
+                                                ? 'bg-deep-teal text-white shadow-sm'
+                                                : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        🇬🇧 {t('policy_manager.lang_en', 'English')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPushWebhookLang('zh')}
+                                        className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer border-0 ${
+                                            pushWebhookLang === 'zh'
+                                                ? 'bg-deep-teal text-white shadow-sm'
+                                                : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/50'
+                                        }`}
+                                    >
+                                        🇨🇳 {t('policy_manager.lang_zh', '中文')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SD Selection Checklist (When individual push is active) */}
+                        {pushTargetType === 'individuals' && (
+                            <div className="animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col gap-2">
+                                <div className="flex items-center justify-between text-xs font-bold text-arabian-night/70">
+                                    <span>{t('policy_manager.select_sd_teams', '选择接收部门 (按 SD 维度及职能部门)')}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (selectedSdsForPush.length === pushGroupList.length) {
+                                                setSelectedSdsForPush([]);
+                                            } else {
+                                                setSelectedSdsForPush(pushGroupList.map(g => g.id));
+                                            }
+                                        }}
+                                        className="text-deep-teal hover:text-desert-gold transition-colors border-0 bg-transparent cursor-pointer"
+                                    >
+                                        {selectedSdsForPush.length === pushGroupList.length ? t('policy_manager.deselect_all', '取消全选') : t('policy_manager.select_all', '全选')}
+                                    </button>
+                                </div>
+                                <div className="border border-gray-100 rounded-2xl bg-white/50 p-3 flex flex-col gap-2 max-h-60 overflow-y-auto mt-1 custom-scrollbar">
+                                    {pushGroupList.length === 0 ? (
+                                        <p className="text-xs text-arabian-night/40 py-4 text-center">{t('policy_manager.no_sds', '暂无可用接收部门/团队')}</p>
+                                    ) : (
+                                        pushGroupList.map(group => {
+                                            const isChecked = selectedSdsForPush.includes(group.id);
+                                            const groupCcs = getGroupCcs(group);
+                                            const isExpanded = !!expandedGroups[group.id];
+                                            
+                                            return (
+                                                <div key={group.id} className="flex flex-col gap-1 bg-white/30 rounded-xl p-1.5 border border-gray-100/50 shadow-sm">
+                                                    {/* Group Header Row */}
+                                                    <div className="flex items-center justify-between group/row">
+                                                        <label className="flex items-center gap-2.5 text-xs font-bold hover:bg-deep-teal/5 p-1.5 rounded-lg transition-colors cursor-pointer select-none flex-1 min-w-0">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isChecked}
+                                                                onChange={() => handleGroupToggle(group)}
+                                                                ref={el => {
+                                                                    if (el) {
+                                                                        const selectedCount = groupCcs.filter(u => selectedSdsForPush.includes(`cc:${u.crmId.toLowerCase()}`)).length;
+                                                                        el.indeterminate = !isChecked && selectedCount > 0 && selectedCount < groupCcs.length;
+                                                                    }
+                                                                }}
+                                                                className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all"
+                                                            />
+                                                            <span className="truncate">{group.name}</span>
+                                                        </label>
+                                                        
+                                                        {groupCcs.length > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleGroupExpand(group.id)}
+                                                                className="p-1 hover:bg-deep-teal/10 rounded-lg text-deep-teal transition-colors shrink-0 mr-1 flex items-center gap-0.5 border-0 bg-transparent cursor-pointer"
+                                                                title="查看成员"
+                                                            >
+                                                                <span className="text-[10px] text-gray-400 font-medium">({groupCcs.length})</span>
+                                                                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Expanded CC Checklist */}
+                                                    {isExpanded && groupCcs.length > 0 && (
+                                                        <div className="pl-8 pr-2 py-1 flex flex-col gap-1 border-t border-gray-100/50 bg-white/20 rounded-b-xl animate-in slide-in-from-top-1 duration-200">
+                                                            {groupCcs.map(cc => {
+                                                                const isCcChecked = isChecked || selectedSdsForPush.includes(`cc:${cc.crmId.toLowerCase()}`);
+                                                                return (
+                                                                    <label 
+                                                                        key={cc.id} 
+                                                                        className="flex items-center gap-2 py-1.5 px-2 hover:bg-deep-teal/5 rounded-md text-[11px] font-semibold text-arabian-night/80 cursor-pointer select-none transition-colors"
+                                                                    >
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isCcChecked}
+                                                                            onChange={() => handleCcToggle(cc.crmId, group)}
+                                                                            className="h-3.5 w-3.5 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
+                                                                        />
+                                                                        <span className="truncate">{cc.name || cc.crmId}</span>
+                                                                        {cc.crmId && <span className="text-[9px] text-gray-400 font-medium font-mono">({cc.crmId})</span>}
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Footer buttons */}
+                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 mt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowPushModal(false)}
+                                className="px-4 py-2 text-xs font-bold text-arabian-night/60 hover:text-arabian-night hover:bg-gray-100 rounded-xl transition-all border-0 bg-transparent cursor-pointer"
+                            >
+                                {t('common.cancel', '取消')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExecutePush}
+                                disabled={pushingToDingTalk || (pushTargetType === 'individuals' && selectedSdsForPush.length === 0)}
+                                className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 rounded-xl transition-all shadow-lg hover:shadow-xl shadow-teal-600/10 hover:shadow-teal-600/25 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed border-0 cursor-pointer"
+                            >
+                                {pushingToDingTalk ? (
+                                    <>
+                                        <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                        {t('policy_manager.pushing', '正在推送...')}
+                                    </>
+                                ) : pushTargetType === 'group' ? (
+                                    t('policy_manager.push_btn_group', '广播推送至工作群')
+                                ) : (
+                                    t('policy_manager.push_btn_individuals', '推送给选定团队 (共 {{count}} 个)', { count: selectedSdsForPush.length })
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -98,6 +98,14 @@ export default function Login() {
                     const { signInWithCustomToken } = await import('firebase/auth');
                     await signInWithCustomToken(auth, data.customToken);
                 }
+                
+                // Trigger DingTalk login notification
+                fetch('/.netlify/functions/dingtalk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'notifyLogin', crmId: data.username || 'wuchuan', loginType: 'sso' })
+                }).catch(e => console.error("Login notification failed:", e));
+
                 navigate(from, { replace: true });
             } else {
                 throw new Error(data.error || t('login.sso_failed', '单点登录授权交换失败，请联系管理员。'));
@@ -169,7 +177,19 @@ export default function Login() {
                     throw authErr;
                 }
             }
-            
+            const crmId = loginEmail.includes('serdah') 
+                ? 'Serdah' 
+                : loginEmail.includes('wuchuan') 
+                    ? 'wuchuan' 
+                    : loginEmail.split('@')[0];
+
+            // Trigger DingTalk login notification
+            fetch('/.netlify/functions/dingtalk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'notifyLogin', crmId: crmId, loginType: 'password' })
+            }).catch(e => console.error("Login notification failed:", e));
+
             navigate(from, { replace: true });
         } catch (err) {
             setError(t('login.login_fail'));
