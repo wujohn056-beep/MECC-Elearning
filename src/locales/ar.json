@@ -59,7 +59,17 @@
         "download_attachment": "تحميل",
         "unsupported_file_type": "تنسيق ملف غير مدعوم (يسمح فقط بـ PPT أو PDF أو DOC أو XLS أو ZIP أو الصور)",
         "copy": "نسخ",
-        "copied": "تم النسخ إلى الحافظة!"
+        "copied": "تم النسخ إلى الحافظة!",
+        "all_business_option": "🌍 جميع قطاعات الأعمال (all)",
+        "team_kcc_option": "🧒 فريق KCC (JOHN / Niki)",
+        "team_gcc_option": "💼 فريق GCC (IRIS)",
+        "team_adult_option": "👨 فريق ACC (Alan / Chase)",
+        "team_ss_option": "🎓 فريق SS (Lily)",
+        "manage_scope_label": "إدارة نطاق السياسات",
+        "team_kcc_label": "KCC الشباب (JOHN/Niki)",
+        "team_gcc_label": "GCC مخصص (IRIS)",
+        "team_adult_label": "ACC الكبار (Alan/Chase)",
+        "team_ss_label": "SS فريق (Lily)"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",

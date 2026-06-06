@@ -59,7 +59,17 @@
         "download_attachment": "Download",
         "unsupported_file_type": "Unsupported file format (Only PPT, PDF, DOC, XLS, ZIP, or images allowed)",
         "copy": "Copy",
-        "copied": "Copied to clipboard!"
+        "copied": "Copied to clipboard!",
+        "all_business_option": "🌍 All Business Lines (all)",
+        "team_kcc_option": "🧒 KCC Team (JOHN / Niki)",
+        "team_gcc_option": "💼 GCC Team (IRIS)",
+        "team_adult_option": "👨 ACC Team (Alan / Chase)",
+        "team_ss_option": "🎓 SS Team (Lily)",
+        "manage_scope_label": "Manage Policy Scope",
+        "team_kcc_label": "KCC Youth (JOHN/Niki)",
+        "team_gcc_label": "GCC Dedicated (IRIS)",
+        "team_adult_label": "ACC Adult (Alan/Chase)",
+        "team_ss_label": "SS Team (Lily)"
     },
     "navbar": {
         "title": "ME Cloud Academy",

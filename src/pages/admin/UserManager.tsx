@@ -1403,17 +1403,17 @@ export default function UserManager() {
                                     </div>
                                     {formData.permissions.managePolicies && (
                                         <div className="col-span-2 mt-2 p-3 bg-desert-gold/5 border border-desert-gold/25 rounded-xl space-y-1.5 animate-in slide-in-from-top-1 duration-200">
-                                            <label className="block text-xs font-bold text-deep-teal">管理所属业务团队范围</label>
+                                            <label className="block text-xs font-bold text-deep-teal">{t('common.manage_scope_label', '管理所属业务团队范围')}</label>
                                             <select 
                                                 value={formData.policyScope || 'all'}
                                                 onChange={e => setFormData({...formData, policyScope: e.target.value as any})}
                                                 className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700"
                                             >
-                                                <option value="all">🌍 全部业务线 (all)</option>
-                                                <option value="KCC">🧒 KCC 团队 (JOHN / Niki)</option>
-                                                <option value="GCC">💼 GCC 团队 (IRIS)</option>
-                                                <option value="Adult">👨 Adult 团队 (Alan / Chase)</option>
-                                                <option value="SS">🎓 SS 团队 (Lily)</option>
+                                                <option value="all">{t('common.all_business_option', '🌍 全部业务线 (all)')}</option>
+                                                <option value="KCC">{t('common.team_kcc_option', '🧒 KCC 团队 (JOHN / Niki)')}</option>
+                                                <option value="GCC">{t('common.team_gcc_option', '💼 GCC 团队 (IRIS)')}</option>
+                                                <option value="Adult">{t('common.team_adult_option', '👨 ACC 团队 (Alan / Chase)')}</option>
+                                                <option value="SS">{t('common.team_ss_option', '🎓 SS 团队 (Lily)')}</option>
                                             </select>
                                         </div>
                                     )}

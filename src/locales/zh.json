@@ -59,7 +59,17 @@
         "download_attachment": "下载附件",
         "unsupported_file_type": "不支持的文件类型（仅支持 PPT, PDF, DOC, XLS, ZIP, 图片）",
         "copy": "复制",
-        "copied": "已复制到剪贴板！"
+        "copied": "已复制到剪贴板！",
+        "all_business_option": "🌍 全部业务线 (all)",
+        "team_kcc_option": "🧒 KCC 团队 (JOHN / Niki)",
+        "team_gcc_option": "💼 GCC 团队 (IRIS)",
+        "team_adult_option": "👨 ACC 团队 (Alan / Chase)",
+        "team_ss_option": "🎓 SS 团队 (Lily)",
+        "manage_scope_label": "管理所属业务团队范围",
+        "team_kcc_label": "KCC 青少 (JOHN/Niki)",
+        "team_gcc_label": "GCC 专区 (IRIS)",
+        "team_adult_label": "ACC 成人 (Alan/Chase)",
+        "team_ss_label": "SS 团队 (Lily)"
     },
     "navbar": {
         "title": "ME 云学堂",

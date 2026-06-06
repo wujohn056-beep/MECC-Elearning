@@ -578,11 +578,11 @@ export default function PolicyManager() {
 
     const getTeamLabel = (team: string) => {
         switch (team) {
-            case 'KCC': return 'KCC 青少 (JOHN/Niki)';
-            case 'GCC': return 'GCC 专区 (IRIS)';
-            case 'Adult': return 'ACC 成人 (Alan/Chase)';
-            case 'EA': return 'SS 团队 (Lily)';
-            case 'SS': return 'SS 团队 (Lily)';
+            case 'KCC': return t('common.team_kcc_label', 'KCC 青少 (JOHN/Niki)');
+            case 'GCC': return t('common.team_gcc_label', 'GCC 专区 (IRIS)');
+            case 'Adult': return t('common.team_adult_label', 'ACC 成人 (Alan/Chase)');
+            case 'EA': return t('common.team_ss_label', 'SS 团队 (Lily)');
+            case 'SS': return t('common.team_ss_label', 'SS 团队 (Lily)');
             case 'all': return t('common.all_business', '全部业务线');
             default: return team;
         }
@@ -719,11 +719,11 @@ export default function PolicyManager() {
                                                 onChange={(e) => setTargetTeam(e.target.value as any)}
                                                 disabled={actionLoading || adminScope !== 'all'}
                                             >
-                                                <option value="all">🌍 全部业务线 (all)</option>
-                                                <option value="KCC">🧒 KCC 团队 (JOHN/Niki)</option>
-                                                <option value="GCC">💼 GCC 团队 (IRIS)</option>
-                                                <option value="Adult">👨 ACC 团队 (Alan/Chase)</option>
-                                                <option value="SS">🎓 SS 团队 (Lily)</option>
+                                                <option value="all">{t('common.all_business_option', '🌍 全部业务线 (all)')}</option>
+                                                <option value="KCC">{t('common.team_kcc_option', '🧒 KCC 团队 (JOHN / Niki)')}</option>
+                                                <option value="GCC">{t('common.team_gcc_option', '💼 GCC 团队 (IRIS)')}</option>
+                                                <option value="Adult">{t('common.team_adult_option', '👨 ACC 团队 (Alan / Chase)')}</option>
+                                                <option value="SS">{t('common.team_ss_option', '🎓 SS 团队 (Lily)')}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -1055,11 +1055,11 @@ export default function PolicyManager() {
                                             onChange={(e) => setDirTargetTeam(e.target.value as any)}
                                             disabled={actionLoading || adminScope !== 'all'}
                                         >
-                                            <option value="all">🌍 全部业务线 (all)</option>
-                                            <option value="KCC">🧒 KCC 团队 (JOHN/Niki)</option>
-                                            <option value="GCC">💼 GCC 团队 (IRIS)</option>
-                                            <option value="Adult">👨 ACC 团队 (Alan/Chase)</option>
-                                            <option value="SS">🎓 SS 团队 (Lily)</option>
+                                            <option value="all">{t('common.all_business_option', '🌍 全部业务线 (all)')}</option>
+                                            <option value="KCC">{t('common.team_kcc_option', '🧒 KCC 团队 (JOHN / Niki)')}</option>
+                                            <option value="GCC">{t('common.team_gcc_option', '💼 GCC 团队 (IRIS)')}</option>
+                                            <option value="Adult">{t('common.team_adult_option', '👨 ACC 团队 (Alan / Chase)')}</option>
+                                            <option value="SS">{t('common.team_ss_option', '🎓 SS 团队 (Lily)')}</option>
                                         </select>
                                     </div>
 
