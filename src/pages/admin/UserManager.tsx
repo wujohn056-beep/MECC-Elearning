@@ -44,6 +44,7 @@ interface UserRecord {
     };
     dingtalkUserId?: string;
     dingtalkSyncedAt?: string;
+    policyScope?: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
 }
 
 export default function UserManager() {
@@ -69,7 +70,8 @@ export default function UserManager() {
     const [formData, setFormData] = useState({ 
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         dingtalkUserId: '',
-        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false }
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false },
+        policyScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all'
     });
 
     useEffect(() => {
@@ -494,6 +496,7 @@ export default function UserManager() {
                         dep: row.dep || 'CC',
                         email: row.email || '',
                         dingtalkUserId: row.dingtalkUserId || null,
+                        policyScope: 'all',
                         createdAt: serverTimestamp()
                     });
 
@@ -727,7 +730,8 @@ export default function UserManager() {
                 manageTasks: !!u.permissions?.manageTasks,
                 manageComments: !!u.permissions?.manageComments,
                 managePolicies: !!u.permissions?.managePolicies
-            }
+            },
+            policyScope: u.policyScope || 'all'
         });
         setSelectedUserId(u.id);
         setEditMode(true);
@@ -784,7 +788,8 @@ export default function UserManager() {
                     team: formData.team,
                     dep: finalDep || 'CC',
                     dingtalkUserId: formData.dingtalkUserId.trim() || null,
-                    permissions: preservedPermissions
+                    permissions: preservedPermissions,
+                    policyScope: formData.policyScope || 'all'
                 });
                 fetchUsers();
                 setShowModal(false);
@@ -829,8 +834,10 @@ export default function UserManager() {
                         manageUsers: false,
                         manageDashboard: false,
                         manageTasks: false,
-                        manageComments: false
+                        manageComments: false,
+                        managePolicies: false
                     },
+                    policyScope: formData.policyScope || 'all',
                     createdAt: serverTimestamp()
                 });
                 await deleteApp(secondaryApp);
@@ -875,7 +882,8 @@ export default function UserManager() {
                                     setFormData({ 
                                         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                         dingtalkUserId: '',
-                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false }
+                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false },
+                                        policyScope: 'all'
                                     }); 
                                     setShowModal(true); 
                                 }} 
@@ -1371,6 +1379,22 @@ export default function UserManager() {
                                             {t('user_manager.perm_manage_policies', '政策运营')}
                                         </label>
                                     </div>
+                                    {formData.permissions.managePolicies && (
+                                        <div className="col-span-2 mt-2 p-3 bg-desert-gold/5 border border-desert-gold/25 rounded-xl space-y-1.5 animate-in slide-in-from-top-1 duration-200">
+                                            <label className="block text-xs font-bold text-deep-teal">管理所属业务团队范围</label>
+                                            <select 
+                                                value={formData.policyScope || 'all'}
+                                                onChange={e => setFormData({...formData, policyScope: e.target.value as any})}
+                                                className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700"
+                                            >
+                                                <option value="all">🌍 全部业务线 (all)</option>
+                                                <option value="KCC">🧒 KCC 团队 (JOHN / Niki)</option>
+                                                <option value="GCC">💼 GCC 团队 (IRIS)</option>
+                                                <option value="Adult">👨 Adult 团队 (Alan / Chase)</option>
+                                                <option value="EA">🎓 EA 团队 (Lily)</option>
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

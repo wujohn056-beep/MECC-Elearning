@@ -2432,7 +2432,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                             {policy.type === 'document' ? '📄 文档政策' : policy.type === 'poster' ? '🖼️ 激励海报' : '🎥 宣导视频'}
                         </span>
                         <span className="text-[10px] px-2 py-0.5 bg-deep-teal/10 text-deep-teal font-bold rounded-full">
-                            {policy.businessType === 'all' ? '全部业务线' : policy.businessType === 'kid' ? '青少' : policy.businessType === 'adult' ? '成人' : policy.businessType === 'ss' ? 'SS 业务' : 'Leader 学院'}
+                            {policy.targetTeam ? (policy.targetTeam === 'all' ? '全部可见' : `${policy.targetTeam} 团队专属`) : (policy.businessType === 'all' ? '全部业务线' : policy.businessType === 'kid' ? '青少' : policy.businessType === 'adult' ? '成人' : policy.businessType === 'ss' ? 'SS 业务' : 'Leader 学院')}
                         </span>
                     </div>
                     <h3 className="text-xl font-black text-slate-800 dark:text-white leading-snug">{policy.title}</h3>
@@ -2508,7 +2508,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
 
 export default function LearningHub() {
     const { t } = useTranslation();
-    const { user, profile, isLeader } = useAuth();
+    const { user, profile, isLeader, userTeam } = useAuth();
     const isNative = Capacitor.isNativePlatform();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -2812,6 +2812,20 @@ export default function LearningHub() {
         });
         return () => unsubscribe();
     }, []);
+
+    const filteredPoliciesForHub = React.useMemo(() => {
+        const mapBusinessTypeToTeam = (bt: string) => {
+            const type = String(bt || '').toLowerCase();
+            if (type === 'kid') return 'KCC';
+            if (type === 'adult') return 'Adult';
+            if (type === 'ss') return 'EA';
+            return 'all';
+        };
+        return policies.filter(p => {
+            const team = p.targetTeam || mapBusinessTypeToTeam(p.businessType || 'all');
+            return team === 'all' || team === userTeam;
+        });
+    }, [policies, userTeam]);
 
     const handleToggleLike = async (recId: string, currentLikes: string[] = []) => {
         if (!user) return;
@@ -3341,19 +3355,14 @@ export default function LearningHub() {
                         </div>
 
                         {/* Showcase List */}
-                        {policies.filter(p => p.businessType === 'all' || p.businessType === businessType).length === 0 ? (
-                            <div className={`p-8 rounded-2xl border text-center transition-all ${
-                                businessType === 'leader'
-                                    ? 'bg-teal-950/20 border-desert-gold/10 text-white/40'
-                                    : 'bg-white/40 border-gray-100 text-slate-450'
-                            }`}>
+                        {filteredPoliciesForHub.length === 0 ? (
+                            <div className="p-8 rounded-2xl border border-gray-100 bg-white/40 text-slate-450 text-center transition-all">
                                 <FileText className="h-10 w-10 mx-auto mb-2.5 opacity-20" />
                                 <p className="text-xs font-bold">{t('learning_hub.no_policies_showcase', '暂无本业务线相关的运营政策')}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {policies
-                                    .filter(p => p.businessType === 'all' || p.businessType === businessType)
+                                {filteredPoliciesForHub
                                     .slice(0, 4) // Show top 4 items on the hub
                                     .map((policy, idx) => {
                                         const isVideo = policy.type === 'video';

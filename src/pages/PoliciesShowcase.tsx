@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, getUserTeam } from '../contexts/AuthContext';
 import { db } from '../services/firebase';
 import { 
     FileText, 
     Image as ImageIcon, 
     Video as VideoIcon, 
-    Sparkles, 
     Play, 
     Download, 
     BookOpen, 
     X, 
     ArrowLeft,
-    EyeOff
+    Folder,
+    ChevronRight,
+    Search
 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 
@@ -25,11 +26,29 @@ interface PolicyItem {
     type: 'document' | 'poster' | 'video';
     url: string;
     thumbnailUrl?: string;
-    businessType: 'kid' | 'adult' | 'ss' | 'leader' | 'all';
+    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    directoryId: string | null;
     sortOrder: number;
     visible: boolean;
     createdAt?: any;
     updatedAt?: any;
+}
+
+interface PolicyDirectory {
+    id: string;
+    name: string;
+    parentId: string | null;
+    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    sortOrder: number;
+}
+
+// Fallback mapper for legacy policies that still use businessType
+function mapBusinessTypeToTeam(bt: string): 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all' {
+    const type = String(bt || '').toLowerCase();
+    if (type === 'kid') return 'KCC';
+    if (type === 'adult') return 'Adult';
+    if (type === 'ss') return 'EA';
+    return 'all';
 }
 
 const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => void }) => {
@@ -55,7 +74,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                             {policy.type === 'document' ? '📄 文档政策' : policy.type === 'poster' ? '🖼️ 激励海报' : '🎥 宣导视频'}
                         </span>
                         <span className="text-[10px] px-2 py-0.5 bg-deep-teal/10 text-deep-teal font-bold rounded-full">
-                            {policy.businessType === 'all' ? '全部业务线' : policy.businessType === 'kid' ? '青少' : policy.businessType === 'adult' ? '成人' : policy.businessType === 'ss' ? 'SS 业务' : 'Leader 学院'}
+                            {policy.targetTeam === 'all' ? '全部可见' : `${policy.targetTeam} 团队专属`}
                         </span>
                     </div>
                     <h3 className="text-xl font-black text-slate-800 dark:text-white leading-snug">{policy.title}</h3>
@@ -132,83 +151,137 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
 export default function PoliciesShowcase() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { profile, isLeader } = useAuth();
-    const isNative = Capacitor.isNativePlatform();
+    const { profile, userTeam } = useAuth();
+    const isSuperAdmin = profile?.role === 'super_admin' || profile?.policyScope === 'all';
 
+    // State
     const [policies, setPolicies] = useState<PolicyItem[]>([]);
+    const [directories, setDirectories] = useState<PolicyDirectory[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // Directory explorer state
+    const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [activePolicyItem, setActivePolicyItem] = useState<PolicyItem | null>(null);
 
-    // Business type tabs configuration
-    const allowedTabs = React.useMemo(() => {
-        const tabs: { type: 'kid' | 'adult' | 'ss' | 'leader'; label: string; gradient: string }[] = [];
-        
-        if (profile?.role === 'super_admin') {
-            tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-            tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
-            tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
-            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
-            return tabs;
-        }
-
-        if (profile?.dep === 'SS') {
-            tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
-            if (isLeader) {
-                tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
-            }
-            return tabs;
-        }
-
-        tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-        tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
-        if (isLeader) {
-            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
-        }
-        return tabs;
-    }, [profile, isLeader, t]);
-
-    const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>(() => {
-        if (profile?.dep === 'SS') return 'ss';
-        return 'kid';
+    // Selected tab for super admin viewing preview: defaults to the user's derived team or 'KCC'
+    const [selectedTeamTab, setSelectedTeamTab] = useState<'KCC' | 'GCC' | 'Adult' | 'EA'>(() => {
+        const team = userTeam !== 'other' ? userTeam : 'KCC';
+        return team;
     });
 
-    useEffect(() => {
-        if (allowedTabs.length > 0 && !allowedTabs.some(t => t.type === businessType)) {
-            setBusinessType(allowedTabs[0].type);
-        }
-    }, [allowedTabs, businessType]);
+    const activeTeam = useMemo(() => {
+        if (isSuperAdmin) return selectedTeamTab;
+        return userTeam !== 'other' ? userTeam : 'KCC';
+    }, [isSuperAdmin, selectedTeamTab, userTeam]);
 
-    // Real-time policies listener
+    // Load policies & directories
     useEffect(() => {
         setLoading(true);
-        const q = query(
-            collection(db, 'policies'),
-            orderBy('sortOrder', 'asc')
-        );
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        
+        // 1. Fetch policies
+        const qPolicies = query(collection(db, 'policies'), orderBy('sortOrder', 'asc'));
+        const unsubPolicies = onSnapshot(qPolicies, (snapshot) => {
             const list: PolicyItem[] = [];
             snapshot.forEach((docSnapshot) => {
                 const data = docSnapshot.data();
                 if (data.visible !== false) {
-                    list.push({ id: docSnapshot.id, ...data } as PolicyItem);
+                    list.push({
+                        id: docSnapshot.id,
+                        title: data.title || '',
+                        description: data.description || '',
+                        type: data.type || 'document',
+                        url: data.url || '',
+                        thumbnailUrl: data.thumbnailUrl || '',
+                        targetTeam: data.targetTeam || mapBusinessTypeToTeam(data.businessType || 'all'),
+                        directoryId: data.directoryId || null,
+                        sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
+                        visible: data.visible !== false
+                    });
                 }
             });
             setPolicies(list);
             setLoading(false);
         }, (error) => {
-            console.error("Error loading policies in Showcase:", error);
+            console.error("Error loading policies:", error);
             setLoading(false);
         });
-        return () => unsubscribe();
+
+        // 2. Fetch directories
+        const qDirs = query(collection(db, 'policy_directories'), orderBy('sortOrder', 'asc'));
+        const unsubDirs = onSnapshot(qDirs, (snapshot) => {
+            const list: PolicyDirectory[] = [];
+            snapshot.forEach((docSnapshot) => {
+                const data = docSnapshot.data();
+                list.push({
+                    id: docSnapshot.id,
+                    name: data.name || '',
+                    parentId: data.parentId || null,
+                    targetTeam: data.targetTeam || 'all',
+                    sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0
+                });
+            });
+            setDirectories(list);
+        }, (error) => {
+            console.error("Error loading directories:", error);
+        });
+
+        return () => {
+            unsubPolicies();
+            unsubDirs();
+        };
     }, []);
 
-    const filteredPolicies = policies.filter(
-        p => p.businessType === 'all' || p.businessType === businessType
-    );
+    // Reset folder path context if tab changes (for super admins)
+    useEffect(() => {
+        setCurrentFolderId(null);
+    }, [activeTeam]);
+
+    // Scoped list filtering: targetTeam must match activeTeam or be 'all'
+    const visiblePolicies = useMemo(() => {
+        return policies.filter(p => p.targetTeam === 'all' || p.targetTeam === activeTeam);
+    }, [policies, activeTeam]);
+
+    const visibleDirectories = useMemo(() => {
+        return directories.filter(d => d.targetTeam === 'all' || d.targetTeam === activeTeam);
+    }, [directories, activeTeam]);
+
+    // Current level contents
+    const foldersInCurrentLevel = useMemo(() => {
+        return visibleDirectories.filter(d => d.parentId === currentFolderId);
+    }, [visibleDirectories, currentFolderId]);
+
+    const policiesInCurrentLevel = useMemo(() => {
+        return visiblePolicies.filter(p => p.directoryId === currentFolderId);
+    }, [visiblePolicies, currentFolderId]);
+
+    // Breadcrumbs pathway logic
+    const breadcrumbs = useMemo(() => {
+        const trail: { id: string | null; name: string }[] = [{ id: null, name: '根目录' }];
+        if (!currentFolderId) return trail;
+        
+        let current = visibleDirectories.find(d => d.id === currentFolderId);
+        const steps: { id: string; name: string }[] = [];
+        while (current) {
+            steps.unshift({ id: current.id, name: current.name });
+            const parentId = current.parentId;
+            current = parentId ? visibleDirectories.find(d => d.id === parentId) : undefined;
+        }
+        return [...trail, ...steps];
+    }, [currentFolderId, visibleDirectories]);
+
+    const getTeamLabel = (team: string) => {
+        switch (team) {
+            case 'KCC': return 'KCC 青少';
+            case 'GCC': return 'GCC 专区';
+            case 'Adult': return 'Adult 成人';
+            case 'EA': return 'EA 团队';
+            default: return team;
+        }
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header section with back button */}
+            {/* Header layout */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                     <button 
@@ -220,124 +293,192 @@ export default function PoliciesShowcase() {
                     </button>
                     <div>
                         <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight">
-                            {t('learning_hub.operations_policies_title', '运营政策与激励展示')}
+                            运营政策与激励中心
                         </h1>
                         <p className="text-arabian-night/60 text-sm mt-1">
-                            {t('learning_hub.operations_policies_desc', '最新销售激励方案与运营规范，一键掌握')}
+                            {!isSuperAdmin ? `${getTeamLabel(activeTeam)}团队专属政策与方案浏览` : '管理权限：全局政策多中心预览'}
                         </p>
                     </div>
                 </div>
 
-                {/* Scoped business tabs inside header */}
-                {allowedTabs.length > 1 && (
-                    <div className="p-1 rounded-full flex items-center bg-white/70 backdrop-blur-md border border-white/50 shadow-sm w-full sm:w-auto overflow-x-auto whitespace-nowrap scrollbar-none">
-                        {allowedTabs.map(tab => (
+                {/* Preview tab switcher for Super Admin / All Scoped Admin */}
+                {isSuperAdmin && (
+                    <div className="p-1 rounded-full flex bg-white/70 backdrop-blur-md border border-white/50 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-none w-full sm:w-auto">
+                        {(['KCC', 'GCC', 'Adult', 'EA'] as const).map(team => (
                             <button
-                                key={tab.type}
-                                onClick={() => setBusinessType(tab.type)}
-                                className={`px-5 py-2 rounded-full font-extrabold transition-all duration-300 text-xs sm:text-sm select-none cursor-pointer ${
-                                    businessType === tab.type 
-                                        ? `bg-gradient-to-r ${tab.gradient} text-white shadow-md shadow-slate-900/10 scale-[1.02] transform`
+                                key={team}
+                                onClick={() => setSelectedTeamTab(team)}
+                                className={`px-4 py-2 rounded-full font-extrabold text-xs transition-all duration-300 cursor-pointer ${
+                                    selectedTeamTab === team 
+                                        ? 'bg-gradient-to-r from-deep-teal to-teal-800 text-white shadow'
                                         : 'text-arabian-night/65 hover:text-arabian-night hover:bg-white/40'
                                 }`}
                             >
-                                {tab.label}
+                                👁️ {getTeamLabel(team)}
                             </button>
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* Showcase Grid of all policies */}
+            {/* Breadcrumb path navigation */}
+            <div className="bg-white/45 backdrop-blur-md border border-white/60 p-3.5 rounded-2xl flex items-center flex-wrap gap-2.5 text-xs text-slate-500 font-bold select-none shadow-sm">
+                {breadcrumbs.map((crumb, idx) => (
+                    <React.Fragment key={crumb.id || 'root'}>
+                        {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
+                        <button
+                            onClick={() => setCurrentFolderId(crumb.id)}
+                            className={`hover:text-desert-gold transition-colors flex items-center gap-1 cursor-pointer ${
+                                idx === breadcrumbs.length - 1 
+                                    ? 'text-deep-teal font-black text-sm' 
+                                    : ''
+                            }`}
+                        >
+                            {crumb.id === null ? '🏠 ' : '📁 '}
+                            {crumb.name}
+                        </button>
+                    </React.Fragment>
+                ))}
+            </div>
+
+            {/* Directory explorer area */}
             {loading ? (
                 <div className="flex justify-center py-24">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-desert-gold"></div>
                 </div>
-            ) : filteredPolicies.length === 0 ? (
-                <div className="p-12 rounded-3xl border border-white/60 bg-white/40 text-center shadow-sm">
-                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-20 text-deep-teal" />
-                    <h3 className="text-lg font-bold text-deep-teal mb-1">{t('learning_hub.no_policies_showcase', '暂无本业务线相关的运营政策')}</h3>
-                    <p className="text-sm text-arabian-night/50">请切换业务线或联系运营管理团队上传发布新的资料物料。</p>
+            ) : (foldersInCurrentLevel.length === 0 && policiesInCurrentLevel.length === 0) ? (
+                <div className="p-16 rounded-3xl border border-white/60 bg-white/40 text-center shadow-sm max-w-md mx-auto">
+                    <Folder className="h-14 w-14 mx-auto mb-4 opacity-25 text-deep-teal" />
+                    <h3 className="text-lg font-bold text-deep-teal mb-1">
+                        本目录暂无内容
+                    </h3>
+                    <p className="text-xs text-arabian-night/50">
+                        运营管理员尚未在此级目录内发布相关的政策、海报或宣导视频。
+                    </p>
+                    {currentFolderId !== null && (
+                        <button 
+                            onClick={() => {
+                                const parent = visibleDirectories.find(d => d.id === currentFolderId);
+                                setCurrentFolderId(parent ? parent.parentId : null);
+                            }}
+                            className="mt-5 text-xs bg-white border border-gray-200 px-4 py-2 rounded-xl text-deep-teal font-extrabold hover:border-desert-gold/30 hover:scale-105 transition-all shadow-sm cursor-pointer"
+                        >
+                            返回上一级
+                        </button>
+                    )}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-in slide-in-from-bottom-4 duration-500">
-                    {filteredPolicies.map(policy => {
-                        const isVideo = policy.type === 'video';
-                        const isPoster = policy.type === 'poster';
+                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+                    
+                    {/* Folders grid */}
+                    {foldersInCurrentLevel.length > 0 && (
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 select-none">文件夹目录 ({foldersInCurrentLevel.length})</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {foldersInCurrentLevel.map(folder => (
+                                    <div 
+                                        key={folder.id}
+                                        onClick={() => setCurrentFolderId(folder.id)}
+                                        className="group cursor-pointer p-4 rounded-2xl border border-white/70 bg-white/50 hover:bg-white hover:border-desert-gold/30 hover:-translate-y-1 hover:shadow-md flex items-center gap-3.5 transition-all duration-300"
+                                    >
+                                        <div className="p-3 bg-amber-500/10 rounded-xl group-hover:bg-amber-500/20 transition-all shrink-0">
+                                            <Folder className="w-6 h-6 text-amber-500 fill-amber-500/20 group-hover:scale-110 transition-transform" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h4 className="font-black text-sm text-slate-800 truncate group-hover:text-desert-gold transition-colors">{folder.name}</h4>
+                                            <span className="text-[10px] text-slate-400 font-semibold">打开文件夹 →</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
-                        return (
-                            <div 
-                                key={policy.id}
-                                onClick={() => setActivePolicyItem(policy)}
-                                className="group cursor-pointer glass-panel rounded-2xl border border-white/60 bg-white/60 hover:bg-white hover:border-desert-gold/30 hover:-translate-y-1.5 shadow-sm hover:shadow-lg flex flex-col transition-all duration-500 overflow-hidden"
-                            >
-                                {/* Preview Area */}
-                                <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
-                                    {isPoster ? (
-                                        <img 
-                                            src={policy.url} 
-                                            alt={policy.title} 
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                        />
-                                    ) : isVideo ? (
-                                        <>
-                                            {policy.thumbnailUrl ? (
-                                                <img 
-                                                    src={policy.thumbnailUrl} 
-                                                    alt={policy.title} 
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                />
-                                            ) : (
-                                                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 to-red-950/80 flex items-center justify-center">
-                                                    <VideoIcon className="h-10 w-10 text-red-500/80 group-hover:scale-110 transition-transform" />
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/45 transition-colors z-10 flex items-center justify-center">
-                                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center transform group-hover:scale-110 transition-all shadow-md">
-                                                    <Play className="w-4 h-4 text-white fill-white ml-0.5" />
-                                                </div>
+                    {/* Files grid */}
+                    {policiesInCurrentLevel.length > 0 && (
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 select-none">政策文件与激励 ({policiesInCurrentLevel.length})</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                {policiesInCurrentLevel.map(policy => {
+                                    const isVideo = policy.type === 'video';
+                                    const isPoster = policy.type === 'poster';
+
+                                    return (
+                                        <div 
+                                            key={policy.id}
+                                            onClick={() => setActivePolicyItem(policy)}
+                                            className="group cursor-pointer glass-panel rounded-2xl border border-white/60 bg-white/60 hover:bg-white hover:border-desert-gold/30 hover:-translate-y-1.5 shadow-sm hover:shadow-lg flex flex-col transition-all duration-500 overflow-hidden"
+                                        >
+                                            {/* Preview Area */}
+                                            <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
+                                                {isPoster ? (
+                                                    <img 
+                                                        src={policy.url} 
+                                                        alt={policy.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    />
+                                                ) : isVideo ? (
+                                                    <>
+                                                        {policy.thumbnailUrl ? (
+                                                            <img 
+                                                                src={policy.thumbnailUrl} 
+                                                                alt={policy.title} 
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : (
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 to-red-950/80 flex items-center justify-center">
+                                                                <VideoIcon className="h-10 w-10 text-red-500/80 group-hover:scale-110 transition-transform" />
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/45 transition-colors z-10 flex items-center justify-center">
+                                                            <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center transform group-hover:scale-110 transition-all shadow-md">
+                                                                <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+                                                        <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                                                            <FileText className="h-5 w-5 text-blue-400" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Format Tag */}
+                                                <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
+                                                    {policy.type === 'document' ? '📄 文档' : policy.type === 'poster' ? '🖼️ 海报' : '🎥 视频'}
+                                                </span>
                                             </div>
-                                        </>
-                                    ) : (
-                                        <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
-                                            <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
-                                                <FileText className="h-5 w-5 text-blue-400" />
+
+                                            {/* Text Info */}
+                                            <div className="p-4 flex-1 flex flex-col justify-between bg-white/40">
+                                                <div>
+                                                    <h4 className="font-black text-sm text-slate-800 line-clamp-1 group-hover:text-desert-gold transition-colors">
+                                                        {policy.title}
+                                                    </h4>
+                                                    {policy.description && (
+                                                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed font-medium">
+                                                            {policy.description}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Action footer */}
+                                                <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-slate-100">
+                                                    <span className="text-[10px] font-bold text-slate-400">
+                                                        {policy.targetTeam === 'all' ? '全部可见' : getTeamLabel(policy.targetTeam)}
+                                                    </span>
+                                                    <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
+                                                        {policy.type === 'document' ? '立即阅读' : policy.type === 'poster' ? '查看海报' : '播放视频'} →
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
-                                    
-                                    {/* Format Tag */}
-                                    <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
-                                        {policy.type === 'document' ? '📄 文档' : policy.type === 'poster' ? '🖼️ 海报' : '🎥 视频'}
-                                    </span>
-                                </div>
-
-                                {/* Text Info */}
-                                <div className="p-4 flex-1 flex flex-col justify-between bg-white/40">
-                                    <div>
-                                        <h4 className="font-black text-sm text-slate-800 line-clamp-1 group-hover:text-desert-gold transition-colors">
-                                            {policy.title}
-                                        </h4>
-                                        {policy.description && (
-                                            <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                                                {policy.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Action footer */}
-                                    <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-slate-100">
-                                        <span className="text-[10px] font-bold text-slate-400">
-                                            排序: {policy.sortOrder}
-                                        </span>
-                                        <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
-                                            {policy.type === 'document' ? '立即阅读' : policy.type === 'poster' ? '查看海报' : '播放视频'} →
-                                        </span>
-                                    </div>
-                                </div>
+                                    );
+                                })}
                             </div>
-                        );
-                    })}
+                        </div>
+                    )}
                 </div>
             )}
 

@@ -22,6 +22,21 @@ export interface UserProfile {
     position?: string;
     dep?: 'CC' | 'SS' | 'functional';
     permissions?: UserPermissions;
+    policyScope?: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+}
+
+export function getUserTeam(profile: UserProfile | null): 'KCC' | 'GCC' | 'Adult' | 'EA' | 'other' {
+    if (!profile) return 'other';
+    const dep = (profile.dep || '').toUpperCase();
+    const sd = (profile.sd || '').trim().toUpperCase();
+    
+    if (dep === 'CC') {
+        if (sd === 'JOHN' || sd === 'NIKI') return 'KCC';
+        if (sd === 'IRIS') return 'GCC';
+    }
+    if (sd === 'ALAN' || sd === 'CHASE') return 'Adult';
+    if (sd === 'LILY') return 'EA';
+    return 'other';
 }
 
 interface AuthContextType {
@@ -36,6 +51,7 @@ interface AuthContextType {
     hasPermission: (permission: keyof UserPermissions) => boolean;
     canAccessTasks: boolean;
     canAccessDashboard: boolean;
+    userTeam: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'other';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -261,6 +277,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = () => firebaseSignOut(auth);
 
+    const userTeam = getUserTeam(profile);
+
     const value = {
         user,
         profile,
@@ -272,7 +290,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasAnyAdminPermission,
         hasPermission,
         canAccessTasks,
-        canAccessDashboard
+        canAccessDashboard,
+        userTeam
     };
 
     return (
