@@ -354,9 +354,9 @@ export default function NotificationBell() {
                 document.body
             )}
 
-            {/* Global Task Alert Modal */}
-            {showGlobalModal && unreadTasksCount > 0 && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
+            {/* Global Task Alert Modal using Portal */}
+            {showGlobalModal && unreadTasksCount > 0 && createPortal(
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex justify-center items-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-90 duration-300">
                         <div className="bg-gradient-to-r from-desert-gold to-yellow-600 p-6 flex flex-col items-center text-white">
                             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
@@ -373,7 +373,7 @@ export default function NotificationBell() {
                                         setShowGlobalModal(false);
                                         setHasSeenGlobalModal(true);
                                     }}
-                                    className="flex-1 px-4 py-3 bg-gray-100 text-arabian-night font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                    className="flex-1 px-4 py-3 bg-gray-100 text-arabian-night font-bold rounded-xl hover:bg-gray-200 transition-colors cursor-pointer"
                                 >
                                     {t('notifications.view_later')}
                                 </button>
@@ -397,14 +397,15 @@ export default function NotificationBell() {
                                             navigate('/account');
                                         }
                                     }}
-                                    className="flex-1 px-4 py-3 bg-deep-teal text-white font-bold rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-deep-teal/30"
+                                    className="flex-1 px-4 py-3 bg-deep-teal text-white font-bold rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-deep-teal/30 cursor-pointer"
                                 >
                                     {t('notifications.view_now')}
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
