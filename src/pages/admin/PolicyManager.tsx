@@ -580,7 +580,7 @@ export default function PolicyManager() {
         switch (team) {
             case 'KCC': return 'KCC 青少 (JOHN/Niki)';
             case 'GCC': return 'GCC 专区 (IRIS)';
-            case 'Adult': return 'Adult 成人 (Alan/Chase)';
+            case 'Adult': return 'ACC 成人 (Alan/Chase)';
             case 'EA': return 'EA 团队 (Lily)';
             case 'all': return t('common.all_business', '全部业务线');
             default: return team;
@@ -721,7 +721,7 @@ export default function PolicyManager() {
                                                 <option value="all">🌍 全部业务线 (all)</option>
                                                 <option value="KCC">🧒 KCC 团队 (JOHN/Niki)</option>
                                                 <option value="GCC">💼 GCC 团队 (IRIS)</option>
-                                                <option value="Adult">👨 Adult 团队 (Alan/Chase)</option>
+                                                <option value="Adult">👨 ACC 团队 (Alan/Chase)</option>
                                                 <option value="EA">🎓 EA 团队 (Lily)</option>
                                             </select>
                                         </div>
@@ -1057,7 +1057,7 @@ export default function PolicyManager() {
                                             <option value="all">🌍 全部业务线 (all)</option>
                                             <option value="KCC">🧒 KCC 团队 (JOHN/Niki)</option>
                                             <option value="GCC">💼 GCC 团队 (IRIS)</option>
-                                            <option value="Adult">👨 Adult 团队 (Alan/Chase)</option>
+                                            <option value="Adult">👨 ACC 团队 (Alan/Chase)</option>
                                             <option value="EA">🎓 EA 团队 (Lily)</option>
                                         </select>
                                     </div>

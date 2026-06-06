@@ -45,6 +45,7 @@ interface UserRecord {
     dingtalkUserId?: string;
     dingtalkSyncedAt?: string;
     policyScope?: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    identity?: string;
 }
 
 export default function UserManager() {
@@ -71,7 +72,8 @@ export default function UserManager() {
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         dingtalkUserId: '',
         permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false },
-        policyScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all'
+        policyScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all',
+        identity: ''
     });
 
     useEffect(() => {
@@ -497,6 +499,7 @@ export default function UserManager() {
                         email: row.email || '',
                         dingtalkUserId: row.dingtalkUserId || null,
                         policyScope: 'all',
+                        identity: '',
                         createdAt: serverTimestamp()
                     });
 
@@ -731,7 +734,8 @@ export default function UserManager() {
                 manageComments: !!u.permissions?.manageComments,
                 managePolicies: !!u.permissions?.managePolicies
             },
-            policyScope: u.policyScope || 'all'
+            policyScope: u.policyScope || 'all',
+            identity: u.identity || ''
         });
         setSelectedUserId(u.id);
         setEditMode(true);
@@ -789,7 +793,8 @@ export default function UserManager() {
                     dep: finalDep || 'CC',
                     dingtalkUserId: formData.dingtalkUserId.trim() || null,
                     permissions: preservedPermissions,
-                    policyScope: formData.policyScope || 'all'
+                    policyScope: formData.policyScope || 'all',
+                    identity: formData.identity || null
                 });
                 fetchUsers();
                 setShowModal(false);
@@ -838,6 +843,7 @@ export default function UserManager() {
                         managePolicies: false
                     },
                     policyScope: formData.policyScope || 'all',
+                    identity: formData.identity || null,
                     createdAt: serverTimestamp()
                 });
                 await deleteApp(secondaryApp);
@@ -883,7 +889,8 @@ export default function UserManager() {
                                         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                         dingtalkUserId: '',
                                         permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false },
-                                        policyScope: 'all'
+                                        policyScope: 'all',
+                                        identity: ''
                                     }); 
                                     setShowModal(true); 
                                 }} 
@@ -997,6 +1004,11 @@ export default function UserManager() {
                                 <div>
                                     <h3 className="font-bold text-arabian-night flex flex-wrap items-center gap-2">
                                         {u.crmId}
+                                        {u.identity && (
+                                            <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-bold shadow-sm">
+                                                👤 {u.identity}
+                                            </span>
+                                        )}
                                         {u.role === 'super_admin' && <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Super Admin</span>}
                                         {u.role === 'sd' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">SD</span>}
                                         {u.role === 'sm' && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">SM</span>}
@@ -1156,6 +1168,28 @@ export default function UserManager() {
                                         {(profile?.dep || 'CC') === 'SS' ? t('common.type_ss') : (profile?.dep || 'CC') === 'CC' ? t('common.type_cc') : t('common.type_functional')}
                                     </div>
                                 )}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">用户身份 (Identity)</label>
+                                <select 
+                                    value={formData.identity || ''} 
+                                    onChange={e => setFormData({...formData, identity: e.target.value})}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700 text-sm"
+                                >
+                                    <option value="">-- 请选择身份 --</option>
+                                    <option value="KCC">KCC (CC 青少)</option>
+                                    <option value="GCC">GCC (CC 专区)</option>
+                                    <option value="ACC">ACC (成人业务)</option>
+                                    <option value="EA">EA (SS 业务)</option>
+                                    <option value="KCC Operation">KCC Operation (青少运营)</option>
+                                    <option value="GCC Operation">GCC Operation (专区运营)</option>
+                                    <option value="ACC Operation">ACC Operation (成人运营)</option>
+                                    <option value="EA Operation">EA Operation (EA 运营)</option>
+                                    <option value="Training Dep">Training Dep (培训部)</option>
+                                    <option value="Management">Management (管理层)</option>
+                                    <option value="Superadmin">Superadmin (系统管理员)</option>
+                                    <option value="BS">BS (业务支持)</option>
+                                </select>
                             </div>
                             
                             {formData.role !== 'super_admin' && formData.role !== 'sd' && (

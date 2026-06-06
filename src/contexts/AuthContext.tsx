@@ -23,10 +23,19 @@ export interface UserProfile {
     dep?: 'CC' | 'SS' | 'functional';
     permissions?: UserPermissions;
     policyScope?: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    identity?: string;
 }
 
 export function getUserTeam(profile: UserProfile | null): 'KCC' | 'GCC' | 'Adult' | 'EA' | 'other' {
     if (!profile) return 'other';
+    
+    // Explicit identity check (highest priority)
+    const identity = profile.identity || '';
+    if (identity === 'KCC' || identity === 'KCC Operation') return 'KCC';
+    if (identity === 'GCC' || identity === 'GCC Operation') return 'GCC';
+    if (identity === 'ACC' || identity === 'ACC Operation') return 'Adult'; // ACC maps to internal Adult segment
+    if (identity === 'EA' || identity === 'EA Operation') return 'EA';
+
     const dep = (profile.dep || '').toUpperCase();
     const sd = (profile.sd || '').trim().toUpperCase();
     

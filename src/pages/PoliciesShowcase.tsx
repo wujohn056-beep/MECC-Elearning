@@ -273,7 +273,7 @@ export default function PoliciesShowcase() {
         switch (team) {
             case 'KCC': return 'KCC 青少';
             case 'GCC': return 'GCC 专区';
-            case 'Adult': return 'Adult 成人';
+            case 'Adult': return 'ACC 成人';
             case 'EA': return 'EA 团队';
             default: return team;
         }
