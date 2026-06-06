@@ -30,7 +30,22 @@ export default function AdminLayout() {
     }
 
     if (!isSuperAdmin && (location.pathname === '/admin' || location.pathname === '/admin/')) {
-        return <Navigate to="/admin/users" replace />;
+        if (hasPermission('manageUsers')) {
+            return <Navigate to="/admin/users" replace />;
+        }
+        if (hasPermission('managePolicies')) {
+            return <Navigate to="/admin/policies" replace />;
+        }
+        if (hasPermission('manageRecordings')) {
+            return <Navigate to="/admin/recordings" replace />;
+        }
+        if (hasPermission('manageCategories')) {
+            return <Navigate to="/admin/categories" replace />;
+        }
+        if (hasPermission('manageComments')) {
+            return <Navigate to="/admin/comments" replace />;
+        }
+        return <Navigate to="/hub" replace />;
     }
 
     return (
