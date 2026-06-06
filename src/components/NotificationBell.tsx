@@ -356,8 +356,17 @@ export default function NotificationBell() {
 
             {/* Global Task Alert Modal using Portal */}
             {showGlobalModal && unreadTasksCount > 0 && createPortal(
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex justify-center items-center p-4">
-                    <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-90 duration-300">
+                <div 
+                    onClick={() => {
+                        setShowGlobalModal(false);
+                        setHasSeenGlobalModal(true);
+                    }}
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex justify-center items-center p-4 cursor-pointer"
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-90 duration-300 cursor-default"
+                    >
                         <div className="bg-gradient-to-r from-desert-gold to-yellow-600 p-6 flex flex-col items-center text-white">
                             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
                                 <Bell className="w-8 h-8 text-white animate-bounce" />
