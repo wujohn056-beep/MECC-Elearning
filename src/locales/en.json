@@ -618,6 +618,24 @@
         "update_success": "Updated successfully!",
         "create_success": "Published successfully!",
         "title_required": "Please enter a title!",
-        "url_required": "Please upload a file or provide a valid resource URL!"
+        "url_required": "Please upload a file or provide a valid resource URL!",
+        "tab_publish": "Policy File Publishing",
+        "tab_directories": "Nested Directory & Folder Management",
+        "create_dir_title": "Create New Category Directory",
+        "edit_dir_title": "Edit Category Directory",
+        "parent_directory": "Parent Folder Directory",
+        "root_directory_option": "📂 [Root Directory] (Do not put in any folder)",
+        "no_policies_desc": "No operational policies in the current scope. Use the left form to publish the first one.",
+        "dir_name_label": "Directory Name",
+        "dir_name_placeholder": "e.g., 2026 Commission Scheme",
+        "dir_parent_label": "Parent Directory (Leave empty for root)",
+        "dir_parent_root": "📁 [Root Directory] (As main folder)",
+        "visible_scope_label": "Visible Business Scope",
+        "btn_save_changes": "Save Changes",
+        "btn_create_category": "Create Category",
+        "dir_list_title": "Existing Tree Directory Structure",
+        "no_directories_desc": "No directories in the current scope. Create the first folder on the left.",
+        "label_sort": "Sort",
+        "label_publisher": "Publisher"
     }
 }

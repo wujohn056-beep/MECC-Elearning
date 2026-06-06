@@ -626,7 +626,7 @@ export default function PolicyManager() {
                     }`}
                 >
                     <FileText className="w-4 h-4" />
-                    政策文件资源发布 ({filteredPolicies.length})
+                    {t('policy_manager.tab_publish', '政策文件资源发布')} ({filteredPolicies.length})
                 </button>
                 <button 
                     onClick={() => {
@@ -641,7 +641,7 @@ export default function PolicyManager() {
                     }`}
                 >
                     <Folder className="w-4 h-4" />
-                    嵌套目录文件夹管理 ({filteredDirectories.length})
+                    {t('policy_manager.tab_directories', '嵌套目录文件夹管理')} ({filteredDirectories.length})
                 </button>
             </div>
 
@@ -667,17 +667,17 @@ export default function PolicyManager() {
                             <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20 bg-white/40 sticky top-8">
                                 <h2 className="text-xl font-bold text-deep-teal mb-6 flex items-center gap-2 border-b border-deep-teal/10 pb-3">
                                     {editingId ? <Edit2 className="text-desert-gold h-5 w-5" /> : <Plus className="text-desert-gold h-5 w-5" />}
-                                    {editingId ? '编辑政策文件' : '发布新政策文件'}
+                                    {editingId ? t('policy_manager.edit_form_title', '编辑政策文件') : t('policy_manager.create_form_title', '发布新政策文件')}
                                 </h2>
                                 
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">政策标题 *</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.form_title', '政策标题')} *</label>
                                         <input
                                             type="text"
                                             required
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80"
-                                            placeholder="如：2026年6月KCC新版销售提成激励"
+                                            placeholder={t('policy_manager.title_placeholder', '如：2026年6月KCC新版销售提成激励')}
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
                                             disabled={actionLoading}
@@ -685,11 +685,11 @@ export default function PolicyManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">政策简介（可选）</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.form_desc', '政策简介（可选）')}</label>
                                         <textarea
                                             rows={2}
                                             className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80"
-                                            placeholder="简短介绍此政策的核心内容..."
+                                            placeholder={t('policy_manager.desc_placeholder', '简短介绍此政策的核心内容...')}
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                             disabled={actionLoading}
@@ -698,7 +698,7 @@ export default function PolicyManager() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-deep-teal mb-1.5">展示形式</label>
+                                            <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.form_type', '展示形式')}</label>
                                             <select
                                                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium"
                                                 value={type}
@@ -712,7 +712,7 @@ export default function PolicyManager() {
                                         </div>
                                         
                                         <div>
-                                            <label className="block text-xs font-bold text-deep-teal mb-1.5">所属业务团队</label>
+                                            <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.target_team', '所属业务团队')}</label>
                                             <select
                                                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium disabled:bg-gray-100 disabled:text-gray-500"
                                                 value={targetTeam}
@@ -729,14 +729,14 @@ export default function PolicyManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">所属文件夹目录</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.parent_directory', '所属文件夹目录')}</label>
                                         <select
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium text-xs"
                                             value={directoryId || ''}
                                             onChange={(e) => setDirectoryId(e.target.value || null)}
                                             disabled={actionLoading}
                                         >
-                                            <option value="">📂 [根目录] (不放入任何文件夹)</option>
+                                            <option value="">{t('policy_manager.root_directory_option', '📂 [根目录] (不放入任何文件夹)')}</option>
                                             {nestedDirOptions.map(opt => (
                                                 <option key={opt.id} value={opt.id}>
                                                     {"　".repeat(opt.level)}└── 📁 {opt.name} ({opt.targetTeam})
@@ -874,7 +874,7 @@ export default function PolicyManager() {
                             <div className="glass-panel rounded-2xl p-6 border border-white/40 bg-white/40 min-h-[500px]">
                                 <h2 className="text-xl font-bold text-deep-teal mb-6 flex items-center gap-2 border-b border-deep-teal/10 pb-3">
                                     <FileText className="text-desert-gold h-5 w-5" />
-                                    已发布文件列表 ({filteredPolicies.length})
+                                    {t('policy_manager.list_title', '已发布文件列表')} ({filteredPolicies.length})
                                 </h2>
 
                                 {loading ? (
@@ -884,7 +884,7 @@ export default function PolicyManager() {
                                 ) : filteredPolicies.length === 0 ? (
                                     <div className="text-center py-24 text-arabian-night/40">
                                         <FileText className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                                        <p className="font-medium">当前范围无运营政策，请使用左侧表单发布第一条政策吧</p>
+                                        <p className="font-medium">{t('policy_manager.no_policies_desc', '当前范围无运营政策，请使用左侧表单发布第一条政策吧')}</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
@@ -924,7 +924,7 @@ export default function PolicyManager() {
                                                         )}
                                                         
                                                         <div className="flex items-center gap-3 mt-3 text-[10px] text-arabian-night/40 font-semibold truncate">
-                                                            <span>排序: {item.sortOrder}</span>
+                                                            <span>{t('policy_manager.label_sort', '排序')}: {item.sortOrder}</span>
                                                             <span>•</span>
                                                             <a 
                                                                 href={item.url} 
@@ -938,7 +938,7 @@ export default function PolicyManager() {
                                                             {item.updatedBy && (
                                                                 <>
                                                                     <span>•</span>
-                                                                    <span>发布人: {item.updatedBy}</span>
+                                                                    <span>{t('policy_manager.label_publisher', '发布人')}: {item.updatedBy}</span>
                                                                 </>
                                                             )}
                                                         </div>
@@ -1010,17 +1010,17 @@ export default function PolicyManager() {
                             <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20 bg-white/40 sticky top-8">
                                 <h2 className="text-xl font-bold text-deep-teal mb-6 flex items-center gap-2 border-b border-deep-teal/10 pb-3">
                                     {editingDirId ? <Edit2 className="text-desert-gold h-5 w-5" /> : <FolderPlus className="text-desert-gold h-5 w-5" />}
-                                    {editingDirId ? '编辑分类目录' : '创建新分类目录'}
+                                    {editingDirId ? t('policy_manager.edit_dir_title', '编辑分类目录') : t('policy_manager.create_dir_title', '创建新分类目录')}
                                 </h2>
                                 
                                 <form onSubmit={handleDirSubmit} className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">目录名称 *</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.dir_name_label', '目录名称')} *</label>
                                         <input
                                             type="text"
                                             required
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80"
-                                            placeholder="如：2026年度提成方案"
+                                            placeholder={t('policy_manager.dir_name_placeholder', '如：2026年度提成方案')}
                                             value={dirName}
                                             onChange={(e) => setDirName(e.target.value)}
                                             disabled={actionLoading}
@@ -1028,14 +1028,14 @@ export default function PolicyManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">上级父目录 (不选即作为根目录)</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.dir_parent_label', '上级父目录 (不选即作为根目录)')}</label>
                                         <select
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium text-xs"
                                             value={dirParentId || ''}
                                             onChange={(e) => setDirParentId(e.target.value || null)}
                                             disabled={actionLoading}
                                         >
-                                            <option value="">📁 [根目录] (作为主文件夹)</option>
+                                            <option value="">{t('policy_manager.dir_parent_root', '📁 [根目录] (作为主文件夹)')}</option>
                                             {nestedDirOptions
                                                 .filter(opt => opt.id !== editingDirId) // Prevent circular parent linkage
                                                 .map(opt => (
@@ -1048,7 +1048,7 @@ export default function PolicyManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">可见业务范围</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.visible_scope_label', '可见业务范围')}</label>
                                         <select
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium disabled:bg-gray-100 disabled:text-gray-500"
                                             value={dirTargetTeam}
@@ -1064,7 +1064,7 @@ export default function PolicyManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">排序权重</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.sort_order_label', '排序权重')}</label>
                                         <input
                                             type="number"
                                             min="0"
@@ -1082,7 +1082,7 @@ export default function PolicyManager() {
                                             className="flex-1 py-3 bg-deep-teal hover:bg-deep-teal/90 text-white rounded-xl font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:transform-none cursor-pointer"
                                         >
                                             {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                                            {editingDirId ? '保存更改' : '创建分类'}
+                                            {editingDirId ? t('policy_manager.btn_save_changes', '保存更改') : t('policy_manager.btn_create_category', '创建分类')}
                                         </button>
                                         
                                         {editingDirId && (
@@ -1104,7 +1104,7 @@ export default function PolicyManager() {
                             <div className="glass-panel rounded-2xl p-6 border border-white/40 bg-white/40 min-h-[500px]">
                                 <h2 className="text-xl font-bold text-deep-teal mb-6 flex items-center gap-2 border-b border-deep-teal/10 pb-3">
                                     <Folder className="text-desert-gold h-5 w-5" />
-                                    现有树形嵌套目录 ({filteredDirectories.length})
+                                    {t('policy_manager.dir_list_title', '现有树形嵌套目录')} ({filteredDirectories.length})
                                 </h2>
 
                                 {loading ? (
@@ -1114,7 +1114,7 @@ export default function PolicyManager() {
                                 ) : filteredDirectories.length === 0 ? (
                                     <div className="text-center py-24 text-arabian-night/40">
                                         <Folder className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                                        <p className="font-medium">当前范围无分类目录，在左边新建第一个分类文件夹吧</p>
+                                        <p className="font-medium">{t('policy_manager.no_directories_desc', '当前范围无分类目录，在左边新建第一个分类文件夹吧')}</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">

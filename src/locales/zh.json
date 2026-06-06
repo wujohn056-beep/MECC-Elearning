@@ -617,6 +617,24 @@
         "update_success": "更新成功！",
         "create_success": "发布成功！",
         "title_required": "请输入标题！",
-        "url_required": "请上传文件或提供有效的资源链接！"
+        "url_required": "请上传文件或提供有效的资源链接！",
+        "tab_publish": "政策文件资源发布",
+        "tab_directories": "嵌套目录文件夹管理",
+        "create_dir_title": "创建新分类目录",
+        "edit_dir_title": "编辑分类目录",
+        "parent_directory": "所属文件夹目录",
+        "root_directory_option": "📂 [根目录] (不放入任何文件夹)",
+        "no_policies_desc": "当前范围无运营政策，请使用左侧表单发布第一条政策吧",
+        "dir_name_label": "目录名称",
+        "dir_name_placeholder": "如：2026年度提成方案",
+        "dir_parent_label": "上级父目录 (不选即作为根目录)",
+        "dir_parent_root": "📁 [根目录] (作为主文件夹)",
+        "visible_scope_label": "可见业务范围",
+        "btn_save_changes": "保存更改",
+        "btn_create_category": "创建分类",
+        "dir_list_title": "现有树形嵌套目录",
+        "no_directories_desc": "当前范围无分类目录，在左边新建第一个分类文件夹吧",
+        "label_sort": "排序",
+        "label_publisher": "发布人"
     }
 }

@@ -602,6 +602,24 @@
         "update_success": "تم التحديث بنجاح!",
         "create_success": "تم النشر بنجاح!",
         "title_required": "يرجى إدخال العنوان!",
-        "url_required": "يرجى تحميل الملف أو تقديم رابط مورد صالح!"
+        "url_required": "يرجى تحميل الملف أو تقديم رابط مورد صالح!",
+        "tab_publish": "نشر ملفات السياسات",
+        "tab_directories": "إدارة المجلدات والأدلة المتداخلة",
+        "create_dir_title": "إنشاء دليل تصنيف جديد",
+        "edit_dir_title": "تعديل دليل التصنيف",
+        "parent_directory": "مجلد الدليل الأب",
+        "root_directory_option": "📂 [الدليل الرئيسي] (لا تضعه في أي مجلد)",
+        "no_policies_desc": "لا توجد سياسات تشغيلية في النطاق الحالي. استخدم النموذج الأيسر لنشر أول سياسة.",
+        "dir_name_label": "اسم المجلد/الدليل",
+        "dir_name_placeholder": "مثال: خطة عمولات 2026",
+        "dir_parent_label": "المجلد الأب (اتركه فارغاً للرئيسي)",
+        "dir_parent_root": "📁 [الدليل الرئيسي] (كمجلد رئيسي)",
+        "visible_scope_label": "نطاق العمل المرئي",
+        "btn_save_changes": "حفظ التغييرات",
+        "btn_create_category": "إنشاء التصنيف",
+        "dir_list_title": "هيكل الأدلة المتداخلة الحالي",
+        "no_directories_desc": "لا توجد مجلدات في النطاق الحالي. أنشئ المجلد الأول على اليسار.",
+        "label_sort": "ترتيب",
+        "label_publisher": "الناشر"
     }
 }
