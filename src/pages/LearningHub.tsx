@@ -2429,10 +2429,24 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                 <div className="p-6 border-b border-gray-100 dark:border-slate-800/80 pr-16 bg-white/50 dark:bg-slate-950/20">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-desert-gold/15 text-[#a88216] border border-desert-gold/20 select-none">
-                            {policy.type === 'document' ? '📄 文档政策' : policy.type === 'poster' ? '🖼️ 激励海报' : '🎥 宣导视频'}
+                            {policy.type === 'document' ? t('policy_showcase.doc_policy', '📄 文档政策') : policy.type === 'poster' ? t('policy_showcase.poster_incentive', '🖼️ 激励海报') : t('policy_showcase.video_promo', '🎥 宣导视频')}
                         </span>
                         <span className="text-[10px] px-2 py-0.5 bg-deep-teal/10 text-deep-teal font-bold rounded-full">
-                            {policy.targetTeam ? (policy.targetTeam === 'all' ? '全部可见' : `${policy.targetTeam} 团队专属`) : (policy.businessType === 'all' ? '全部业务线' : policy.businessType === 'kid' ? '青少' : policy.businessType === 'adult' ? '成人' : policy.businessType === 'ss' ? 'SS 业务' : 'Leader 学院')}
+                            {policy.targetTeam ? (
+                                policy.targetTeam === 'all' 
+                                    ? t('policy_showcase.visible_to_all', '全部可见') 
+                                    : t('policy_showcase.team_exclusive', '{{team}} 团队专属', { team: policy.targetTeam })
+                            ) : (
+                                policy.businessType === 'all' 
+                                    ? t('common.all_business', '全部业务线') 
+                                    : policy.businessType === 'kid' 
+                                        ? t('common.team_kcc_clean', 'KCC 青少') 
+                                        : policy.businessType === 'adult' 
+                                            ? t('common.team_adult_clean', 'ACC 成人') 
+                                            : policy.businessType === 'ss' 
+                                                ? t('common.team_ss_clean', 'SS 团队') 
+                                                : t('common.leader_academy', 'Leader 学院')
+                            )}
                         </span>
                     </div>
                     <h3 className="text-xl font-black text-slate-800 dark:text-white leading-snug">{policy.title}</h3>
@@ -2458,7 +2472,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                                 className="absolute bottom-6 bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md px-6 py-2.5 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95"
                             >
                                 <Download className="w-4 h-4" />
-                                下载原图海报
+                                {t('policy_showcase.download_poster', '下载原图海报')}
                             </a>
                         </div>
                     ) : isVideo ? (
@@ -2476,8 +2490,8 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                                 <FileText className="w-10 h-10 text-blue-500" />
                             </div>
                             <div className="space-y-2 max-w-md">
-                                <h4 className="text-white font-bold text-lg">运营文档政策资料</h4>
-                                <p className="text-slate-400 text-xs leading-relaxed">该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。</p>
+                                <h4 className="text-white font-bold text-lg">{t('policy_showcase.doc_material_title', '运营文档政策资料')}</h4>
+                                <p className="text-slate-400 text-xs leading-relaxed">{t('policy_showcase.doc_material_desc', '该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。')}</p>
                             </div>
                             <a 
                                 href={policy.url} 
@@ -2486,7 +2500,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                                 className="bg-gradient-to-r from-deep-teal to-[#005f66] hover:shadow-[0_4px_15px_rgba(0,109,119,0.3)] text-white px-8 py-3.5 rounded-xl font-extrabold shadow-md flex items-center gap-2 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer border border-white/10"
                             >
                                 <BookOpen className="w-5 h-5 text-desert-gold" />
-                                打开政策文档
+                                {t('policy_showcase.open_doc', '打开政策文档')}
                             </a>
                         </div>
                     )}
@@ -2498,7 +2512,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                         onClick={onClose}
                         className="px-6 py-2 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition-all text-xs cursor-pointer"
                     >
-                        关闭窗口
+                        {t('policy_showcase.close_window', '关闭窗口')}
                     </button>
                 </div>
             </div>
@@ -3425,7 +3439,7 @@ export default function LearningHub() {
 
                                                     {/* Format Tag */}
                                                     <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
-                                                        {policy.type === 'document' ? '📄 文档' : policy.type === 'poster' ? '🖼️ 海报' : '🎥 视频'}
+                                                        {policy.type === 'document' ? t('policy_showcase.type_doc_badge', '📄 文档') : policy.type === 'poster' ? t('policy_showcase.type_poster_badge', '🖼️ 海报') : t('policy_showcase.type_video_badge', '🎥 视频')}
                                                     </span>
                                                 </div>
 
@@ -3451,10 +3465,10 @@ export default function LearningHub() {
                                                         <span className={`text-[10px] font-bold ${
                                                             businessType === 'leader' ? 'text-white/30' : 'text-slate-400'
                                                         }`}>
-                                                            排序: {policy.sortOrder}
+                                                            {t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}
                                                         </span>
                                                         <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
-                                                            {policy.type === 'document' ? '立即阅读' : policy.type === 'poster' ? '查看海报' : '播放视频'} →
+                                                            {policy.type === 'document' ? t('policy_showcase.action_read', '立即阅读') : policy.type === 'poster' ? t('policy_showcase.action_view_poster', '查看海报') : t('policy_showcase.action_play_video', '播放视频')} →
                                                         </span>
                                                     </div>
                                                 </div>
