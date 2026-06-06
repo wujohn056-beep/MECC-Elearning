@@ -69,7 +69,11 @@
         "team_kcc_label": "KCC 青少 (JOHN/Niki)",
         "team_gcc_label": "GCC 专区 (IRIS)",
         "team_adult_label": "ACC 成人 (Alan/Chase)",
-        "team_ss_label": "SS 团队 (Lily)"
+        "team_ss_label": "SS 团队 (Lily)",
+        "team_kcc_clean": "KCC 青少",
+        "team_gcc_clean": "GCC 专区",
+        "team_adult_clean": "ACC 成人",
+        "team_ss_clean": "SS 团队"
     },
     "navbar": {
         "title": "ME 云学堂",
@@ -635,6 +639,36 @@
         "dir_list_title": "现有树形嵌套目录",
         "no_directories_desc": "当前范围无分类目录，在左边新建第一个分类文件夹吧",
         "label_sort": "排序",
-        "label_publisher": "发布人"
+        "label_publisher": "发布人",
+        "upload_success": "文件上传成功！",
+        "uploaded": "已上传"
+    },
+    "policy_showcase": {
+        "doc_policy": "📄 文档政策",
+        "poster_incentive": "🖼️ 激励海报",
+        "video_promo": "🎥 宣导视频",
+        "visible_to_all": "全部可见",
+        "team_exclusive": "{{team}} 团队专属",
+        "download_poster": "下载原图海报",
+        "doc_material_title": "运营文档政策资料",
+        "doc_material_desc": "该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。",
+        "open_doc": "打开政策文档",
+        "close_window": "关闭窗口",
+        "root_directory": "根目录",
+        "title": "运营政策与激励中心",
+        "subtitle_user": "{{team}} 专属政策与方案浏览",
+        "subtitle_admin": "管理权限：全局政策多中心预览",
+        "empty_dir_title": "本目录暂无内容",
+        "empty_dir_desc": "运营管理员尚未在此级目录内发布相关的政策、海报或宣导视频。",
+        "back_parent": "返回上一级",
+        "directories_title": "文件夹目录 ({{count}})",
+        "open_folder": "打开文件夹",
+        "files_title": "政策文件与激励 ({{count}})",
+        "type_doc_badge": "📄 文档",
+        "type_poster_badge": "🖼️ 海报",
+        "type_video_badge": "🎥 视频",
+        "action_read": "立即阅读",
+        "action_view_poster": "查看海报",
+        "action_play_video": "播放视频"
     }
 }

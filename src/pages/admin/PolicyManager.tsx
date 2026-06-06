@@ -101,6 +101,7 @@ export default function PolicyManager() {
     const [directoryId, setDirectoryId] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<number>(0);
     const [visible, setVisible] = useState(true);
+    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     
     // Directory Form states
     const [editingDirId, setEditingDirId] = useState<string | null>(null);
@@ -249,6 +250,7 @@ export default function PolicyManager() {
         setUploadFile(null);
         setUploadProgress(null);
         setUploading(false);
+        setUploadedFileName(null);
     };
 
     const resetDirForm = () => {
@@ -271,9 +273,57 @@ export default function PolicyManager() {
         }
     }, [filteredDirectories, editingDirId, activeTab]);
 
+    const uploadSelectedFile = (file: File) => {
+        if (!storage) {
+            setError("Storage is not configured");
+            return;
+        }
+
+        const teamFolder = adminScope === 'all' ? targetTeam : adminScope;
+        setUploading(true);
+        setUploadProgress(0);
+        setError(null);
+        setSuccess(null);
+
+        const fileRef = ref(storage, `policies/${teamFolder}/${Date.now()}_${file.name}`);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                setUploadProgress(Math.round(progress));
+            }, 
+            (error) => {
+                setUploading(false);
+                setError(error.message);
+                setUploadProgress(null);
+                setUploadFile(null);
+            }, 
+            async () => {
+                try {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    setUploading(false);
+                    setUrl(downloadURL);
+                    setUploadProgress(null);
+                    setUploadFile(null);
+                    setUploadedFileName(file.name);
+                    setSuccess(t('policy_manager.upload_success', '文件上传成功！'));
+                } catch (err: any) {
+                    setUploading(false);
+                    setError(err.message);
+                    setUploadProgress(null);
+                    setUploadFile(null);
+                }
+            }
+        );
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setUploadFile(e.target.files[0]);
+            const file = e.target.files[0];
+            setUploadFile(file);
+            setUploadedFileName(null);
+            uploadSelectedFile(file);
         }
     };
 
@@ -457,6 +507,7 @@ export default function PolicyManager() {
         setVisible(item.visible);
         setUploadFile(null);
         setUploadProgress(null);
+        setUploadedFileName(null);
     };
 
     const handleDirEdit = (item: PolicyDirectory) => {
@@ -761,8 +812,16 @@ export default function PolicyManager() {
                                                     />
                                                     <div className="text-center space-y-1 text-arabian-night/60">
                                                         <Upload className="mx-auto h-8 w-8 text-desert-gold group-hover:scale-110 transition-transform" />
-                                                        <p className="text-xs font-bold">
-                                                            {uploadFile ? uploadFile.name : t('policy_manager.click_to_upload', '点击选择或拖拽文件上传')}
+                                                        <p className="text-xs font-bold text-deep-teal">
+                                                            {uploading ? (
+                                                                <span>⏳ {uploadFile?.name}</span>
+                                                            ) : uploadedFileName ? (
+                                                                <span className="text-green-600 flex items-center justify-center gap-1 font-extrabold">✅ {uploadedFileName} ({t('policy_manager.uploaded', '已上传')})</span>
+                                                            ) : uploadFile ? (
+                                                                <span>{uploadFile.name}</span>
+                                                            ) : (
+                                                                t('policy_manager.click_to_upload', '点击选择或拖拽文件上传')
+                                                            )}
                                                         </p>
                                                         <p className="text-[10px] text-arabian-night/40">
                                                             {type === 'poster' ? 'Images only' : type === 'video' ? 'MP4 only' : 'PDF, Images, or MP4'}

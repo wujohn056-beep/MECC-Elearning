@@ -69,7 +69,11 @@
         "team_kcc_label": "KCC الشباب (JOHN/Niki)",
         "team_gcc_label": "GCC مخصص (IRIS)",
         "team_adult_label": "ACC الكبار (Alan/Chase)",
-        "team_ss_label": "SS فريق (Lily)"
+        "team_ss_label": "SS فريق (Lily)",
+        "team_kcc_clean": "KCC الشباب",
+        "team_gcc_clean": "GCC مخصص",
+        "team_adult_clean": "ACC الكبار",
+        "team_ss_clean": "SS فريق"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",
@@ -620,6 +624,36 @@
         "dir_list_title": "هيكل الأدلة المتداخلة الحالي",
         "no_directories_desc": "لا توجد مجلدات في النطاق الحالي. أنشئ المجلد الأول على اليسار.",
         "label_sort": "ترتيب",
-        "label_publisher": "الناشر"
+        "label_publisher": "الناشر",
+        "upload_success": "تم رفع الملف بنجاح!",
+        "uploaded": "تم الرفع"
+    },
+    "policy_showcase": {
+        "doc_policy": "📄 سياسة المستند",
+        "poster_incentive": "🖼️ ملصق تحفيزي",
+        "video_promo": "🎥 فيديو ترويجي",
+        "visible_to_all": "مرئي للجميع",
+        "team_exclusive": "خاص بـ {{team}}",
+        "download_poster": "تحميل الملصق الأصلي",
+        "doc_material_title": "سياسة مستندات التشغيل",
+        "doc_material_desc": "هذه السياسة هي مستند رسمي منشور (عادةً ملف PDF أو صفحة إعلانات سياسات مخصصة). انقر على الزر أدناه لفتح التفاصيل ومراجعتها.",
+        "open_doc": "فتح مستند السياسة",
+        "close_window": "إغلاق النافذة",
+        "root_directory": "الدليل الرئيسي",
+        "title": "سياسات التشغيل والحوافز",
+        "subtitle_user": "السياسات والخطط الحصرية لـ {{team}}",
+        "subtitle_admin": "صلاحية المسؤول: معاينة عالمية متعددة المراكز",
+        "empty_dir_title": "هذا المجلد فارغ",
+        "empty_dir_desc": "لم ينشر المسؤولون أي سياسات أو ملصقات أو مقاطع فيديو في هذا الدليل بعد.",
+        "back_parent": "العودة للأعلى",
+        "directories_title": "أدلة المجلدات ({{count}})",
+        "open_folder": "فتح المجلد",
+        "files_title": "السياسات والحوافز ({{count}})",
+        "type_doc_badge": "📄 مستند",
+        "type_poster_badge": "🖼️ ملصق",
+        "type_video_badge": "🎥 فيديو",
+        "action_read": "اقرأ الآن",
+        "action_view_poster": "عرض الملصق",
+        "action_play_video": "تشغيل الفيديو"
     }
 }

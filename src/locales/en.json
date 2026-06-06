@@ -69,7 +69,11 @@
         "team_kcc_label": "KCC Youth (JOHN/Niki)",
         "team_gcc_label": "GCC Dedicated (IRIS)",
         "team_adult_label": "ACC Adult (Alan/Chase)",
-        "team_ss_label": "SS Team (Lily)"
+        "team_ss_label": "SS Team (Lily)",
+        "team_kcc_clean": "KCC Youth",
+        "team_gcc_clean": "GCC Dedicated",
+        "team_adult_clean": "ACC Adult",
+        "team_ss_clean": "SS Team"
     },
     "navbar": {
         "title": "ME Cloud Academy",
@@ -636,6 +640,36 @@
         "dir_list_title": "Existing Tree Directory Structure",
         "no_directories_desc": "No directories in the current scope. Create the first folder on the left.",
         "label_sort": "Sort",
-        "label_publisher": "Publisher"
+        "label_publisher": "Publisher",
+        "upload_success": "File uploaded successfully!",
+        "uploaded": "Uploaded"
+    },
+    "policy_showcase": {
+        "doc_policy": "📄 Document Policy",
+        "poster_incentive": "🖼️ Incentive Poster",
+        "video_promo": "🎥 Promo Video",
+        "visible_to_all": "Visible to All",
+        "team_exclusive": "Exclusive to {{team}}",
+        "download_poster": "Download Original Poster",
+        "doc_material_title": "Operational Document Policy",
+        "doc_material_desc": "This policy is an official published document (usually a PDF or dedicated policy announcement page). Click the button below to open and review details.",
+        "open_doc": "Open Policy Document",
+        "close_window": "Close Window",
+        "root_directory": "Root Directory",
+        "title": "Operations Policies & Incentives",
+        "subtitle_user": "Exclusive policies & schemes for {{team}}",
+        "subtitle_admin": "Admin Access: Global Multi-Center Preview",
+        "empty_dir_title": "This folder is empty",
+        "empty_dir_desc": "Administrators have not yet published any policies, posters, or videos in this directory.",
+        "back_parent": "Back to Parent",
+        "directories_title": "Folder Directories ({{count}})",
+        "open_folder": "Open Folder",
+        "files_title": "Policies & Incentives ({{count}})",
+        "type_doc_badge": "📄 Doc",
+        "type_poster_badge": "🖼️ Poster",
+        "type_video_badge": "🎥 Video",
+        "action_read": "Read Now",
+        "action_view_poster": "View Poster",
+        "action_play_video": "Play Video"
     }
 }
