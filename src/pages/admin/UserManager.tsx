@@ -1115,41 +1115,27 @@ export default function UserManager() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_role', 'Role')}</label>
+                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_role', 'System Role')}</label>
                                 <select 
                                     value={formData.role} 
                                     onChange={e => setFormData({...formData, role: e.target.value})}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700 text-sm"
                                 >
-                                    {formData.dep === 'SS' ? (
-                                        <>
-                                            <option value="user">SS</option>
-                                            {(profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm') && (
-                                                <option value="tl">SS TL</option>
-                                            )}
-                                            {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
-                                                <option value="sm">SS SM</option>
-                                            )}
-                                            {profile?.role === 'super_admin' && (
-                                                <option value="sd">SS SD</option>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <option value="user">CC</option>
-                                            {(profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm') && (
-                                                <option value="tl">Team Leader (TL)</option>
-                                            )}
-                                            {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
-                                                <option value="sm">Sales Manager (SM)</option>
-                                            )}
-                                            {profile?.role === 'super_admin' && (
-                                                <option value="sd">Sales Director (SD)</option>
-                                            )}
-                                        </>
+                                    <option value="user">{t('user_manager.role_options.user', 'Ordinary User / Sales')}</option>
+                                    {(profile?.role === 'super_admin' || profile?.role === 'sd' || profile?.role === 'sm') && (
+                                        <option value="tl">{t('user_manager.role_options.tl', 'Team Leader (TL)')}</option>
                                     )}
-                                    {profile?.role === 'super_admin' && <option value="super_admin">Super Admin</option>}
+                                    {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
+                                        <option value="sm">{t('user_manager.role_options.sm', 'Sales Manager (SM)')}</option>
+                                    )}
+                                    {profile?.role === 'super_admin' && (
+                                        <option value="sd">{t('user_manager.role_options.sd', 'Sales Director (SD)')}</option>
+                                    )}
+                                    {profile?.role === 'super_admin' && (
+                                        <option value="super_admin">{t('user_manager.role_options.super_admin', 'Super Admin')}</option>
+                                    )}
                                 </select>
+                                <p className="text-[11px] text-slate-400 mt-1 select-none">{t('user_manager.hint_role', 'Determines permission level and hierarchy in the system.')}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_dep', 'Department')}</label>
@@ -1157,39 +1143,41 @@ export default function UserManager() {
                                     <select 
                                         value={formData.dep || 'CC'} 
                                         onChange={e => setFormData({...formData, dep: e.target.value as 'CC' | 'SS' | 'functional'})}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700 text-sm"
                                     >
-                                        <option value="CC">{t('common.type_cc')}</option>
-                                        <option value="SS">{t('common.type_ss')}</option>
-                                        <option value="functional">{t('common.type_functional')}</option>
+                                        <option value="CC">{t('common.type_cc', 'CC Sales')}</option>
+                                        <option value="SS">{t('common.type_ss', 'SS Sales')}</option>
+                                        <option value="functional">{t('common.type_functional', 'Functional Dept')}</option>
                                     </select>
                                 ) : (
-                                    <div className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-100 font-bold text-arabian-night select-none">
+                                    <div className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-100 font-bold text-arabian-night select-none text-sm">
                                         {(profile?.dep || 'CC') === 'SS' ? t('common.type_ss') : (profile?.dep || 'CC') === 'CC' ? t('common.type_cc') : t('common.type_functional')}
                                     </div>
                                 )}
+                                <p className="text-[11px] text-slate-400 mt-1 select-none">{t('user_manager.hint_dep', 'Determines the major business division/department.')}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">用户身份 (Identity)</label>
+                                <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_identity', 'Identity')}</label>
                                 <select 
                                     value={formData.identity || ''} 
                                     onChange={e => setFormData({...formData, identity: e.target.value})}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700 text-sm"
                                 >
-                                    <option value="">-- 请选择身份 --</option>
-                                    <option value="KCC">KCC (CC 青少)</option>
-                                    <option value="GCC">GCC (CC 专区)</option>
-                                    <option value="ACC">ACC (成人业务)</option>
-                                    <option value="SS">SS (SS 业务)</option>
-                                    <option value="KCC Operation">KCC Operation (青少运营)</option>
-                                    <option value="GCC Operation">GCC Operation (专区运营)</option>
-                                    <option value="ACC Operation">ACC Operation (成人运营)</option>
-                                    <option value="SS Operation">SS Operation (SS 运营)</option>
-                                    <option value="Training Dep">Training Dep (培训部)</option>
-                                    <option value="Management">Management (管理层)</option>
-                                    <option value="Superadmin">Superadmin (系统管理员)</option>
-                                    <option value="BS">BS (业务支持)</option>
+                                    <option value="">{t('user_manager.placeholder_identity', '-- Select Identity --')}</option>
+                                    <option value="KCC">{t('user_manager.identity_options.kcc', 'KCC (CC Kids)')}</option>
+                                    <option value="GCC">{t('user_manager.identity_options.gcc', 'GCC (CC Dedicated)')}</option>
+                                    <option value="ACC">{t('user_manager.identity_options.acc', 'ACC (Adult Business)')}</option>
+                                    <option value="SS">{t('user_manager.identity_options.ss', 'SS (SS Business)')}</option>
+                                    <option value="KCC Operation">{t('user_manager.identity_options.kcc_op', 'KCC Operation (Kids Operations)')}</option>
+                                    <option value="GCC Operation">{t('user_manager.identity_options.gcc_op', 'GCC Operation (Dedicated Operations)')}</option>
+                                    <option value="ACC Operation">{t('user_manager.identity_options.acc_op', 'ACC Operation (Adult Operations)')}</option>
+                                    <option value="SS Operation">{t('user_manager.identity_options.ss_op', 'SS Operation (SS Operations)')}</option>
+                                    <option value="Training Dep">{t('user_manager.identity_options.training', 'Training Dept (Training)')}</option>
+                                    <option value="Management">{t('user_manager.identity_options.management', 'Management')}</option>
+                                    <option value="Superadmin">{t('user_manager.identity_options.superadmin', 'Superadmin (System Admin)')}</option>
+                                    <option value="BS">{t('user_manager.identity_options.bs', 'BS (Business Support)')}</option>
                                 </select>
+                                <p className="text-[11px] text-slate-400 mt-1 select-none">{t('user_manager.hint_identity', 'Determines fine-grained segment identity for operational policy scoping.')}</p>
                             </div>
                             
                             {formData.role !== 'super_admin' && formData.role !== 'sd' && (

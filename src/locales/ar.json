@@ -402,7 +402,33 @@
         "dingtalk_linked": "مرتبط بدينغ توك",
         "dingtalk_unlinked": "غير مرتبط",
         "last_synced": "آخر مزامنة: {{time}}",
-        "resigned_reminder": "تنبيه: إذا كان هناك موظفون مستقيلون، يرجى حذف حساباتهم في الوقت المناسب لضمان أمن البيانات والنظام."
+        "resigned_reminder": "تنبيه: إذا كان هناك موظفون مستقيلون، يرجى حذف حساباتهم في الوقت المناسب لضمان أمن البيانات والنظام.",
+        "label_identity": "الهوية (Identity)",
+        "placeholder_identity": "-- اختر الهوية --",
+        "hint_role": "يحدد مستوى الصلاحيات والتسلسل الهرمي في المنصة.",
+        "hint_dep": "يحدد القسم الرئيسي أو قطاع الأعمال.",
+        "hint_identity": "يحدد الهوية التفصيلية أو فريق التشغيل لتحديد نطاق السياسات والمستندات المرئية.",
+        "identity_options": {
+            "kcc": "KCC (CC أطفال)",
+            "gcc": "GCC (CC مخصص)",
+            "acc": "ACC (أعمال الكبار)",
+            "ss": "SS (SS أعمال)",
+            "kcc_op": "KCC Operation (تشغيل الأطفال)",
+            "gcc_op": "GCC Operation (تشغيل مخصص)",
+            "acc_op": "ACC Operation (تشغيل الكبار)",
+            "ss_op": "SS Operation (SS تشغيل)",
+            "training": "Training Dep (قسم التدريب)",
+            "management": "Management (الإدارة)",
+            "superadmin": "Superadmin (مسؤول النظام)",
+            "bs": "BS (دعم الأعمال)"
+        },
+        "role_options": {
+            "super_admin": "المسؤول الأعلى (Super Admin)",
+            "sd": "مدير المبيعات (Sales Director / SD)",
+            "sm": "مدير المبيعات (Sales Manager / SM)",
+            "tl": "قائد الفريق (Team Leader / TL)",
+            "user": "مبيعات / مستخدم عادي (Ordinary User / Sales)"
+        }
     },
     "account": {
         "title": "مركز التعلم الشخصي",

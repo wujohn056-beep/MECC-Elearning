@@ -403,7 +403,33 @@
         "dingtalk_linked": "DingTalk Linked",
         "dingtalk_unlinked": "Not Linked",
         "last_synced": "Last synced: {{time}}",
-        "resigned_reminder": "Reminder: If there are resigned employees, please delete their accounts in a timely manner to ensure data and system security."
+        "resigned_reminder": "Reminder: If there are resigned employees, please delete their accounts in a timely manner to ensure data and system security.",
+        "label_identity": "Identity",
+        "placeholder_identity": "-- Select Identity --",
+        "hint_role": "Determines permission level and hierarchy in the system.",
+        "hint_dep": "Determines the major business division/department.",
+        "hint_identity": "Determines fine-grained segment identity for operational policy scoping.",
+        "identity_options": {
+            "kcc": "KCC (CC Kids)",
+            "gcc": "GCC (CC Dedicated)",
+            "acc": "ACC (Adult Business)",
+            "ss": "SS (SS Business)",
+            "kcc_op": "KCC Operation (Kids Operations)",
+            "gcc_op": "GCC Operation (Dedicated Operations)",
+            "acc_op": "ACC Operation (Adult Operations)",
+            "ss_op": "SS Operation (SS Operations)",
+            "training": "Training Dept (Training)",
+            "management": "Management",
+            "superadmin": "Superadmin (System Admin)",
+            "bs": "BS (Business Support)"
+        },
+        "role_options": {
+            "super_admin": "Super Admin",
+            "sd": "Sales Director (SD)",
+            "sm": "Sales Manager (SM)",
+            "tl": "Team Leader (TL)",
+            "user": "Ordinary User / Sales"
+        }
     },
     "account": {
         "title": "Personal Learning Center",

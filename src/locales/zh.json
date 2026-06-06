@@ -402,7 +402,33 @@
         "dingtalk_linked": "已关联钉钉",
         "dingtalk_unlinked": "未关联",
         "last_synced": "上次同步: {{time}}",
-        "resigned_reminder": "提示：如有离职员工，请及时在此删除其账户以确保数据与系统安全。"
+        "resigned_reminder": "提示：如有离职员工，请及时在此删除其账户以确保数据与系统安全。",
+        "label_identity": "用户身份 (Identity)",
+        "placeholder_identity": "-- 请选择身份 --",
+        "hint_role": "决定平台的系统管理与数据查看权限级别。",
+        "hint_dep": "划分高层级的业务线部门。",
+        "hint_identity": "用于区分具体业务板块/运营组身份，以决定能看到哪些运营政策和目录。",
+        "identity_options": {
+            "kcc": "KCC (CC 青少)",
+            "gcc": "GCC (CC 专区)",
+            "acc": "ACC (成人业务)",
+            "ss": "SS (SS 业务)",
+            "kcc_op": "KCC Operation (青少运营)",
+            "gcc_op": "GCC Operation (专区运营)",
+            "acc_op": "ACC Operation (成人运营)",
+            "ss_op": "SS Operation (SS 运营)",
+            "training": "Training Dep (培训部)",
+            "management": "Management (管理层)",
+            "superadmin": "Superadmin (系统管理员)",
+            "bs": "BS (业务支持)"
+        },
+        "role_options": {
+            "super_admin": "超级管理员 (Super Admin)",
+            "sd": "销售总监 (Sales Director / SD)",
+            "sm": "销售经理 (Sales Manager / SM)",
+            "tl": "小组负责人 (Team Leader / TL)",
+            "user": "普通销售/用户 (Ordinary User / Sales)"
+        }
     },
     "account": {
         "title": "个人学习中心",
