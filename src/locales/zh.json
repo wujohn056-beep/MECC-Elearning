@@ -64,6 +64,7 @@
     "navbar": {
         "title": "ME 云学堂",
         "learning_hub": "学习广场",
+        "operations_policies": "政策与激励",
         "admin_dashboard": "管理后台",
         "dashboard": "数据看板",
         "personal_center": "个人学习中心",
@@ -226,7 +227,8 @@
         "analysis_generating_desc": "系统正在后台自动生成录音诊断画像，AI 将深入诊断说话比例、平均语速、异议突破及情绪走势，完成后将自动呈现，请稍候。",
         "operations_policies_title": "运营政策与激励展示",
         "operations_policies_desc": "最新销售激励方案与运营规范，一键掌握",
-        "no_policies_showcase": "当前暂无本业务线相关的运营政策"
+        "no_policies_showcase": "当前暂无本业务线相关的运营政策",
+        "view_all_policies": "查看全部"
     },
     "category_manager": {
         "title": "目录分类管理",

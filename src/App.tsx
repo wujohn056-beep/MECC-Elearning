@@ -11,6 +11,7 @@ import RecordingsManager from './pages/admin/RecordingsManager';
 import LearningHub from './pages/LearningHub';
 import Account from './pages/Account';
 import TeamTasks from './pages/TeamTasks';
+import PoliciesShowcase from './pages/PoliciesShowcase';
 
 import UserManager from './pages/admin/UserManager';
 import CategoryManager from './pages/admin/CategoryManager';
@@ -35,6 +36,7 @@ function App() {
           }>
             <Route path="/" element={<Navigate to="/hub" replace />} />
             <Route path="/hub" element={<LearningHub />} />
+            <Route path="/policies" element={<PoliciesShowcase />} />
             <Route path="/account" element={<Account />} />
             <Route path="/team-tasks" element={
               <ProtectedRoute requireTaskAccess={true}>

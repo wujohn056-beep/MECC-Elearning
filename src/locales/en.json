@@ -64,6 +64,7 @@
     "navbar": {
         "title": "ME Cloud Academy",
         "learning_hub": "Learning Hub",
+        "operations_policies": "Policies & Incentives",
         "admin_dashboard": "Admin",
         "dashboard": "Dashboard",
         "personal_center": "Personal Center",
@@ -227,7 +228,8 @@
         "analysis_generating_desc": "The system is automatically generating the recording diagnosis in the background. The AI will analyze the talk-to-listen ratio, speech rate, objection handling check, and sentiment trends. It will display automatically once completed.",
         "operations_policies_title": "Operations Policies & Incentives",
         "operations_policies_desc": "Latest sales incentive schemes and operational guidelines",
-        "no_policies_showcase": "No operation policies for this business line at the moment."
+        "no_policies_showcase": "No operation policies for this business line at the moment.",
+        "view_all_policies": "View All"
     },
     "category_manager": {
         "title": "Category Management",

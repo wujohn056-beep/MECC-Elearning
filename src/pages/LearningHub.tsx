@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
 interface Recording {
@@ -2519,8 +2519,8 @@ export default function LearningHub() {
     const [sortType, setSortType] = useState<'latest' | 'popular' | 'leaderboard'>('latest');
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
     const [displayCount, setDisplayCount] = useState(12);
-    
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const taskId = searchParams.get('taskId');
     const targetRecordingId = searchParams.get('recordingId');
     const [taskRecordingIds, setTaskRecordingIds] = useState<string[]>([]);
@@ -3306,7 +3306,7 @@ export default function LearningHub() {
                 {/* Operations Policy Showcase Section */}
                 {!taskId && !targetRecordingId && (
                     <div className="mt-8 relative z-10 animate-in fade-in duration-700">
-                        {/* Title Header with a glowing gradient badge */}
+                        {/* Title Header with a glowing gradient badge and View All button */}
                         <div className="flex items-center justify-between mb-5 px-1">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-desert-gold to-amber-500 flex items-center justify-center shadow-md shrink-0">
@@ -3325,6 +3325,19 @@ export default function LearningHub() {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* View All Button */}
+                            <button
+                                onClick={() => navigate('/policies')}
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm ${
+                                    businessType === 'leader'
+                                        ? 'bg-white/10 hover:bg-white/20 text-desert-gold border border-desert-gold/30'
+                                        : 'bg-white hover:bg-gray-50 text-deep-teal border border-gray-150'
+                                }`}
+                            >
+                                {t('learning_hub.view_all_policies', '查看全部')}
+                                <span className="text-[10px] sm:text-xs font-black">→</span>
+                            </button>
                         </div>
 
                         {/* Showcase List */}
@@ -3342,15 +3355,25 @@ export default function LearningHub() {
                                 {policies
                                     .filter(p => p.businessType === 'all' || p.businessType === businessType)
                                     .slice(0, 4) // Show top 4 items on the hub
-                                    .map(policy => {
+                                    .map((policy, idx) => {
                                         const isVideo = policy.type === 'video';
                                         const isPoster = policy.type === 'poster';
-                                        
+
+                                        // Exactly 1 row responsive visibility classes:
+                                        // Index 0: always flex
+                                        // Index 1: hidden sm:flex
+                                        // Index 2: hidden md:flex
+                                        // Index 3: hidden lg:flex
+                                        let responsiveClass = '';
+                                        if (idx === 1) responsiveClass = 'hidden sm:flex';
+                                        else if (idx === 2) responsiveClass = 'hidden md:flex';
+                                        else if (idx === 3) responsiveClass = 'hidden lg:flex';
+
                                         return (
                                             <div 
                                                 key={policy.id}
                                                 onClick={() => setActivePolicyItem(policy)}
-                                                className={`group cursor-pointer glass-panel rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lg flex flex-col ${
+                                                className={`group cursor-pointer glass-panel rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lg flex flex-col ${responsiveClass} ${
                                                     businessType === 'leader'
                                                         ? 'border-desert-gold/25 hover:border-desert-gold/50 bg-teal-950/20 hover:bg-teal-950/30'
                                                         : 'border-white/60 hover:border-desert-gold/30 bg-white/60 hover:bg-white/90 shadow-sm'
@@ -3387,10 +3410,10 @@ export default function LearningHub() {
                                                         <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
                                                             <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
                                                                     <FileText className="h-5 w-5 text-blue-400" />
-                                                            </div>
+                                                                </div>
                                                         </div>
                                                     )}
-                                                    
+
                                                     {/* Format Tag */}
                                                     <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
                                                         {policy.type === 'document' ? '📄 文档' : policy.type === 'poster' ? '🖼️ 海报' : '🎥 视频'}
@@ -3413,7 +3436,7 @@ export default function LearningHub() {
                                                             </p>
                                                         )}
                                                     </div>
-                                                    
+
                                                     {/* Action footer */}
                                                     <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-white/5">
                                                         <span className={`text-[10px] font-bold ${
