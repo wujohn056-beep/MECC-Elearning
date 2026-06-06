@@ -35,7 +35,7 @@ interface PolicyItem {
     type: 'document' | 'poster' | 'video';
     url: string;
     thumbnailUrl?: string;
-    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     directoryId: string | null;
     sortOrder: number;
     visible: boolean;
@@ -48,7 +48,7 @@ interface PolicyDirectory {
     id: string;
     name: string;
     parentId: string | null;
-    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     sortOrder: number;
     createdAt?: any;
 }
@@ -61,11 +61,11 @@ interface NestedDirOption {
 }
 
 // Helper to bridge old businessType schemas with new team target segments
-function mapBusinessTypeToTeam(bt: string): 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all' {
+function mapBusinessTypeToTeam(bt: string): 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all' {
     const type = String(bt || '').toLowerCase();
     if (type === 'kid') return 'KCC';
     if (type === 'adult') return 'Adult';
-    if (type === 'ss') return 'EA';
+    if (type === 'ss') return 'SS';
     return 'all';
 }
 
@@ -97,7 +97,7 @@ export default function PolicyManager() {
     const [type, setType] = useState<'document' | 'poster' | 'video'>('document');
     const [url, setUrl] = useState('');
     const [thumbnailUrl, setThumbnailUrl] = useState('');
-    const [targetTeam, setTargetTeam] = useState<'KCC' | 'GCC' | 'Adult' | 'EA' | 'all'>('all');
+    const [targetTeam, setTargetTeam] = useState<'KCC' | 'GCC' | 'Adult' | 'SS' | 'all'>('all');
     const [directoryId, setDirectoryId] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<number>(0);
     const [visible, setVisible] = useState(true);
@@ -106,7 +106,7 @@ export default function PolicyManager() {
     const [editingDirId, setEditingDirId] = useState<string | null>(null);
     const [dirName, setDirName] = useState('');
     const [dirParentId, setDirParentId] = useState<string | null>(null);
-    const [dirTargetTeam, setDirTargetTeam] = useState<'KCC' | 'GCC' | 'Adult' | 'EA' | 'all'>('all');
+    const [dirTargetTeam, setDirTargetTeam] = useState<'KCC' | 'GCC' | 'Adult' | 'SS' | 'all'>('all');
     const [dirSortOrder, setDirSortOrder] = useState<number>(0);
 
     // Upload state
@@ -581,7 +581,8 @@ export default function PolicyManager() {
             case 'KCC': return 'KCC 青少 (JOHN/Niki)';
             case 'GCC': return 'GCC 专区 (IRIS)';
             case 'Adult': return 'ACC 成人 (Alan/Chase)';
-            case 'EA': return 'EA 团队 (Lily)';
+            case 'EA': return 'SS 团队 (Lily)';
+            case 'SS': return 'SS 团队 (Lily)';
             case 'all': return t('common.all_business', '全部业务线');
             default: return team;
         }
@@ -722,7 +723,7 @@ export default function PolicyManager() {
                                                 <option value="KCC">🧒 KCC 团队 (JOHN/Niki)</option>
                                                 <option value="GCC">💼 GCC 团队 (IRIS)</option>
                                                 <option value="Adult">👨 ACC 团队 (Alan/Chase)</option>
-                                                <option value="EA">🎓 EA 团队 (Lily)</option>
+                                                <option value="SS">🎓 SS 团队 (Lily)</option>
                                             </select>
                                         </div>
                                     </div>
@@ -1058,7 +1059,7 @@ export default function PolicyManager() {
                                             <option value="KCC">🧒 KCC 团队 (JOHN/Niki)</option>
                                             <option value="GCC">💼 GCC 团队 (IRIS)</option>
                                             <option value="Adult">👨 ACC 团队 (Alan/Chase)</option>
-                                            <option value="EA">🎓 EA 团队 (Lily)</option>
+                                            <option value="SS">🎓 SS 团队 (Lily)</option>
                                         </select>
                                     </div>
 

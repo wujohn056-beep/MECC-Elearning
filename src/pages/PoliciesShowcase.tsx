@@ -26,7 +26,7 @@ interface PolicyItem {
     type: 'document' | 'poster' | 'video';
     url: string;
     thumbnailUrl?: string;
-    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     directoryId: string | null;
     sortOrder: number;
     visible: boolean;
@@ -38,16 +38,16 @@ interface PolicyDirectory {
     id: string;
     name: string;
     parentId: string | null;
-    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    targetTeam: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     sortOrder: number;
 }
 
 // Fallback mapper for legacy policies that still use businessType
-function mapBusinessTypeToTeam(bt: string): 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all' {
+function mapBusinessTypeToTeam(bt: string): 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all' {
     const type = String(bt || '').toLowerCase();
     if (type === 'kid') return 'KCC';
     if (type === 'adult') return 'Adult';
-    if (type === 'ss') return 'EA';
+    if (type === 'ss') return 'SS';
     return 'all';
 }
 
@@ -164,7 +164,7 @@ export default function PoliciesShowcase() {
     const [activePolicyItem, setActivePolicyItem] = useState<PolicyItem | null>(null);
 
     // Selected tab for super admin viewing preview: defaults to the user's derived team or 'KCC'
-    const [selectedTeamTab, setSelectedTeamTab] = useState<'KCC' | 'GCC' | 'Adult' | 'EA'>(() => {
+    const [selectedTeamTab, setSelectedTeamTab] = useState<'KCC' | 'GCC' | 'Adult' | 'SS'>(() => {
         const team = userTeam !== 'other' ? userTeam : 'KCC';
         return team;
     });
@@ -274,7 +274,7 @@ export default function PoliciesShowcase() {
             case 'KCC': return 'KCC 青少';
             case 'GCC': return 'GCC 专区';
             case 'Adult': return 'ACC 成人';
-            case 'EA': return 'EA 团队';
+            case 'SS': return 'SS 团队';
             default: return team;
         }
     };
@@ -304,7 +304,7 @@ export default function PoliciesShowcase() {
                 {/* Preview tab switcher for Super Admin / All Scoped Admin */}
                 {isSuperAdmin && (
                     <div className="p-1 rounded-full flex bg-white/70 backdrop-blur-md border border-white/50 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-none w-full sm:w-auto">
-                        {(['KCC', 'GCC', 'Adult', 'EA'] as const).map(team => (
+                        {(['KCC', 'GCC', 'Adult', 'SS'] as const).map(team => (
                             <button
                                 key={team}
                                 onClick={() => setSelectedTeamTab(team)}

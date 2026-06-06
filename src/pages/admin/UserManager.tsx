@@ -44,7 +44,7 @@ interface UserRecord {
     };
     dingtalkUserId?: string;
     dingtalkSyncedAt?: string;
-    policyScope?: 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all';
+    policyScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     identity?: string;
 }
 
@@ -72,7 +72,7 @@ export default function UserManager() {
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         dingtalkUserId: '',
         permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false },
-        policyScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'EA' | 'all',
+        policyScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all',
         identity: ''
     });
 
@@ -1180,11 +1180,11 @@ export default function UserManager() {
                                     <option value="KCC">KCC (CC 青少)</option>
                                     <option value="GCC">GCC (CC 专区)</option>
                                     <option value="ACC">ACC (成人业务)</option>
-                                    <option value="EA">EA (SS 业务)</option>
+                                    <option value="SS">SS (SS 业务)</option>
                                     <option value="KCC Operation">KCC Operation (青少运营)</option>
                                     <option value="GCC Operation">GCC Operation (专区运营)</option>
                                     <option value="ACC Operation">ACC Operation (成人运营)</option>
-                                    <option value="EA Operation">EA Operation (EA 运营)</option>
+                                    <option value="SS Operation">SS Operation (SS 运营)</option>
                                     <option value="Training Dep">Training Dep (培训部)</option>
                                     <option value="Management">Management (管理层)</option>
                                     <option value="Superadmin">Superadmin (系统管理员)</option>
@@ -1425,7 +1425,7 @@ export default function UserManager() {
                                                 <option value="KCC">🧒 KCC 团队 (JOHN / Niki)</option>
                                                 <option value="GCC">💼 GCC 团队 (IRIS)</option>
                                                 <option value="Adult">👨 Adult 团队 (Alan / Chase)</option>
-                                                <option value="EA">🎓 EA 团队 (Lily)</option>
+                                                <option value="SS">🎓 SS 团队 (Lily)</option>
                                             </select>
                                         </div>
                                     )}

@@ -2818,7 +2818,7 @@ export default function LearningHub() {
             const type = String(bt || '').toLowerCase();
             if (type === 'kid') return 'KCC';
             if (type === 'adult') return 'Adult';
-            if (type === 'ss') return 'EA';
+            if (type === 'ss') return 'SS';
             return 'all';
         };
         return policies.filter(p => {
