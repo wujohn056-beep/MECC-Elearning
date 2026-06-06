@@ -641,7 +641,18 @@
         "label_sort": "排序",
         "label_publisher": "发布人",
         "upload_success": "文件上传成功！",
-        "uploaded": "已上传"
+        "uploaded": "已上传",
+        "target_team": "所属业务团队",
+        "page_title": "运营政策与目录管理",
+        "page_subtitle": "分团队维护销售激励方案与学习政策。您可以设置树形子目录，将不同激励和政策按文件夹分门别类展示。",
+        "scope_isolated": "🔒 运营隔离",
+        "scope_all": "全局总管理员 (ALL)",
+        "scope_scoped": "{{scope}} 运营专员",
+        "format_images": "仅限图片 (PNG/JPG等)",
+        "format_video": "仅限视频 (MP4)",
+        "format_doc": "仅限文档 (PDF, Word, Excel, PPT, TXT)",
+        "delete_dir_confirm": "确定要删除此目录文件夹吗？删除后该目录下的子文件和子文件夹将自动移到【上级/根目录】下。",
+        "unknown_directory": "未知目录"
     },
     "policy_showcase": {
         "doc_policy": "📄 文档政策",

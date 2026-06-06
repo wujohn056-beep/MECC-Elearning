@@ -642,7 +642,18 @@
         "label_sort": "Sort",
         "label_publisher": "Publisher",
         "upload_success": "File uploaded successfully!",
-        "uploaded": "Uploaded"
+        "uploaded": "Uploaded",
+        "target_team": "Target Business Team",
+        "page_title": "Operations Policies & Directory Management",
+        "page_subtitle": "Maintain sales incentives and learning policies by team. Set up folder structures to organize resources.",
+        "scope_isolated": "🔒 Scope Boundary",
+        "scope_all": "Global Super Admin (ALL)",
+        "scope_scoped": "{{scope}} Operator",
+        "format_images": "Images only (PNG, JPG, etc.)",
+        "format_video": "Video only (MP4)",
+        "format_doc": "Documents only (PDF, Word, Excel, PPT, TXT)",
+        "delete_dir_confirm": "Are you sure you want to delete this folder? After deletion, sub-files and sub-folders under it will automatically move to the parent/root directory.",
+        "unknown_directory": "Unknown Folder"
     },
     "policy_showcase": {
         "doc_policy": "📄 Document Policy",

@@ -626,7 +626,18 @@
         "label_sort": "ترتيب",
         "label_publisher": "الناشر",
         "upload_success": "تم رفع الملف بنجاح!",
-        "uploaded": "تم الرفع"
+        "uploaded": "تم الرفع",
+        "target_team": "فريق العمل المستهدف",
+        "page_title": "سياسات التشغيل وإدارة الدليل",
+        "page_subtitle": "صيانة حوافز المبيعات وسياسات التعلم حسب الفريق. قم بإعداد مجلدات متداخلة لتنظيم الموارد.",
+        "scope_isolated": "🔒 حدود الصلاحية",
+        "scope_all": "مسؤول عام عالمي (ALL)",
+        "scope_scoped": "مؤهل تشغيل {{scope}}",
+        "format_images": "الصور فقط (PNG, JPG, إلخ)",
+        "format_video": "الفيديو فقط (MP4)",
+        "format_doc": "المستندات فقط (PDF, Word, Excel, PPT, TXT)",
+        "delete_dir_confirm": "هل أنت متأكد من حذف هذا المجلد؟ بعد الحذف، سيتم نقل الملفات والمجلدات الفرعية الموجودة تحته تلقائياً إلى المجلد الأب/الرئيسي.",
+        "unknown_directory": "مجلد غير معروف"
     },
     "policy_showcase": {
         "doc_policy": "📄 سياسة المستند",

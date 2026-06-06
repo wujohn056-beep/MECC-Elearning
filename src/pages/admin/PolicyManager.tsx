@@ -539,7 +539,7 @@ export default function PolicyManager() {
     };
 
     const handleDirDelete = async (id: string) => {
-        if (!window.confirm("确定要删除此目录文件夹吗？删除后该目录下的子文件和子文件夹将自动移到【上级/根目录】下。")) {
+        if (!window.confirm(t('policy_manager.delete_dir_confirm', '确定要删除此目录文件夹吗？删除后该目录下的子文件和子文件夹将自动移到【上级/根目录】下。'))) {
             return;
         }
 
@@ -640,9 +640,9 @@ export default function PolicyManager() {
     };
 
     const getParentFolderName = (dirId: string | null) => {
-        if (!dirId) return '根目录';
+        if (!dirId) return t('policy_showcase.root_directory', '根目录');
         const matched = directories.find(d => d.id === dirId);
-        return matched ? matched.name : '未知目录';
+        return matched ? matched.name : t('policy_manager.unknown_directory', '未知目录');
     };
 
     return (
@@ -651,13 +651,13 @@ export default function PolicyManager() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-deep-teal">
-                        运营政策与目录管理
+                        {t('policy_manager.page_title', '运营政策与目录管理')}
                         <span className="text-sm font-black ml-3 px-3 py-1 rounded-full bg-desert-gold/15 text-amber-700 border border-desert-gold/20 select-none">
-                            🔒 运营隔离: {adminScope === 'all' ? '全局总管理员 (ALL)' : `${adminScope} 运营专员`}
+                            {t('policy_manager.scope_isolated', '🔒 运营隔离')}: {adminScope === 'all' ? t('policy_manager.scope_all', '全局总管理员 (ALL)') : t('policy_manager.scope_scoped', '{{scope}} 运营专员', { scope: adminScope })}
                         </span>
                     </h1>
                     <p className="text-arabian-night/60 mt-1">
-                        分团队维护销售激励方案与学习政策。您可以设置树形子目录，将不同激励和政策按文件夹分门别类展示。
+                        {t('policy_manager.page_subtitle', '分团队维护销售激励方案与学习政策。您可以设置树形子目录，将不同激励和政策按文件夹分门别类展示。')}
                     </p>
                 </div>
             </div>
@@ -805,7 +805,7 @@ export default function PolicyManager() {
                                                 <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-4 bg-white/40 hover:bg-white/60 transition-all cursor-pointer relative group">
                                                     <input
                                                         type="file"
-                                                        accept={type === 'poster' ? 'image/*' : type === 'video' ? 'video/mp4' : 'application/pdf,image/*,video/mp4'}
+                                                        accept={type === 'poster' ? 'image/*' : type === 'video' ? 'video/mp4' : 'application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt'}
                                                         onChange={handleFileChange}
                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                         disabled={actionLoading || uploading}
@@ -824,7 +824,7 @@ export default function PolicyManager() {
                                                             )}
                                                         </p>
                                                         <p className="text-[10px] text-arabian-night/40">
-                                                            {type === 'poster' ? 'Images only' : type === 'video' ? 'MP4 only' : 'PDF, Images, or MP4'}
+                                                            {type === 'poster' ? t('policy_manager.format_images', 'Images only (PNG, JPG, etc.)') : type === 'video' ? t('policy_manager.format_video', 'Video only (MP4)') : t('policy_manager.format_doc', 'Documents only (PDF, Word, Excel, PPT, TXT)')}
                                                         </p>
                                                     </div>
                                                 </div>
