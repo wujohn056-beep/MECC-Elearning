@@ -665,6 +665,7 @@
         "type_video_badge": "🎥 فيديو",
         "action_read": "اقرأ الآن",
         "action_view_poster": "عرض الملصق",
-        "action_play_video": "تشغيل الفيديو"
+        "action_play_video": "تشغيل الفيديو",
+        "label_sort": "الترتيب"
     }
 }

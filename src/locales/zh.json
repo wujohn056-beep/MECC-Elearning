@@ -680,6 +680,7 @@
         "type_video_badge": "🎥 视频",
         "action_read": "立即阅读",
         "action_view_poster": "查看海报",
-        "action_play_video": "播放视频"
+        "action_play_video": "播放视频",
+        "label_sort": "排序"
     }
 }

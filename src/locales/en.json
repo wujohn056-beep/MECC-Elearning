@@ -681,6 +681,7 @@
         "type_video_badge": "🎥 Video",
         "action_read": "Read Now",
         "action_view_poster": "View Poster",
-        "action_play_video": "Play Video"
+        "action_play_video": "Play Video",
+        "label_sort": "Sort"
     }
 }
