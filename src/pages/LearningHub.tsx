@@ -3794,7 +3794,7 @@ export default function LearningHub() {
                                         </button>
                                         <button 
                                             onClick={() => setSortType('leaderboard')}
-                                            className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-[15px] font-extrabold transition-all flex items-center gap-1.5 ${sortType === 'leaderboard' ? 'bg-white text-desert-gold shadow-md border border-gray-200/50 scale-105' : 'text-arabian-night/60 hover:text-desert-gold hover:bg-white/50'}`}
+                                            className={`xl:hidden px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-[15px] font-extrabold transition-all flex items-center gap-1.5 ${sortType === 'leaderboard' ? 'bg-white text-desert-gold shadow-md border border-gray-200/50 scale-105' : 'text-arabian-night/60 hover:text-desert-gold hover:bg-white/50'}`}
                                         >
                                             <span className="text-lg">🏆</span> {t('learning_hub.leaderboard')}
                                         </button>
