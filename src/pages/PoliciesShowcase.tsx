@@ -163,10 +163,10 @@ export default function PoliciesShowcase() {
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [activePolicyItem, setActivePolicyItem] = useState<PolicyItem | null>(null);
 
-    // Selected tab for super admin viewing preview: defaults to the user's derived team or 'KCC'
-    const [selectedTeamTab, setSelectedTeamTab] = useState<'KCC' | 'GCC' | 'Adult' | 'SS'>(() => {
-        const team = userTeam !== 'other' ? userTeam : 'KCC';
-        return team;
+    // Selected tab for super admin viewing preview: defaults to the user's derived team or 'all'
+    const [selectedTeamTab, setSelectedTeamTab] = useState<'all' | 'KCC' | 'GCC' | 'Adult' | 'SS'>(() => {
+        const team = userTeam !== 'other' ? userTeam : 'all';
+        return team as any;
     });
 
     const activeTeam = useMemo(() => {
@@ -238,10 +238,12 @@ export default function PoliciesShowcase() {
 
     // Scoped list filtering: targetTeam must match activeTeam or be 'all'
     const visiblePolicies = useMemo(() => {
+        if (activeTeam === 'all') return policies;
         return policies.filter(p => p.targetTeam === 'all' || p.targetTeam === activeTeam);
     }, [policies, activeTeam]);
 
     const visibleDirectories = useMemo(() => {
+        if (activeTeam === 'all') return directories;
         return directories.filter(d => d.targetTeam === 'all' || d.targetTeam === activeTeam);
     }, [directories, activeTeam]);
 
@@ -271,6 +273,7 @@ export default function PoliciesShowcase() {
 
     const getTeamLabel = (team: string) => {
         switch (team) {
+            case 'all': return t('common.all_business_option', '全部业务线');
             case 'KCC': return t('common.team_kcc_clean', 'KCC 青少');
             case 'GCC': return t('common.team_gcc_clean', 'GCC 专区');
             case 'Adult': return t('common.team_adult_clean', 'ACC 成人');
@@ -304,7 +307,7 @@ export default function PoliciesShowcase() {
                 {/* Preview tab switcher for Super Admin / All Scoped Admin */}
                 {isSuperAdmin && (
                     <div className="p-1 rounded-full flex bg-white/70 backdrop-blur-md border border-white/50 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-none w-full sm:w-auto">
-                        {(['KCC', 'GCC', 'Adult', 'SS'] as const).map(team => (
+                        {(['all', 'KCC', 'GCC', 'Adult', 'SS'] as const).map(team => (
                             <button
                                 key={team}
                                 onClick={() => setSelectedTeamTab(team)}

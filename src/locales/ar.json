@@ -242,7 +242,13 @@
         "operations_policies_title": "سياسات وحوافز التشغيل",
         "operations_policies_desc": "أحدث خطط حوافز المبيعات والمبادئ التوجيهية التشغيلية",
         "no_policies_showcase": "لا توجد سياسات تشغيلية لهذه الوحدة حالياً.",
-        "view_all_policies": "عرض الكل"
+        "view_all_policies": "عرض الكل",
+        "open_new_tab": "فتح في علامة تبويب جديدة",
+        "no_inline_preview_tip": "تنسيق هذا الملف لا يدعم المعاينة المباشرة. يرجى النقر فوق الزر أدناه لتنزيله وعرضه محليًا.",
+        "open_original_image": "عرض الصورة الأصلية",
+        "preview_attachment": "معاينة",
+        "current_previewing": "المعاينة الحالية: {{name}}",
+        "main_course_doc": "وثيقة الدراسة الأساسية"
     },
     "category_manager": {
         "title": "إدارة التصنيفات",

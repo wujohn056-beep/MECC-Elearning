@@ -242,7 +242,13 @@
         "operations_policies_title": "运营政策与激励展示",
         "operations_policies_desc": "最新销售激励方案与运营规范，一键掌握",
         "no_policies_showcase": "当前暂无本业务线相关的运营政策",
-        "view_all_policies": "查看全部"
+        "view_all_policies": "查看全部",
+        "open_new_tab": "在新窗口打开",
+        "no_inline_preview_tip": "此文件格式暂不支持在线预览，请点击下方按钮下载至本地查看。",
+        "open_original_image": "查看原图",
+        "preview_attachment": "预览",
+        "current_previewing": "当前预览：{{name}}",
+        "main_course_doc": "核心学习文档"
     },
     "category_manager": {
         "title": "目录分类管理",

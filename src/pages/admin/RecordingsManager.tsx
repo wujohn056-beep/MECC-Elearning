@@ -1006,9 +1006,8 @@ export default function RecordingsManager() {
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/50"
                                     value={selectedCategoryId}
                                     onChange={(e) => setSelectedCategoryId(e.target.value)}
-                                    required
                                 >
-                                    <option value="" disabled>{t('recordings_manager.select_placeholder')}</option>
+                                    <option value="">{t('common.uncategorized', '未分类')}</option>
                                     {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                                     ))}

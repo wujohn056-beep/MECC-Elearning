@@ -243,7 +243,13 @@
         "operations_policies_title": "Operations Policies & Incentives",
         "operations_policies_desc": "Latest sales incentive schemes and operational guidelines",
         "no_policies_showcase": "No operation policies for this business line at the moment.",
-        "view_all_policies": "View All"
+        "view_all_policies": "View All",
+        "open_new_tab": "Open in New Tab",
+        "no_inline_preview_tip": "This file format does not support inline preview. Please click the button below to download and view it locally.",
+        "open_original_image": "View Original Image",
+        "preview_attachment": "Preview",
+        "current_previewing": "Current Previewing: {{name}}",
+        "main_course_doc": "Core Study Document"
     },
     "category_manager": {
         "title": "Category Management",

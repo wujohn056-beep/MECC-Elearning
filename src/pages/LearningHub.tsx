@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -560,6 +560,35 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
 
     const [rec, setRec] = useState<any>(initialRec);
 
+    const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+
+    const getAttachmentType = (url: string) => {
+        if (!url) return 'other';
+        const cleanUrl = url.split('?')[0].toLowerCase();
+        if (cleanUrl.endsWith('.pdf')) return 'pdf';
+        if (cleanUrl.endsWith('.png') || cleanUrl.endsWith('.jpg') || cleanUrl.endsWith('.jpeg') || cleanUrl.endsWith('.gif') || cleanUrl.endsWith('.webp') || cleanUrl.endsWith('.svg')) return 'image';
+        if (cleanUrl.endsWith('.ppt') || cleanUrl.endsWith('.pptx')) return 'ppt';
+        if (cleanUrl.endsWith('.doc') || cleanUrl.endsWith('.docx')) return 'word';
+        if (cleanUrl.endsWith('.xls') || cleanUrl.endsWith('.xlsx')) return 'excel';
+        if (cleanUrl.endsWith('.txt')) return 'txt';
+        return 'other';
+    };
+
+    React.useEffect(() => {
+        if (isDoc && rec.audioUrl) {
+            setSelectedAttachment({
+                id: 'main-doc',
+                name: rec.title || 'Main Document',
+                url: rec.audioUrl,
+                type: 'pdf'
+            });
+        } else if (!rec.audioUrl && rec.attachments && rec.attachments.length > 0) {
+            setSelectedAttachment(rec.attachments[0]);
+        } else {
+            setSelectedAttachment(null);
+        }
+    }, [rec.id, rec.audioUrl, isDoc]);
+
     React.useEffect(() => {
         setRec(initialRec);
     }, [initialRec]);
@@ -955,28 +984,100 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                     <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
                         {/* Playback viewport */}
                         <div className="bg-black flex-1 flex items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-[400px]">
-                    {isDoc ? (
-                        <div className="flex flex-col items-center justify-center gap-6 py-12 w-full bg-gradient-to-br from-amber-500/10 via-rose-500/10 to-indigo-600/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-inner min-h-[300px] md:min-h-[400px] px-8 text-center animate-in fade-in duration-500">
-                            <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl relative overflow-hidden transform hover:scale-105 transition-all duration-300 group">
-                                <FileText className="w-12 h-12 text-white animate-pulse" />
+                    {selectedAttachment ? (
+                        // Document Preview Panel
+                        <div className="w-full h-full flex flex-col min-h-[450px] md:min-h-[550px] bg-slate-950">
+                            {/* Toolbar */}
+                            <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between text-slate-200 text-xs shrink-0 select-none">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-lg shrink-0">
+                                        {getAttachmentType(selectedAttachment.url) === 'ppt' ? '📊' : getAttachmentType(selectedAttachment.url) === 'pdf' ? '📕' : getAttachmentType(selectedAttachment.url) === 'image' ? '🖼️' : '📄'}
+                                    </span>
+                                    <span className="font-extrabold truncate pr-2" title={selectedAttachment.name}>
+                                        {selectedAttachment.name}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-4 shrink-0">
+                                    <a 
+                                        href={selectedAttachment.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="hover:text-desert-gold flex items-center gap-1.5 transition-colors font-bold"
+                                    >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                        <span>{t('learning_hub.open_new_tab', '在新窗口打开')}</span>
+                                    </a>
+                                    <span className="w-px h-3 bg-slate-800"></span>
+                                    <a 
+                                        href={selectedAttachment.url} 
+                                        download={selectedAttachment.name} 
+                                        className="hover:text-desert-gold flex items-center gap-1.5 transition-colors font-bold"
+                                    >
+                                        <Download className="w-3.5 h-3.5" />
+                                        <span>{t('common.download_attachment', '下载')}</span>
+                                    </a>
+                                </div>
                             </div>
-                            <div className="space-y-3 max-w-md">
-                                <span className="inline-flex items-center gap-1.5 text-[10px] bg-black/40 backdrop-blur-md text-white border border-white/10 px-3.5 py-1 rounded-full font-black shadow-sm uppercase tracking-widest select-none">
-                                    📄 {t('learning_hub.doc_tag', '学习文档模式')}
-                                </span>
-                                <h4 className="text-white font-extrabold text-base leading-snug line-clamp-2 px-4">
-                                    {rec.title}
-                                </h4>
+                            
+                            {/* Preview Body */}
+                            <div className="flex-1 bg-white relative overflow-hidden min-h-[380px] md:min-h-[480px]">
+                                {getAttachmentType(selectedAttachment.url) === 'pdf' ? (
+                                    <iframe
+                                        src={`${selectedAttachment.url}#toolbar=0`}
+                                        className="w-full h-full border-0 bg-white"
+                                        title={selectedAttachment.name}
+                                    />
+                                ) : getAttachmentType(selectedAttachment.url) === 'image' ? (
+                                    <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-900/10 relative group">
+                                        <img
+                                            src={selectedAttachment.url}
+                                            alt={selectedAttachment.name}
+                                            className="max-w-full max-h-[45vh] lg:max-h-[55vh] object-contain rounded-lg shadow-2xl transition-all duration-300 hover:scale-[1.01]"
+                                        />
+                                        <a
+                                            href={selectedAttachment.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="absolute bottom-6 bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white text-[11px] font-extrabold px-4 py-2 rounded-xl border border-slate-700 shadow-lg transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                                        >
+                                            <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                                            <span>{t('learning_hub.open_original_image', '查看原图')}</span>
+                                        </a>
+                                    </div>
+                                ) : ['ppt', 'word', 'excel'].includes(getAttachmentType(selectedAttachment.url)) ? (
+                                    <iframe
+                                        src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedAttachment.url)}&embedded=true`}
+                                        className="w-full h-full border-0 bg-white"
+                                        title={selectedAttachment.name}
+                                    />
+                                ) : (
+                                    // Fallback for ZIP, RAR, or unsupported
+                                    <div className="flex flex-col items-center justify-center gap-6 py-12 w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 backdrop-blur-md rounded-none border-0 shadow-inner px-8 text-center animate-in fade-in duration-500">
+                                        <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl relative overflow-hidden transform hover:scale-105 transition-all duration-300 group">
+                                            <FileText className="w-10 h-10 text-white animate-pulse" />
+                                        </div>
+                                        <div className="space-y-3 max-w-md">
+                                            <span className="inline-flex items-center gap-1.5 text-[10px] bg-black/40 backdrop-blur-md text-white border border-white/10 px-3.5 py-1 rounded-full font-black shadow-sm uppercase tracking-widest select-none">
+                                                📂 {selectedAttachment.name.split('.').pop()?.toUpperCase() || 'FILE'}
+                                            </span>
+                                            <h4 className="text-white font-extrabold text-base leading-snug line-clamp-2 px-4">
+                                                {selectedAttachment.name}
+                                            </h4>
+                                            <p className="text-xs text-white/60 px-4">
+                                                {t('learning_hub.no_inline_preview_tip', '此文件格式暂不支持在线预览，请点击下方按钮下载至本地查看。')}
+                                            </p>
+                                        </div>
+                                        <a
+                                            href={selectedAttachment.url}
+                                            download={selectedAttachment.name}
+                                            className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:scale-105 active:scale-95 text-white text-xs font-black py-3 px-6 rounded-xl shadow-xl border border-white/15 transition-all duration-300 cursor-pointer"
+                                        >
+                                            <Download className="w-4 h-4 shrink-0 text-white" />
+                                            <span>{t('common.download', '下载文件')}</span>
+                                        </a>
+                                    </div>
+                                )}
                             </div>
-                            <a
-                                href={rec.audioUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:scale-105 active:scale-95 text-white text-xs font-black py-3.5 px-7 rounded-2xl shadow-xl border border-white/15 transition-all duration-300 cursor-pointer"
-                            >
-                                <BookOpen className="w-4 h-4 shrink-0 text-white fill-white/20 animate-bounce" />
-                                <span>{t('learning_hub.read_document', '阅读学习文档')}</span>
-                            </a>
                         </div>
                     ) : !rec.audioUrl ? (
                         <div className="flex flex-col items-center justify-center gap-6 py-12 w-full bg-gradient-to-br from-amber-500/10 via-rose-500/10 to-indigo-600/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-inner min-h-[300px] md:min-h-[400px] px-8 text-center animate-in fade-in duration-500">
@@ -1786,33 +1887,64 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                                 {t('common.attachments', '配套讲义与附件')}
                             </h3>
                             <div className="space-y-3">
-                                {rec.attachments.map((att: any) => (
-                                    <div key={att.id} className="bg-white border border-gray-100/80 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-desert-gold/20 transition-all group">
-                                        <div className="flex items-start gap-2.5 min-w-0">
-                                            <span className="text-2xl shrink-0 select-none" role="img" aria-label="file">
-                                                {att.type === 'ppt' ? '📊' : att.type === 'pdf' ? '📕' : att.type === 'image' ? '🖼️' : '📄'}
-                                            </span>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-extrabold text-xs text-arabian-night line-clamp-2 pr-1" title={att.name}>
-                                                    {att.name}
-                                                </p>
-                                                <span className="text-[10px] font-bold text-arabian-night/40 mt-1 inline-block">
-                                                    {att.size || '-'}
+                                {rec.attachments.map((att: any) => {
+                                    const isSelected = selectedAttachment && (selectedAttachment.id === att.id || selectedAttachment.url === att.url);
+                                    const fileType = getAttachmentType(att.url);
+                                    return (
+                                        <div 
+                                            key={att.id || att.url} 
+                                            onClick={() => setSelectedAttachment(att)}
+                                            className={`rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-all group cursor-pointer ${
+                                                isSelected 
+                                                    ? 'bg-amber-50/60 border-2 border-desert-gold/50 shadow-inner ring-1 ring-desert-gold/10' 
+                                                    : 'bg-white border border-gray-100/80 hover:border-desert-gold/20'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-2.5 min-w-0">
+                                                <span className="text-2xl shrink-0 select-none" role="img" aria-label="file">
+                                                    {fileType === 'ppt' ? '📊' : fileType === 'pdf' ? '📕' : fileType === 'image' ? '🖼️' : '📄'}
                                                 </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className={`font-extrabold text-xs line-clamp-2 pr-1 transition-colors ${
+                                                        isSelected ? 'text-yellow-800' : 'text-arabian-night'
+                                                    }`} title={att.name}>
+                                                        {att.name}
+                                                    </p>
+                                                    <span className="text-[10px] font-bold text-arabian-night/40 mt-1 inline-block">
+                                                        {att.size || '-'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex gap-2 w-full mt-1">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedAttachment(att);
+                                                    }}
+                                                    className={`flex-1 text-center py-2 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1 transition-all ${
+                                                        isSelected 
+                                                            ? 'bg-desert-gold text-white shadow-md shadow-desert-gold/10' 
+                                                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                                    }`}
+                                                >
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                    <span>{t('learning_hub.preview_attachment', '预览')}</span>
+                                                </button>
+                                                
+                                                <a
+                                                    href={att.url}
+                                                    download={att.name}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="flex-1 bg-deep-teal/5 hover:bg-deep-teal hover:text-white text-deep-teal text-center py-2 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
+                                                >
+                                                    <Download className="w-3.5 h-3.5" />
+                                                    <span>{t('common.download_attachment', '下载')}</span>
+                                                </a>
                                             </div>
                                         </div>
-                                        
-                                        <a
-                                            href={att.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-full bg-deep-teal/5 hover:bg-deep-teal hover:text-white text-deep-teal text-center py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
-                                        >
-                                            <Download className="w-3.5 h-3.5" />
-                                            <span>{t('common.download_attachment', '下载')}</span>
-                                        </a>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
