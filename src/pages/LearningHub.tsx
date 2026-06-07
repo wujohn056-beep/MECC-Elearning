@@ -2835,11 +2835,34 @@ export default function LearningHub() {
             if (type === 'ss') return 'SS';
             return 'all';
         };
+        
+        const isSuperAdmin = profile?.role === 'super_admin';
+
         return policies.filter(p => {
             const team = p.targetTeam || mapBusinessTypeToTeam(p.businessType || 'all');
+            
+            // 1. Business line tab filtering
+            let matchesBusinessTab = false;
+            if (businessType === 'kid') {
+                matchesBusinessTab = (team === 'KCC' || team === 'GCC' || team === 'all');
+            } else if (businessType === 'adult') {
+                matchesBusinessTab = (team === 'Adult' || team === 'all');
+            } else if (businessType === 'ss') {
+                matchesBusinessTab = (team === 'SS' || team === 'all');
+            } else if (businessType === 'leader') {
+                matchesBusinessTab = (team === 'all');
+            }
+
+            if (!matchesBusinessTab) return false;
+
+            // 2. User role/team permission filtering
+            if (isSuperAdmin) {
+                return true;
+            }
+
             return team === 'all' || team === userTeam;
         });
-    }, [policies, userTeam]);
+    }, [policies, userTeam, profile, businessType]);
 
     const handleToggleLike = async (recId: string, currentLikes: string[] = []) => {
         if (!user) return;
