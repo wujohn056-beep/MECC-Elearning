@@ -333,8 +333,10 @@ export default function PolicyManager() {
 
             groups.push({ id: 'role:cctl', name: 'CCTL', type: 'dep', rawId: 'cctl' });
             groups.push({ id: 'role:ccsm', name: 'CCSM', type: 'dep', rawId: 'ccsm' });
+            groups.push({ id: 'role:ccsd', name: 'CCSD', type: 'dep', rawId: 'ccsd' });
             groups.push({ id: 'role:sstl', name: 'SSTL', type: 'dep', rawId: 'sstl' });
             groups.push({ id: 'role:sssm', name: 'SSSM', type: 'dep', rawId: 'sssm' });
+            groups.push({ id: 'role:sssd', name: 'SSSD', type: 'dep', rawId: 'sssd' });
         } 
         else if (userRole === 'sd') {
             const sms = new Set<string>();
@@ -419,8 +421,10 @@ export default function PolicyManager() {
                     const userRoleLower = String(u.role || '').trim().toLowerCase();
                     if (group.rawId === 'cctl' && userDepUpper === 'CC' && userRoleLower === 'tl') return true;
                     if (group.rawId === 'ccsm' && userDepUpper === 'CC' && userRoleLower === 'sm') return true;
+                    if (group.rawId === 'ccsd' && userDepUpper === 'CC' && userRoleLower === 'sd') return true;
                     if (group.rawId === 'sstl' && userDepUpper === 'SS' && userRoleLower === 'tl') return true;
                     if (group.rawId === 'sssm' && userDepUpper === 'SS' && userRoleLower === 'sm') return true;
+                    if (group.rawId === 'sssd' && userDepUpper === 'SS' && userRoleLower === 'sd') return true;
                     return false;
                 }
                 const hasSd = !!u.sd;

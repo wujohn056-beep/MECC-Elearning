@@ -984,14 +984,16 @@ export const handler = async (event, context) => {
                                     const isSd = data.role === 'sd';
                                     const depMatched = !hasSd && !isSd && (depFilters.includes(userDep) || depFilters.includes(userTeam));
 
-                                    // Match custom role + department combinations (CCTL, CCSM, SSTL, SSSM)
+                                    // Match custom role + department combinations (CCTL, CCSM, CCSD, SSTL, SSSM, SSSD)
                                     const userDepUpper = String(data.dep || '').trim().toUpperCase();
                                     const userRoleLower = String(data.role || '').trim().toLowerCase();
                                     let roleMatched = false;
                                     if (roleFilters.includes('cctl') && userDepUpper === 'CC' && userRoleLower === 'tl') roleMatched = true;
                                     if (roleFilters.includes('ccsm') && userDepUpper === 'CC' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('ccsd') && userDepUpper === 'CC' && userRoleLower === 'sd') roleMatched = true;
                                     if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
                                     if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('sssd') && userDepUpper === 'SS' && userRoleLower === 'sd') roleMatched = true;
 
                                     const isMatched = sdMatched || smMatched || tlMatched || ccMatched || depMatched || roleMatched;
 
@@ -1279,8 +1281,10 @@ export const handler = async (event, context) => {
                                     let roleMatched = false;
                                     if (roleFilters.includes('cctl') && userDepUpper === 'CC' && userRoleLower === 'tl') roleMatched = true;
                                     if (roleFilters.includes('ccsm') && userDepUpper === 'CC' && userRoleLower === 'sm') roleMatched = true;
+                                     if (roleFilters.includes('ccsd') && userDepUpper === 'CC' && userRoleLower === 'sd') roleMatched = true;
                                     if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
                                     if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
+                                     if (roleFilters.includes('sssd') && userDepUpper === 'SS' && userRoleLower === 'sd') roleMatched = true;
 
                                     const isMatched = sdMatched || smMatched || tlMatched || ccMatched || depMatched || roleMatched;
 
