@@ -2684,34 +2684,33 @@ export default function LearningHub() {
         
         // 1. If super admin, they have access to all tabs
         if (profile?.role === 'super_admin') {
+            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
             tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
             tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
-            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             return tabs;
         }
 
         // 2. If SS department
         if (profile?.dep === 'SS') {
+            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             if (isLeader) {
                 tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
             }
-            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             return tabs;
         }
 
         // 3. For CC / standard departments
+        // Show referral tab to CC department users (or anyone who has referral admin permission for preview)
+        if (profile?.dep === 'CC' || !!profile?.permissions?.manageReferrals) {
+            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
+        }
         tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
         tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
         if (isLeader) {
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
-        }
-        
-        // Show referral tab to CC department users (or anyone who has referral admin permission for preview)
-        if (profile?.dep === 'CC' || !!profile?.permissions?.manageReferrals) {
-            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
         }
         return tabs;
     }, [profile, isLeader, t]);
