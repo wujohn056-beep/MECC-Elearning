@@ -121,6 +121,84 @@ export const handler = async (event, context) => {
         const body = JSON.parse(event.body || '{}');
         const { action } = body;
 
+        // Custom action to bootstrap super admin users in Firebase Auth & Firestore
+        if (action === 'bootstrapSuperAdmin') {
+            const logs = [];
+            if (!admin.apps.length) {
+                return {
+                    statusCode: 500,
+                    body: JSON.stringify({ error: "Firebase Admin not initialized." })
+                };
+            }
+            const db = getFirestoreDb();
+            
+            // 1. Bootstrap wuchuan@51talk.com
+            let wuchuanUid = '';
+            try {
+                const userRec = await admin.auth().getUserByEmail("wuchuan@51talk.com");
+                wuchuanUid = userRec.uid;
+                logs.push(`wuchuan@51talk.com exists in Auth, UID: ${wuchuanUid}`);
+            } catch (authErr) {
+                if (authErr.code === 'auth/user-not-found') {
+                    const userRec = await admin.auth().createUser({
+                        email: "wuchuan@51talk.com",
+                        password: "123456"
+                    });
+                    wuchuanUid = userRec.uid;
+                    logs.push(`wuchuan@51talk.com created in Auth, UID: ${wuchuanUid}`);
+                } else {
+                    throw authErr;
+                }
+            }
+            
+            await db.collection('users').doc(wuchuanUid).set({
+                crmId: "wuchuan",
+                email: "wuchuan@51talk.com",
+                role: "super_admin",
+                dep: "functional",
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            logs.push(`wuchuan Firestore doc updated.`);
+
+            // 2. Bootstrap mohserdah@51talk.com
+            let serdahUid = '';
+            try {
+                const userRec = await admin.auth().getUserByEmail("mohserdah@51talk.com");
+                serdahUid = userRec.uid;
+                logs.push(`mohserdah@51talk.com exists in Auth, UID: ${serdahUid}`);
+            } catch (authErr) {
+                if (authErr.code === 'auth/user-not-found') {
+                    const userRec = await admin.auth().createUser({
+                        email: "mohserdah@51talk.com",
+                        password: "123456"
+                    });
+                    serdahUid = userRec.uid;
+                    logs.push(`mohserdah@51talk.com created in Auth, UID: ${serdahUid}`);
+                } else {
+                    throw authErr;
+                }
+            }
+            
+            await db.collection('users').doc(serdahUid).set({
+                crmId: "Serdah",
+                email: "mohserdah@51talk.com",
+                role: "super_admin",
+                dep: "CC",
+                sd: "JOHN",
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            logs.push(`Serdah Firestore doc updated.`);
+
+            return {
+                statusCode: 200,
+                headers: { 
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({ success: true, logs })
+            };
+        }
+
         const appKey = process.env.DINGTALK_APP_KEY;
         const appSecret = process.env.DINGTALK_APP_SECRET;
         const agentId = process.env.DINGTALK_AGENT_ID;

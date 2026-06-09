@@ -309,7 +309,7 @@ export default function PolicyManager() {
     // Unified list of targets (SD Teams, SM Teams, TL Teams and Non-sales Departments)
     const pushGroupList = useMemo(() => {
         const groups: { id: string; name: string; type: 'sd' | 'sm' | 'tl' | 'dep'; rawId: string }[] = [];
-        const userRole = profile?.role || 'user';
+        const userRole = String(profile?.role || 'user').trim().toLowerCase();
         const userCrmId = (profile?.crmId || '').toUpperCase();
         
         if (isSuperAdmin) {
@@ -413,7 +413,11 @@ export default function PolicyManager() {
                 return (u.sm || '').toUpperCase() === raw || (u.role === 'sm' && uCrmId === raw);
             }
             if (group.type === 'tl') {
-                return (u.tl || '').toUpperCase() === raw || (u.role === 'tl' && uCrmId === raw) || uCrmId === raw;
+                const teamName = getTlTeamName(group.rawId);
+                const isSameTeam = teamName && teamName !== group.rawId && u.team && u.team.trim().toUpperCase() === teamName.trim().toUpperCase();
+                const isDirectCc = (u.tl || '').toUpperCase() === raw;
+                const isSelf = uCrmId === raw;
+                return isSameTeam || isDirectCc || isSelf;
             }
             if (group.type === 'dep') {
                 if (group.id.startsWith('role:')) {
@@ -435,7 +439,7 @@ export default function PolicyManager() {
             }
             return false;
         }).sort((a, b) => (a.name || a.crmId || '').localeCompare(b.name || b.crmId || ''));
-    }, [systemUsers]);
+    }, [systemUsers, getTlTeamName]);
 
     const handleGroupToggle = (group: any) => {
         const groupCcs = getGroupCcs(group);
@@ -487,7 +491,7 @@ export default function PolicyManager() {
 
     const handlePushToDingTalkClick = (item: PolicyItem) => {
         setSelectedPolicyForPush(item);
-        const targetType = adminScope === 'all' ? 'group' : 'individuals';
+        const targetType = isSuperAdmin ? 'group' : 'individuals';
         setPushTargetType(targetType);
         
         if (targetType === 'individuals' && pushGroupList.length === 1) {

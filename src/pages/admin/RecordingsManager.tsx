@@ -193,7 +193,7 @@ export default function RecordingsManager() {
     const pushGroupList = React.useMemo(() => {
         const groups: { id: string; name: string; type: 'sd' | 'sm' | 'tl' | 'dep'; rawId: string }[] = [];
         const isSuper = profile?.role === 'super_admin';
-        const userRole = profile?.role || 'user';
+        const userRole = String(profile?.role || 'user').trim().toLowerCase();
         const userCrmId = (profile?.crmId || '').toUpperCase();
         
         if (isSuper) {
@@ -910,7 +910,11 @@ export default function RecordingsManager() {
                 return (u.sm || '').toUpperCase() === raw || (u.role === 'sm' && uCrmId === raw);
             }
             if (group.type === 'tl') {
-                return (u.tl || '').toUpperCase() === raw || (u.role === 'tl' && uCrmId === raw) || uCrmId === raw;
+                const teamName = getTlTeamName(group.rawId);
+                const isSameTeam = teamName && teamName !== group.rawId && u.team && u.team.trim().toUpperCase() === teamName.trim().toUpperCase();
+                const isDirectCc = (u.tl || '').toUpperCase() === raw;
+                const isSelf = uCrmId === raw;
+                return isSameTeam || isDirectCc || isSelf;
             }
             if (group.type === 'dep') {
                 if (group.id.startsWith('role:')) {
@@ -932,7 +936,7 @@ export default function RecordingsManager() {
             }
             return false;
         }).sort((a, b) => (a.name || a.crmId || '').localeCompare(b.name || b.crmId || ''));
-    }, [systemUsers]);
+    }, [systemUsers, getTlTeamName]);
 
     const handleCcToggle = React.useCallback((ccCrmId: string, group: { id: string; type: string; rawId: string }) => {
         const ccId = `cc:${ccCrmId.toLowerCase()}`;

@@ -297,6 +297,28 @@ export default function Login() {
                         >
                             🔑 CC 部门经理 (Serdah) 免密登录
                         </button>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (window.confirm("确定要一键修复生产环境/本地数据库中的超级管理员及部门经理账户吗？ / Are you sure you want to bootstrap/repair super_admin accounts?")) {
+                                    try {
+                                        const res = await fetch('/.netlify/functions/dingtalk', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ action: 'bootstrapSuperAdmin' })
+                                        });
+                                        const data = await res.json();
+                                        alert("Success:\n" + JSON.stringify(data, null, 2));
+                                    } catch (err: any) {
+                                        alert("Bootstrap failed: " + err.message);
+                                    }
+                                }
+                            }}
+                            disabled={loading}
+                            className="w-full py-2 px-4 rounded-xl text-xs font-bold text-amber-400 hover:text-white border border-amber-500/40 bg-amber-950/20 hover:bg-amber-700/30 transition-all hover:scale-[1.02] cursor-pointer"
+                        >
+                            🔧 一键修复超级管理员数据库账号 (Bootstrap)
+                        </button>
                         <p className="text-[10px] text-teal-200/50 mt-1 text-center leading-normal">
                             点击上述按钮将直接以真实账号身份登录，无需输入密码，完美支持本地环境测试。
                         </p>
