@@ -41,6 +41,7 @@ interface UserRecord {
         manageTasks?: boolean;
         manageComments?: boolean;
         managePolicies?: boolean;
+        manageReferrals?: boolean;
     };
     dingtalkUserId?: string;
     dingtalkSyncedAt?: string;
@@ -71,7 +72,7 @@ export default function UserManager() {
     const [formData, setFormData] = useState({ 
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         dingtalkUserId: '',
-        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false },
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageReferrals: false },
         policyScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all',
         identity: ''
     });
@@ -732,7 +733,8 @@ export default function UserManager() {
                 manageDashboard: !!u.permissions?.manageDashboard,
                 manageTasks: !!u.permissions?.manageTasks,
                 manageComments: !!u.permissions?.manageComments,
-                managePolicies: !!u.permissions?.managePolicies
+                managePolicies: !!u.permissions?.managePolicies,
+                manageReferrals: !!u.permissions?.manageReferrals
             },
             policyScope: u.policyScope || 'all',
             identity: u.identity || ''
@@ -779,7 +781,8 @@ export default function UserManager() {
                     manageDashboard: false,
                     manageTasks: false,
                     manageComments: false,
-                    managePolicies: false
+                    managePolicies: false,
+                    manageReferrals: false
                 });
 
                 await updateDoc(doc(db, 'users', selectedUserId), {
@@ -840,7 +843,8 @@ export default function UserManager() {
                         manageDashboard: false,
                         manageTasks: false,
                         manageComments: false,
-                        managePolicies: false
+                        managePolicies: false,
+                        manageReferrals: false
                     },
                     policyScope: formData.policyScope || 'all',
                     identity: formData.identity || null,
@@ -888,7 +892,7 @@ export default function UserManager() {
                                     setFormData({ 
                                         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                         dingtalkUserId: '',
-                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false },
+                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageReferrals: false },
                                         policyScope: 'all',
                                         identity: ''
                                     }); 
@@ -963,7 +967,7 @@ export default function UserManager() {
                                             tl: profile?.role === 'tl' ? profile.crmId : '', 
                                             team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                             dingtalkUserId: '',
-                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false }
+                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageReferrals: false }
                                         }); 
                                         setShowModal(true); 
                                     }} 
@@ -1176,6 +1180,7 @@ export default function UserManager() {
                                     <option value="Management">{t('user_manager.identity_options.management', 'Management')}</option>
                                     <option value="Superadmin">{t('user_manager.identity_options.superadmin', 'Superadmin (System Admin)')}</option>
                                     <option value="BS">{t('user_manager.identity_options.bs', 'BS (Business Support)')}</option>
+                                    <option value="Referral Operation">{t('user_manager.identity_options.referral_op', 'Referral Operation (推荐运营)')}</option>
                                 </select>
                                 <p className="text-[11px] text-slate-400 mt-1 select-none">{t('user_manager.hint_identity', 'Determines fine-grained segment identity for operational policy scoping.')}</p>
                             </div>
@@ -1399,6 +1404,15 @@ export default function UserManager() {
                                                 onChange={e => setFormData({...formData, permissions: {...formData.permissions, managePolicies: e.target.checked}})}
                                             />
                                             {t('user_manager.perm_manage_policies', '政策运营')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageReferrals || false}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageReferrals: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_referrals', '推荐素材管理')}
                                         </label>
                                     </div>
                                     {formData.permissions.managePolicies && (

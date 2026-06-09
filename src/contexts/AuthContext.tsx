@@ -11,6 +11,7 @@ export interface UserPermissions {
     manageTasks?: boolean;
     manageComments?: boolean;
     managePolicies?: boolean;
+    manageReferrals?: boolean;
 }
 
 export interface UserProfile {
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return isSuperAdmin || !!profile?.permissions?.[permission];
     };
-    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments || !!profile?.permissions?.managePolicies || (profile?.role === 'sd' && profile?.dep === 'SS');
+    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments || !!profile?.permissions?.managePolicies || !!profile?.permissions?.manageReferrals || (profile?.role === 'sd' && profile?.dep === 'SS');
 
     const canAccessTasks = isLeader || hasPermission('manageTasks');
     const canAccessDashboard = isLeader || hasPermission('manageDashboard');

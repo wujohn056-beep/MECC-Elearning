@@ -12,12 +12,14 @@ import LearningHub from './pages/LearningHub';
 import Account from './pages/Account';
 import TeamTasks from './pages/TeamTasks';
 import PoliciesShowcase from './pages/PoliciesShowcase';
+import ReferralShowcase from './pages/ReferralShowcase';
 
 import UserManager from './pages/admin/UserManager';
 import CategoryManager from './pages/admin/CategoryManager';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CommentManager from './pages/admin/CommentManager';
 import PolicyManager from './pages/admin/PolicyManager';
+import ReferralManager from './pages/admin/ReferralManager';
 
 const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
 
@@ -37,6 +39,7 @@ function App() {
             <Route path="/" element={<Navigate to="/hub" replace />} />
             <Route path="/hub" element={<LearningHub />} />
             <Route path="/policies" element={<PoliciesShowcase />} />
+            <Route path="/referrals" element={<ReferralShowcase />} />
             <Route path="/account" element={<Account />} />
             <Route path="/team-tasks" element={
               <ProtectedRoute requireTaskAccess={true}>
@@ -66,6 +69,7 @@ function App() {
             <Route path="users" element={<UserManager />} />
             <Route path="comments" element={<CommentManager />} />
             <Route path="policies" element={<PolicyManager />} />
+            <Route path="referrals" element={<ReferralManager />} />
 
           </Route>
         </Routes>

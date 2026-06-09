@@ -36,6 +36,9 @@ export default function AdminLayout() {
         if (hasPermission('managePolicies')) {
             return <Navigate to="/admin/policies" replace />;
         }
+        if (hasPermission('manageReferrals')) {
+            return <Navigate to="/admin/referrals" replace />;
+        }
         if (hasPermission('manageRecordings')) {
             return <Navigate to="/admin/recordings" replace />;
         }
@@ -115,6 +118,9 @@ export default function AdminLayout() {
                     )}
                     {hasPermission('managePolicies') && (
                         <Link to="/admin/policies" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/policies')}>{t('admin_menu.policies', '政策运营')}</Link>
+                    )}
+                    {hasPermission('manageReferrals') && (
+                        <Link to="/admin/referrals" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/referrals')}>{t('admin_menu.referrals', '推荐素材管理')}</Link>
                     )}
                 </nav>
                 <div className="px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:pb-4 border-t border-white/10 space-y-2">

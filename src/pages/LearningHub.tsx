@@ -2680,7 +2680,7 @@ export default function LearningHub() {
     const [showAllLecturers, setShowAllLecturers] = useState(false);
     
     const allowedTabs = React.useMemo(() => {
-        const tabs: { type: 'kid' | 'adult' | 'ss' | 'leader'; label: string; gradient: string }[] = [];
+        const tabs: { type: 'kid' | 'adult' | 'ss' | 'leader' | 'referral'; label: string; gradient: string }[] = [];
         
         // 1. If super admin, they have access to all tabs
         if (profile?.role === 'super_admin') {
@@ -2688,6 +2688,7 @@ export default function LearningHub() {
             tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
             tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             return tabs;
         }
 
@@ -2697,6 +2698,7 @@ export default function LearningHub() {
             if (isLeader) {
                 tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
             }
+            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             return tabs;
         }
 
@@ -2705,6 +2707,11 @@ export default function LearningHub() {
         tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
         if (isLeader) {
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+        }
+        
+        // Show referral tab to CC department users (or anyone who has referral admin permission for preview)
+        if (profile?.dep === 'CC' || !!profile?.permissions?.manageReferrals) {
+            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
         }
         return tabs;
     }, [profile, isLeader, t]);
@@ -3320,7 +3327,15 @@ export default function LearningHub() {
                                     {allowedTabs.map(tab => (
                                         <button
                                             key={tab.type}
-                                            onClick={() => { setBusinessType(tab.type); setActiveTab('all'); setSelectedLecturer(''); }}
+                                            onClick={() => {
+                                                if (tab.type === 'referral') {
+                                                    navigate('/referrals');
+                                                } else {
+                                                    setBusinessType(tab.type);
+                                                    setActiveTab('all');
+                                                    setSelectedLecturer('');
+                                                }
+                                            }}
                                             className={`flex-1 md:flex-none px-4 md:px-6 py-2 md:py-2.5 rounded-full font-extrabold transition-all duration-300 text-xs sm:text-sm select-none cursor-pointer ${
                                                 businessType === tab.type 
                                                     ? `bg-gradient-to-r ${tab.gradient} text-white shadow-md shadow-slate-900/10 scale-[1.02] transform`
