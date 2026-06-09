@@ -754,6 +754,8 @@
         "save_success": "تم تحديث المادة بنجاح!",
         "add_success": "تم إنشاء المادة بنجاح!",
         "cat_save_success": "تم تحديث المجلد بنجاح!",
-        "cat_add_success": "تم إنشاء المجلد بنجاح!"
+        "cat_add_success": "تم إنشاء المجلد بنجاح!",
+        "parent_root_uncategorized": "[المجلد الرئيسي / غير مصنف]",
+        "parent_root_top": "[المجلد الرئيسي - مجلد المستوى الأعلى]"
     }
 }

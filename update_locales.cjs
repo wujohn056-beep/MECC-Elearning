@@ -154,7 +154,9 @@ const updates = {
             save_success: "保存素材成功！",
             add_success: "添加素材成功！",
             cat_save_success: "保存分类成功！",
-            cat_add_success: "添加分类成功！"
+            cat_add_success: "添加分类成功！",
+            parent_root_uncategorized: "[根目录 / 暂无归类]",
+            parent_root_top: "[根目录 - 作为顶级文件夹]"
         }
     },
     en: {
@@ -310,7 +312,9 @@ const updates = {
             save_success: "Material updated successfully!",
             add_success: "Material created successfully!",
             cat_save_success: "Folder updated successfully!",
-            cat_add_success: "Folder created successfully!"
+            cat_add_success: "Folder created successfully!",
+            parent_root_uncategorized: "[Root Directory / Uncategorized]",
+            parent_root_top: "[Root Directory - Top Level Folder]"
         }
     },
     ar: {
@@ -466,7 +470,9 @@ const updates = {
             save_success: "تم تحديث المادة بنجاح!",
             add_success: "تم إنشاء المادة بنجاح!",
             cat_save_success: "تم تحديث المجلد بنجاح!",
-            cat_add_success: "تم إنشاء المجلد بنجاح!"
+            cat_add_success: "تم إنشاء المجلد بنجاح!",
+            parent_root_uncategorized: "[المجلد الرئيسي / غير مصنف]",
+            parent_root_top: "[المجلد الرئيسي - مجلد المستوى الأعلى]"
         }
     }
 };

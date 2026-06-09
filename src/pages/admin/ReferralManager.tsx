@@ -622,7 +622,7 @@ export default function ReferralManager() {
                                         onChange={(e) => setCategoryId(e.target.value || null)}
                                         disabled={actionLoading}
                                     >
-                                        <option value="">📁 [根目录 / 暂无归类]</option>
+                                        <option value="">📁 {t('referral_manager.parent_root_uncategorized', '[根目录 / 暂无归类]')}</option>
                                         {nestedCatOptions.map(opt => (
                                             <option key={opt.id} value={opt.id}>
                                                 {"　".repeat(opt.level)}└── 📁 {opt.name}
@@ -852,7 +852,7 @@ export default function ReferralManager() {
                                     onChange={(e) => setDirParentId(e.target.value || null)}
                                     disabled={actionLoading}
                                 >
-                                    <option value="">📁 [根目录 - 作为顶级文件夹]</option>
+                                    <option value="">📁 {t('referral_manager.parent_root_top', '[根目录 - 作为顶级文件夹]')}</option>
                                     {nestedCatOptions
                                         .filter(opt => opt.id !== editingDirId) // Prevent circular linkage
                                         .map(opt => (

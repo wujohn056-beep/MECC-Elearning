@@ -770,6 +770,8 @@
         "save_success": "Material updated successfully!",
         "add_success": "Material created successfully!",
         "cat_save_success": "Folder updated successfully!",
-        "cat_add_success": "Folder created successfully!"
+        "cat_add_success": "Folder created successfully!",
+        "parent_root_uncategorized": "[Root Directory / Uncategorized]",
+        "parent_root_top": "[Root Directory - Top Level Folder]"
     }
 }
