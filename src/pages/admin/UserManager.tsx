@@ -41,11 +41,13 @@ interface UserRecord {
         manageTasks?: boolean;
         manageComments?: boolean;
         managePolicies?: boolean;
+        manageBrands?: boolean;
         manageReferrals?: boolean;
     };
     dingtalkUserId?: string;
     dingtalkSyncedAt?: string;
     policyScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
+    brandScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     identity?: string;
 }
 
@@ -72,8 +74,9 @@ export default function UserManager() {
     const [formData, setFormData] = useState({ 
         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
         dingtalkUserId: '',
-        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageReferrals: false },
+        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageBrands: false, manageReferrals: false },
         policyScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all',
+        brandScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all',
         identity: ''
     });
 
@@ -500,6 +503,7 @@ export default function UserManager() {
                         email: row.email || '',
                         dingtalkUserId: row.dingtalkUserId || null,
                         policyScope: 'all',
+                        brandScope: 'all',
                         identity: '',
                         createdAt: serverTimestamp()
                     });
@@ -734,9 +738,11 @@ export default function UserManager() {
                 manageTasks: !!u.permissions?.manageTasks,
                 manageComments: !!u.permissions?.manageComments,
                 managePolicies: !!u.permissions?.managePolicies,
+                manageBrands: !!u.permissions?.manageBrands,
                 manageReferrals: !!u.permissions?.manageReferrals
             },
             policyScope: u.policyScope || 'all',
+            brandScope: u.brandScope || 'all',
             identity: u.identity || ''
         });
         setSelectedUserId(u.id);
@@ -797,6 +803,7 @@ export default function UserManager() {
                     dingtalkUserId: formData.dingtalkUserId.trim() || null,
                     permissions: preservedPermissions,
                     policyScope: formData.policyScope || 'all',
+                    brandScope: formData.brandScope || 'all',
                     identity: formData.identity || null
                 });
                 fetchUsers();
@@ -844,9 +851,11 @@ export default function UserManager() {
                         manageTasks: false,
                         manageComments: false,
                         managePolicies: false,
+                        manageBrands: false,
                         manageReferrals: false
                     },
                     policyScope: formData.policyScope || 'all',
+                    brandScope: formData.brandScope || 'all',
                     identity: formData.identity || null,
                     createdAt: serverTimestamp()
                 });
@@ -892,8 +901,9 @@ export default function UserManager() {
                                     setFormData({ 
                                         crmId: '', email: '', role: 'user', sd: '', sm: '', tl: '', team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                         dingtalkUserId: '',
-                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageReferrals: false },
+                                        permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageBrands: false, manageReferrals: false },
                                         policyScope: 'all',
+                                        brandScope: 'all',
                                         identity: ''
                                     }); 
                                     setShowModal(true); 
@@ -967,7 +977,10 @@ export default function UserManager() {
                                             tl: profile?.role === 'tl' ? profile.crmId : '', 
                                             team: '', dep: defaultDep as 'CC' | 'SS' | 'functional',
                                             dingtalkUserId: '',
-                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageReferrals: false }
+                                            permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false, manageComments: false, managePolicies: false, manageBrands: false, manageReferrals: false },
+                                            policyScope: 'all',
+                                            brandScope: 'all',
+                                            identity: ''
                                         }); 
                                         setShowModal(true); 
                                     }} 
@@ -1409,6 +1422,15 @@ export default function UserManager() {
                                             <input 
                                                 type="checkbox" 
                                                 className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
+                                                checked={formData.permissions.manageBrands || false}
+                                                onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageBrands: e.target.checked}})}
+                                            />
+                                            {t('user_manager.perm_manage_brands', '市场品牌管理')}
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold"
                                                 checked={formData.permissions.manageReferrals || false}
                                                 onChange={e => setFormData({...formData, permissions: {...formData.permissions, manageReferrals: e.target.checked}})}
                                             />
@@ -1417,10 +1439,26 @@ export default function UserManager() {
                                     </div>
                                     {formData.permissions.managePolicies && (
                                         <div className="col-span-2 mt-2 p-3 bg-desert-gold/5 border border-desert-gold/25 rounded-xl space-y-1.5 animate-in slide-in-from-top-1 duration-200">
-                                            <label className="block text-xs font-bold text-deep-teal">{t('common.manage_scope_label', '管理所属业务团队范围')}</label>
+                                            <label className="block text-xs font-bold text-deep-teal">{t('common.manage_scope_label', '管理政策业务范围')}</label>
                                             <select 
                                                 value={formData.policyScope || 'all'}
                                                 onChange={e => setFormData({...formData, policyScope: e.target.value as any})}
+                                                className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700"
+                                            >
+                                                <option value="all">{t('common.all_business_option', '🌍 全部业务线 (all)')}</option>
+                                                <option value="KCC">{t('common.team_kcc_option', '🧒 KCC 团队 (JOHN / Niki)')}</option>
+                                                <option value="GCC">{t('common.team_gcc_option', '💼 GCC 团队 (IRIS)')}</option>
+                                                <option value="Adult">{t('common.team_adult_option', '👨 ACC 团队 (Alan / Chase)')}</option>
+                                                <option value="SS">{t('common.team_ss_option', '🎓 SS 团队 (Lily)')}</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    {formData.permissions.manageBrands && (
+                                        <div className="col-span-2 mt-2 p-3 bg-desert-gold/5 border border-desert-gold/25 rounded-xl space-y-1.5 animate-in slide-in-from-top-1 duration-200">
+                                            <label className="block text-xs font-bold text-deep-teal">{t('common.brand_manage_scope_label', '管理品牌业务范围')}</label>
+                                            <select 
+                                                value={formData.brandScope || 'all'}
+                                                onChange={e => setFormData({...formData, brandScope: e.target.value as any})}
                                                 className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700"
                                             >
                                                 <option value="all">{t('common.all_business_option', '🌍 全部业务线 (all)')}</option>

@@ -41,6 +41,7 @@ interface PolicyItem {
     directoryId: string | null;
     sortOrder: number;
     visible: boolean;
+    section?: 'policy' | 'brand';
     createdAt?: any;
     updatedAt?: any;
     updatedBy?: string;
@@ -52,6 +53,7 @@ interface PolicyDirectory {
     parentId: string | null;
     targetTeam: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     sortOrder: number;
+    section?: 'policy' | 'brand';
     createdAt?: any;
 }
 
@@ -75,11 +77,21 @@ export default function PolicyManager() {
     const { t } = useTranslation();
     const { hasPermission, profile } = useAuth();
     
+    const hasManagePolicies = hasPermission('managePolicies');
+    const hasManageBrands = hasPermission('manageBrands');
+
+    // Section Selector
+    const [activeSection, setActiveSection] = useState<'policy' | 'brand'>(() => {
+        if (hasPermission('managePolicies')) return 'policy';
+        if (hasPermission('manageBrands')) return 'brand';
+        return 'policy';
+    });
+
     // Scoped role assignment
     const adminScope = useMemo(() => {
         if (profile?.role === 'super_admin') return 'all';
-        return profile?.policyScope || 'all';
-    }, [profile]);
+        return (activeSection === 'policy' ? profile?.policyScope : profile?.brandScope) || 'all';
+    }, [profile, activeSection]);
 
     // State management
     const [policies, setPolicies] = useState<PolicyItem[]>([]);
@@ -127,7 +139,7 @@ export default function PolicyManager() {
     const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
-    if (!hasPermission('managePolicies')) {
+    if (!hasManagePolicies && !hasManageBrands) {
         return <Navigate to="/admin" replace />;
     }
 
@@ -156,6 +168,7 @@ export default function PolicyManager() {
                     directoryId: item.directoryId || null,
                     sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : 0,
                     visible: item.visible !== false,
+                    section: item.section || 'policy',
                     createdAt: item.createdAt,
                     updatedAt: item.updatedAt,
                     updatedBy: item.updatedBy
@@ -181,6 +194,7 @@ export default function PolicyManager() {
                     parentId: item.parentId || null,
                     targetTeam: item.targetTeam || 'all',
                     sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : 0,
+                    section: item.section || 'policy',
                     createdAt: item.createdAt
                 });
             });
@@ -215,16 +229,24 @@ export default function PolicyManager() {
         loadData();
     }, []);
 
+    const sectionPolicies = useMemo(() => {
+        return policies.filter(p => (p.section || 'policy') === activeSection);
+    }, [policies, activeSection]);
+
+    const sectionDirectories = useMemo(() => {
+        return directories.filter(d => (d.section || 'policy') === activeSection);
+    }, [directories, activeSection]);
+
     // Filter policies and directories based on admin boundary scope
     const filteredPolicies = useMemo(() => {
-        if (adminScope === 'all') return policies;
-        return policies.filter(p => p.targetTeam === adminScope);
-    }, [policies, adminScope]);
+        if (adminScope === 'all') return sectionPolicies;
+        return sectionPolicies.filter(p => p.targetTeam === adminScope);
+    }, [sectionPolicies, adminScope]);
 
     const filteredDirectories = useMemo(() => {
-        if (adminScope === 'all') return directories;
-        return directories.filter(d => d.targetTeam === adminScope);
-    }, [directories, adminScope]);
+        if (adminScope === 'all') return sectionDirectories;
+        return sectionDirectories.filter(d => d.targetTeam === adminScope);
+    }, [sectionDirectories, adminScope]);
 
     // Build indented hierarchy structure for selection dropdowns
     const nestedDirOptions = useMemo(() => {
@@ -524,13 +546,17 @@ export default function PolicyManager() {
                     targetTeam: selectedPolicyForPush.targetTeam,
                     targetType: pushTargetType,
                     selectedSds: selectedSdsForPush,
-                    webhookLang: pushWebhookLang
+                    webhookLang: pushWebhookLang,
+                    section: activeSection
                 })
             });
 
             const data = await response.json();
             if (response.ok && data.success) {
-                alert(t('policy_manager.push_success', '政策素材已成功推送至钉钉！'));
+                const successMsg = activeSection === 'brand' 
+                    ? t('policy_manager.brand_push_success', '品牌素材已成功推送至钉钉！') 
+                    : t('policy_manager.push_success', '政策素材已成功推送至钉钉！');
+                alert(successMsg);
                 setShowPushModal(false);
             } else {
                 throw new Error(data.error || t('policy_manager.push_fail', '推送到钉钉失败，请检查通道凭证或网络配置。'));
@@ -592,7 +618,8 @@ export default function PolicyManager() {
         setError(null);
         setSuccess(null);
 
-        const fileRef = ref(storage, `policies/${teamFolder}/${Date.now()}_${file.name}`);
+        const storageFolder = activeSection === 'brand' ? 'brands' : 'policies';
+        const fileRef = ref(storage, `${storageFolder}/${teamFolder}/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(fileRef, file);
 
         uploadTask.on('state_changed', 
@@ -647,7 +674,8 @@ export default function PolicyManager() {
 
             setUploading(true);
             setUploadProgress(0);
-            const fileRef = ref(storage, `policies/${teamFolder}/${Date.now()}_${uploadFile.name}`);
+            const storageFolder = activeSection === 'brand' ? 'brands' : 'policies';
+            const fileRef = ref(storage, `${storageFolder}/${teamFolder}/${Date.now()}_${uploadFile.name}`);
             const uploadTask = uploadBytesResumable(fileRef, uploadFile);
 
             uploadTask.on('state_changed', 
@@ -708,6 +736,7 @@ export default function PolicyManager() {
                 directoryId: directoryId || null,
                 sortOrder: Number(sortOrder) || 0,
                 visible,
+                section: activeSection,
                 updatedAt: serverTimestamp(),
                 updatedBy: profile?.crmId || 'admin'
             };
@@ -776,6 +805,7 @@ export default function PolicyManager() {
                 path,
                 targetTeam: finalTeam,
                 sortOrder: Number(dirSortOrder) || 0,
+                section: activeSection,
                 updatedAt: serverTimestamp(),
                 updatedBy: profile?.crmId || 'admin'
             };
@@ -954,17 +984,55 @@ export default function PolicyManager() {
 
     return (
         <div className="animate-in fade-in duration-500 space-y-8 pb-10">
+            {/* Section Switcher (if user has both managePolicies and manageBrands) */}
+            {hasManagePolicies && hasManageBrands && (
+                <div className="flex border-b border-gray-200/80 gap-1 select-none">
+                    <button 
+                        onClick={() => {
+                            setActiveSection('policy');
+                            setError(null);
+                            setSuccess(null);
+                            setActiveTab('policies');
+                        }}
+                        className={`px-6 py-3 font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+                            activeSection === 'policy' 
+                                ? 'border-deep-teal text-deep-teal bg-deep-teal/5 rounded-t-xl font-bold' 
+                                : 'border-transparent text-gray-500 hover:text-deep-teal hover:bg-gray-50/50'
+                        }`}
+                    >
+                        📘 {t('policy_manager.section_policy', '运营政策')}
+                    </button>
+                    <button 
+                        onClick={() => {
+                            setActiveSection('brand');
+                            setError(null);
+                            setSuccess(null);
+                            setActiveTab('policies');
+                        }}
+                        className={`px-6 py-3 font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+                            activeSection === 'brand' 
+                                ? 'border-deep-teal text-deep-teal bg-deep-teal/5 rounded-t-xl font-bold' 
+                                : 'border-transparent text-gray-500 hover:text-deep-teal hover:bg-gray-50/50'
+                        }`}
+                    >
+                        🎨 {t('policy_manager.section_brand', '市场品牌')}
+                    </button>
+                </div>
+            )}
+
             {/* Header info */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-deep-teal">
-                        {t('policy_manager.page_title', '运营政策与目录管理')}
+                        {activeSection === 'brand' ? t('policy_manager.brand_page_title', '市场品牌专栏管理') : t('policy_manager.page_title', '运营政策与目录管理')}
                         <span className="text-sm font-black ml-3 px-3 py-1 rounded-full bg-desert-gold/15 text-amber-700 border border-desert-gold/20 select-none">
                             {t('policy_manager.scope_isolated', '🔒 运营隔离')}: {adminScope === 'all' ? t('policy_manager.scope_all', '全局总管理员 (ALL)') : t('policy_manager.scope_scoped', '{{scope}} 运营专员', { scope: adminScope })}
                         </span>
                     </h1>
                     <p className="text-arabian-night/60 mt-1">
-                        {t('policy_manager.page_subtitle', '分团队维护销售激励方案与学习政策。您可以设置树形子目录，将不同激励和政策按文件夹分门别类展示。')}
+                        {activeSection === 'brand' 
+                            ? t('policy_manager.brand_page_subtitle', '分团队维护市场品牌物料、海报与宣导视频。您可以设置树形子目录，将不同品牌资源按文件夹分门别类展示。') 
+                            : t('policy_manager.page_subtitle', '分团队维护销售激励方案与学习政策。您可以设置树形子目录，将不同激励和政策按文件夹分门别类展示。')}
                     </p>
                 </div>
             </div>
@@ -984,7 +1052,7 @@ export default function PolicyManager() {
                     }`}
                 >
                     <FileText className="w-4 h-4" />
-                    {t('policy_manager.tab_publish', '政策文件资源发布')} ({filteredPolicies.length})
+                    {activeSection === 'brand' ? t('policy_manager.brand_tab_publish', '品牌物料资源发布') : t('policy_manager.tab_publish', '政策文件资源发布')} ({filteredPolicies.length})
                 </button>
                 <button 
                     onClick={() => {
@@ -1025,7 +1093,10 @@ export default function PolicyManager() {
                             <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20 bg-white/40 sticky top-8">
                                 <h2 className="text-xl font-bold text-deep-teal mb-6 flex items-center gap-2 border-b border-deep-teal/10 pb-3">
                                     {editingId ? <Edit2 className="text-desert-gold h-5 w-5" /> : <Plus className="text-desert-gold h-5 w-5" />}
-                                    {editingId ? t('policy_manager.edit_form_title', '编辑政策文件') : t('policy_manager.create_form_title', '发布新政策文件')}
+                                    {editingId 
+                                        ? (activeSection === 'brand' ? t('policy_manager.brand_edit_form_title', '编辑品牌物料') : t('policy_manager.edit_form_title', '编辑政策文件')) 
+                                        : (activeSection === 'brand' ? t('policy_manager.brand_create_form_title', '发布新品牌物料') : t('policy_manager.create_form_title', '发布新政策文件'))
+                                    }
                                 </h2>
                                 
                                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -1035,7 +1106,7 @@ export default function PolicyManager() {
                                             type="text"
                                             required
                                             className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80"
-                                            placeholder={t('policy_manager.title_placeholder', '如：2026年6月KCC新版销售提成激励')}
+                                            placeholder={activeSection === 'brand' ? t('policy_manager.brand_title_placeholder', '如：2026年6月GCC品牌宣传海报') : t('policy_manager.title_placeholder', '如：2026年6月KCC新版销售提成激励')}
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
                                             disabled={actionLoading}
@@ -1043,11 +1114,13 @@ export default function PolicyManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.form_desc', '政策简介（可选）')}</label>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">
+                                            {activeSection === 'brand' ? t('policy_manager.brand_form_desc', '物料简介（可选）') : t('policy_manager.form_desc', '政策简介（可选）')}
+                                        </label>
                                         <textarea
                                             rows={2}
                                             className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80"
-                                            placeholder={t('policy_manager.desc_placeholder', '简短介绍此政策的核心内容...')}
+                                            placeholder={activeSection === 'brand' ? t('policy_manager.brand_desc_placeholder', '简短介绍此品牌物料的核心内容...') : t('policy_manager.desc_placeholder', '简短介绍此政策的核心内容...')}
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                             disabled={actionLoading}
@@ -1240,7 +1313,7 @@ export default function PolicyManager() {
                             <div className="glass-panel rounded-2xl p-6 border border-white/40 bg-white/40 min-h-[500px]">
                                 <h2 className="text-xl font-bold text-deep-teal mb-6 flex items-center gap-2 border-b border-deep-teal/10 pb-3">
                                     <FileText className="text-desert-gold h-5 w-5" />
-                                    {t('policy_manager.list_title', '已发布文件列表')} ({filteredPolicies.length})
+                                    {activeSection === 'brand' ? t('policy_manager.brand_list_title', '已发布品牌物料列表') : t('policy_manager.list_title', '已发布文件列表')} ({filteredPolicies.length})
                                 </h2>
 
                                 {loading ? (
@@ -1250,7 +1323,12 @@ export default function PolicyManager() {
                                 ) : filteredPolicies.length === 0 ? (
                                     <div className="text-center py-24 text-arabian-night/40">
                                         <FileText className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                                        <p className="font-medium">{t('policy_manager.no_policies_desc', '当前范围无运营政策，请使用左侧表单发布第一条政策吧')}</p>
+                                        <p className="font-medium">
+                                            {activeSection === 'brand' 
+                                                ? t('policy_manager.no_brands_desc', '当前范围无市场品牌物料，请使用左侧表单发布第一条品牌物料吧')
+                                                : t('policy_manager.no_policies_desc', '当前范围无运营政策，请使用左侧表单发布第一条政策吧')
+                                            }
+                                        </p>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
@@ -1561,7 +1639,7 @@ export default function PolicyManager() {
                             <div className="flex items-center gap-2">
                                 <Send className="h-5 w-5 text-deep-teal" />
                                 <h3 className="text-lg font-bold text-arabian-night">
-                                    {t('policy_manager.push_modal_title', '推送政策/激励至钉钉')}
+                                    {activeSection === 'brand' ? t('policy_manager.brand_push_modal_title', '推送品牌物料至钉钉') : t('policy_manager.push_modal_title', '推送政策/激励至钉钉')}
                                 </h3>
                             </div>
                             <button 

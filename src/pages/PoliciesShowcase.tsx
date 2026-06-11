@@ -30,6 +30,7 @@ interface PolicyItem {
     directoryId: string | null;
     sortOrder: number;
     visible: boolean;
+    section?: 'policy' | 'brand';
     createdAt?: any;
     updatedAt?: any;
 }
@@ -40,6 +41,7 @@ interface PolicyDirectory {
     parentId: string | null;
     targetTeam: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     sortOrder: number;
+    section?: 'policy' | 'brand';
 }
 
 // Fallback mapper for legacy policies that still use businessType
@@ -71,7 +73,10 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                 <div className="p-6 border-b border-gray-100 dark:border-slate-800/80 pr-16 bg-white/50 dark:bg-slate-950/20">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-desert-gold/15 text-[#a88216] border border-desert-gold/20 select-none">
-                            {policy.type === 'document' ? t('policy_showcase.doc_policy', '📄 文档政策') : policy.type === 'poster' ? t('policy_showcase.poster_incentive', '🖼️ 激励海报') : t('policy_showcase.video_promo', '🎥 宣导视频')}
+                            {policy.section === 'brand' 
+                                ? (policy.type === 'document' ? t('policy_showcase.brand_doc_badge', '📄 品牌文档') : policy.type === 'poster' ? t('policy_showcase.brand_poster_badge', '🖼️ 品牌海报') : t('policy_showcase.brand_video_badge', '🎥 宣导视频'))
+                                : (policy.type === 'document' ? t('policy_showcase.doc_policy', '📄 文档政策') : policy.type === 'poster' ? t('policy_showcase.poster_incentive', '🖼️ 激励海报') : t('policy_showcase.video_promo', '🎥 宣导视频'))
+                            }
                         </span>
                         <span className="text-[10px] px-2 py-0.5 bg-deep-teal/10 text-deep-teal font-bold rounded-full">
                             {policy.targetTeam === 'all' ? t('policy_showcase.visible_to_all', '全部可见') : t('policy_showcase.team_exclusive', '{{team}} 团队专属', { team: policy.targetTeam })}
@@ -118,8 +123,12 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                                 <FileText className="w-10 h-10 text-blue-500" />
                             </div>
                             <div className="space-y-2 max-w-md">
-                                <h4 className="text-white font-bold text-lg">{t('policy_showcase.doc_material_title', '运营文档政策资料')}</h4>
-                                <p className="text-slate-400 text-xs leading-relaxed">{t('policy_showcase.doc_material_desc', '该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。')}</p>
+                                <h4 className="text-white font-bold text-lg">
+                                    {policy.section === 'brand' ? t('policy_showcase.brand_doc_material_title', '品牌文档物料资料') : t('policy_showcase.doc_material_title', '运营文档政策资料')}
+                                </h4>
+                                <p className="text-slate-400 text-xs leading-relaxed">
+                                    {policy.section === 'brand' ? t('policy_showcase.brand_doc_material_desc', '该品牌物料为正式发布文档。点击下方按钮打开并仔细阅读物料细则。') : t('policy_showcase.doc_material_desc', '该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。')}
+                                </p>
                             </div>
                             <a 
                                 href={policy.url} 
@@ -128,7 +137,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                                 className="bg-gradient-to-r from-deep-teal to-[#005f66] hover:shadow-[0_4px_15px_rgba(0,109,119,0.3)] text-white px-8 py-3.5 rounded-xl font-extrabold shadow-md flex items-center gap-2 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer border border-white/10"
                             >
                                 <BookOpen className="w-5 h-5 text-desert-gold" />
-                                {t('policy_showcase.open_doc', '打开政策文档')}
+                                {policy.section === 'brand' ? t('policy_showcase.brand_open_doc', '打开品牌文档') : t('policy_showcase.open_doc', '打开政策文档')}
                             </a>
                         </div>
                     )}
@@ -148,11 +157,11 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
     );
 };
 
-export default function PoliciesShowcase() {
+export default function PoliciesShowcase({ section = 'policy' }: { section?: 'policy' | 'brand' }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { profile, userTeam } = useAuth();
-    const isSuperAdmin = profile?.role === 'super_admin' || profile?.policyScope === 'all';
+    const isSuperAdmin = profile?.role === 'super_admin' || (section === 'policy' ? profile?.policyScope === 'all' : profile?.brandScope === 'all');
 
     // State
     const [policies, setPolicies] = useState<PolicyItem[]>([]);
@@ -171,8 +180,10 @@ export default function PoliciesShowcase() {
 
     const activeTeam = useMemo(() => {
         if (isSuperAdmin) return selectedTeamTab;
+        const targetScope = section === 'policy' ? profile?.policyScope : profile?.brandScope;
+        if (targetScope && targetScope !== 'all') return targetScope;
         return userTeam !== 'other' ? userTeam : 'KCC';
-    }, [isSuperAdmin, selectedTeamTab, userTeam]);
+    }, [isSuperAdmin, selectedTeamTab, userTeam, profile, section]);
 
     // Load policies & directories
     useEffect(() => {
@@ -195,7 +206,8 @@ export default function PoliciesShowcase() {
                         targetTeam: data.targetTeam || mapBusinessTypeToTeam(data.businessType || 'all'),
                         directoryId: data.directoryId || null,
                         sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
-                        visible: data.visible !== false
+                        visible: data.visible !== false,
+                        section: data.section || 'policy'
                     });
                 }
             });
@@ -217,7 +229,8 @@ export default function PoliciesShowcase() {
                     name: data.name || '',
                     parentId: data.parentId || null,
                     targetTeam: data.targetTeam || 'all',
-                    sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0
+                    sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
+                    section: data.section || 'policy'
                 });
             });
             setDirectories(list);
@@ -237,15 +250,23 @@ export default function PoliciesShowcase() {
     }, [activeTeam]);
 
     // Scoped list filtering: targetTeam must match activeTeam or be 'all'
+    const sectionPolicies = useMemo(() => {
+        return policies.filter(p => (p.section || 'policy') === section);
+    }, [policies, section]);
+
+    const sectionDirectories = useMemo(() => {
+        return directories.filter(d => (d.section || 'policy') === section);
+    }, [directories, section]);
+
     const visiblePolicies = useMemo(() => {
-        if (activeTeam === 'all') return policies;
-        return policies.filter(p => p.targetTeam === 'all' || p.targetTeam === activeTeam);
-    }, [policies, activeTeam]);
+        if (activeTeam === 'all') return sectionPolicies;
+        return sectionPolicies.filter(p => p.targetTeam === 'all' || p.targetTeam === activeTeam);
+    }, [sectionPolicies, activeTeam]);
 
     const visibleDirectories = useMemo(() => {
-        if (activeTeam === 'all') return directories;
-        return directories.filter(d => d.targetTeam === 'all' || d.targetTeam === activeTeam);
-    }, [directories, activeTeam]);
+        if (activeTeam === 'all') return sectionDirectories;
+        return sectionDirectories.filter(d => d.targetTeam === 'all' || d.targetTeam === activeTeam);
+    }, [sectionDirectories, activeTeam]);
 
     // Current level contents
     const foldersInCurrentLevel = useMemo(() => {
@@ -296,10 +317,16 @@ export default function PoliciesShowcase() {
                     </button>
                     <div>
                         <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight">
-                            {t('policy_showcase.title', '运营政策与激励中心')}
+                            {section === 'brand' ? t('policy_showcase.brand_title', '市场品牌专题中心') : t('policy_showcase.title', '运营运营政策与激励中心')}
                         </h1>
                         <p className="text-arabian-night/60 text-sm mt-1">
-                            {!isSuperAdmin ? t('policy_showcase.subtitle_user', '{{team}} 专属政策与方案浏览', { team: getTeamLabel(activeTeam) }) : t('policy_showcase.subtitle_admin', '管理权限：全局政策多中心预览')}
+                            {!isSuperAdmin 
+                                ? (section === 'brand' 
+                                    ? t('policy_showcase.brand_subtitle_user', '{{team}} 专属市场品牌物料浏览', { team: getTeamLabel(activeTeam) }) 
+                                    : t('policy_showcase.subtitle_user', '{{team}} 专属政策与方案浏览', { team: getTeamLabel(activeTeam) })) 
+                                : (section === 'brand' 
+                                    ? t('policy_showcase.brand_subtitle_admin', '管理权限：全局市场品牌多中心预览') 
+                                    : t('policy_showcase.subtitle_admin', '管理权限：全局政策多中心预览'))}
                         </p>
                     </div>
                 </div>
@@ -356,7 +383,9 @@ export default function PoliciesShowcase() {
                         {t('policy_showcase.empty_dir_title', '本目录暂无内容')}
                     </h3>
                     <p className="text-xs text-arabian-night/50">
-                        {t('policy_showcase.empty_dir_desc', '运营管理员尚未在此级目录内发布相关的政策、海报或宣导视频。')}
+                        {section === 'brand'
+                            ? t('policy_showcase.brand_empty_dir_desc', '管理员尚未在此级目录内发布相关的品牌海报、宣导视频或文档物料。')
+                            : t('policy_showcase.empty_dir_desc', '运营管理员尚未在此级目录内发布相关的政策、海报或宣导视频。')}
                     </p>
                     {currentFolderId !== null && (
                         <button 
@@ -400,7 +429,11 @@ export default function PoliciesShowcase() {
                     {/* Files grid */}
                     {policiesInCurrentLevel.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 select-none">{t('policy_showcase.files_title', '政策文件与激励 ({{count}})', { count: policiesInCurrentLevel.length })}</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 select-none">
+                                {section === 'brand' 
+                                    ? t('policy_showcase.brand_files_title', '品牌物料文件 ({{count}})', { count: policiesInCurrentLevel.length })
+                                    : t('policy_showcase.files_title', '政策文件与激励 ({{count}})', { count: policiesInCurrentLevel.length })}
+                            </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {policiesInCurrentLevel.map(policy => {
                                     const isVideo = policy.type === 'video';

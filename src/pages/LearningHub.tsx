@@ -2561,7 +2561,10 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                 <div className="p-6 border-b border-gray-100 dark:border-slate-800/80 pr-16 bg-white/50 dark:bg-slate-950/20">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-desert-gold/15 text-[#a88216] border border-desert-gold/20 select-none">
-                            {policy.type === 'document' ? t('policy_showcase.doc_policy', '📄 文档政策') : policy.type === 'poster' ? t('policy_showcase.poster_incentive', '🖼️ 激励海报') : t('policy_showcase.video_promo', '🎥 宣导视频')}
+                            {policy.section === 'brand'
+                                ? (policy.type === 'document' ? t('policy_showcase.brand_doc_badge', '📄 品牌文档') : policy.type === 'poster' ? t('policy_showcase.brand_poster_badge', '🖼️ 品牌海报') : t('policy_showcase.brand_video_badge', '🎥 宣导视频'))
+                                : (policy.type === 'document' ? t('policy_showcase.doc_policy', '📄 文档政策') : policy.type === 'poster' ? t('policy_showcase.poster_incentive', '🖼️ 激励海报') : t('policy_showcase.video_promo', '🎥 宣导视频'))
+                            }
                         </span>
                         <span className="text-[10px] px-2 py-0.5 bg-deep-teal/10 text-deep-teal font-bold rounded-full">
                             {policy.targetTeam ? (
@@ -2622,8 +2625,12 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                                 <FileText className="w-10 h-10 text-blue-500" />
                             </div>
                             <div className="space-y-2 max-w-md">
-                                <h4 className="text-white font-bold text-lg">{t('policy_showcase.doc_material_title', '运营文档政策资料')}</h4>
-                                <p className="text-slate-400 text-xs leading-relaxed">{t('policy_showcase.doc_material_desc', '该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。')}</p>
+                                <h4 className="text-white font-bold text-lg">
+                                    {policy.section === 'brand' ? t('policy_showcase.brand_doc_material_title', '品牌文档物料资料') : t('policy_showcase.doc_material_title', '运营文档政策资料')}
+                                </h4>
+                                <p className="text-slate-400 text-xs leading-relaxed">
+                                    {policy.section === 'brand' ? t('policy_showcase.brand_doc_material_desc', '该品牌物料为正式发布文档。点击下方按钮打开并仔细阅读物料细则。') : t('policy_showcase.doc_material_desc', '该政策为正式发布文档（通常为PDF或专用政策公告网页）。点击下方按钮打开并仔细研读政策细则。')}
+                                </p>
                             </div>
                             <a 
                                 href={policy.url} 
@@ -2632,7 +2639,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
                                 className="bg-gradient-to-r from-deep-teal to-[#005f66] hover:shadow-[0_4px_15px_rgba(0,109,119,0.3)] text-white px-8 py-3.5 rounded-xl font-extrabold shadow-md flex items-center gap-2 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer border border-white/10"
                             >
                                 <BookOpen className="w-5 h-5 text-desert-gold" />
-                                {t('policy_showcase.open_doc', '打开政策文档')}
+                                {policy.section === 'brand' ? t('policy_showcase.brand_open_doc', '打开品牌文档') : t('policy_showcase.open_doc', '打开政策文档')}
                             </a>
                         </div>
                     )}
@@ -2977,6 +2984,8 @@ export default function LearningHub() {
         const isSuperAdmin = profile?.role === 'super_admin';
 
         return policies.filter(p => {
+            if ((p.section || 'policy') !== 'policy') return false;
+
             const team = p.targetTeam || mapBusinessTypeToTeam(p.businessType || 'all');
             
             // 1. Business line tab filtering
@@ -2996,6 +3005,55 @@ export default function LearningHub() {
             // 2. User role/team permission filtering
             if (isSuperAdmin) {
                 return true;
+            }
+
+            const targetScope = profile?.policyScope;
+            if (targetScope && targetScope !== 'all') {
+                return team === 'all' || team === targetScope;
+            }
+
+            return team === 'all' || team === userTeam;
+        });
+    }, [policies, userTeam, profile, businessType]);
+
+    const filteredBrandsForHub = React.useMemo(() => {
+        const mapBusinessTypeToTeam = (bt: string) => {
+            const type = String(bt || '').toLowerCase();
+            if (type === 'kid') return 'KCC';
+            if (type === 'adult') return 'Adult';
+            if (type === 'ss') return 'SS';
+            return 'all';
+        };
+        
+        const isSuperAdmin = profile?.role === 'super_admin';
+
+        return policies.filter(p => {
+            if (p.section !== 'brand') return false;
+
+            const team = p.targetTeam || mapBusinessTypeToTeam(p.businessType || 'all');
+            
+            // 1. Business line tab filtering
+            let matchesBusinessTab = false;
+            if (businessType === 'kid') {
+                matchesBusinessTab = (team === 'KCC' || team === 'GCC' || team === 'all');
+            } else if (businessType === 'adult') {
+                matchesBusinessTab = (team === 'Adult' || team === 'all');
+            } else if (businessType === 'ss') {
+                matchesBusinessTab = (team === 'SS' || team === 'all');
+            } else if (businessType === 'leader') {
+                matchesBusinessTab = (team === 'all');
+            }
+
+            if (!matchesBusinessTab) return false;
+
+            // 2. User role/team permission filtering
+            if (isSuperAdmin) {
+                return true;
+            }
+
+            const targetScope = profile?.brandScope;
+            if (targetScope && targetScope !== 'all') {
+                return team === 'all' || team === targetScope;
             }
 
             return team === 'all' || team === userTeam;
@@ -3500,152 +3558,282 @@ export default function LearningHub() {
                     </div>
                 )}
 
-                {/* Operations Policy Showcase Section */}
+                {/* Operations Policy & Marketing Brand Side-by-side Showcase Section */}
                 {!taskId && !targetRecordingId && (
-                    <div className="mt-8 relative z-10 animate-in fade-in duration-700">
-                        {/* Title Header with a glowing gradient badge and View All button */}
-                        <div className="flex items-center justify-between mb-5 px-1">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-desert-gold to-amber-500 flex items-center justify-center shadow-md shrink-0">
-                                    <Sparkles className="h-5 w-5 text-white animate-pulse" />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 relative z-10 animate-in fade-in duration-700">
+                        {/* Left Column: Operations Policy Showcase */}
+                        <div>
+                            {/* Title Header with a glowing gradient badge and View All button */}
+                            <div className="flex items-center justify-between mb-5 px-1">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-desert-gold to-amber-500 flex items-center justify-center shadow-md shrink-0">
+                                        <Sparkles className="h-5 w-5 text-white animate-pulse" />
+                                    </div>
+                                    <div>
+                                        <h3 className={`font-black text-base sm:text-lg tracking-tight ${
+                                            businessType === 'leader' ? 'text-white' : 'text-slate-800'
+                                        }`}>
+                                            {t('learning_hub.operations_policies_title', '运营政策与激励展示')}
+                                        </h3>
+                                        <p className={`text-xs ${
+                                            businessType === 'leader' ? 'text-white/50' : 'text-slate-400'
+                                        }`}>
+                                            {t('learning_hub.operations_policies_desc', '最新销售激励方案与运营规范，一键掌握')}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className={`font-black text-lg sm:text-xl tracking-tight ${
-                                        businessType === 'leader' ? 'text-white' : 'text-slate-800'
-                                    }`}>
-                                        {t('learning_hub.operations_policies_title', '运营政策与激励展示')}
-                                    </h3>
-                                    <p className={`text-xs ${
-                                        businessType === 'leader' ? 'text-white/50' : 'text-slate-400'
-                                    }`}>
-                                        {t('learning_hub.operations_policies_desc', '最新销售激励方案与运营规范，一键掌握')}
-                                    </p>
-                                </div>
+
+                                {/* View All Button */}
+                                <button
+                                    onClick={() => navigate('/policies')}
+                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-black transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm ${
+                                        businessType === 'leader'
+                                            ? 'bg-white/10 hover:bg-white/20 text-desert-gold border border-desert-gold/30'
+                                            : 'bg-white hover:bg-gray-50 text-deep-teal border border-gray-150'
+                                    }`}
+                                >
+                                    {t('learning_hub.view_all_policies', '查看全部')}
+                                    <span className="text-[10px] sm:text-xs font-black">→</span>
+                                </button>
                             </div>
 
-                            {/* View All Button */}
-                            <button
-                                onClick={() => navigate('/policies')}
-                                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm ${
-                                    businessType === 'leader'
-                                        ? 'bg-white/10 hover:bg-white/20 text-desert-gold border border-desert-gold/30'
-                                        : 'bg-white hover:bg-gray-50 text-deep-teal border border-gray-150'
-                                }`}
-                            >
-                                {t('learning_hub.view_all_policies', '查看全部')}
-                                <span className="text-[10px] sm:text-xs font-black">→</span>
-                            </button>
+                            {/* Showcase List */}
+                            {filteredPoliciesForHub.length === 0 ? (
+                                <div className="p-8 rounded-2xl border border-gray-100 bg-white/40 text-slate-450 text-center transition-all min-h-[178px] flex flex-col justify-center">
+                                    <FileText className="h-10 w-10 mx-auto mb-2.5 opacity-20 text-deep-teal" />
+                                    <p className="text-xs font-bold">{t('learning_hub.no_policies_showcase', '暂无本业务线相关的运营政策')}</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    {filteredPoliciesForHub
+                                        .slice(0, 2) // Show top 2 items
+                                        .map((policy) => {
+                                            const isVideo = policy.type === 'video';
+                                            const isPoster = policy.type === 'poster';
+
+                                            return (
+                                                <div 
+                                                    key={policy.id}
+                                                    onClick={() => setActivePolicyItem(policy)}
+                                                    className={`group cursor-pointer glass-panel rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lg flex flex-col ${
+                                                        businessType === 'leader'
+                                                            ? 'border-desert-gold/25 hover:border-desert-gold/50 bg-teal-950/20 hover:bg-teal-950/30'
+                                                            : 'border-white/60 hover:border-desert-gold/30 bg-white/60 hover:bg-white/90 shadow-sm'
+                                                    }`}
+                                                >
+                                                    {/* Preview Area */}
+                                                    <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
+                                                        {isPoster ? (
+                                                            <img 
+                                                                src={policy.url} 
+                                                                alt={policy.title} 
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : isVideo ? (
+                                                            <>
+                                                                {policy.thumbnailUrl ? (
+                                                                    <img 
+                                                                        src={policy.thumbnailUrl} 
+                                                                        alt={policy.title} 
+                                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 to-red-950/80 flex items-center justify-center">
+                                                                        <VideoIcon className="h-10 w-10 text-red-500/80 group-hover:scale-110 transition-transform" />
+                                                                    </div>
+                                                                )}
+                                                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/45 transition-colors z-10 flex items-center justify-center">
+                                                                    <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center transform group-hover:scale-110 transition-all shadow-md">
+                                                                        <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+                                                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                                                                        <FileText className="h-5 w-5 text-blue-400" />
+                                                                    </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Format Tag */}
+                                                        <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
+                                                            {policy.type === 'document' ? t('policy_showcase.type_doc_badge', '📄 文档') : policy.type === 'poster' ? t('policy_showcase.type_poster_badge', '🖼️ 海报') : t('policy_showcase.type_video_badge', '🎥 视频')}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Text Info */}
+                                                    <div className="p-4 flex-1 flex flex-col justify-between">
+                                                        <div>
+                                                            <h4 className={`font-black text-sm line-clamp-1 group-hover:text-desert-gold transition-colors ${
+                                                                businessType === 'leader' ? 'text-white' : 'text-slate-800'
+                                                            }`}>
+                                                                {policy.title}
+                                                            </h4>
+                                                            {policy.description && (
+                                                                <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${
+                                                                    businessType === 'leader' ? 'text-white/50' : 'text-slate-500'
+                                                                }`}>
+                                                                    {policy.description}
+                                                                </p>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Action footer */}
+                                                        <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-white/5">
+                                                            <span className={`text-[10px] font-bold ${
+                                                                businessType === 'leader' ? 'text-white/30' : 'text-slate-400'
+                                                            }`}>
+                                                                {t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}
+                                                            </span>
+                                                            <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
+                                                                {policy.type === 'document' ? t('policy_showcase.action_read', '立即阅读') : policy.type === 'poster' ? t('policy_showcase.action_view_poster', '查看海报') : t('policy_showcase.action_play_video', '播放视频')} →
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            )}
                         </div>
 
-                        {/* Showcase List */}
-                        {filteredPoliciesForHub.length === 0 ? (
-                            <div className="p-8 rounded-2xl border border-gray-100 bg-white/40 text-slate-450 text-center transition-all">
-                                <FileText className="h-10 w-10 mx-auto mb-2.5 opacity-20" />
-                                <p className="text-xs font-bold">{t('learning_hub.no_policies_showcase', '暂无本业务线相关的运营政策')}</p>
+                        {/* Right Column: Marketing Brand Showcase */}
+                        <div>
+                            {/* Title Header with a glowing gradient badge and View All button */}
+                            <div className="flex items-center justify-between mb-5 px-1">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-500 flex items-center justify-center shadow-md shrink-0">
+                                        <ImageIcon className="h-5 w-5 text-white animate-pulse" />
+                                    </div>
+                                    <div>
+                                        <h3 className={`font-black text-base sm:text-lg tracking-tight ${
+                                            businessType === 'leader' ? 'text-white' : 'text-slate-800'
+                                        }`}>
+                                            {t('learning_hub.marketing_brand_title', '市场品牌专栏')}
+                                        </h3>
+                                        <p className={`text-xs ${
+                                            businessType === 'leader' ? 'text-white/50' : 'text-slate-400'
+                                        }`}>
+                                            {t('learning_hub.marketing_brand_desc', '品牌视觉物料与宣传宣导海报，一键掌握')}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* View All Button */}
+                                <button
+                                    onClick={() => navigate('/brands')}
+                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-black transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm ${
+                                        businessType === 'leader'
+                                            ? 'bg-white/10 hover:bg-white/20 text-desert-gold border border-desert-gold/30'
+                                            : 'bg-white hover:bg-gray-50 text-deep-teal border border-gray-150'
+                                    }`}
+                                >
+                                    {t('learning_hub.view_all_brands', '查看全部')}
+                                    <span className="text-[10px] sm:text-xs font-black">→</span>
+                                </button>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {filteredPoliciesForHub
-                                    .slice(0, 4) // Show top 4 items on the hub
-                                    .map((policy, idx) => {
-                                        const isVideo = policy.type === 'video';
-                                        const isPoster = policy.type === 'poster';
 
-                                        // Exactly 1 row responsive visibility classes:
-                                        // Index 0: always flex
-                                        // Index 1: hidden sm:flex
-                                        // Index 2: hidden md:flex
-                                        // Index 3: hidden lg:flex
-                                        let responsiveClass = '';
-                                        if (idx === 1) responsiveClass = 'hidden sm:flex';
-                                        else if (idx === 2) responsiveClass = 'hidden md:flex';
-                                        else if (idx === 3) responsiveClass = 'hidden lg:flex';
+                            {/* Showcase List */}
+                            {filteredBrandsForHub.length === 0 ? (
+                                <div className="p-8 rounded-2xl border border-gray-100 bg-white/40 text-slate-450 text-center transition-all min-h-[178px] flex flex-col justify-center">
+                                    <ImageIcon className="h-10 w-10 mx-auto mb-2.5 opacity-20 text-deep-teal" />
+                                    <p className="text-xs font-bold">{t('learning_hub.no_brands_showcase', '暂无本业务线相关的品牌物料')}</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    {filteredBrandsForHub
+                                        .slice(0, 2) // Show top 2 items
+                                        .map((policy) => {
+                                            const isVideo = policy.type === 'video';
+                                            const isPoster = policy.type === 'poster';
 
-                                        return (
-                                            <div 
-                                                key={policy.id}
-                                                onClick={() => setActivePolicyItem(policy)}
-                                                className={`group cursor-pointer glass-panel rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lg flex flex-col ${responsiveClass} ${
-                                                    businessType === 'leader'
-                                                        ? 'border-desert-gold/25 hover:border-desert-gold/50 bg-teal-950/20 hover:bg-teal-950/30'
-                                                        : 'border-white/60 hover:border-desert-gold/30 bg-white/60 hover:bg-white/90 shadow-sm'
-                                                }`}
-                                            >
-                                                {/* Preview Area */}
-                                                <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
-                                                    {isPoster ? (
-                                                        <img 
-                                                            src={policy.url} 
-                                                            alt={policy.title} 
-                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                        />
-                                                    ) : isVideo ? (
-                                                        <>
-                                                            {policy.thumbnailUrl ? (
-                                                                <img 
-                                                                    src={policy.thumbnailUrl} 
-                                                                    alt={policy.title} 
-                                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                                />
-                                                            ) : (
-                                                                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 to-red-950/80 flex items-center justify-center">
-                                                                    <VideoIcon className="h-10 w-10 text-red-500/80 group-hover:scale-110 transition-transform" />
+                                            return (
+                                                <div 
+                                                    key={policy.id}
+                                                    onClick={() => setActivePolicyItem(policy)}
+                                                    className={`group cursor-pointer glass-panel rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lg flex flex-col ${
+                                                        businessType === 'leader'
+                                                            ? 'border-desert-gold/25 hover:border-desert-gold/50 bg-teal-950/20 hover:bg-teal-950/30'
+                                                            : 'border-white/60 hover:border-desert-gold/30 bg-white/60 hover:bg-white/90 shadow-sm'
+                                                    }`}
+                                                >
+                                                    {/* Preview Area */}
+                                                    <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
+                                                        {isPoster ? (
+                                                            <img 
+                                                                src={policy.url} 
+                                                                alt={policy.title} 
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : isVideo ? (
+                                                            <>
+                                                                {policy.thumbnailUrl ? (
+                                                                    <img 
+                                                                        src={policy.thumbnailUrl} 
+                                                                        alt={policy.title} 
+                                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 to-red-950/80 flex items-center justify-center">
+                                                                        <VideoIcon className="h-10 w-10 text-red-500/80 group-hover:scale-110 transition-transform" />
+                                                                    </div>
+                                                                )}
+                                                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/45 transition-colors z-10 flex items-center justify-center">
+                                                                    <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center transform group-hover:scale-110 transition-all shadow-md">
+                                                                        <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                                                    </div>
                                                                 </div>
-                                                            )}
-                                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/45 transition-colors z-10 flex items-center justify-center">
-                                                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center transform group-hover:scale-110 transition-all shadow-md">
-                                                                    <Play className="w-4 h-4 text-white fill-white ml-0.5" />
-                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+                                                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                                                                        <FileText className="h-5 w-5 text-blue-400" />
+                                                                    </div>
                                                             </div>
-                                                        </>
-                                                    ) : (
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
-                                                            <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
-                                                                    <FileText className="h-5 w-5 text-blue-400" />
-                                                                </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Format Tag */}
-                                                    <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
-                                                        {policy.type === 'document' ? t('policy_showcase.type_doc_badge', '📄 文档') : policy.type === 'poster' ? t('policy_showcase.type_poster_badge', '🖼️ 海报') : t('policy_showcase.type_video_badge', '🎥 视频')}
-                                                    </span>
-                                                </div>
-
-                                                {/* Text Info */}
-                                                <div className="p-4 flex-1 flex flex-col justify-between">
-                                                    <div>
-                                                        <h4 className={`font-black text-sm line-clamp-1 group-hover:text-desert-gold transition-colors ${
-                                                            businessType === 'leader' ? 'text-white' : 'text-slate-800'
-                                                        }`}>
-                                                            {policy.title}
-                                                        </h4>
-                                                        {policy.description && (
-                                                            <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${
-                                                                businessType === 'leader' ? 'text-white/50' : 'text-slate-500'
-                                                            }`}>
-                                                                {policy.description}
-                                                            </p>
                                                         )}
+
+                                                        {/* Format Tag */}
+                                                        <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
+                                                            {policy.type === 'document' ? t('policy_showcase.brand_doc_badge', '📄 品牌文档') : policy.type === 'poster' ? t('policy_showcase.brand_poster_badge', '🖼️ 海报') : t('policy_showcase.brand_video_badge', '🎥 视频')}
+                                                        </span>
                                                     </div>
 
-                                                    {/* Action footer */}
-                                                    <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-white/5">
-                                                        <span className={`text-[10px] font-bold ${
-                                                            businessType === 'leader' ? 'text-white/30' : 'text-slate-400'
-                                                        }`}>
-                                                            {t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}
-                                                        </span>
-                                                        <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
-                                                            {policy.type === 'document' ? t('policy_showcase.action_read', '立即阅读') : policy.type === 'poster' ? t('policy_showcase.action_view_poster', '查看海报') : t('policy_showcase.action_play_video', '播放视频')} →
-                                                        </span>
+                                                    {/* Text Info */}
+                                                    <div className="p-4 flex-1 flex flex-col justify-between">
+                                                        <div>
+                                                            <h4 className={`font-black text-sm line-clamp-1 group-hover:text-desert-gold transition-colors ${
+                                                                businessType === 'leader' ? 'text-white' : 'text-slate-800'
+                                                            }`}>
+                                                                {policy.title}
+                                                            </h4>
+                                                            {policy.description && (
+                                                                <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${
+                                                                    businessType === 'leader' ? 'text-white/50' : 'text-slate-500'
+                                                                }`}>
+                                                                    {policy.description}
+                                                                </p>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Action footer */}
+                                                        <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-white/5">
+                                                            <span className={`text-[10px] font-bold ${
+                                                                businessType === 'leader' ? 'text-white/30' : 'text-slate-400'
+                                                            }`}>
+                                                                {t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}
+                                                            </span>
+                                                            <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
+                                                                {policy.type === 'document' ? t('policy_showcase.action_read', '立即阅读') : policy.type === 'poster' ? t('policy_showcase.action_view_poster', '查看海报') : t('policy_showcase.action_play_video', '播放视频')} →
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                            </div>
-                        )}
+                                            );
+                                        })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

@@ -42,8 +42,9 @@ interface ReferralMaterial {
     categoryId: string | null;
     title: string;
     description?: string;
-    type: 'document' | 'audio' | 'video' | 'image';
+    type: 'document' | 'audio' | 'video' | 'image' | 'text';
     url: string;
+    content?: string;
     sortOrder: number;
     visible: boolean;
     createdAt?: any;
@@ -81,7 +82,8 @@ export default function ReferralManager() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [type, setType] = useState<'document' | 'audio' | 'video' | 'image'>('document');
+    const [type, setType] = useState<'document' | 'audio' | 'video' | 'image' | 'text'>('document');
+    const [content, setContent] = useState('');
     const [categoryId, setCategoryId] = useState<string | null>(null);
     const [url, setUrl] = useState('');
     const [visible, setVisible] = useState(true);
@@ -132,6 +134,7 @@ export default function ReferralManager() {
                     description: data.description || '',
                     type: data.type || 'document',
                     url: data.url || '',
+                    content: data.content || '',
                     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
                     visible: data.visible !== false
                 });
@@ -249,8 +252,12 @@ export default function ReferralManager() {
 
     const handleMaterialSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim() || !url.trim()) {
-            setError(t('referral_manager.form_required', '请填写标题并上传文件/填写链接！'));
+        const isText = type === 'text';
+        if (!title.trim() || (isText ? !content.trim() : !url.trim())) {
+            setError(isText 
+                ? t('referral_manager.form_required_text', '请填写标题并输入文本内容！') 
+                : t('referral_manager.form_required', '请填写标题并上传文件/填写链接！')
+            );
             return;
         }
 
@@ -259,16 +266,22 @@ export default function ReferralManager() {
             // Find max sortOrder to append to end if new
             const maxOrder = materials.reduce((max, item) => item.sortOrder > max ? item.sortOrder : max, 0);
             
-            const matData = {
+            const matData: any = {
                 title: title.trim(),
                 description: description.trim(),
                 type: type,
                 categoryId: categoryId || null,
-                url: url.trim(),
+                url: isText ? '#text' : url.trim(),
                 visible: visible,
                 sortOrder: editingId ? (materials.find(m => m.id === editingId)?.sortOrder || 0) : (maxOrder + 10),
                 updatedAt: serverTimestamp()
             };
+
+            if (isText) {
+                matData.content = content.trim();
+            } else {
+                matData.content = '';
+            }
 
             if (editingId) {
                 await updateDoc(doc(db, 'referral_materials', editingId), matData);
@@ -298,6 +311,7 @@ export default function ReferralManager() {
         setType('document');
         setCategoryId(null);
         setUrl('');
+        setContent('');
         setVisible(true);
         setUploadFile(null);
         setUploadedFileName(null);
@@ -309,7 +323,8 @@ export default function ReferralManager() {
         setDescription(item.description || '');
         setType(item.type);
         setCategoryId(item.categoryId);
-        setUrl(item.url);
+        setUrl(item.type === 'text' ? '' : item.url);
+        setContent(item.content || '');
         setVisible(item.visible);
         setUploadedFileName(null);
     };
@@ -506,6 +521,7 @@ export default function ReferralManager() {
             case 'audio': return <Music className="w-4 h-4 text-emerald-500" />;
             case 'video': return <VideoIcon className="w-4 h-4 text-rose-500" />;
             case 'image': return <ImageIcon className="w-4 h-4 text-amber-500" />;
+            case 'text': return <FileText className="w-4 h-4 text-violet-500" />;
             default: return <FileText className="w-4 h-4 text-blue-500" />;
         }
     };
@@ -632,60 +648,79 @@ export default function ReferralManager() {
                                 </div>
                             </div>
 
-                            {/* Storage File Upload Area */}
-                            <div className="space-y-2 border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
-                                <label className="block text-xs font-bold text-deep-teal">{t('referral_manager.upload_file_label', '上传文件')}</label>
-                                <div className="relative flex items-center justify-center border border-gray-200 rounded-xl bg-white p-3 hover:bg-slate-50 transition-colors">
-                                    <input
-                                        type="file"
-                                        accept={
-                                            type === 'audio' ? 'audio/*' : 
-                                            type === 'video' ? 'video/*' : 
-                                            type === 'image' ? 'image/*' : 
-                                            '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt'
-                                        }
-                                        onChange={handleFileChange}
-                                        disabled={uploading || actionLoading}
-                                        className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed w-full h-full"
-                                    />
-                                    <div className="flex items-center gap-2 text-xs font-bold text-deep-teal">
-                                        <Upload className="w-4 h-4 text-desert-gold animate-bounce" />
-                                        <span>{uploading ? t('common.uploading', '正在上传...') : t('referral_manager.click_to_upload', '选择本地文件上传')}</span>
-                                    </div>
-                                </div>
-
-                                {uploadProgress !== null && (
-                                    <div className="space-y-1">
-                                        <div className="flex justify-between text-[10px] font-bold text-deep-teal">
-                                            <span>{t('referral_manager.progress', '上传进度')}</span>
-                                            <span>{uploadProgress}%</span>
-                                        </div>
-                                        <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div className="bg-desert-gold h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }}></div>
-                                        </div>
-                                    </div>
-                                )}
-                                {uploadedFileName && (
-                                    <p className="text-[10px] text-emerald-600 font-bold">✓ {t('referral_manager.uploaded_file', '已上传')}: {uploadedFileName}</p>
-                                )}
-                            </div>
-
-                            {/* Direct URL input */}
-                            <div>
-                                <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('referral_manager.url_label', '下载/访问链接URL (自动填充)')} *</label>
-                                <div className="relative">
-                                    <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="url"
+                            {type === 'text' ? (
+                                <div>
+                                    <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('referral_manager.content_label', '文本内容')} *</label>
+                                    <textarea
                                         required
-                                        className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium text-xs text-slate-800"
-                                        placeholder="https://..."
-                                        value={url}
-                                        onChange={(e) => setUrl(e.target.value)}
+                                        className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium text-xs text-slate-800 h-40 resize-y"
+                                        placeholder={t('referral_manager.content_placeholder', '在此输入或复制粘贴文本内容...\n支持以下格式：\n# 标题\n## 子标题\n- 列表项\n> 强调框\n**加粗文字**')}
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
                                         disabled={actionLoading}
                                     />
+                                    <p className="text-[10px] text-slate-400 mt-1 select-none leading-relaxed">
+                                        ℹ️ {t('referral_manager.formatting_hint', '排版规则：输入 # 代表大标题，## 代表小标题，- 代表列表，> 代表高亮块，用 **包裹** 代表加粗。')}
+                                    </p>
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    {/* Storage File Upload Area */}
+                                    <div className="space-y-2 border border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50">
+                                        <label className="block text-xs font-bold text-deep-teal">{t('referral_manager.upload_file_label', '上传文件')}</label>
+                                        <div className="relative flex items-center justify-center border border-gray-200 rounded-xl bg-white p-3 hover:bg-slate-50 transition-colors">
+                                            <input
+                                                type="file"
+                                                accept={
+                                                    type === 'audio' ? 'audio/*' : 
+                                                    type === 'video' ? 'video/*' : 
+                                                    type === 'image' ? 'image/*' : 
+                                                    '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt'
+                                                }
+                                                onChange={handleFileChange}
+                                                disabled={uploading || actionLoading}
+                                                className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed w-full h-full"
+                                            />
+                                            <div className="flex items-center gap-2 text-xs font-bold text-deep-teal">
+                                                <Upload className="w-4 h-4 text-desert-gold animate-bounce" />
+                                                <span>{uploading ? t('common.uploading', '正在上传...') : t('referral_manager.click_to_upload', '选择本地文件上传')}</span>
+                                            </div>
+                                        </div>
+
+                                        {uploadProgress !== null && (
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-[10px] font-bold text-deep-teal">
+                                                    <span>{t('referral_manager.progress', '上传进度')}</span>
+                                                    <span>{uploadProgress}%</span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div className="bg-desert-gold h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }}></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {uploadedFileName && (
+                                            <p className="text-[10px] text-emerald-600 font-bold">✓ {t('referral_manager.uploaded_file', '已上传')}: {uploadedFileName}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Direct URL input */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('referral_manager.url_label', '下载/访问链接URL (自动填充)')} *</label>
+                                        <div className="relative">
+                                            <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input
+                                                type="url"
+                                                required
+                                                className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium text-xs text-slate-800"
+                                                placeholder="https://..."
+                                                value={url}
+                                                onChange={(e) => setUrl(e.target.value)}
+                                                disabled={actionLoading}
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
 
                             <div className="flex items-center gap-2 pt-2 select-none">
                                 <input

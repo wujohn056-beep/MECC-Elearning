@@ -73,7 +73,8 @@
         "team_gcc_clean": "GCC مخصص",
         "team_adult_clean": "ACC الكبار",
         "team_ss_clean": "SS فريق",
-        "type_referral": "الترشيحات"
+        "type_referral": "الترشيحات",
+        "brand_manage_scope_label": "إدارة نطاق العلامة التجارية"
     },
     "navbar": {
         "title": "أكاديمية ME السحابية",
@@ -249,7 +250,11 @@
         "open_original_image": "عرض الصورة الأصلية",
         "preview_attachment": "معاينة",
         "current_previewing": "المعاينة الحالية: {{name}}",
-        "main_course_doc": "وثيقة الدراسة الأساسية"
+        "main_course_doc": "وثيقة الدراسة الأساسية",
+        "marketing_brand_title": "العلامة التجارية والتسويق",
+        "marketing_brand_desc": "المواد البصرية للعلامة التجارية والملصقات الترويجية في متناول يدك",
+        "view_all_brands": "عرض الكل",
+        "no_brands_showcase": "لا توجد مواد للعلامة التجارية لخط العمل هذا حالياً."
     },
     "category_manager": {
         "title": "إدارة التصنيفات",
@@ -439,7 +444,8 @@
             "tl": "قائد الفريق (Team Leader / TL)",
             "user": "مبيعات / مستخدم عادي (Ordinary User / Sales)"
         },
-        "perm_manage_referrals": "إدارة مواد الترشيح"
+        "perm_manage_referrals": "إدارة مواد الترشيح",
+        "perm_manage_brands": "إدارة العلامة التجارية والتسويق"
     },
     "account": {
         "title": "مركز التعلم الشخصي",
@@ -650,7 +656,21 @@
         "dep_suffix": "قسم",
         "sd_direct_suffix": "مباشر",
         "push_success": "تم إرسال مادة السياسة بنجاح إلى DingTalk!",
-        "push_fail": "فشل الإرسال إلى DingTalk، يرجى التحقق من أوراق اعتماد القناة أو تكوين الشبكة."
+        "push_fail": "فشل الإرسال إلى DingTalk، يرجى التحقق من أوراق اعتماد القناة أو تكوين الشبكة.",
+        "brand_push_success": "تم إرسال مواد العلامة التجارية بنجاح إلى DingTalk!",
+        "section_policy": "سياسات العمليات",
+        "section_brand": "العلامة التجارية والتسويق",
+        "brand_page_title": "إدارة العلامة التجارية والتسويق",
+        "brand_page_subtitle": "صيانة موارد العلامة التجارية والملصقات ومقاطع الفيديو حسب الفريق. قم بإعداد بنية مجلدات لتنظيم الموارد.",
+        "brand_tab_publish": "نشر مواد العلامة التجارية",
+        "brand_edit_form_title": "تعديل مادة العلامة التجارية",
+        "brand_create_form_title": "نشر مادة علامة تجارية جديدة",
+        "brand_title_placeholder": "مثال: ملصق ترويج العلامة التجارية لـ GCC يونيو 2026",
+        "brand_form_desc": "وصف المادة (اختياري)",
+        "brand_desc_placeholder": "وصف موجز لمادة العلامة التجارية...",
+        "brand_list_title": "المواد المنشورة للعلامة التجارية",
+        "no_brands_desc": "لا توجد مواد للعلامة التجارية في النطاق الحالي. استخدم النموذج الأيسر لنشر أول مادة.",
+        "brand_push_modal_title": "إرسال مادة العلامة التجارية إلى DingTalk"
     },
     "policy_showcase": {
         "doc_policy": "📄 سياسة المستند",
@@ -679,7 +699,18 @@
         "action_read": "اقرأ الآن",
         "action_view_poster": "عرض الملصق",
         "action_play_video": "تشغيل الفيديو",
-        "label_sort": "الترتيب"
+        "label_sort": "الترتيب",
+        "brand_doc_badge": "📄 مستند العلامة التجارية",
+        "brand_poster_badge": "🖼️ ملصق العلامة التجارية",
+        "brand_video_badge": "🎥 فيديو ترويجي",
+        "brand_doc_material_title": "مستند مواد العلامة التجارية",
+        "brand_doc_material_desc": "هذه المادة عبارة عن مستند رسمي منشور. انقر على الزر أدناه لفتحه ومراجعة التفاصيل.",
+        "brand_open_doc": "فتح مستند العلامة التجارية",
+        "brand_title": "مركز العلامة التجارية والتسويق",
+        "brand_subtitle_user": "موارد العلامة التجارية الحصرية لفريق {{team}}",
+        "brand_subtitle_admin": "صلاحية المسؤول: معاينة العلامات التجارية لجميع المراكز",
+        "brand_empty_dir_desc": "لم يقم المسؤولون بنشر أي ملصقات أو مقاطع فيديو أو مستندات للعلامة التجارية في هذا الدليل بعد.",
+        "brand_files_title": "ملفات العلامة التجارية ({{count}})"
     },
     "referral_showcase": {
         "root_directory": "كل المواد",
@@ -699,7 +730,12 @@
         "download_origin": "تحميل الملصق الأصلي",
         "action_read": "افتح واقرأ",
         "action_play": "تشغيل الفيديو",
-        "action_view_image": "عرض الصورة"
+        "action_view_image": "عرض الصورة",
+        "badge_text": "✍️ نص",
+        "badge_text_detail": "نص الترشيح / محتوى النص",
+        "action_view_text": "عرض / نسخ النص",
+        "copy_content": "نسخ النص",
+        "copied": "تم النسخ إلى الحافظة"
     },
     "referral_manager": {
         "title": "إدارة الترشيحات",
@@ -756,6 +792,11 @@
         "cat_save_success": "تم تحديث المجلد بنجاح!",
         "cat_add_success": "تم إنشاء المجلد بنجاح!",
         "parent_root_uncategorized": "[المجلد الرئيسي / غير مصنف]",
-        "parent_root_top": "[المجلد الرئيسي - مجلد المستوى الأعلى]"
+        "parent_root_top": "[المجلد الرئيسي - مجلد المستوى الأعلى]",
+        "type_text": "نص/سيناريو",
+        "form_required_text": "يرجى ملء العنوان وإدخال محتوى النص!",
+        "content_label": "محتوى النص",
+        "content_placeholder": "أدخل أو الصق محتوى النص هنا...\nيدعم التنسيقات التالية:\n# العنوان\n## عنوان فرعي\n- عنصر قائمة\n> مربع تمييز\n**نص عريض**",
+        "formatting_hint": "قواعد التنسيق: # للعنوان 1، ## للعنوان 2، - للقوائم، > للتنبيهات، ولف النص بـ ** للخط العريض."
     }
 }

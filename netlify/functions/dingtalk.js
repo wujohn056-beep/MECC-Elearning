@@ -1204,33 +1204,59 @@ export const handler = async (event, context) => {
         // ACTION: NOTIFY POLICY (Policy Pushes)
         // ==========================================
         if (action === 'notifyPolicy') {
-            const { policyId, title, description, type, targetTeam, targetType, selectedSds, webhookLang } = body;
+            const { policyId, title, description, type, targetTeam, targetType, selectedSds, webhookLang, section } = body;
             if (!policyId || !title) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing policyId or title' }) };
             }
 
+            const isBrand = section === 'brand';
+            const pagePath = isBrand ? 'brands' : 'policies';
+            const encodedPagePath = isBrand ? 'brands' : 'policies';
+
             const getMsgMarkdown = (lang) => {
-                const typeStr = type === 'document' 
-                    ? (lang === 'zh' ? '📄 文档政策' : '📄 Document Policy') 
-                    : type === 'poster' 
-                        ? (lang === 'zh' ? '🖼️ 激励海报' : '🖼️ Incentive Poster') 
-                        : (lang === 'zh' ? '🎥 宣导视频' : '🎥 Promo Video');
+                let typeStr = '';
+                if (isBrand) {
+                    typeStr = type === 'document' 
+                        ? (lang === 'zh' ? '📄 品牌文档' : '📄 Brand Document') 
+                        : type === 'poster' 
+                            ? (lang === 'zh' ? '🖼️ 品牌海报' : '🖼️ Brand Poster') 
+                            : (lang === 'zh' ? '🎥 宣导视频' : '🎥 Brand Video');
+                } else {
+                    typeStr = type === 'document' 
+                        ? (lang === 'zh' ? '📄 文档政策' : '📄 Document Policy') 
+                        : type === 'poster' 
+                            ? (lang === 'zh' ? '🖼️ 激励海报' : '🖼️ Incentive Poster') 
+                            : (lang === 'zh' ? '🎥 宣导视频' : '🎥 Promo Video');
+                }
                 
                 const audienceStr = targetTeam === 'all'
                     ? (lang === 'zh' ? '🌍 全部业务线' : '🌍 All Business Lines')
                     : (lang === 'zh' ? `${targetTeam} 团队专属` : `${targetTeam} Team Exclusive`);
 
-                if (lang === 'en') {
-                    return `### 📢 **ME Cloud Academy**\n**New Operations Policy / Incentive Published**\n\n---\n\n**📋 Policy Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}\n\n[👉 Click Here to View Policy](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
+                if (isBrand) {
+                    if (lang === 'en') {
+                        return `### 🎨 **ME Cloud Academy**\n**New Brand Material / Poster Published**\n\n---\n\n**📋 Material Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New brand promotion material or poster released. Please review immediately.'}\n\n[👉 Click Here to View Brand Materials](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fbrands)`;
+                    }
+                    return `### 🎨 **ME 云学堂**\n**发布了新的品牌物料/宣导海报**\n\n---\n\n**📋 物料详情：**\n* 🎬 **物料标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '设计/运营团队发布了最新的宣传海报或品牌宣导视频，请及时查看下载。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fbrands)`;
+                } else {
+                    if (lang === 'en') {
+                        return `### 📢 **ME Cloud Academy**\n**New Operations Policy / Incentive Published**\n\n---\n\n**📋 Policy Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}\n\n[👉 Click Here to View Policy](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
+                    }
+                    return `### 📢 **ME 云学堂**\n**发布了新的运营政策/激励方案**\n\n---\n\n**📋 政策详情：**\n* 🎬 **政策标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '运营团队发布了最新的提成激励或运营政策，请及时查看并研读。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
                 }
-                return `### 📢 **ME 云学堂**\n**发布了新的运营政策/激励方案**\n\n---\n\n**📋 政策详情：**\n* 🎬 **政策标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '运营团队发布了最新的提成激励或运营政策，请及时查看并研读。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
             };
 
             const getMsgBtnText = (lang) => {
+                if (isBrand) {
+                    return lang === 'en' ? "🎨 View Brand Material" : "🎨 立即查看品牌物料";
+                }
                 return lang === 'en' ? "📢 View Policy Online" : "📢 立即查看政策";
             };
 
             const getMsgTitle = (lang) => {
+                if (isBrand) {
+                    return lang === 'en' ? "🎨 ME Cloud Academy - New Brand Material" : "🎨 ME 云学堂新品牌物料发布";
+                }
                 return lang === 'en' ? "📢 ME Cloud Academy - New Policy" : "📢 ME 云学堂新政策发布";
             };
 
@@ -1248,18 +1274,27 @@ export const handler = async (event, context) => {
                         pushType = 'webhook';
                         const urls = webhookUrl.split(',').map(url => url.trim()).filter(Boolean);
                         
-                        let webhookTitle = "📢 ME 云学堂新政策发布 / ME Cloud Academy - New Operations Policy Published";
-                        let webhookText = `### **📢 ME 云学堂新增运营政策 / ME Cloud Academy - New Policy Released** \n\n ---\n\n **📋 Details / 政策详情：**\n* 🎬 **Title / 政策标题：** ${title}\n* 📂 **Type / 展示类型：** ${type === 'document' ? '📄 文档政策' : type === 'poster' ? '🖼️ 激励海报' : '🎥 宣导视频'}\n* 👥 **Audience / 团队：** ${targetTeam === 'all' ? '全部可见' : targetTeam + ' 团队专属'}\n\n ---\n\n > 💡 **Introduction / 内容介绍：**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}`;
-                        let webhookBtnText = "📢 查看政策 / View Policy";
+                        let webhookTitle = isBrand
+                            ? "🎨 ME 云学堂新品牌物料发布 / ME Cloud Academy - New Brand Material Published"
+                            : "📢 ME 云学堂新政策发布 / ME Cloud Academy - New Operations Policy Published";
+                        
+                        let webhookText = "";
+                        if (isBrand) {
+                            webhookText = `### **🎨 ME 云学堂新增品牌物料 / ME Cloud Academy - New Brand Material Released** \n\n ---\n\n **📋 Details / 物料详情：**\n* 🎬 **Title / 物料标题：** ${title}\n* 📂 **Type / 展示类型：** ${type === 'document' ? '📄 品牌文档' : type === 'poster' ? '🖼️ 品牌海报' : '🎥 宣导视频'}\n* 👥 **Audience / 团队：** ${targetTeam === 'all' ? '全部可见' : targetTeam + ' 团队专属'}\n\n ---\n\n > 💡 **Introduction / 内容介绍：**\n> ${description || 'New brand promotion material or poster released. Please review immediately.'}`;
+                        } else {
+                            webhookText = `### **📢 ME 云学堂新增运营政策 / ME Cloud Academy - New Policy Released** \n\n ---\n\n **📋 Details / 政策详情：**\n* 🎬 **Title / 政策标题：** ${title}\n* 📂 **Type / 展示类型：** ${type === 'document' ? '📄 文档政策' : type === 'poster' ? '🖼️ 激励海报' : '🎥 宣导视频'}\n* 👥 **Audience / 团队：** ${targetTeam === 'all' ? '全部可见' : targetTeam + ' 团队专属'}\n\n ---\n\n > 💡 **Introduction / 内容介绍：**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}`;
+                        }
+                        
+                        let webhookBtnText = isBrand ? "🎨 查看物料 / View Material" : "📢 查看政策 / View Policy";
                         
                         if (webhookLang === 'en') {
-                            webhookTitle = "📢 ME Cloud Academy - New Policy Released";
+                            webhookTitle = isBrand ? "🎨 ME Cloud Academy - New Brand Material Released" : "📢 ME Cloud Academy - New Policy Released";
                             webhookText = getMsgMarkdown('en');
-                            webhookBtnText = "📢 View Policy";
+                            webhookBtnText = isBrand ? "🎨 View Material" : "📢 View Policy";
                         } else if (webhookLang === 'zh') {
-                            webhookTitle = "📢 ME 云学堂新政策发布";
+                            webhookTitle = isBrand ? "🎨 ME 云学堂新品牌物料发布" : "📢 ME 云学堂新政策发布";
                             webhookText = getMsgMarkdown('zh');
-                            webhookBtnText = "📢 立即查看政策";
+                            webhookBtnText = isBrand ? "🎨 立即查看品牌物料" : "📢 立即查看政策";
                         }
 
                         const pushPromises = urls.map(async (url) => {
@@ -1275,7 +1310,7 @@ export const handler = async (event, context) => {
                                         btns: [
                                             {
                                                 title: webhookBtnText,
-                                                actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies`
+                                                actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}`
                                             }
                                         ]
                                     }
@@ -1359,10 +1394,10 @@ export const handler = async (event, context) => {
                                     let roleMatched = false;
                                     if (roleFilters.includes('cctl') && userDepUpper === 'CC' && userRoleLower === 'tl') roleMatched = true;
                                     if (roleFilters.includes('ccsm') && userDepUpper === 'CC' && userRoleLower === 'sm') roleMatched = true;
-                                     if (roleFilters.includes('ccsd') && userDepUpper === 'CC' && userRoleLower === 'sd') roleMatched = true;
+                                    if (roleFilters.includes('ccsd') && userDepUpper === 'CC' && userRoleLower === 'sd') roleMatched = true;
                                     if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
                                     if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
-                                     if (roleFilters.includes('sssd') && userDepUpper === 'SS' && userRoleLower === 'sd') roleMatched = true;
+                                    if (roleFilters.includes('sssd') && userDepUpper === 'SS' && userRoleLower === 'sd') roleMatched = true;
 
                                     const isMatched = sdMatched || smMatched || tlMatched || ccMatched || depMatched || roleMatched;
 
@@ -1424,7 +1459,7 @@ export const handler = async (event, context) => {
                                                 btn_json_list: [
                                                     {
                                                         title: getMsgBtnText(lang),
-                                                        action_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies`
+                                                        action_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}`
                                                     }
                                                 ]
                                             }
@@ -1465,7 +1500,7 @@ export const handler = async (event, context) => {
                             pushType: pushType,
                             markdownZh: getMsgMarkdown('zh'),
                             markdownEn: getMsgMarkdown('en'),
-                            actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies`,
+                            actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}`,
                             queryLogs: queryLogs
                         };
                         console.log("[Mock Policy Push sent]", mockPayload);

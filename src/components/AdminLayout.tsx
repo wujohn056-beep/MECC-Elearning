@@ -33,7 +33,7 @@ export default function AdminLayout() {
         if (hasPermission('manageUsers')) {
             return <Navigate to="/admin/users" replace />;
         }
-        if (hasPermission('managePolicies')) {
+        if (hasPermission('managePolicies') || hasPermission('manageBrands')) {
             return <Navigate to="/admin/policies" replace />;
         }
         if (hasPermission('manageReferrals')) {
@@ -116,8 +116,8 @@ export default function AdminLayout() {
                     {hasPermission('manageComments') && (
                         <Link to="/admin/comments" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/comments')}>{t('admin_menu.comments', '互动审核')}</Link>
                     )}
-                    {hasPermission('managePolicies') && (
-                        <Link to="/admin/policies" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/policies')}>{t('admin_menu.policies', '政策运营')}</Link>
+                    {(hasPermission('managePolicies') || hasPermission('manageBrands')) && (
+                        <Link to="/admin/policies" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/policies')}>{t('admin_menu.policies', '政策与品牌运营')}</Link>
                     )}
                     {hasPermission('manageReferrals') && (
                         <Link to="/admin/referrals" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/referrals')}>{t('admin_menu.referrals', '推荐素材管理')}</Link>

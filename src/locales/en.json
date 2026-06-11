@@ -73,7 +73,8 @@
         "team_gcc_clean": "GCC Dedicated",
         "team_adult_clean": "ACC Adult",
         "team_ss_clean": "SS Team",
-        "type_referral": "Referral"
+        "type_referral": "Referral",
+        "brand_manage_scope_label": "Manage Brand Scope"
     },
     "navbar": {
         "title": "ME Cloud Academy",
@@ -250,7 +251,11 @@
         "open_original_image": "View Original Image",
         "preview_attachment": "Preview",
         "current_previewing": "Current Previewing: {{name}}",
-        "main_course_doc": "Core Study Document"
+        "main_course_doc": "Core Study Document",
+        "marketing_brand_title": "Marketing Brand",
+        "marketing_brand_desc": "Brand visual assets and promotion posters at your fingertips",
+        "view_all_brands": "View All",
+        "no_brands_showcase": "No brand materials for this business line at the moment."
     },
     "category_manager": {
         "title": "Category Management",
@@ -440,7 +445,8 @@
             "tl": "Team Leader (TL)",
             "user": "Ordinary User / Sales"
         },
-        "perm_manage_referrals": "Referral Management"
+        "perm_manage_referrals": "Referral Management",
+        "perm_manage_brands": "Marketing Brand Management"
     },
     "account": {
         "title": "Personal Learning Center",
@@ -666,7 +672,21 @@
         "dep_suffix": "Dept",
         "sd_direct_suffix": "Direct",
         "push_success": "Policy material successfully pushed to DingTalk!",
-        "push_fail": "Failed to push to DingTalk, please check credentials or network configuration."
+        "push_fail": "Failed to push to DingTalk, please check credentials or network configuration.",
+        "brand_push_success": "Brand material successfully pushed to DingTalk!",
+        "section_policy": "Operations Policies",
+        "section_brand": "Marketing Brand",
+        "brand_page_title": "Marketing Brand Management",
+        "brand_page_subtitle": "Maintain marketing brand resources, posters, and videos by team. Set up folders to organize them.",
+        "brand_tab_publish": "Brand Material Publishing",
+        "brand_edit_form_title": "Edit Brand Material",
+        "brand_create_form_title": "Publish New Brand Material",
+        "brand_title_placeholder": "e.g., June 2026 GCC Brand Promotion Poster",
+        "brand_form_desc": "Material Description (Optional)",
+        "brand_desc_placeholder": "Brief description of this brand material...",
+        "brand_list_title": "Published Brand Materials",
+        "no_brands_desc": "No brand materials in the current scope. Use the left form to publish the first one.",
+        "brand_push_modal_title": "Push Brand Material to DingTalk"
     },
     "policy_showcase": {
         "doc_policy": "📄 Document Policy",
@@ -695,7 +715,18 @@
         "action_read": "Read Now",
         "action_view_poster": "View Poster",
         "action_play_video": "Play Video",
-        "label_sort": "Sort"
+        "label_sort": "Sort",
+        "brand_doc_badge": "📄 Brand Doc",
+        "brand_poster_badge": "🖼️ Brand Poster",
+        "brand_video_badge": "🎥 Promo Video",
+        "brand_doc_material_title": "Brand Document Material",
+        "brand_doc_material_desc": "This brand material is an official published document. Click the button below to open and review details.",
+        "brand_open_doc": "Open Brand Document",
+        "brand_title": "Marketing Brand Center",
+        "brand_subtitle_user": "Exclusive brand materials for {{team}}",
+        "brand_subtitle_admin": "Admin Access: Global Brand Multi-Center Preview",
+        "brand_empty_dir_desc": "Administrators have not yet published any brand posters, videos, or documents in this directory.",
+        "brand_files_title": "Brand Materials ({{count}})"
     },
     "referral_showcase": {
         "root_directory": "All Materials",
@@ -715,7 +746,12 @@
         "download_origin": "Download Poster",
         "action_read": "Open & Read",
         "action_play": "Play Video",
-        "action_view_image": "View Image"
+        "action_view_image": "View Image",
+        "badge_text": "✍️ Script",
+        "badge_text_detail": "Referral Script / Text Content",
+        "action_view_text": "View / Copy Script",
+        "copy_content": "Copy Text",
+        "copied": "Copied to Clipboard"
     },
     "referral_manager": {
         "title": "Referrals Management",
@@ -738,7 +774,7 @@
         "click_to_upload": "Click to upload local file",
         "progress": "Upload Progress",
         "uploaded_file": "Uploaded",
-        "url_label": "Download/Access Link URL",
+        "url_label": "Download/Access Link URL (Auto-filled)",
         "visible_label": "Publish Immediately (Visible)",
         "btn_update": "Update Material",
         "btn_create": "Create & Add",
@@ -772,6 +808,11 @@
         "cat_save_success": "Folder updated successfully!",
         "cat_add_success": "Folder created successfully!",
         "parent_root_uncategorized": "[Root Directory / Uncategorized]",
-        "parent_root_top": "[Root Directory - Top Level Folder]"
+        "parent_root_top": "[Root Directory - Top Level Folder]",
+        "type_text": "Text/Script",
+        "form_required_text": "Please fill in the title and input text content!",
+        "content_label": "Text Content",
+        "content_placeholder": "Enter or paste text content here...\nSupports the following formats:\n# Title\n## Subheading\n- List Item\n> Highlight Box\n**Bold Text**",
+        "formatting_hint": "Formatting rules: # for heading 1, ## for heading 2, - for lists, > for callouts, and wrap in ** for bold text."
     }
 }

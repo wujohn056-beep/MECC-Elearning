@@ -38,7 +38,8 @@ function App() {
           }>
             <Route path="/" element={<Navigate to="/hub" replace />} />
             <Route path="/hub" element={<LearningHub />} />
-            <Route path="/policies" element={<PoliciesShowcase />} />
+            <Route path="/policies" element={<PoliciesShowcase section="policy" />} />
+            <Route path="/brands" element={<PoliciesShowcase section="brand" />} />
             <Route path="/referrals" element={<ReferralShowcase />} />
             <Route path="/account" element={<Account />} />
             <Route path="/team-tasks" element={

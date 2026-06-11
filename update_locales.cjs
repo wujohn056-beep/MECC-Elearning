@@ -19,7 +19,8 @@ const updates = {
             password_success: "密码修改成功！",
             times: "次",
             mins: "分钟",
-            type_referral: "推荐业务"
+            type_referral: "推荐业务",
+            brand_manage_scope_label: "管理品牌业务范围"
         },
         learning_hub: {
             latest_uploads: "✨ 最新上传",
@@ -42,7 +43,11 @@ const updates = {
             listen_first: "请先完整听完任意一首任务录音",
             submit_task: "提交心得并完成任务",
             submit_success: "提交成功！任务已完成。",
-            submit_fail: "提交失败，请重试。"
+            submit_fail: "提交失败，请重试。",
+            marketing_brand_title: "市场品牌专栏",
+            marketing_brand_desc: "品牌视觉物料与宣传宣导海报，一键掌握",
+            view_all_brands: "查看全部",
+            no_brands_showcase: "暂无本业务线相关的品牌物料"
         },
         account: {
             title: "个人学习中心",
@@ -77,9 +82,39 @@ const updates = {
         },
         user_manager: {
             perm_manage_referrals: "推荐素材管理",
+            perm_manage_brands: "市场品牌管理",
             identity_options: {
                 referral_op: "推荐运营 (推荐素材专区维护)"
             }
+        },
+        policy_manager: {
+            brand_push_success: "品牌素材已成功推送至钉钉！",
+            section_policy: "运营政策",
+            section_brand: "市场品牌",
+            brand_page_title: "市场品牌专栏管理",
+            brand_page_subtitle: "分团队维护市场品牌物料、海报与宣导视频。您可以设置树形子目录，将不同品牌资源按文件夹分门别类展示。",
+            brand_tab_publish: "品牌物料资源发布",
+            brand_edit_form_title: "编辑品牌物料",
+            brand_create_form_title: "发布新品牌物料",
+            brand_title_placeholder: "如：2026年6月GCC品牌宣传海报",
+            brand_form_desc: "物料简介（可选）",
+            brand_desc_placeholder: "简短介绍此品牌物料的核心内容...",
+            brand_list_title: "已发布品牌物料列表",
+            no_brands_desc: "当前范围无市场品牌物料，请使用左侧表单发布第一条品牌物料吧",
+            brand_push_modal_title: "推送品牌物料至钉钉"
+        },
+        policy_showcase: {
+            brand_doc_badge: "📄 品牌文档",
+            brand_poster_badge: "🖼️ 品牌海报",
+            brand_video_badge: "🎥 宣导视频",
+            brand_doc_material_title: "品牌文档物料资料",
+            brand_doc_material_desc: "该品牌物料为正式发布文档。点击下方按钮打开并仔细阅读物料细则。",
+            brand_open_doc: "打开品牌文档",
+            brand_title: "市场品牌专题中心",
+            brand_subtitle_user: "{{team}} 专属市场品牌物料浏览",
+            brand_subtitle_admin: "管理权限：全局市场品牌多中心预览",
+            brand_empty_dir_desc: "管理员尚未在此级目录内发布相关的品牌海报、宣导视频或文档物料。",
+            brand_files_title: "品牌物料文件 ({{count}})"
         },
         referral_showcase: {
             root_directory: "全部素材",
@@ -96,13 +131,23 @@ const updates = {
             badge_audio: "🎧 音频",
             badge_video: "🎥 视频",
             badge_image: "🖼️ 图片",
+            badge_text: "✍️ 文本",
+            badge_text_detail: "宣传话术 / 文本内容",
             download_origin: "下载原图海报",
             action_read: "打开阅读",
             action_play: "播放视频",
-            action_view_image: "查看大图"
+            action_view_image: "查看大图",
+            action_view_text: "查看/复制话术",
+            copy_content: "一键复制文本",
+            copied: "已复制到剪贴板"
         },
         referral_manager: {
             title: "推荐业务素材管理",
+            type_text: "文本/话术",
+            form_required_text: "请填写标题并输入文本内容！",
+            content_label: "文本内容",
+            content_placeholder: "在此输入或复制粘贴文本内容...\n支持以下格式：\n# 标题\n## 子标题\n- 列表项\n> 强调框\n**加粗文字**",
+            formatting_hint: "排版规则：输入 # 代表大标题，## 代表小标题，- 代表列表，> 代表高亮块，用 **包裹** 代表加粗。",
             desc: "面向CC与SS团队的推荐业务素材、规则文件、案例音频/视频的上传与层级目录配置中心。",
             tab_materials: "推荐素材管理",
             tab_categories: "目录结构维护",
@@ -177,7 +222,8 @@ const updates = {
             password_success: "Password changed successfully!",
             times: " plays",
             mins: "mins",
-            type_referral: "Referral"
+            type_referral: "Referral",
+            brand_manage_scope_label: "Manage Brand Scope"
         },
         learning_hub: {
             latest_uploads: "✨ Latest Uploads",
@@ -200,7 +246,11 @@ const updates = {
             listen_first: "Please finish listening to at least one task recording first",
             submit_task: "Submit reflection and complete task",
             submit_success: "Submission successful! Task completed.",
-            submit_fail: "Submission failed, please try again."
+            submit_fail: "Submission failed, please try again.",
+            marketing_brand_title: "Marketing Brand",
+            marketing_brand_desc: "Brand visual assets and promotion posters at your fingertips",
+            view_all_brands: "View All",
+            no_brands_showcase: "No brand materials for this business line at the moment."
         },
         account: {
             title: "Personal Learning Center",
@@ -235,9 +285,39 @@ const updates = {
         },
         user_manager: {
             perm_manage_referrals: "Referral Management",
+            perm_manage_brands: "Marketing Brand Management",
             identity_options: {
                 referral_op: "Referral Operation (Referral Maintenance)"
             }
+        },
+        policy_manager: {
+            brand_push_success: "Brand material successfully pushed to DingTalk!",
+            section_policy: "Operations Policies",
+            section_brand: "Marketing Brand",
+            brand_page_title: "Marketing Brand Management",
+            brand_page_subtitle: "Maintain marketing brand resources, posters, and videos by team. Set up folders to organize them.",
+            brand_tab_publish: "Brand Material Publishing",
+            brand_edit_form_title: "Edit Brand Material",
+            brand_create_form_title: "Publish New Brand Material",
+            brand_title_placeholder: "e.g., June 2026 GCC Brand Promotion Poster",
+            brand_form_desc: "Material Description (Optional)",
+            brand_desc_placeholder: "Brief description of this brand material...",
+            brand_list_title: "Published Brand Materials",
+            no_brands_desc: "No brand materials in the current scope. Use the left form to publish the first one.",
+            brand_push_modal_title: "Push Brand Material to DingTalk"
+        },
+        policy_showcase: {
+            brand_doc_badge: "📄 Brand Doc",
+            brand_poster_badge: "🖼️ Brand Poster",
+            brand_video_badge: "🎥 Promo Video",
+            brand_doc_material_title: "Brand Document Material",
+            brand_doc_material_desc: "This brand material is an official published document. Click the button below to open and review details.",
+            brand_open_doc: "Open Brand Document",
+            brand_title: "Marketing Brand Center",
+            brand_subtitle_user: "Exclusive brand materials for {{team}}",
+            brand_subtitle_admin: "Admin Access: Global Brand Multi-Center Preview",
+            brand_empty_dir_desc: "Administrators have not yet published any brand posters, videos, or documents in this directory.",
+            brand_files_title: "Brand Materials ({{count}})"
         },
         referral_showcase: {
             root_directory: "All Materials",
@@ -254,13 +334,23 @@ const updates = {
             badge_audio: "🎧 Audio",
             badge_video: "🎥 Video",
             badge_image: "🖼️ Image",
+            badge_text: "✍️ Script",
+            badge_text_detail: "Referral Script / Text Content",
             download_origin: "Download Poster",
             action_read: "Open & Read",
             action_play: "Play Video",
-            action_view_image: "View Image"
+            action_view_image: "View Image",
+            action_view_text: "View / Copy Script",
+            copy_content: "Copy Text",
+            copied: "Copied to Clipboard"
         },
         referral_manager: {
             title: "Referrals Management",
+            type_text: "Text/Script",
+            form_required_text: "Please fill in the title and input text content!",
+            content_label: "Text Content",
+            content_placeholder: "Enter or paste text content here...\nSupports the following formats:\n# Title\n## Subheading\n- List Item\n> Highlight Box\n**Bold Text**",
+            formatting_hint: "Formatting rules: # for heading 1, ## for heading 2, - for lists, > for callouts, and wrap in ** for bold text.",
             desc: "Upload referral policy materials, pitching guides, and training audios/videos for CC & SS teams.",
             tab_materials: "Materials List",
             tab_categories: "Folder Structure",
@@ -280,7 +370,7 @@ const updates = {
             click_to_upload: "Click to upload local file",
             progress: "Upload Progress",
             uploaded_file: "Uploaded",
-            url_label: "Download/Access Link URL",
+            url_label: "Download/Access Link URL (Auto-filled)",
             visible_label: "Publish Immediately (Visible)",
             btn_update: "Update Material",
             btn_create: "Create & Add",
@@ -335,7 +425,8 @@ const updates = {
             password_success: "تم تغيير كلمة المرور بنجاح!",
             times: " مرات",
             mins: "دقيقة",
-            type_referral: "الترشيحات"
+            type_referral: "الترشيحات",
+            brand_manage_scope_label: "إدارة نطاق العلامة التجارية"
         },
         learning_hub: {
             latest_uploads: "✨ أحدث التحميلات",
@@ -358,7 +449,11 @@ const updates = {
             listen_first: "يرجى الانتهاء من الاستماع لتسجيل واحد على الأقل أولاً",
             submit_task: "إرسال التأمل وإكمال المهمة",
             submit_success: "تم التقديم بنجاح! اكتملت المهمة.",
-            submit_fail: "فشل التقديم، يرجى المحاولة مرة أخرى."
+            submit_fail: "فشل التقديم، يرجى المحاولة مرة أخرى.",
+            marketing_brand_title: "العلامة التجارية والتسويق",
+            marketing_brand_desc: "المواد البصرية للعلامة التجارية والملصقات الترويجية في متناول يدك",
+            view_all_brands: "عرض الكل",
+            no_brands_showcase: "لا توجد مواد للعلامة التجارية لخط العمل هذا حالياً."
         },
         account: {
             title: "مركز التعلم الشخصي",
@@ -393,9 +488,39 @@ const updates = {
         },
         user_manager: {
             perm_manage_referrals: "إدارة مواد الترشيح",
+            perm_manage_brands: "إدارة العلامة التجارية والتسويق",
             identity_options: {
                 referral_op: "عمليات الترشيح (صيانة منطقة الترشيح)"
             }
+        },
+        policy_manager: {
+            brand_push_success: "تم إرسال مواد العلامة التجارية بنجاح إلى DingTalk!",
+            section_policy: "سياسات العمليات",
+            section_brand: "العلامة التجارية والتسويق",
+            brand_page_title: "إدارة العلامة التجارية والتسويق",
+            brand_page_subtitle: "صيانة موارد العلامة التجارية والملصقات ومقاطع الفيديو حسب الفريق. قم بإعداد بنية مجلدات لتنظيم الموارد.",
+            brand_tab_publish: "نشر مواد العلامة التجارية",
+            brand_edit_form_title: "تعديل مادة العلامة التجارية",
+            brand_create_form_title: "نشر مادة علامة تجارية جديدة",
+            brand_title_placeholder: "مثال: ملصق ترويج العلامة التجارية لـ GCC يونيو 2026",
+            brand_form_desc: "وصف المادة (اختياري)",
+            brand_desc_placeholder: "وصف موجز لمادة العلامة التجارية...",
+            brand_list_title: "المواد المنشورة للعلامة التجارية",
+            no_brands_desc: "لا توجد مواد للعلامة التجارية في النطاق الحالي. استخدم النموذج الأيسر لنشر أول مادة.",
+            brand_push_modal_title: "إرسال مادة العلامة التجارية إلى DingTalk"
+        },
+        policy_showcase: {
+            brand_doc_badge: "📄 مستند العلامة التجارية",
+            brand_poster_badge: "🖼️ ملصق العلامة التجارية",
+            brand_video_badge: "🎥 فيديو ترويجي",
+            brand_doc_material_title: "مستند مواد العلامة التجارية",
+            brand_doc_material_desc: "هذه المادة عبارة عن مستند رسمي منشور. انقر على الزر أدناه لفتحه ومراجعة التفاصيل.",
+            brand_open_doc: "فتح مستند العلامة التجارية",
+            brand_title: "مركز العلامة التجارية والتسويق",
+            brand_subtitle_user: "موارد العلامة التجارية الحصرية لفريق {{team}}",
+            brand_subtitle_admin: "صلاحية المسؤول: معاينة العلامات التجارية لجميع المراكز",
+            brand_empty_dir_desc: "لم يقم المسؤولون بنشر أي ملصقات أو مقاطع فيديو أو مستندات للعلامة التجارية في هذا الدليل بعد.",
+            brand_files_title: "ملفات العلامة التجارية ({{count}})"
         },
         referral_showcase: {
             root_directory: "كل المواد",
@@ -412,13 +537,23 @@ const updates = {
             badge_audio: "🎧 صوت",
             badge_video: "🎥 فيديو",
             badge_image: "🖼️ صورة",
+            badge_text: "✍️ نص",
+            badge_text_detail: "نص الترشيح / محتوى النص",
             download_origin: "تحميل الملصق الأصلي",
             action_read: "افتح واقرأ",
             action_play: "تشغيل الفيديو",
-            action_view_image: "عرض الصورة"
+            action_view_image: "عرض الصورة",
+            action_view_text: "عرض / نسخ النص",
+            copy_content: "نسخ النص",
+            copied: "تم النسخ إلى الحافظة"
         },
         referral_manager: {
             title: "إدارة الترشيحات",
+            type_text: "نص/سيناريو",
+            form_required_text: "يرجى ملء العنوان وإدخال محتوى النص!",
+            content_label: "محتوى النص",
+            content_placeholder: "أدخل أو الصق محتوى النص هنا...\nيدعم التنسيقات التالية:\n# العنوان\n## عنوان فرعي\n- عنصر قائمة\n> مربع تمييز\n**نص عريض**",
+            formatting_hint: "قواعد التنسيق: # للعنوان 1، ## للعنوان 2، - للقوائم، > للتنبيهات، ولف النص بـ ** للخط العريض.",
             desc: "تحميل مواد سياسة الترشيح، وأدلة التدريب والملفات الصوتية/المرئية لفرق CC و SS.",
             tab_materials: "قائمة المواد",
             tab_categories: "هيكل المجلدات",

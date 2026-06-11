@@ -11,6 +11,7 @@ export interface UserPermissions {
     manageTasks?: boolean;
     manageComments?: boolean;
     managePolicies?: boolean;
+    manageBrands?: boolean;
     manageReferrals?: boolean;
 }
 
@@ -24,6 +25,7 @@ export interface UserProfile {
     dep?: 'CC' | 'SS' | 'functional';
     permissions?: UserPermissions;
     policyScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
+    brandScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     identity?: string;
 }
 
@@ -94,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return isSuperAdmin || !!profile?.permissions?.[permission];
     };
-    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments || !!profile?.permissions?.managePolicies || !!profile?.permissions?.manageReferrals || (profile?.role === 'sd' && profile?.dep === 'SS');
+    const hasAnyAdminPermission = isSuperAdmin || isLeader || !!profile?.permissions?.manageCategories || !!profile?.permissions?.manageRecordings || !!profile?.permissions?.manageUsers || !!profile?.permissions?.manageDashboard || !!profile?.permissions?.manageTasks || !!profile?.permissions?.manageComments || !!profile?.permissions?.managePolicies || !!profile?.permissions?.manageBrands || !!profile?.permissions?.manageReferrals || (profile?.role === 'sd' && profile?.dep === 'SS');
 
     const canAccessTasks = isLeader || hasPermission('manageTasks');
     const canAccessDashboard = isLeader || hasPermission('manageDashboard');

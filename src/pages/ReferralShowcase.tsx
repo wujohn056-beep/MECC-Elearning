@@ -35,8 +35,9 @@ interface ReferralMaterial {
     categoryId: string | null;
     title: string;
     description?: string;
-    type: 'document' | 'audio' | 'video' | 'image';
+    type: 'document' | 'audio' | 'video' | 'image' | 'text';
     url: string;
+    content?: string;
     sortOrder: number;
     visible: boolean;
 }
@@ -163,6 +164,8 @@ export default function ReferralShowcase() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeVideoItem, setActiveVideoItem] = useState<ReferralMaterial | null>(null);
     const [activeImageItem, setActiveImageItem] = useState<ReferralMaterial | null>(null);
+    const [activeTextItem, setActiveTextItem] = useState<ReferralMaterial | null>(null);
+    const [copied, setCopied] = useState(false);
 
     // Collapsed folders state (maps folderId to boolean indicating if collapsed)
     const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
@@ -203,6 +206,7 @@ export default function ReferralShowcase() {
                         description: data.description || '',
                         type: data.type || 'document',
                         url: data.url || '',
+                        content: data.content || '',
                         sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
                         visible: data.visible !== false
                     });
@@ -449,6 +453,7 @@ export default function ReferralShowcase() {
                                 const isAudio = item.type === 'audio';
                                 const isVideo = item.type === 'video';
                                 const isImage = item.type === 'image';
+                                const isText = item.type === 'text';
 
                                 return (
                                     <div 
@@ -456,6 +461,7 @@ export default function ReferralShowcase() {
                                         onClick={() => {
                                             if (isVideo) setActiveVideoItem(item);
                                             else if (isImage) setActiveImageItem(item);
+                                            else if (isText) setActiveTextItem(item);
                                             else if (isDoc) window.open(item.url, '_blank');
                                         }}
                                         className="group cursor-pointer glass-panel rounded-2xl border border-white/60 bg-white/65 hover:bg-white hover:border-amber-500/30 hover:-translate-y-1.5 shadow-sm hover:shadow-lg flex flex-col transition-all duration-500 overflow-hidden"
@@ -482,6 +488,17 @@ export default function ReferralShowcase() {
                                                     <Music className="h-8 w-8 text-emerald-400 group-hover:scale-110 transition-transform" />
                                                     <Volume2 className="w-3.5 h-3.5 text-emerald-400/40 animate-pulse" />
                                                 </div>
+                                            ) : isText ? (
+                                                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-violet-950/80 flex flex-col items-start p-4 text-left overflow-hidden select-none w-full">
+                                                    <div className="flex items-center gap-1.5 text-violet-400 font-bold mb-2">
+                                                        <FileText className="h-4 w-4" />
+                                                        <span className="text-[9px] tracking-wide uppercase">{t('referral_showcase.badge_text', '文本/话术')}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-300 line-clamp-4 leading-normal font-mono text-left w-full break-all">
+                                                        {item.content || item.description || ''}
+                                                    </p>
+                                                    <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none" />
+                                                </div>
                                             ) : (
                                                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-blue-950/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
                                                     <FileText className="h-8 w-8 text-blue-400" />
@@ -490,7 +507,7 @@ export default function ReferralShowcase() {
 
                                             {/* Type Badge */}
                                             <span className="absolute top-2.5 right-2.5 bg-black/55 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
-                                                {isDoc ? t('referral_showcase.badge_doc', '📄 文档') : isAudio ? t('referral_showcase.badge_audio', '🎧 音频') : isVideo ? t('referral_showcase.badge_video', '🎥 视频') : t('referral_showcase.badge_image', '🖼️ 图片')}
+                                                {isDoc ? t('referral_showcase.badge_doc', '📄 文档') : isAudio ? t('referral_showcase.badge_audio', '🎧 音频') : isVideo ? t('referral_showcase.badge_video', '🎥 视频') : isImage ? t('referral_showcase.badge_image', '🖼️ 图片') : t('referral_showcase.badge_text', '✍️ 文本')}
                                             </span>
                                         </div>
 
@@ -516,7 +533,7 @@ export default function ReferralShowcase() {
                                             {!isAudio && (
                                                 <div className="flex items-center justify-end mt-4 pt-2.5 border-t border-slate-100">
                                                     <span className="text-[11px] font-bold text-amber-600 hover:underline flex items-center gap-0.5 select-none">
-                                                        {isDoc ? t('referral_showcase.action_read', '打开阅读') : isVideo ? t('referral_showcase.action_play', '播放视频') : t('referral_showcase.action_view_image', '查看大图')} →
+                                                        {isDoc ? t('referral_showcase.action_read', '打开阅读') : isVideo ? t('referral_showcase.action_play', '播放视频') : isImage ? t('referral_showcase.action_view_image', '查看大图') : t('referral_showcase.action_view_text', '查看/复制话术')} →
                                                     </span>
                                                 </div>
                                             )}
@@ -605,10 +622,75 @@ export default function ReferralShowcase() {
                                 {t('referral_showcase.download_origin', '下载原图海报')}
                             </a>
                         </div>
-
                         <div className="p-4 bg-slate-50 flex justify-end">
                             <button 
                                 onClick={() => setActiveImageItem(null)}
+                                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-xl font-bold transition-all text-xs cursor-pointer"
+                            >
+                                {t('common.close', '关闭')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Text Modal Reader */}
+            {activeTextItem && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+                    <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 dark:border-slate-800/60 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden relative">
+                        {/* Close button */}
+                        <button 
+                            onClick={() => setActiveTextItem(null)}
+                            className="absolute top-4 right-4 z-50 p-2 bg-black/10 hover:bg-black/25 text-slate-700 dark:text-white rounded-full transition-colors cursor-pointer"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <div className="p-6 border-b border-gray-100 pr-16 animate-in fade-in duration-350">
+                            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 border border-violet-500/20 select-none">
+                                ✍️ {t('referral_showcase.badge_text_detail', '宣传话术 / 文本内容')}
+                            </span>
+                            <h3 className="text-base font-black text-slate-800 mt-2.5">{activeTextItem.title}</h3>
+                            {activeTextItem.description && (
+                                <p className="text-[11px] text-slate-500 mt-1">{activeTextItem.description}</p>
+                            )}
+                        </div>
+
+                        {/* Text reader viewport */}
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 min-h-[250px] max-h-[50vh]">
+                            <div className="bg-white border border-gray-200/60 rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] select-text font-sans">
+                                {formatContent(activeTextItem.content || '')}
+                            </div>
+                        </div>
+
+                        {/* Modal Footer Actions */}
+                        <div className="p-4 bg-slate-50 border-t border-gray-100 flex justify-between items-center gap-3">
+                            <button
+                                onClick={() => handleCopyText(activeTextItem.content || '')}
+                                className={`px-5 py-2.5 rounded-xl font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm select-none ${
+                                    copied 
+                                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
+                                        : 'bg-deep-teal hover:bg-teal-700 text-white'
+                                }`}
+                            >
+                                {copied ? (
+                                    <>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        {t('referral_showcase.copied', '已复制到剪贴板')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m-2 4h5m-3-3l3 3-3 3" />
+                                        </svg>
+                                        {t('referral_showcase.copy_content', '一键复制文本')}
+                                    </>
+                                )}
+                            </button>
+                            <button 
+                                onClick={() => setActiveTextItem(null)}
                                 className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-xl font-bold transition-all text-xs cursor-pointer"
                             >
                                 {t('common.close', '关闭')}
