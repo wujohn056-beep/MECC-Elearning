@@ -24,6 +24,7 @@ interface Recording {
     uploaderId?: string;
     uploaderCrmId?: string;
     attachments?: any[];
+    isPinned?: boolean;
 }
 
 interface Category {
@@ -213,6 +214,11 @@ const RecordingCard = ({
                 ? 'border-desert-gold/40 shadow-[0_0_15px_rgba(203,161,53,0.15)] hover:shadow-[0_0_25px_rgba(203,161,53,0.3)] bg-gradient-to-br from-teal-950/20 to-desert-gold/5'
                 : 'border-white/60 hover:shadow-[0_25px_60px_rgba(26,43,60,0.06)] shadow-sm bg-white/60'
         }`}>
+            {rec.isPinned && (
+                <span className="absolute top-2.5 left-2.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[9.5px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-rose-400/30 shadow-md flex items-center gap-1 z-20 select-none animate-in fade-in duration-300">
+                    📌 {t('learning_hub.pinned', '置顶')}
+                </span>
+            )}
             {isDoc ? (
                 /* Premium Document Cover with sunset-to-indigo gradient and floating glassmorphic shapes */
                 <div 
@@ -2691,9 +2697,9 @@ export default function LearningHub() {
         
         // 1. If super admin, they have access to all tabs
         if (profile?.role === 'super_admin') {
-            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
+            // tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-            tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
+            // tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
             tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
             return tabs;
@@ -2701,7 +2707,7 @@ export default function LearningHub() {
 
         // 2. If SS department
         if (profile?.dep === 'SS') {
-            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
+            // tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             if (isLeader) {
                 tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
@@ -2711,11 +2717,11 @@ export default function LearningHub() {
 
         // 3. For CC / standard departments
         // Show referral tab to CC department users (or anyone who has referral admin permission for preview)
-        if (profile?.dep === 'CC' || !!profile?.permissions?.manageReferrals) {
-            tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
-        }
+        // if (profile?.dep === 'CC' || !!profile?.permissions?.manageReferrals) {
+        //     tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
+        // }
         tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-        tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
+        // tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
         if (isLeader) {
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
         }
@@ -3224,14 +3230,35 @@ export default function LearningHub() {
         return acc;
     }, {} as Record<string, string>);
 
-    // Sort the filtered recordings based on sortType
-    const sortedRecordings = [...filteredRecordings].sort((a, b) => {
+    // Separate pinned and unpinned recordings
+    const pinnedFiltered = filteredRecordings.filter(rec => rec.isPinned);
+    
+    // Sort pinned matching current sortType
+    const sortedPinned = [...pinnedFiltered].sort((a, b) => {
         if (sortType === 'latest') {
             return (b.createdAt?.toDate?.()?.getTime() || 0) - (a.createdAt?.toDate?.()?.getTime() || 0);
         } else {
             return (b.playCount || 0) - (a.playCount || 0);
         }
     });
+
+    // Show at most 6 pinned items at the top
+    const pinnedToShow = sortedPinned.slice(0, 6);
+
+    // All remaining recordings (excluding the top 6 pinned items)
+    const restRecordings = filteredRecordings.filter(rec => !pinnedToShow.some(p => p.id === rec.id));
+
+    // Sort the remaining recordings
+    const sortedRest = [...restRecordings].sort((a, b) => {
+        if (sortType === 'latest') {
+            return (b.createdAt?.toDate?.()?.getTime() || 0) - (a.createdAt?.toDate?.()?.getTime() || 0);
+        } else {
+            return (b.playCount || 0) - (a.playCount || 0);
+        }
+    });
+
+    // Combine pinnedToShow at the top, followed by sortedRest
+    const sortedRecordings = [...pinnedToShow, ...sortedRest];
 
     // Calculate display slice
     const displayedRecordings = sortedRecordings.slice(0, displayCount);

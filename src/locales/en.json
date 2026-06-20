@@ -255,7 +255,8 @@
         "marketing_brand_title": "Marketing Brand",
         "marketing_brand_desc": "Brand visual assets and promotion posters at your fingertips",
         "view_all_brands": "View All",
-        "no_brands_showcase": "No brand materials for this business line at the moment."
+        "no_brands_showcase": "No brand materials for this business line at the moment.",
+        "pinned": "Pinned"
     },
     "category_manager": {
         "title": "Category Management",
@@ -353,7 +354,10 @@
         "attachments_tip": "Optional. You can upload courseware, PDF guides, mind maps, or attachment ZIP files (Max size: 50MB per file).",
         "waiting_attachments": "Waiting for attachments to complete uploading, please submit later...",
         "lang_en": "English",
-        "lang_zh": "Chinese"
+        "lang_zh": "Chinese",
+        "pin": "Pin to Top",
+        "unpin": "Unpin",
+        "pinned": "Pinned"
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",

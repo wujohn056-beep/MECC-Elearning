@@ -254,7 +254,8 @@
         "marketing_brand_title": "市场品牌专栏",
         "marketing_brand_desc": "品牌视觉物料与宣传宣导海报，一键掌握",
         "view_all_brands": "查看全部",
-        "no_brands_showcase": "暂无本业务线相关的品牌物料"
+        "no_brands_showcase": "暂无本业务线相关的品牌物料",
+        "pinned": "置顶"
     },
     "category_manager": {
         "title": "目录分类管理",
@@ -352,7 +353,10 @@
         "attachments_tip": "可选。可上传配套课件、PDF指南、脑图或附件压缩包，单个大小上限 50MB。",
         "waiting_attachments": "正在等待附件讲义上传完成，请稍后提交...",
         "lang_en": "英文",
-        "lang_zh": "中文"
+        "lang_zh": "中文",
+        "pin": "置顶",
+        "unpin": "取消置顶",
+        "pinned": "已置顶"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",

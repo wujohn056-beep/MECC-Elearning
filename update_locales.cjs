@@ -47,7 +47,8 @@ const updates = {
             marketing_brand_title: "市场品牌专栏",
             marketing_brand_desc: "品牌视觉物料与宣传宣导海报，一键掌握",
             view_all_brands: "查看全部",
-            no_brands_showcase: "暂无本业务线相关的品牌物料"
+            no_brands_showcase: "暂无本业务线相关的品牌物料",
+            pinned: "置顶"
         },
         account: {
             title: "个人学习中心",
@@ -202,6 +203,11 @@ const updates = {
             cat_add_success: "添加分类成功！",
             parent_root_uncategorized: "[根目录 / 暂无归类]",
             parent_root_top: "[根目录 - 作为顶级文件夹]"
+        },
+        recordings_manager: {
+            pin: "置顶",
+            unpin: "取消置顶",
+            pinned: "已置顶"
         }
     },
     en: {
@@ -250,7 +256,8 @@ const updates = {
             marketing_brand_title: "Marketing Brand",
             marketing_brand_desc: "Brand visual assets and promotion posters at your fingertips",
             view_all_brands: "View All",
-            no_brands_showcase: "No brand materials for this business line at the moment."
+            no_brands_showcase: "No brand materials for this business line at the moment.",
+            pinned: "Pinned"
         },
         account: {
             title: "Personal Learning Center",
@@ -405,6 +412,11 @@ const updates = {
             cat_add_success: "Folder created successfully!",
             parent_root_uncategorized: "[Root Directory / Uncategorized]",
             parent_root_top: "[Root Directory - Top Level Folder]"
+        },
+        recordings_manager: {
+            pin: "Pin to Top",
+            unpin: "Unpin",
+            pinned: "Pinned"
         }
     },
     ar: {
@@ -453,7 +465,8 @@ const updates = {
             marketing_brand_title: "العلامة التجارية والتسويق",
             marketing_brand_desc: "المواد البصرية للعلامة التجارية والملصقات الترويجية في متناول يدك",
             view_all_brands: "عرض الكل",
-            no_brands_showcase: "لا توجد مواد للعلامة التجارية لخط العمل هذا حالياً."
+            no_brands_showcase: "لا توجد مواد للعلامة التجارية لخط العمل هذا حالياً.",
+            pinned: "مثبت"
         },
         account: {
             title: "مركز التعلم الشخصي",
@@ -608,6 +621,11 @@ const updates = {
             cat_add_success: "تم إنشاء المجلد بنجاح!",
             parent_root_uncategorized: "[المجلد الرئيسي / غير مصنف]",
             parent_root_top: "[المجلد الرئيسي - مجلد المستوى الأعلى]"
+        },
+        recordings_manager: {
+            pin: "تثبيت في الأعلى",
+            unpin: "إلغاء التثبيت",
+            pinned: "مثبت"
         }
     }
 };

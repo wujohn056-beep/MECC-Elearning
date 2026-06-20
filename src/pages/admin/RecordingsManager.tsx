@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight, BookOpen } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight, BookOpen, Pin } from 'lucide-react';
 
 interface Attachment {
     id: string;
@@ -29,6 +29,7 @@ interface Recording {
     displayId?: string;
     businessType?: 'kid' | 'adult' | 'ss' | 'leader';
     attachments?: Attachment[];
+    isPinned?: boolean;
 }
 
 interface Category {
@@ -718,6 +719,22 @@ export default function RecordingsManager() {
         }
     };
 
+    const handleTogglePin = async (rec: Recording) => {
+        try {
+            setUploading(true);
+            setPageError(null);
+            const recordingRef = doc(db, 'recordings', rec.id);
+            const newPinned = !rec.isPinned;
+            await updateDoc(recordingRef, { isPinned: newPinned });
+            await fetchData();
+        } catch (error: any) {
+            console.error("Toggle pin failed:", error);
+            setPageError(`Toggle pin failed: ${error.message}`);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const toggleSelectAll = () => {
         if (selectedIds.length === filteredRecordings.length && filteredRecordings.length > 0) {
             setSelectedIds([]);
@@ -872,6 +889,7 @@ export default function RecordingsManager() {
 
                 const docRef = await addDoc(collection(db, 'recordings'), {
                     ...dataToSave,
+                    isPinned: false,
                     createdAt: serverTimestamp()
                 });
 
@@ -1641,9 +1659,14 @@ export default function RecordingsManager() {
                                                          )}
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <h3 className="font-bold text-arabian-night">
+                                                        <h3 className="font-bold text-arabian-night flex items-center flex-wrap gap-1.5">
                                                             {rec.displayId && <span className="text-desert-gold mr-1.5 text-sm">[{rec.displayId}]</span>}
                                                             {rec.title}
+                                                            {rec.isPinned && (
+                                                                <span className="inline-flex items-center gap-0.5 text-[10px] bg-amber-50 text-[#a88216] border border-[#d4af37]/30 px-1.5 py-0.5 rounded font-bold shadow-sm select-none" title={t('recordings_manager.pinned', '已置顶')}>
+                                                                    📌 {t('recordings_manager.pinned', '已置顶')}
+                                                                </span>
+                                                            )}
                                                         </h3>
                                                     </div>
                                                     <p className="text-sm text-arabian-night/60 mt-1 line-clamp-1">{rec.description}</p>
@@ -1696,6 +1719,20 @@ export default function RecordingsManager() {
                                                             ) : (
                                                                 <FileText className="h-4 w-4" />
                                                             )}
+                                                        </button>
+                                                    )}
+                                                    {isWriteAllowed && (
+                                                        <button 
+                                                            onClick={() => handleTogglePin(rec)} 
+                                                            disabled={uploading} 
+                                                            className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
+                                                                rec.isPinned 
+                                                                    ? 'text-desert-gold hover:bg-yellow-50 hover:text-desert-gold' 
+                                                                    : 'text-arabian-night/40 hover:text-desert-gold hover:bg-yellow-50'
+                                                            }`} 
+                                                            title={rec.isPinned ? t('recordings_manager.unpin', '取消置顶') : t('recordings_manager.pin', '置顶')}
+                                                        >
+                                                            <Pin className={`h-4 w-4 ${rec.isPinned ? 'fill-current' : ''}`} />
                                                         </button>
                                                     )}
                                                     <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
