@@ -990,6 +990,195 @@ export default function RecordingsManager() {
         }
     }, [selectedSdsForPush, getGroupCcs]);
 
+    const isUserSelected = React.useCallback((crmId: string, group: { id: string }) => {
+        const ccId = `cc:${crmId.toLowerCase()}`;
+        return selectedSdsForPush.includes(group.id) || selectedSdsForPush.includes(ccId);
+    }, [selectedSdsForPush]);
+
+    const isTlSelected = React.useCallback((tlCrmId: string, tlUsers: any[], group: { id: string }) => {
+        if (selectedSdsForPush.includes(group.id)) return true;
+        if (tlUsers.length === 0) return false;
+        return tlUsers.every(u => isUserSelected(u.crmId, group));
+    }, [selectedSdsForPush, isUserSelected]);
+
+    const isSmSelected = React.useCallback((smCrmId: string, smUsers: any[], group: { id: string }) => {
+        if (selectedSdsForPush.includes(group.id)) return true;
+        if (smUsers.length === 0) return false;
+        return smUsers.every(u => isUserSelected(u.crmId, group));
+    }, [selectedSdsForPush, isUserSelected]);
+
+    const handleTlToggle = React.useCallback((tlCrmId: string, tlUsers: any[], group: { id: string; type: string; rawId: string }) => {
+        const groupCcs = getGroupCcs(group);
+        const isSelected = isTlSelected(tlCrmId, tlUsers, group);
+        const tlCcIds = tlUsers.map(u => `cc:${u.crmId.toLowerCase()}`);
+        
+        if (isSelected) {
+            if (selectedSdsForPush.includes(group.id)) {
+                const otherCcIds = groupCcs
+                    .filter(u => !tlCcIds.includes(`cc:${u.crmId.toLowerCase()}`))
+                    .map(u => `cc:${u.crmId.toLowerCase()}`);
+                setSelectedSdsForPush(prev => [
+                    ...prev.filter(x => x !== group.id),
+                    ...otherCcIds
+                ]);
+            } else {
+                setSelectedSdsForPush(prev => prev.filter(x => !tlCcIds.includes(x)));
+            }
+        } else {
+            const nextCcIds = [
+                ...selectedSdsForPush.filter(x => x.startsWith('cc:') && !tlCcIds.includes(x)),
+                ...tlCcIds
+            ];
+            const allCcsSelected = groupCcs.every(u => nextCcIds.includes(`cc:${u.crmId.toLowerCase()}`));
+            if (allCcsSelected && groupCcs.length > 0) {
+                setSelectedSdsForPush(prev => [
+                    ...prev.filter(x => !nextCcIds.includes(x) && x !== group.id),
+                    group.id
+                ]);
+            } else {
+                setSelectedSdsForPush(prev => [
+                    ...prev.filter(x => !tlCcIds.includes(x)),
+                    ...tlCcIds
+                ]);
+            }
+        }
+    }, [selectedSdsForPush, getGroupCcs, isTlSelected]);
+
+    const handleSmToggle = React.useCallback((smCrmId: string, smUsers: any[], group: { id: string; type: string; rawId: string }) => {
+        const groupCcs = getGroupCcs(group);
+        const isSelected = isSmSelected(smCrmId, smUsers, group);
+        const smCcIds = smUsers.map(u => `cc:${u.crmId.toLowerCase()}`);
+        
+        if (isSelected) {
+            if (selectedSdsForPush.includes(group.id)) {
+                const otherCcIds = groupCcs
+                    .filter(u => !smCcIds.includes(`cc:${u.crmId.toLowerCase()}`))
+                    .map(u => `cc:${u.crmId.toLowerCase()}`);
+                setSelectedSdsForPush(prev => [
+                    ...prev.filter(x => x !== group.id),
+                    ...otherCcIds
+                ]);
+            } else {
+                setSelectedSdsForPush(prev => prev.filter(x => !smCcIds.includes(x)));
+            }
+        } else {
+            const nextCcIds = [
+                ...selectedSdsForPush.filter(x => x.startsWith('cc:') && !smCcIds.includes(x)),
+                ...smCcIds
+            ];
+            const allCcsSelected = groupCcs.every(u => nextCcIds.includes(`cc:${u.crmId.toLowerCase()}`));
+            if (allCcsSelected && groupCcs.length > 0) {
+                setSelectedSdsForPush(prev => [
+                    ...prev.filter(x => !nextCcIds.includes(x) && x !== group.id),
+                    group.id
+                ]);
+            } else {
+                setSelectedSdsForPush(prev => [
+                    ...prev.filter(x => !smCcIds.includes(x)),
+                    ...smCcIds
+                ]);
+            }
+        }
+    }, [selectedSdsForPush, getGroupCcs, isSmSelected]);
+
+    const buildGroupHierarchy = React.useCallback((users: any[]) => {
+        const getUserName = (crmId: string) => {
+            const u = systemUsers.find(x => (x.crmId || '').toUpperCase() === crmId.toUpperCase());
+            return u ? (u.name || crmId) : crmId;
+        };
+
+        const smMap: Record<string, any[]> = {};
+        const directToSd: any[] = [];
+        
+        users.forEach(u => {
+            if (u.role === 'sd') return;
+            if (u.sm) {
+                const smKey = u.sm.toUpperCase();
+                if (!smMap[smKey]) smMap[smKey] = [];
+                smMap[smKey].push(u);
+            } else {
+                directToSd.push(u);
+            }
+        });
+        
+        const smGroups = Object.keys(smMap).sort().map(smKey => {
+            const smUsers = smMap[smKey];
+            const smUserObj = users.find(u => u.role === 'sm' && (u.crmId || '').toUpperCase() === smKey);
+            const smName = smUserObj ? (smUserObj.name || smKey) : getUserName(smKey);
+            
+            const tlMap: Record<string, any[]> = {};
+            const directToSm: any[] = [];
+            
+            smUsers.forEach(u => {
+                if (u.role === 'sm') return;
+                if (u.tl) {
+                    const tlKey = u.tl.toUpperCase();
+                    if (!tlMap[tlKey]) tlMap[tlKey] = [];
+                    tlMap[tlKey].push(u);
+                } else {
+                    directToSm.push(u);
+                }
+            });
+            
+            const tlGroups = Object.keys(tlMap).sort().map(tlKey => {
+                const tlUsers = tlMap[tlKey];
+                const tlUserObj = users.find(u => u.role === 'tl' && (u.crmId || '').toUpperCase() === tlKey) || 
+                                  systemUsers.find(u => u.role === 'tl' && (u.crmId || '').toUpperCase() === tlKey);
+                const tlName = tlUserObj ? (tlUserObj.name || tlKey) : tlKey;
+                const tlTeamName = tlUserObj?.team ? `${tlUserObj.team.trim()}` : tlName;
+                
+                return {
+                    tlKey,
+                    tlName: tlTeamName,
+                    users: tlUsers,
+                    tlUserObj
+                };
+            });
+            
+            return {
+                smKey,
+                smName,
+                tlGroups,
+                directToSm,
+                smUserObj
+            };
+        });
+        
+        const sdTlMap: Record<string, any[]> = {};
+        const directRepsToSd: any[] = [];
+        
+        directToSd.forEach(u => {
+            if (u.tl) {
+                const tlKey = u.tl.toUpperCase();
+                if (!sdTlMap[tlKey]) sdTlMap[tlKey] = [];
+                sdTlMap[tlKey].push(u);
+            } else {
+                directRepsToSd.push(u);
+            }
+        });
+        
+        const sdTlGroups = Object.keys(sdTlMap).sort().map(tlKey => {
+            const tlUsers = sdTlMap[tlKey];
+            const tlUserObj = users.find(u => u.role === 'tl' && (u.crmId || '').toUpperCase() === tlKey) ||
+                              systemUsers.find(u => u.role === 'tl' && (u.crmId || '').toUpperCase() === tlKey);
+            const tlName = tlUserObj ? (tlUserObj.name || tlKey) : tlKey;
+            const tlTeamName = tlUserObj?.team ? `${tlUserObj.team.trim()}` : tlName;
+            
+            return {
+                tlKey,
+                tlName: tlTeamName,
+                users: tlUsers,
+                tlUserObj
+            };
+        });
+        
+        return {
+            smGroups,
+            sdTlGroups,
+            directRepsToSd
+        };
+    }, [systemUsers]);
+
     const handleGroupToggle = React.useCallback((group: { id: string; type: string; rawId: string }) => {
         const isGroupSelected = selectedSdsForPush.includes(group.id);
         const groupCcs = getGroupCcs(group);
@@ -2113,25 +2302,176 @@ export default function RecordingsManager() {
                                                     
                                                     {/* Expanded CC Checklist */}
                                                     {isExpanded && groupCcs.length > 0 && (
-                                                        <div className="pl-8 pr-2 py-1 flex flex-col gap-1 border-t border-gray-100/50 bg-white/20 rounded-b-xl animate-in slide-in-from-top-1 duration-200">
-                                                            {groupCcs.map(cc => {
-                                                                const isCcChecked = isChecked || selectedSdsForPush.includes(`cc:${cc.crmId.toLowerCase()}`);
+                                                        <div className="pl-6 pr-2 py-2 flex flex-col gap-2 border-t border-gray-100/50 bg-white/20 rounded-b-xl animate-in slide-in-from-top-1 duration-200 text-[11px]">
+                                                            {(() => {
+                                                                if (group.type !== 'sd' && group.type !== 'sm') {
+                                                                    return groupCcs.map(cc => {
+                                                                        const isCcChecked = isChecked || selectedSdsForPush.includes(`cc:${cc.crmId.toLowerCase()}`);
+                                                                        return (
+                                                                            <label 
+                                                                                key={cc.id} 
+                                                                                className="flex items-center gap-2 py-1.5 px-2 hover:bg-deep-teal/5 rounded-md font-semibold text-arabian-night/80 cursor-pointer select-none transition-colors"
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={isCcChecked}
+                                                                                    onChange={() => handleCcToggle(cc.crmId, group)}
+                                                                                    className="h-3.5 w-3.5 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
+                                                                                />
+                                                                                <span className="truncate">{cc.name || cc.crmId}</span>
+                                                                                {cc.crmId && <span className="text-[9px] text-gray-400 font-medium font-mono">({cc.crmId})</span>}
+                                                                            </label>
+                                                                        );
+                                                                    });
+                                                                }
+
+                                                                const { smGroups, sdTlGroups, directRepsToSd } = buildGroupHierarchy(groupCcs);
+
+                                                                const renderTlNode = (tl: any) => {
+                                                                    const allTlUsers = [...tl.users, ...(tl.tlUserObj ? [tl.tlUserObj] : [])];
+                                                                    const isAllChecked = isTlSelected(tl.tlKey, allTlUsers, group);
+                                                                    const isSomeChecked = !isAllChecked && allTlUsers.some(u => isUserSelected(u.crmId, group));
+                                                                    const isTlExpanded = !!expandedGroups[`tl:${group.id}:${tl.tlKey}`];
+
+                                                                    return (
+                                                                        <div key={tl.tlKey} className="flex flex-col gap-1 pl-4 border-l border-gray-200/60 my-0.5">
+                                                                            <div className="flex items-center justify-between group/tl-row py-1">
+                                                                                <label className="flex items-center gap-2 font-bold text-arabian-night/80 cursor-pointer select-none flex-1 min-w-0">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={isAllChecked}
+                                                                                        onChange={() => handleTlToggle(tl.tlKey, allTlUsers, group)}
+                                                                                        ref={el => { if (el) el.indeterminate = isSomeChecked; }}
+                                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
+                                                                                    />
+                                                                                    <span className="truncate">{tl.tlName} {t('recordings_manager.team_suffix', '团队')}</span>
+                                                                                </label>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => toggleGroupExpand(`tl:${group.id}:${tl.tlKey}`)}
+                                                                                    className="p-0.5 hover:bg-deep-teal/15 rounded text-deep-teal transition-colors shrink-0 flex items-center mr-1"
+                                                                                >
+                                                                                    <span className="text-[9px] text-gray-400 font-medium mr-0.5">({allTlUsers.length})</span>
+                                                                                    {isTlExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                                                                                </button>
+                                                                            </div>
+                                                                            {isTlExpanded && (
+                                                                                <div className="pl-6 flex flex-col gap-1 border-l border-dotted border-gray-200/50 py-0.5">
+                                                                                    {allTlUsers.map(cc => {
+                                                                                        const isCcChecked = isUserSelected(cc.crmId, group);
+                                                                                        return (
+                                                                                            <label 
+                                                                                                key={cc.crmId} 
+                                                                                                className="flex items-center gap-2 py-1 px-1.5 hover:bg-deep-teal/5 rounded text-[10.5px] text-arabian-night/70 cursor-pointer select-none transition-colors"
+                                                                                            >
+                                                                                                <input
+                                                                                                    type="checkbox"
+                                                                                                    checked={isCcChecked}
+                                                                                                    onChange={() => handleCcToggle(cc.crmId, group)}
+                                                                                                    className="h-3 w-3 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
+                                                                                                />
+                                                                                                <span className="truncate">{cc.name || cc.crmId}</span>
+                                                                                                {cc.role && cc.role !== 'rep' && cc.role !== 'user' && (
+                                                                                                    <span className="text-[8px] bg-desert-gold/10 border border-desert-gold/25 text-[#a88216] px-1 rounded scale-90 origin-left">{cc.role.toUpperCase()}</span>
+                                                                                                )}
+                                                                                            </label>
+                                                                                        );
+                                                                                    })}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                };
+
+                                                                const renderSmNode = (sm: any) => {
+                                                                    const allSmUsers = [...sm.directToSm];
+                                                                    sm.tlGroups.forEach((tl: any) => {
+                                                                        allSmUsers.push(...tl.users);
+                                                                        if (tl.tlUserObj) allSmUsers.push(tl.tlUserObj);
+                                                                    });
+                                                                    if (sm.smUserObj) allSmUsers.push(sm.smUserObj);
+
+                                                                    const isAllChecked = isSmSelected(sm.smKey, allSmUsers, group);
+                                                                    const isSomeChecked = !isAllChecked && allSmUsers.some(u => isUserSelected(u.crmId, group));
+                                                                    const isSmExpanded = !!expandedGroups[`sm:${group.id}:${sm.smKey}`];
+
+                                                                    return (
+                                                                        <div key={sm.smKey} className="flex flex-col gap-1 pl-2 border-l border-gray-300/80 my-1">
+                                                                            <div className="flex items-center justify-between group/sm-row py-1">
+                                                                                <label className="flex items-center gap-2 font-bold text-arabian-night/90 cursor-pointer select-none flex-1 min-w-0">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={isAllChecked}
+                                                                                        onChange={() => handleSmToggle(sm.smKey, allSmUsers, group)}
+                                                                                        ref={el => { if (el) el.indeterminate = isSomeChecked; }}
+                                                                                        className="h-3.5 w-3.5 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-95"
+                                                                                    />
+                                                                                    <span className="truncate">{sm.smName} {t('recordings_manager.team_suffix', '团队')}</span>
+                                                                                </label>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => toggleGroupExpand(`sm:${group.id}:${sm.smKey}`)}
+                                                                                    className="p-0.5 hover:bg-deep-teal/15 rounded text-deep-teal transition-colors shrink-0 flex items-center mr-1"
+                                                                                >
+                                                                                    <span className="text-[9px] text-gray-400 font-medium mr-0.5">({allSmUsers.length})</span>
+                                                                                    {isSmExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                                                </button>
+                                                                            </div>
+                                                                            {isSmExpanded && (
+                                                                                <div className="pl-4 flex flex-col gap-1.5 py-1">
+                                                                                    {sm.tlGroups.map((tl: any) => renderTlNode(tl))}
+                                                                                    {sm.directToSm.map(cc => {
+                                                                                        const isCcChecked = isUserSelected(cc.crmId, group);
+                                                                                        return (
+                                                                                            <label 
+                                                                                                key={cc.crmId} 
+                                                                                                className="flex items-center gap-2 py-1 px-1.5 hover:bg-deep-teal/5 rounded text-[10.5px] text-arabian-night/70 cursor-pointer select-none transition-colors"
+                                                                                            >
+                                                                                                <input
+                                                                                                    type="checkbox"
+                                                                                                    checked={isCcChecked}
+                                                                                                    onChange={() => handleCcToggle(cc.crmId, group)}
+                                                                                                    className="h-3 w-3 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
+                                                                                                />
+                                                                                                <span className="truncate">{cc.name || cc.crmId}</span>
+                                                                                            </label>
+                                                                                        );
+                                                                                    })}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                };
+
                                                                 return (
-                                                                    <label 
-                                                                        key={cc.id} 
-                                                                        className="flex items-center gap-2 py-1.5 px-2 hover:bg-deep-teal/5 rounded-md text-[11px] font-semibold text-arabian-night/80 cursor-pointer select-none transition-colors"
-                                                                    >
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={isCcChecked}
-                                                                            onChange={() => handleCcToggle(cc.crmId, group)}
-                                                                            className="h-3.5 w-3.5 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
-                                                                        />
-                                                                        <span className="truncate">{cc.name || cc.crmId}</span>
-                                                                        {cc.crmId && <span className="text-[9px] text-gray-400 font-medium font-mono">({cc.crmId})</span>}
-                                                                    </label>
+                                                                    <>
+                                                                        {smGroups.map(sm => renderSmNode(sm))}
+                                                                        {sdTlGroups.map(tl => renderTlNode(tl))}
+                                                                        {directRepsToSd.length > 0 && (
+                                                                            <div className="flex flex-col gap-1 pl-2 my-1">
+                                                                                <div className="text-[10px] text-gray-400 font-bold px-1.5 mb-1">{t('recordings_manager.direct_members', '直属成员')}</div>
+                                                                                {directRepsToSd.map(cc => {
+                                                                                    const isCcChecked = isUserSelected(cc.crmId, group);
+                                                                                    return (
+                                                                                        <label 
+                                                                                            key={cc.crmId} 
+                                                                                            className="flex items-center gap-2 py-1 px-1.5 hover:bg-deep-teal/5 rounded text-[10.5px] text-arabian-night/70 cursor-pointer select-none transition-colors"
+                                                                                        >
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                checked={isCcChecked}
+                                                                                                onChange={() => handleCcToggle(cc.crmId, group)}
+                                                                                                className="h-3 w-3 rounded border-gray-300 text-deep-teal focus:ring-deep-teal transition-all scale-90"
+                                                                                            />
+                                                                                            <span className="truncate">{cc.name || cc.crmId}</span>
+                                                                                        </label>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        )}
+                                                                    </>
                                                                 );
-                                                            })}
+                                                            })()}
                                                         </div>
                                                     )}
                                                 </div>

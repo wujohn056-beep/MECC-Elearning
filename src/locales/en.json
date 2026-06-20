@@ -357,7 +357,8 @@
         "lang_zh": "Chinese",
         "pin": "Pin to Top",
         "unpin": "Unpin",
-        "pinned": "Pinned"
+        "pinned": "Pinned",
+        "direct_members": "Direct Members"
     },
     "admin_dashboard_page": {
         "title": "Dashboard Overview",

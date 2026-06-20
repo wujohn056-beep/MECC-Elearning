@@ -207,7 +207,8 @@ const updates = {
         recordings_manager: {
             pin: "置顶",
             unpin: "取消置顶",
-            pinned: "已置顶"
+            pinned: "已置顶",
+            direct_members: "直属成员"
         }
     },
     en: {
@@ -416,7 +417,8 @@ const updates = {
         recordings_manager: {
             pin: "Pin to Top",
             unpin: "Unpin",
-            pinned: "Pinned"
+            pinned: "Pinned",
+            direct_members: "Direct Members"
         }
     },
     ar: {
@@ -625,7 +627,8 @@ const updates = {
         recordings_manager: {
             pin: "تثبيت في الأعلى",
             unpin: "إلغاء التثبيت",
-            pinned: "مثبت"
+            pinned: "مثبت",
+            direct_members: "الأعضاء المباشرين"
         }
     }
 };

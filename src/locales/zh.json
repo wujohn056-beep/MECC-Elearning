@@ -356,7 +356,8 @@
         "lang_zh": "中文",
         "pin": "置顶",
         "unpin": "取消置顶",
-        "pinned": "已置顶"
+        "pinned": "已置顶",
+        "direct_members": "直属成员"
     },
     "admin_dashboard_page": {
         "title": "仪表盘总览",
