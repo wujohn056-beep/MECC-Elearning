@@ -40,6 +40,21 @@ export const handler = async (event, context) => {
                 statusCode: 200,
                 body: JSON.stringify({ message: 'User deleted successfully from Auth' })
             };
+        } else if (action === 'batchDelete') {
+            const { uids } = body;
+            if (!Array.isArray(uids) || uids.length === 0) {
+                return { statusCode: 400, body: JSON.stringify({ error: 'Missing uids array' }) };
+            }
+            const deleteResult = await admin.auth().deleteUsers(uids);
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    message: 'Batch delete completed from Auth',
+                    successCount: deleteResult.successCount,
+                    failureCount: deleteResult.failureCount,
+                    errors: deleteResult.errors.map(e => ({ index: e.index, error: e.error.message }))
+                })
+            };
         } else if (action === 'resetPassword') {
             const passwordToSet = newPassword || '123456';
             await admin.auth().updateUser(uid, {

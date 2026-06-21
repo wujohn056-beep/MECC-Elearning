@@ -79,6 +79,16 @@ export default function UserManager() {
         brandScope: 'all' as 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all',
         identity: ''
     });
+    
+    // Batch deletion state variables
+    const [selectedUids, setSelectedUids] = useState<string[]>([]);
+    const [batchSd, setBatchSd] = useState('');
+    const [batchSm, setBatchSm] = useState('');
+    const [batchTl, setBatchTl] = useState('');
+    const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false);
+    const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+    const [batchDeleteConfirmText, setBatchDeleteConfirmText] = useState('');
+    const [isBatchPanelExpanded, setIsBatchPanelExpanded] = useState(false);
 
     useEffect(() => {
         if (canManageUsers) {
@@ -164,6 +174,44 @@ export default function UserManager() {
         }
         return a.crmId.localeCompare(b.crmId);
     });
+
+    // Extract unique values for batch selection dropdowns (cascading lists)
+    const batchSdList = useMemo(() => {
+        const sds = new Set<string>();
+        users.forEach(u => {
+            if (u.sd) sds.add(u.sd.trim().toUpperCase());
+            if (u.role === 'sd' && u.crmId) sds.add(u.crmId.trim().toUpperCase());
+        });
+        return Array.from(sds).sort();
+    }, [users]);
+
+    const batchSmList = useMemo(() => {
+        const sms = new Set<string>();
+        users.forEach(u => {
+            const uSd = (u.sd || '').trim().toUpperCase();
+            const uCrmId = (u.crmId || '').trim().toUpperCase();
+            const isSdSelf = u.role === 'sd' && uCrmId === batchSd.trim().toUpperCase();
+            if (batchSd && (uSd === batchSd.trim().toUpperCase() || isSdSelf)) {
+                if (u.sm) sms.add(u.sm.trim().toUpperCase());
+                if (u.role === 'sm' && u.crmId) sms.add(u.crmId.trim().toUpperCase());
+            }
+        });
+        return Array.from(sms).sort();
+    }, [users, batchSd]);
+
+    const batchTlList = useMemo(() => {
+        const tls = new Set<string>();
+        users.forEach(u => {
+            const uSm = (u.sm || '').trim().toUpperCase();
+            const uCrmId = (u.crmId || '').trim().toUpperCase();
+            const isSmSelf = u.role === 'sm' && uCrmId === batchSm.trim().toUpperCase();
+            if (batchSm && (uSm === batchSm.trim().toUpperCase() || isSmSelf)) {
+                if (u.tl) tls.add(u.tl.trim().toUpperCase());
+                if (u.role === 'tl' && u.crmId) tls.add(u.crmId.trim().toUpperCase());
+            }
+        });
+        return Array.from(tls).sort();
+    }, [users, batchSm]);
 
     // Extract unique values for dropdowns
     const uniqueSDs = Array.from(new Set(users.map(u => u.sd).filter(Boolean))).sort();
@@ -644,6 +692,163 @@ export default function UserManager() {
         }
     };
 
+    // Toggle individual checkbox selection
+    const handleToggleUserSelect = (uid: string) => {
+        setSelectedUids(prev => {
+            if (prev.includes(uid)) {
+                return prev.filter(id => id !== uid);
+            } else {
+                return [...prev, uid];
+            }
+        });
+    };
+
+    // Select all users matching currently filtered list
+    const handleSelectAllFiltered = () => {
+        const filteredIds = filteredUsers.map(u => u.id);
+        setSelectedUids(prev => {
+            // merge and de-duplicate
+            const merged = new Set([...prev, ...filteredIds]);
+            return Array.from(merged);
+        });
+    };
+
+    // Clear all checkbox selections
+    const handleClearSelection = () => {
+        setSelectedUids([]);
+    };
+
+    // Get matching user UIDs based on SD/SM/TL architecture selections
+    const getArchitectureMatchingUsers = () => {
+        return users.filter(u => {
+            const uSd = (u.sd || '').trim().toUpperCase();
+            const uSm = (u.sm || '').trim().toUpperCase();
+            const uTl = (u.tl || '').trim().toUpperCase();
+            const uCrmId = (u.crmId || '').trim().toUpperCase();
+
+            // If TL is selected, match TL level
+            if (batchTl) {
+                const targetTl = batchTl.trim().toUpperCase();
+                return uTl === targetTl || (u.role === 'tl' && uCrmId === targetTl);
+            }
+            // If SM is selected, match SM level (SM + all TLs/users under this SM)
+            if (batchSm) {
+                const targetSm = batchSm.trim().toUpperCase();
+                return uSm === targetSm || (u.role === 'sm' && uCrmId === targetSm);
+            }
+            // If SD is selected, match SD level (SD + all SMs/TLs/users under this SD)
+            if (batchSd) {
+                const targetSd = batchSd.trim().toUpperCase();
+                return uSd === targetSd || (u.role === 'sd' && uCrmId === targetSd);
+            }
+            return false;
+        });
+    };
+
+    // Select all matching users from selected architecture
+    const handleSelectAllMatching = () => {
+        const matchingIds = getArchitectureMatchingUsers().map(u => u.id);
+        if (matchingIds.length === 0) {
+            alert(t('user_manager.no_matching_users', '未找到匹配的成员'));
+            return;
+        }
+        setSelectedUids(prev => {
+            const merged = new Set([...prev, ...matchingIds]);
+            return Array.from(merged);
+        });
+    };
+
+    // Deselect all matching users from selected architecture
+    const handleDeselectAllMatching = () => {
+        const matchingIds = getArchitectureMatchingUsers().map(u => u.id);
+        setSelectedUids(prev => prev.filter(id => !matchingIds.includes(id)));
+    };
+
+    // Execute Batch User Deletion
+    const handleBatchDeleteUsers = async () => {
+        if (selectedUids.length === 0) return;
+        setIsBatchDeleting(true);
+        
+        try {
+            // 1. Call Netlify function to delete Auth credentials
+            const res = await fetch('/.netlify/functions/manageUser', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'batchDelete', uids: selectedUids })
+            });
+
+            if (!res.ok) {
+                const errText = await res.text().catch(() => '');
+                let errMsg = 'Backend batch delete failed';
+                try {
+                    const errData = JSON.parse(errText);
+                    errMsg = errData.error || errMsg;
+                } catch (e) {
+                    if (errText) errMsg = errText.substring(0, 100);
+                }
+                throw new Error(errMsg);
+            }
+
+            const data = await res.json();
+            const successCount = data.successCount || 0;
+            const failureCount = data.failureCount || 0;
+
+            // 2. Perform Firestore write batch deletion
+            const { writeBatch, doc } = await import('firebase/firestore');
+            const BATCH_LIMIT = 400; // split into chunks of 400
+            for (let i = 0; i < selectedUids.length; i += BATCH_LIMIT) {
+                const chunk = selectedUids.slice(i, i + BATCH_LIMIT);
+                const firestoreBatch = writeBatch(db);
+                chunk.forEach(uid => {
+                    firestoreBatch.delete(doc(db, 'users', uid));
+                });
+                await firestoreBatch.commit();
+            }
+
+            // 3. Complete and refresh
+            setSelectedUids([]);
+            setBatchDeleteConfirmText('');
+            setShowBatchDeleteModal(false);
+            fetchUsers();
+            
+            let successMsg = t('user_manager.batch_delete_success', '成功批量删除 {{success}} 个账户！').replace('{{success}}', successCount.toString());
+            if (failureCount > 0) {
+                successMsg += ` (失败: ${failureCount} 个)`;
+            }
+            alert(successMsg);
+        } catch (err: any) {
+            console.error("Batch delete error:", err);
+            const confirmDbOnly = window.confirm(
+                t('user_manager.batch_backend_config_missing_confirm',
+                  '检测到 Netlify 后端服务不可用或运行异常，未能批量删除登录账号。\n\n是否仍立即仅从数据库中删除这 {{count}} 个销售的用户档案？'.replace('{{count}}', selectedUids.length.toString())
+                )
+            );
+            if (confirmDbOnly) {
+                try {
+                    const { writeBatch, doc } = await import('firebase/firestore');
+                    const BATCH_LIMIT = 400;
+                    for (let i = 0; i < selectedUids.length; i += BATCH_LIMIT) {
+                        const chunk = selectedUids.slice(i, i + BATCH_LIMIT);
+                        const firestoreBatch = writeBatch(db);
+                        chunk.forEach(uid => {
+                            firestoreBatch.delete(doc(db, 'users', uid));
+                        });
+                        await firestoreBatch.commit();
+                    }
+                    setSelectedUids([]);
+                    setBatchDeleteConfirmText('');
+                    setShowBatchDeleteModal(false);
+                    fetchUsers();
+                    alert(t('user_manager.batch_delete_db_only_success', '已成功仅从数据库中清除已选用户档案！'));
+                } catch (dbErr) {
+                    alert(t('user_manager.db_delete_failed', '从数据库批量删除失败，请检查网络或权限。'));
+                }
+            }
+        } finally {
+            setIsBatchDeleting(false);
+        }
+    };
+
     const handleDeleteUser = async (uid: string) => {
         if (!window.confirm(t('user_manager.confirm_delete', '确定要删除该账号吗？'))) return;
         try {
@@ -1004,6 +1209,34 @@ export default function UserManager() {
                         </div>
                     </div>
 
+                    {/* Batch Deletion Banner / Floating Bar */}
+                    {selectedUids.length > 0 && (
+                        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3.5 flex justify-between items-center shadow-md animate-in slide-in-from-top-2 duration-300">
+                            <div>
+                                <p className="text-xs font-black text-red-800">
+                                    ⚠️ {t('user_manager.selected_count', '已选择 {{count}} 个销售账号').replace('{{count}}', selectedUids.length.toString())}
+                                </p>
+                                <p className="text-[10px] text-red-650 font-medium mt-0.5">
+                                    {t('user_manager.selected_action_warning', '批量删除操作将清除被删用户的 App 登录账号与数据档案。')}
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => setShowBatchDeleteModal(true)}
+                                    className="px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-extrabold text-xs rounded-xl shadow transition-all hover:scale-105 active:scale-95 border-0 cursor-pointer"
+                                >
+                                    🗑️ {t('user_manager.batch_delete_btn', '批量删除')}
+                                </button>
+                                <button 
+                                    onClick={handleClearSelection}
+                                    className="px-3.5 py-2 bg-white border border-gray-250 hover:bg-gray-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                                >
+                                    {t('common.cancel', '取消')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="relative mb-4">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input 
@@ -1014,51 +1247,178 @@ export default function UserManager() {
                             className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none bg-white/60"
                         />
                     </div>
+
+                    {/* Batch Selection Accordion/Controls for Super Admin or SS SD */}
+                    {(profile?.role === 'super_admin' || (profile?.role === 'sd' && profile?.dep === 'SS')) && (
+                        <div className="mb-4 bg-white/45 border border-gray-200/50 rounded-xl p-3 shadow-sm">
+                            <div className="flex justify-between items-center cursor-pointer select-none" onClick={() => setIsBatchPanelExpanded(!isBatchPanelExpanded)}>
+                                <span className="text-xs font-black text-deep-teal flex items-center gap-1.5">
+                                    👥 {t('user_manager.batch_selection_helper', '按 SD / SM 架构批量选择')}
+                                    {selectedUids.length > 0 && (
+                                        <span className="bg-desert-gold text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                            {selectedUids.length}
+                                        </span>
+                                    )}
+                                </span>
+                                <span className="text-xs text-slate-500 font-bold">
+                                    {isBatchPanelExpanded ? t('common.collapse', '折叠') : t('common.expand', '展开')}
+                                </span>
+                            </div>
+
+                            {isBatchPanelExpanded && (
+                                <div className="mt-3 space-y-3 pt-3 border-t border-gray-150 animate-in slide-in-from-top-1 duration-200">
+                                    {/* Cascading dropdown selectors */}
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-deep-teal/70 mb-1">{t('common.select_sd', '选择 SD')}</label>
+                                            <select 
+                                                value={batchSd} 
+                                                onChange={e => {
+                                                    setBatchSd(e.target.value);
+                                                    setBatchSm('');
+                                                    setBatchTl('');
+                                                }}
+                                                className="w-full text-xs px-2 py-1.5 rounded-lg border border-gray-200 bg-white font-semibold text-slate-700"
+                                            >
+                                                <option value="">-- ALL SD --</option>
+                                                {batchSdList.map(sd => (
+                                                    <option key={sd} value={sd}>{sd}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-deep-teal/70 mb-1">{t('common.select_sm', '选择 SM')}</label>
+                                            <select 
+                                                value={batchSm} 
+                                                onChange={e => {
+                                                    setBatchSm(e.target.value);
+                                                    setBatchTl('');
+                                                }}
+                                                disabled={!batchSd}
+                                                className="w-full text-xs px-2 py-1.5 rounded-lg border border-gray-200 bg-white font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="">-- ALL SM --</option>
+                                                {batchSmList.map(sm => (
+                                                    <option key={sm} value={sm}>{sm}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-deep-teal/70 mb-1">{t('common.select_tl', '选择 TL')}</label>
+                                            <select 
+                                                value={batchTl} 
+                                                onChange={e => setBatchTl(e.target.value)}
+                                                disabled={!batchSm}
+                                                className="w-full text-xs px-2 py-1.5 rounded-lg border border-gray-200 bg-white font-semibold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="">-- ALL TL --</option>
+                                                {batchTlList.map(tl => (
+                                                    <option key={tl} value={tl}>{tl}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Action buttons */}
+                                    <div className="flex flex-wrap gap-1.5 justify-between items-center pt-1.5">
+                                        <div className="flex gap-1.5">
+                                            <button 
+                                                type="button"
+                                                onClick={handleSelectAllMatching}
+                                                disabled={!batchSd}
+                                                className="px-2.5 py-1.5 rounded-lg bg-deep-teal text-white font-bold text-[10px] transition-all hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border-0"
+                                            >
+                                                ✔️ {t('user_manager.select_matching', '勾选匹配架构')}
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={handleDeselectAllMatching}
+                                                disabled={!batchSd}
+                                                className="px-2.5 py-1.5 rounded-lg bg-gray-200 text-slate-700 font-bold text-[10px] transition-all hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border-0"
+                                            >
+                                                ❌ {t('user_manager.deselect_matching', '取消勾选匹配')}
+                                            </button>
+                                        </div>
+
+                                        <div className="flex gap-1.5">
+                                            <button 
+                                                type="button"
+                                                onClick={handleSelectAllFiltered}
+                                                className="px-2.5 py-1.5 rounded-lg bg-desert-gold/15 text-amber-800 border border-desert-gold/30 font-bold text-[10px] transition-all hover:bg-desert-gold/25 cursor-pointer"
+                                            >
+                                                👁️ {t('user_manager.select_filtered', '勾选搜索结果')}
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={handleClearSelection}
+                                                disabled={selectedUids.length === 0}
+                                                className="px-2.5 py-1.5 rounded-lg bg-red-150 text-red-700 font-bold text-[10px] transition-all hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer border-0"
+                                            >
+                                                🧹 {t('user_manager.clear_selected', '清空选择')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     
                     <div className="flex-1 overflow-y-auto space-y-3 pr-2">
                         {filteredUsers.map(u => (
-                            <div key={u.id} className="bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group">
-                                <div>
-                                    <h3 className="font-bold text-arabian-night flex flex-wrap items-center gap-2">
-                                        {u.crmId}
-                                        {u.identity && (
-                                            <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-bold shadow-sm">
-                                                👤 {u.identity}
+                            <div key={u.id} className="bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group gap-3">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    {(profile?.role === 'super_admin' || (profile?.role === 'sd' && profile?.dep === 'SS')) && (
+                                        <input 
+                                            type="checkbox"
+                                            className="rounded border-gray-300 text-desert-gold focus:ring-desert-gold w-4 h-4 cursor-pointer shrink-0"
+                                            checked={selectedUids.includes(u.id)}
+                                            onChange={() => handleToggleUserSelect(u.id)}
+                                        />
+                                    )}
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-arabian-night flex flex-wrap items-center gap-2">
+                                            {u.crmId}
+                                            {u.identity && (
+                                                <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-bold shadow-sm">
+                                                    👤 {u.identity}
+                                                </span>
+                                            )}
+                                            {u.role === 'super_admin' && <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Super Admin</span>}
+                                            {u.role === 'sd' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">SD</span>}
+                                            {u.role === 'sm' && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">SM</span>}
+                                            {u.role === 'tl' && <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">TL</span>}
+                                            {u.dingtalkUserId ? (
+                                                <span 
+                                                    title={u.dingtalkSyncedAt ? `${t('user_manager.last_synced', '上次同步: ')} ${new Date(u.dingtalkSyncedAt).toLocaleString()}` : ''}
+                                                    className="text-[10px] bg-teal-50 text-teal-700 border border-teal-200/50 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm font-medium hover:bg-teal-100/50 transition-colors"
+                                                >
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
+                                                    {t('user_manager.dingtalk_linked', '已关联钉钉')}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] bg-gray-100 text-gray-500 border border-gray-200/50 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                                    {t('user_manager.dingtalk_unlinked', '未关联')}
+                                                </span>
+                                            )}
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm ${
+                                                (u.dep || 'CC') === 'SS'
+                                                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-orange-400'
+                                                    : (u.dep || 'CC') === 'CC'
+                                                        ? 'bg-teal-100 text-teal-800 border border-teal-200'
+                                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                            }`}>
+                                                {(u.dep || 'CC') === 'SS' ? t('common.type_ss') : (u.dep || 'CC') === 'CC' ? t('common.type_cc') : t('common.type_functional')}
                                             </span>
-                                        )}
-                                        {u.role === 'super_admin' && <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Super Admin</span>}
-                                        {u.role === 'sd' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">SD</span>}
-                                        {u.role === 'sm' && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">SM</span>}
-                                        {u.role === 'tl' && <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">TL</span>}
-                                        {u.dingtalkUserId ? (
-                                            <span 
-                                                title={u.dingtalkSyncedAt ? `${t('user_manager.last_synced', '上次同步: ')} ${new Date(u.dingtalkSyncedAt).toLocaleString()}` : ''}
-                                                className="text-[10px] bg-teal-50 text-teal-700 border border-teal-200/50 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm font-medium hover:bg-teal-100/50 transition-colors"
-                                            >
-                                                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
-                                                {t('user_manager.dingtalk_linked', '已关联钉钉')}
-                                            </span>
-                                        ) : (
-                                            <span className="text-[10px] bg-gray-100 text-gray-500 border border-gray-200/50 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                                {t('user_manager.dingtalk_unlinked', '未关联')}
-                                            </span>
-                                        )}
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm ${
-                                            (u.dep || 'CC') === 'SS'
-                                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-orange-400'
-                                                : (u.dep || 'CC') === 'CC'
-                                                    ? 'bg-teal-100 text-teal-800 border border-teal-200'
-                                                    : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                        }`}>
-                                            {(u.dep || 'CC') === 'SS' ? t('common.type_ss') : (u.dep || 'CC') === 'CC' ? t('common.type_cc') : t('common.type_functional')}
-                                        </span>
-                                    </h3>
-                                    <div className="text-xs text-arabian-night/60 mt-1 flex gap-3">
-                                        <span>SD: {u.sd || '-'}</span>
-                                        {u.role !== 'sm' && u.role !== 'sd' && <span>SM: {u.sm || '-'}</span>}
-                                        {u.role === 'user' && <span>TL: {u.tl || '-'}</span>}
-                                        <span>Team: {u.team || '-'}</span>
+                                        </h3>
+                                        <div className="text-xs text-arabian-night/60 mt-1 flex gap-3">
+                                            <span>SD: {u.sd || '-'}</span>
+                                            {u.role !== 'sm' && u.role !== 'sd' && <span>SM: {u.sm || '-'}</span>}
+                                            {u.role === 'user' && <span>TL: {u.tl || '-'}</span>}
+                                            <span>Team: {u.team || '-'}</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
@@ -1079,6 +1439,97 @@ export default function UserManager() {
                     </div>
                 </div>
             </div>
+
+            {/* Batch Delete Confirmation Modal */}
+            {showBatchDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arabian-night/65 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-red-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+                        {/* Modal Header */}
+                        <div className="p-5 border-b border-gray-150 flex justify-between items-center bg-red-50 shrink-0">
+                            <h2 className="text-lg font-black text-red-700 flex items-center gap-2">
+                                ⚠️ {t('user_manager.batch_delete_confirm_title', '危险操作：批量删除确认')}
+                            </h2>
+                            <button 
+                                onClick={() => {
+                                    setShowBatchDeleteModal(false);
+                                    setBatchDeleteConfirmText('');
+                                }} 
+                                disabled={isBatchDeleting}
+                                className="text-gray-400 hover:text-gray-700 font-bold border-0 bg-transparent cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <X className="w-5 h-5"/>
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 overflow-y-auto space-y-4 flex-1">
+                            <div className="p-4 bg-red-50/50 border border-red-200/50 rounded-2xl text-xs text-red-800 leading-relaxed font-semibold">
+                                <p className="font-black text-sm mb-1">{t('user_manager.batch_warning_header', '请仔细阅读以下警告信息：')}</p>
+                                <ul className="list-disc list-inside space-y-1 mt-1">
+                                    <li>{t('user_manager.batch_warning_1', '该操作将永久注销所选员工的 App 登录账号 (Firebase Auth)。')}</li>
+                                    <li>{t('user_manager.batch_warning_2', '被删账号的用户档案文件 (Firestore) 将被一并移除。')}</li>
+                                    <li>{t('user_manager.batch_warning_3', '员工将立即被强制登出 App 且无法再次登录，请确认他们非在职或误创建。')}</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-black text-deep-teal mb-1.5">
+                                    {t('user_manager.batch_selected_list', '被选中的待删除账号清单 (共 {{count}} 个)：').replace('{{count}}', selectedUids.length.toString())}
+                                </label>
+                                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 max-h-48 overflow-y-auto flex flex-wrap gap-2">
+                                    {users.filter(u => selectedUids.includes(u.id)).map(u => (
+                                        <span key={u.id} className="text-xs bg-white border border-gray-200 px-2.5 py-1 rounded-lg font-bold text-slate-700 flex items-center gap-1 shadow-sm">
+                                            👤 {u.crmId} <span className="text-[10px] text-gray-400 font-normal">({u.role})</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5 pt-2">
+                                <label className="block text-xs font-black text-red-700">
+                                    {t('user_manager.batch_confirm_label', '请输入 “DELETE” 确认此高危删除：')}
+                                </label>
+                                <input 
+                                    type="text"
+                                    value={batchDeleteConfirmText}
+                                    onChange={e => setBatchDeleteConfirmText(e.target.value)}
+                                    placeholder="DELETE"
+                                    disabled={isBatchDeleting}
+                                    className="w-full px-3.5 py-2.5 border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none bg-white text-center font-bold tracking-widest text-red-600 uppercase disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 border-t border-gray-150 bg-gray-50 flex justify-end gap-2.5 shrink-0">
+                            <button
+                                onClick={() => {
+                                    setShowBatchDeleteModal(false);
+                                    setBatchDeleteConfirmText('');
+                                }}
+                                disabled={isBatchDeleting}
+                                className="px-5 py-2.5 bg-white border border-gray-350 hover:bg-gray-100 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {t('common.cancel', '取消')}
+                            </button>
+                            <button
+                                onClick={handleBatchDeleteUsers}
+                                disabled={isBatchDeleting || batchDeleteConfirmText !== 'DELETE'}
+                                className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none border-0 cursor-pointer"
+                            >
+                                {isBatchDeleting ? (
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        {t('common.deleting', '正在删除...')}
+                                    </div>
+                                ) : (
+                                    t('common.confirm_delete', '确认批量删除')
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Add/Edit Modal */}
             {showModal && (
