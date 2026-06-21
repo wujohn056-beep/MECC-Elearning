@@ -49,7 +49,7 @@ interface UnifiedNotification {
 
 export default function NotificationBell() {
     const { t } = useTranslation();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const navigate = useNavigate();
     const [tasks, setTasks] = useState<TaskNotification[]>([]);
     const [comments, setComments] = useState<CommentNotification[]>([]);
@@ -61,11 +61,12 @@ export default function NotificationBell() {
 
     useEffect(() => {
         if (!user) return;
+        const myUid = profile?.realUid || user.uid;
 
         // 1. Listen to learning tasks
         const q1 = query(
             collection(db, 'learning_tasks'),
-            where('assigneeIds', 'array-contains', user.uid)
+            where('assigneeIds', 'array-contains', myUid)
         );
 
         const unsubscribe1 = onSnapshot(q1, (snapshot) => {
@@ -76,7 +77,7 @@ export default function NotificationBell() {
 
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
-                const myStatus = data.assignees[user.uid];
+                const myStatus = data.assignees[myUid];
                 if (!myStatus) return;
 
                 const deadlineDate = data.deadline?.toDate();
@@ -119,7 +120,7 @@ export default function NotificationBell() {
         // 2. Listen to comment notifications
         const q2 = query(
             collection(db, 'user_notifications'),
-            where('recipientId', '==', user.uid)
+            where('recipientId', '==', myUid)
         );
 
         const unsubscribe2 = onSnapshot(q2, (snapshot) => {
@@ -145,7 +146,7 @@ export default function NotificationBell() {
             unsubscribe1();
             unsubscribe2();
         };
-    }, [user, t]);
+    }, [user, profile, t]);
 
     // Handle outside click to close dropdown
     useEffect(() => {
@@ -214,8 +215,9 @@ export default function NotificationBell() {
         setIsOpen(false);
         if (!task.read && user) {
             try {
+                const myUid = profile?.realUid || user.uid;
                 await updateDoc(doc(db, 'learning_tasks', task.id), {
-                    [`assignees.${user.uid}.read`]: true
+                    [`assignees.${myUid}.read`]: true
                 });
             } catch (error) {
                 console.error("Error marking task as read", error);

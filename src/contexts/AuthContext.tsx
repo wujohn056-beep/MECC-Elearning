@@ -27,6 +27,7 @@ export interface UserProfile {
     policyScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     brandScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     identity?: string;
+    realUid?: string;
 }
 
 export function getUserTeam(profile: UserProfile | null): 'KCC' | 'GCC' | 'Adult' | 'SS' | 'other' {
@@ -258,19 +259,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         
                         // Listen for successful registration and token return
                         PushNotifications.addListener('registration', async (token) => {
-                            console.log('[Native Push] Registration successful, token:', token.value);
+                            console.log('[Native Push] APNs Registration successful, token:', token.value);
                             
-                            // Save deviceToken in user's profile under Firestore 'users' collection for targeted pushes
+                            // Save FCM token in user's profile under Firestore 'users' collection for targeted pushes
                             try {
+                                const { FCM } = await import('@capacitor-community/fcm');
+                                const fcmTokenResult = await FCM.getToken();
+                                const fcmToken = fcmTokenResult.token;
+                                console.log('[Native Push] FCM token retrieved:', fcmToken);
+
                                 const { doc, updateDoc, arrayUnion } = await import('firebase/firestore');
-                                const userRef = doc(db, 'users', user.uid);
+                                const targetUid = profile.realUid || user.uid;
+                                const userRef = doc(db, 'users', targetUid);
                                 await updateDoc(userRef, {
-                                    deviceTokens: arrayUnion(token.value),
+                                    deviceTokens: arrayUnion(fcmToken),
                                     lastActiveDevice: 'ios'
                                 });
-                                console.log('[Native Push] Associated token in Firestore.');
+                                console.log('[Native Push] Associated FCM token in Firestore.');
                             } catch (e) {
-                                console.error('[Native Push] Failed to save token in Firestore:', e);
+                                console.error('[Native Push] Failed to save FCM token in Firestore:', e);
                             }
                         });
 

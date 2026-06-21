@@ -2829,7 +2829,8 @@ export default function LearningHub() {
                         setTaskRecordingIds(data.recordingIds || []);
                         setTaskTitle(data.title || '学习任务');
                         
-                        const myAssigneeData = data.assignees?.[user.uid];
+                        const myUid = profile?.realUid || user.uid;
+                        const myAssigneeData = data.assignees?.[myUid];
                         if (myAssigneeData) {
                             if (myAssigneeData.reflections) {
                                 setReflections(myAssigneeData.reflections);
@@ -2855,7 +2856,7 @@ export default function LearningHub() {
             setReflections({});
             setIsTaskCompleted(false);
         }
-    }, [taskId, user]);
+    }, [taskId, user, profile]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -3169,10 +3170,11 @@ export default function LearningHub() {
         setIsSubmittingTask(true);
         try {
             const taskRef = doc(db, 'learning_tasks', taskId);
+            const myUid = profile?.realUid || user.uid;
             await updateDoc(taskRef, {
-                [`assignees.${user.uid}.status`]: 'completed',
-                [`assignees.${user.uid}.completedAt`]: serverTimestamp(),
-                [`assignees.${user.uid}.reflections`]: reflections
+                [`assignees.${myUid}.status`]: 'completed',
+                [`assignees.${myUid}.completedAt`]: serverTimestamp(),
+                [`assignees.${myUid}.reflections`]: reflections
             });
             alert(t('learning_hub.submit_success'));
             setSearchParams({}); // Go back to normal hub

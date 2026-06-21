@@ -639,10 +639,11 @@ export const handler = async (event, context) => {
 
             const recipientsZh = [];
             const recipientsEn = [];
+            const fcmTokens = [];
             let dbError = null;
             const queryLogs = [];
 
-            // Fetch users to retrieve their dingtalkUserIds
+            // Fetch users to retrieve their dingtalkUserIds and deviceTokens
             if (!isMockFirebase) {
                 try {
                     const db = getFirestoreDb();
@@ -650,6 +651,8 @@ export const handler = async (event, context) => {
                         const doc = await db.collection('users').doc(uid).get();
                         if (doc.exists) {
                             const data = doc.data();
+                            
+                            // Collect DingTalk User ID
                             if (data.dingtalkUserId) {
                                 const isEnglishSpeaker = !isUserChineseSpeaker(data);
                                 if (isEnglishSpeaker) {
@@ -661,12 +664,21 @@ export const handler = async (event, context) => {
                             } else {
                                 queryLogs.push({ uid, found: true, dingtalkUserId: null, crmId: data.crmId, msg: "dingtalkUserId is missing in database profile" });
                             }
+
+                            // Collect device tokens for FCM push
+                            if (Array.isArray(data.deviceTokens) && data.deviceTokens.length > 0) {
+                                data.deviceTokens.forEach(t => {
+                                    if (t && typeof t === 'string') {
+                                        fcmTokens.push(t);
+                                    }
+                                });
+                            }
                         } else {
                             queryLogs.push({ uid, found: false, msg: "User document not found in Firestore users collection" });
                         }
                     }
                 } catch (err) {
-                    console.error("Failed to query assignees dingtalkUserIds:", err);
+                    console.error("Failed to query assignees dingtalkUserIds and tokens:", err);
                     dbError = err.message;
                 }
             } else {
@@ -680,6 +692,7 @@ export const handler = async (event, context) => {
                     }
                     queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, msg: "mocked" });
                 });
+                fcmTokens.push('mock_fcm_token_1', 'mock_fcm_token_2');
             }
 
             const getMsgMarkdown = (lang) => {
@@ -774,6 +787,72 @@ export const handler = async (event, context) => {
                 }
             }
 
+            // FCM App System Push
+            let fcmSentSuccess = false;
+            let fcmError = null;
+            let fcmSuccessCount = 0;
+            let fcmFailureCount = 0;
+            const uniqueFcmTokens = Array.from(new Set(fcmTokens));
+
+            if (uniqueFcmTokens.length > 0) {
+                if (!isMockFirebase) {
+                    try {
+                        const fcmPayload = {
+                            notification: {
+                                title: `📋 收到新的学习任务`,
+                                body: `${title} (指派人: ${assignerName || '导师'})`
+                            },
+                            data: {
+                                title: title,
+                                type: 'task',
+                                deadline: deadline || '',
+                                assignerName: assignerName || ''
+                            },
+                            apns: {
+                                payload: {
+                                    aps: {
+                                        sound: 'default',
+                                        badge: 1
+                                    }
+                                }
+                            }
+                        };
+
+                        const tokenChunks = [];
+                        for (let i = 0; i < uniqueFcmTokens.length; i += 500) {
+                            tokenChunks.push(uniqueFcmTokens.slice(i, i + 500));
+                        }
+
+                        const messaging = admin.messaging();
+                        const sendMethod = typeof messaging.sendEachForMulticast === 'function' 
+                            ? messaging.sendEachForMulticast.bind(messaging) 
+                            : messaging.sendMulticast.bind(messaging);
+
+                        for (const chunk of tokenChunks) {
+                            const response = await sendMethod({
+                                tokens: chunk,
+                                ...fcmPayload
+                            });
+                            fcmSuccessCount += response.successCount;
+                            fcmFailureCount += response.failureCount;
+                        }
+                        
+                        fcmSentSuccess = fcmSuccessCount > 0 || fcmFailureCount === 0;
+                        console.log(`[FCM Task Push] Success: ${fcmSuccessCount}, Fail: ${fcmFailureCount}`);
+                    } catch (fcmErr) {
+                        console.error("FCM task push error:", fcmErr);
+                        fcmError = fcmErr.message;
+                    }
+                } else {
+                    fcmSentSuccess = true;
+                    console.log("[Mock FCM Task Push sent]", {
+                        tokens: uniqueFcmTokens,
+                        title: `📋 收到新的学习任务`,
+                        body: `${title} (指派人: ${assignerName || '导师'})`
+                    });
+                }
+            }
+
             return {
                 statusCode: 200,
                 headers: { 'Content-Type': 'application/json' },
@@ -787,7 +866,14 @@ export const handler = async (event, context) => {
                     queryLogs: queryLogs,
                     isMockFirebase: isMockFirebase,
                     isMockDingTalk: isMockDingTalk,
-                    dingtalkApiResponse: dingtalkApiResponse
+                    dingtalkApiResponse: dingtalkApiResponse,
+                    fcmPush: {
+                        success: fcmSentSuccess,
+                        error: fcmError,
+                        successCount: fcmSuccessCount,
+                        failureCount: fcmFailureCount,
+                        tokensCount: uniqueFcmTokens.length
+                    }
                 })
             };
         }
@@ -1007,6 +1093,157 @@ export const handler = async (event, context) => {
                     }
                 } else {
                     errorMessage = "DingTalk Group Webhook URL (DINGTALK_WEBHOOK_URL) is not configured in Netlify environment variables.";
+                }
+            } else if (targetType === 'app') {
+                // FCM App System Push
+                pushType = 'app_push';
+                const tokens = [];
+                const queryLogs = [];
+                if (!isMockFirebase) {
+                    try {
+                        const db = getFirestoreDb();
+                        const snapshot = await db.collection('users').get();
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (data.role !== 'blocked') {
+                                let isMatched = true;
+                                if (Array.isArray(selectedSds) && selectedSds.length > 0) {
+                                    const sdFilters = selectedSds.map(s => {
+                                        const str = String(s);
+                                        if (str.startsWith('sd:')) return str.substring(3);
+                                        if (str.startsWith('sm:') || str.startsWith('tl:') || str.startsWith('cc:') || str.startsWith('dep:') || str.startsWith('role:')) return null;
+                                        return str;
+                                    }).filter(Boolean).map(x => x.trim().toLowerCase());
+
+                                    const smFilters = selectedSds.filter(s => String(s).startsWith('sm:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const tlFilters = selectedSds.filter(s => String(s).startsWith('tl:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const ccFilters = selectedSds.filter(s => String(s).startsWith('cc:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const depFilters = selectedSds.filter(s => String(s).startsWith('dep:')).map(s => String(s).substring(4).trim().toLowerCase());
+                                    const roleFilters = selectedSds.filter(s => String(s).startsWith('role:')).map(s => String(s).substring(5).trim().toLowerCase());
+
+                                    const userSd = String(data.sd || '').trim().toLowerCase();
+                                    const userCrmId = String(data.crmId || '').trim().toLowerCase();
+                                    const sdMatched = sdFilters.some(sd => sd === userSd || (data.role === 'sd' && sd === userCrmId));
+
+                                    const userSm = String(data.sm || '').trim().toLowerCase();
+                                    const smMatched = smFilters.some(sm => sm === userSm || (data.role === 'sm' && sm === userCrmId));
+
+                                    const userTl = String(data.tl || '').trim().toLowerCase();
+                                    const tlMatched = tlFilters.some(tl => tl === userTl || (data.role === 'tl' && tl === userCrmId));
+
+                                    const ccMatched = ccFilters.includes(userCrmId);
+
+                                    const userDep = String(data.dep || '').trim().toLowerCase();
+                                    const userTeam = String(data.team || '').trim().toLowerCase();
+                                    const hasSd = !!data.sd;
+                                    const isSd = data.role === 'sd';
+                                    const depMatched = !hasSd && !isSd && (depFilters.includes(userDep) || depFilters.includes(userTeam));
+
+                                    const userDepUpper = String(data.dep || '').trim().toUpperCase();
+                                    const userRoleLower = String(data.role || '').trim().toLowerCase();
+                                    let roleMatched = false;
+                                    if (roleFilters.includes('cctl') && userDepUpper === 'CC' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('ccsm') && userDepUpper === 'CC' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('ccsd') && userDepUpper === 'CC' && userRoleLower === 'sd') roleMatched = true;
+                                    if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('sssd') && userDepUpper === 'SS' && userRoleLower === 'sd') roleMatched = true;
+
+                                    isMatched = sdMatched || smMatched || tlMatched || ccMatched || depMatched || roleMatched;
+                                }
+
+                                if (isMatched && Array.isArray(data.deviceTokens) && data.deviceTokens.length > 0) {
+                                    data.deviceTokens.forEach(t => {
+                                        if (t && typeof t === 'string') tokens.push(t);
+                                    });
+                                    queryLogs.push({ uid: doc.id, crmId: data.crmId, matched: true, tokensCount: data.deviceTokens.length });
+                                }
+                            }
+                        });
+                    } catch (err) {
+                        console.error("Failed to query device tokens for material app push:", err);
+                        errorMessage = `Database query failed: ${err.message}`;
+                    }
+                } else {
+                    tokens.push('mock_fcm_token_1', 'mock_fcm_token_2');
+                }
+
+                const uniqueTokens = Array.from(new Set(tokens));
+
+                if (uniqueTokens.length > 0) {
+                    if (!isMockFirebase) {
+                        try {
+                            const payload = {
+                                notification: {
+                                    title: `🔥 ME云学堂发布了新录音`,
+                                    body: `${title}${lecturerName ? ' (主讲: ' + lecturerName + ')' : ''}`
+                                },
+                                data: {
+                                    recordingId: recordingId,
+                                    displayId: displayId || '',
+                                    title: title,
+                                    type: 'recording'
+                                },
+                                apns: {
+                                    payload: {
+                                        aps: {
+                                            sound: 'default',
+                                            badge: 1
+                                        }
+                                    }
+                                }
+                            };
+
+                            const tokenChunks = [];
+                            for (let i = 0; i < uniqueTokens.length; i += 500) {
+                                tokenChunks.push(uniqueTokens.slice(i, i + 500));
+                            }
+                            
+                            let successCount = 0;
+                            let failureCount = 0;
+                            const messaging = admin.messaging();
+                            const sendMethod = typeof messaging.sendEachForMulticast === 'function' 
+                                ? messaging.sendEachForMulticast.bind(messaging) 
+                                : messaging.sendMulticast.bind(messaging);
+
+                            for (const chunk of tokenChunks) {
+                                const response = await sendMethod({
+                                    tokens: chunk,
+                                    ...payload
+                                });
+                                successCount += response.successCount;
+                                failureCount += response.failureCount;
+                            }
+                            
+                            sentSuccess = successCount > 0 || failureCount === 0;
+                            console.log(`[FCM Push] Sent material. Success: ${successCount}, Fail: ${failureCount}`);
+                            if (failureCount > 0) {
+                                errorMessage = `FCM sent completed. Success: ${successCount}, Failures: ${failureCount}`;
+                            }
+                        } catch (fcmErr) {
+                            console.error("FCM broadcast error:", fcmErr);
+                            errorMessage = `FCM send failed: ${fcmErr.message}`;
+                            sentSuccess = false;
+                        }
+                    } else {
+                        sentSuccess = true;
+                        mockPayload = {
+                            tokens: uniqueTokens,
+                            title: `🔥 ME云学堂发布了新录音`,
+                            body: `${title}${lecturerName ? ' (主讲: ' + lecturerName + ')' : ''}`,
+                            data: {
+                                recordingId: recordingId,
+                                displayId: displayId || '',
+                                title: title,
+                                type: 'recording'
+                            },
+                            queryLogs
+                        };
+                        console.log("[Mock FCM Push sent]", mockPayload);
+                    }
+                } else {
+                    sentSuccess = true;
+                    errorMessage = "未在匹配的目标成员中找到任何注册的 App 推送设备 (FCM Token)。请确保员工已下载并开启通知。 / No active App devices (FCM tokens) found for the selected team members.";
                 }
             } else {
                 // Broadcast/Targeted Push via Work Notification partitioned by language
@@ -1340,6 +1577,173 @@ export const handler = async (event, context) => {
                     }
                 } else {
                     errorMessage = "DingTalk Group Webhook URL (DINGTALK_WEBHOOK_URL) is not configured in Netlify environment variables.";
+                }
+            } else if (targetType === 'app') {
+                // FCM App System Push
+                pushType = 'app_push';
+                const tokens = [];
+                const queryLogs = [];
+                if (!isMockFirebase) {
+                    try {
+                        const db = getFirestoreDb();
+                        const snapshot = await db.collection('users').get();
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (data.role !== 'blocked') {
+                                let isMatched = true;
+                                if (Array.isArray(selectedSds) && selectedSds.length > 0) {
+                                    const sdFilters = selectedSds.map(s => {
+                                        const str = String(s);
+                                        if (str.startsWith('sd:')) return str.substring(3);
+                                        if (str.startsWith('sm:') || str.startsWith('tl:') || str.startsWith('cc:') || str.startsWith('dep:') || str.startsWith('role:')) return null;
+                                        return str;
+                                    }).filter(Boolean).map(x => x.trim().toLowerCase());
+
+                                    const smFilters = selectedSds.filter(s => String(s).startsWith('sm:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const tlFilters = selectedSds.filter(s => String(s).startsWith('tl:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const ccFilters = selectedSds.filter(s => String(s).startsWith('cc:')).map(s => String(s).substring(3).trim().toLowerCase());
+                                    const depFilters = selectedSds.filter(s => String(s).startsWith('dep:')).map(s => String(s).substring(4).trim().toLowerCase());
+                                    const roleFilters = selectedSds.filter(s => String(s).startsWith('role:')).map(s => String(s).substring(5).trim().toLowerCase());
+
+                                    const userSd = String(data.sd || '').trim().toLowerCase();
+                                    const userCrmId = String(data.crmId || '').trim().toLowerCase();
+                                    const sdMatched = sdFilters.some(sd => sd === userSd || (data.role === 'sd' && sd === userCrmId));
+
+                                    const userSm = String(data.sm || '').trim().toLowerCase();
+                                    const smMatched = smFilters.some(sm => sm === userSm || (data.role === 'sm' && sm === userCrmId));
+
+                                    const userTl = String(data.tl || '').trim().toLowerCase();
+                                    const tlMatched = tlFilters.some(tl => tl === userTl || (data.role === 'tl' && tl === userCrmId));
+
+                                    const ccMatched = ccFilters.includes(userCrmId);
+
+                                    const userDep = String(data.dep || '').trim().toLowerCase();
+                                    const userTeam = String(data.team || '').trim().toLowerCase();
+                                    const hasSd = !!data.sd;
+                                    const isSd = data.role === 'sd';
+                                    const depMatched = !hasSd && !isSd && (depFilters.includes(userDep) || depFilters.includes(userTeam));
+
+                                    const userDepUpper = String(data.dep || '').trim().toUpperCase();
+                                    const userRoleLower = String(data.role || '').trim().toLowerCase();
+                                    let roleMatched = false;
+                                    if (roleFilters.includes('cctl') && userDepUpper === 'CC' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('ccsm') && userDepUpper === 'CC' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('ccsd') && userDepUpper === 'CC' && userRoleLower === 'sd') roleMatched = true;
+                                    if (roleFilters.includes('sstl') && userDepUpper === 'SS' && userRoleLower === 'tl') roleMatched = true;
+                                    if (roleFilters.includes('sssm') && userDepUpper === 'SS' && userRoleLower === 'sm') roleMatched = true;
+                                    if (roleFilters.includes('sssd') && userDepUpper === 'SS' && userRoleLower === 'sd') roleMatched = true;
+
+                                    isMatched = sdMatched || smMatched || tlMatched || ccMatched || depMatched || roleMatched;
+                                } else if (targetTeam && targetTeam !== 'all') {
+                                    const normalizedTeam = String(targetTeam).toUpperCase();
+                                    const userDepUpper = String(data.dep || '').trim().toUpperCase();
+                                    const userSdUpper = String(data.sd || '').trim().toUpperCase();
+                                    
+                                    let matchesTeam = false;
+                                    const identity = String(data.identity || '');
+                                    if (identity === normalizedTeam || identity === `${normalizedTeam} Operation` || (normalizedTeam === 'ADULT' && (identity === 'ACC' || identity === 'ACC Operation'))) {
+                                        matchesTeam = true;
+                                    } else {
+                                        if (normalizedTeam === 'KCC' && userDepUpper === 'CC' && (userSdUpper === 'JOHN' || userSdUpper === 'NIKI')) matchesTeam = true;
+                                        else if (normalizedTeam === 'GCC' && userDepUpper === 'CC' && userSdUpper === 'IRIS') matchesTeam = true;
+                                        else if (normalizedTeam === 'ADULT' && (userSdUpper === 'ALAN' || userSdUpper === 'CHASE')) matchesTeam = true;
+                                        else if (normalizedTeam === 'SS' && userSdUpper === 'LILY') matchesTeam = true;
+                                    }
+                                    isMatched = matchesTeam;
+                                }
+
+                                if (isMatched && Array.isArray(data.deviceTokens) && data.deviceTokens.length > 0) {
+                                    data.deviceTokens.forEach(t => {
+                                        if (t && typeof t === 'string') tokens.push(t);
+                                    });
+                                    queryLogs.push({ uid: doc.id, crmId: data.crmId, matched: true, tokensCount: data.deviceTokens.length });
+                                }
+                            }
+                        });
+                    } catch (err) {
+                        console.error("Failed to query device tokens for policy app push:", err);
+                        errorMessage = `Database query failed: ${err.message}`;
+                    }
+                } else {
+                    tokens.push('mock_fcm_token_1', 'mock_fcm_token_2');
+                }
+
+                const uniqueTokens = Array.from(new Set(tokens));
+
+                if (uniqueTokens.length > 0) {
+                    if (!isMockFirebase) {
+                        try {
+                            const isBrand = section === 'brand';
+                            const payload = {
+                                notification: {
+                                    title: isBrand ? `🎨 ME云学堂发布了新品牌物料` : `📢 ME云学堂发布了新运营政策`,
+                                    body: title
+                                },
+                                data: {
+                                    policyId: policyId,
+                                    title: title,
+                                    type: isBrand ? 'brand' : 'policy'
+                                },
+                                apns: {
+                                    payload: {
+                                        aps: {
+                                            sound: 'default',
+                                            badge: 1
+                                        }
+                                    }
+                                }
+                            };
+
+                            const tokenChunks = [];
+                            for (let i = 0; i < uniqueTokens.length; i += 500) {
+                                tokenChunks.push(uniqueTokens.slice(i, i + 500));
+                            }
+                            
+                            let successCount = 0;
+                            let failureCount = 0;
+                            const messaging = admin.messaging();
+                            const sendMethod = typeof messaging.sendEachForMulticast === 'function' 
+                                ? messaging.sendEachForMulticast.bind(messaging) 
+                                : messaging.sendMulticast.bind(messaging);
+
+                            for (const chunk of tokenChunks) {
+                                const response = await sendMethod({
+                                    tokens: chunk,
+                                    ...payload
+                                });
+                                successCount += response.successCount;
+                                failureCount += response.failureCount;
+                            }
+                            
+                            sentSuccess = successCount > 0 || failureCount === 0;
+                            console.log(`[FCM Push] Sent policy. Success: ${successCount}, Fail: ${failureCount}`);
+                            if (failureCount > 0) {
+                                errorMessage = `FCM sent completed. Success: ${successCount}, Failures: ${failureCount}`;
+                            }
+                        } catch (fcmErr) {
+                            console.error("FCM policy push error:", fcmErr);
+                            errorMessage = `FCM send failed: ${fcmErr.message}`;
+                            sentSuccess = false;
+                        }
+                    } else {
+                        sentSuccess = true;
+                        const isBrand = section === 'brand';
+                        mockPayload = {
+                            tokens: uniqueTokens,
+                            title: isBrand ? `🎨 ME云学堂发布了新品牌物料` : `📢 ME云学堂发布了新运营政策`,
+                            body: title,
+                            data: {
+                                policyId: policyId,
+                                title: title,
+                                type: isBrand ? 'brand' : 'policy'
+                            },
+                            queryLogs
+                        };
+                        console.log("[Mock FCM Policy Push sent]", mockPayload);
+                    }
+                } else {
+                    sentSuccess = true;
+                    errorMessage = "未在匹配的目标成员中找到任何注册App 推送设备 (FCM Token)。请确保员工已下载并开启通知。 / No active App devices (FCM tokens) found for the selected team members.";
                 }
             } else {
                 // Broadcast/Targeted Push via Work Notification

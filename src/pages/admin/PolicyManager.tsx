@@ -132,7 +132,7 @@ export default function PolicyManager() {
     // DingTalk push states
     const [showPushModal, setShowPushModal] = useState(false);
     const [selectedPolicyForPush, setSelectedPolicyForPush] = useState<PolicyItem | null>(null);
-    const [pushTargetType, setPushTargetType] = useState<'group' | 'individuals'>('group');
+    const [pushTargetType, setPushTargetType] = useState<'group' | 'individuals' | 'app'>('group');
     const [selectedSdsForPush, setSelectedSdsForPush] = useState<string[]>([]);
     const [pushWebhookLang, setPushWebhookLang] = useState<'bilingual' | 'en' | 'zh'>('bilingual');
     const [pushingToDingTalk, setPushingToDingTalk] = useState(false);
@@ -553,9 +553,13 @@ export default function PolicyManager() {
 
             const data = await response.json();
             if (response.ok && data.success) {
-                const successMsg = activeSection === 'brand' 
-                    ? t('policy_manager.brand_push_success', '品牌素材已成功推送至钉钉！') 
-                    : t('policy_manager.push_success', '政策素材已成功推送至钉钉！');
+                const successMsg = pushTargetType === 'app'
+                    ? (activeSection === 'brand' 
+                        ? t('policy_manager.brand_push_success_app', '品牌素材已成功推送至 App 锁屏！') 
+                        : t('policy_manager.push_success_app', '政策素材已成功推送至 App 锁屏！'))
+                    : (activeSection === 'brand' 
+                        ? t('policy_manager.brand_push_success', '品牌素材已成功推送至钉钉！') 
+                        : t('policy_manager.push_success', '政策素材已成功推送至钉钉！'));
                 alert(successMsg);
                 setShowPushModal(false);
             } else {
@@ -1666,31 +1670,48 @@ export default function PolicyManager() {
                         </div>
 
                         {/* Push Segment Toggle */}
-                        {isSuperAdmin && (
-                            <div className="flex bg-gray-100/80 p-1 rounded-xl gap-1">
+                        <div className="flex bg-gray-100/80 p-1 rounded-xl gap-1">
+                            {isSuperAdmin && (
                                 <button
                                     type="button"
                                     onClick={() => setPushTargetType('group')}
-                                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
+                                    className={`flex-1 py-2.5 px-3 rounded-lg text-[11px] md:text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-0 bg-transparent cursor-pointer ${
                                         pushTargetType === 'group'
                                             ? 'bg-white text-deep-teal shadow-md border border-gray-100'
                                             : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
                                     }`}
                                 >
-                                    {t('policy_manager.push_to_group', '👥 推送至工作群机器人')}
+                                    {t('policy_manager.push_to_group', '👥 钉钉群助手')}
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setPushTargetType('individuals')}
-                                    className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-0 cursor-pointer ${
-                                        pushTargetType === 'individuals'
-                                            ? 'bg-white text-deep-teal shadow-md border border-gray-100'
-                                            : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
-                                    }`}
-                                >
-                                    {t('policy_manager.push_to_individuals', '👤 精确推送给个人')}
-                                </button>
-                            </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setPushTargetType('individuals')}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-[11px] md:text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-0 bg-transparent cursor-pointer ${
+                                    pushTargetType === 'individuals'
+                                        ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                        : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                }`}
+                            >
+                                {t('policy_manager.push_to_individuals', '👤 钉钉个人')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPushTargetType('app')}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-[11px] md:text-xs font-bold transition-all flex items-center justify-center gap-1.5 border-0 bg-transparent cursor-pointer ${
+                                    pushTargetType === 'app'
+                                        ? 'bg-white text-deep-teal shadow-md border border-gray-100'
+                                        : 'bg-transparent text-arabian-night/60 hover:text-arabian-night hover:bg-white/40'
+                                }`}
+                            >
+                                {t('policy_manager.push_to_app', '📱 App系统通知')}
+                            </button>
+                        </div>
+
+                        {pushTargetType === 'app' && selectedSdsForPush.length === 0 && (
+                            <p className="text-[11px] text-[#a88216] bg-desert-gold/5 border border-desert-gold/15 rounded-xl p-2.5 font-medium leading-relaxed">
+                                💡 {t('policy_manager.app_push_all_tip', '提示：未选择任何部门，本次推送将广播给所有已注册 App 推送的员工。若只需推送给特定团队，请勾选下方对应的部门。')}
+                            </p>
                         )}
 
                         {/* Webhook Push Language Selector */}
@@ -1737,8 +1758,8 @@ export default function PolicyManager() {
                             </div>
                         )}
 
-                        {/* SD Selection Checklist (When individual push is active) */}
-                        {pushTargetType === 'individuals' && (
+                        {/* SD Selection Checklist (When individual push or app push is active) */}
+                        {(pushTargetType === 'individuals' || pushTargetType === 'app') && (
                             <div className="animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col gap-2">
                                 <div className="flex items-center justify-between text-xs font-bold text-arabian-night/70">
                                     <span>{t('policy_manager.select_sd_teams', '选择接收部门 (按 SD 维度及职能部门)')}</span>
@@ -1851,6 +1872,10 @@ export default function PolicyManager() {
                                     </>
                                 ) : pushTargetType === 'group' ? (
                                     t('policy_manager.push_btn_group', '广播推送至工作群')
+                                ) : pushTargetType === 'app' ? (
+                                    selectedSdsForPush.length === 0
+                                        ? t('policy_manager.push_btn_app_all', '全局广播推送至 App')
+                                        : t('policy_manager.push_btn_app_targeted', '推送至 App (共 {{count}} 个团队)', { count: selectedSdsForPush.length })
                                 ) : (
                                     t('policy_manager.push_btn_individuals', '推送给选定团队 (共 {{count}} 个)', { count: selectedSdsForPush.length })
                                 )}

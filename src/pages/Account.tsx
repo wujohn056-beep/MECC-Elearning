@@ -135,15 +135,16 @@ export default function Account() {
         if (!user) return;
         const fetchTasks = async () => {
             try {
+                const myUid = profile?.realUid || user.uid;
                 const q = query(
                     collection(db, 'learning_tasks'),
-                    where('assigneeIds', 'array-contains', user.uid)
+                    where('assigneeIds', 'array-contains', myUid)
                 );
                 const snapshot = await getDocs(q);
                 const tasksData: any[] = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const myInfo = data.assignees[user.uid];
+                    const myInfo = data.assignees[myUid];
                     if (myInfo) {
                         tasksData.push({
                             id: doc.id,
@@ -171,7 +172,7 @@ export default function Account() {
             }
         };
         fetchTasks();
-    }, [user]);
+    }, [user, profile]);
 
     const [favRecordings, setFavRecordings] = useState<any[]>([]);
     const [favLoading, setFavLoading] = useState(true);
