@@ -94,7 +94,8 @@
         "comments": "Q&A Moderation",
         "policies": "Policy Operations",
         "return_hub": "Return to Hub",
-        "referrals": "Referral Management"
+        "referrals": "Referral Management",
+        "brands": "Branding Management"
     },
     "login": {
         "email_label": "CRM Account",

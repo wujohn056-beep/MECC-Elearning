@@ -30,7 +30,7 @@ export const handler = async (event, context) => {
         const body = JSON.parse(event.body);
         const { action, uid, newPassword } = body;
 
-        if (!uid) {
+        if (action !== 'batchDelete' && !uid) {
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing uid' }) };
         }
 

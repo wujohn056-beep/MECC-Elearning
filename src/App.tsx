@@ -69,7 +69,8 @@ function App() {
             <Route path="recordings" element={<RecordingsManager />} />
             <Route path="users" element={<UserManager />} />
             <Route path="comments" element={<CommentManager />} />
-            <Route path="policies" element={<PolicyManager />} />
+            <Route path="policies" element={<PolicyManager initialSection="policy" />} />
+            <Route path="brands" element={<PolicyManager initialSection="brand" />} />
             <Route path="referrals" element={<ReferralManager />} />
 
           </Route>

@@ -73,7 +73,11 @@ function mapBusinessTypeToTeam(bt: string): 'KCC' | 'GCC' | 'Adult' | 'SS' | 'al
     return 'all';
 }
 
-export default function PolicyManager() {
+interface PolicyManagerProps {
+    initialSection?: 'policy' | 'brand';
+}
+
+export default function PolicyManager({ initialSection }: PolicyManagerProps = {}) {
     const { t } = useTranslation();
     const { hasPermission, profile } = useAuth();
     
@@ -82,6 +86,7 @@ export default function PolicyManager() {
 
     // Section Selector
     const [activeSection, setActiveSection] = useState<'policy' | 'brand'>(() => {
+        if (initialSection) return initialSection;
         if (hasPermission('managePolicies')) return 'policy';
         if (hasPermission('manageBrands')) return 'brand';
         return 'policy';
@@ -989,7 +994,7 @@ export default function PolicyManager() {
     return (
         <div className="animate-in fade-in duration-500 space-y-8 pb-10">
             {/* Section Switcher (if user has both managePolicies and manageBrands) */}
-            {hasManagePolicies && hasManageBrands && (
+            {!initialSection && hasManagePolicies && hasManageBrands && (
                 <div className="flex border-b border-gray-200/80 gap-1 select-none">
                     <button 
                         onClick={() => {

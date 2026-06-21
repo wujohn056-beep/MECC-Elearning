@@ -94,7 +94,8 @@
         "comments": "互动审核",
         "policies": "政策运营",
         "return_hub": "返回学习广场",
-        "referrals": "推荐素材管理"
+        "referrals": "推荐素材管理",
+        "brands": "品牌运营"
     },
     "login": {
         "email_label": "CRM 账号",
