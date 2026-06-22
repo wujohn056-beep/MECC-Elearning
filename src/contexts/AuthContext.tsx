@@ -249,8 +249,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     
                     // Request notification permission from iOS/Android OS
                     let permStatus = await PushNotifications.checkPermissions();
+                    localStorage.setItem('native_push_permission', permStatus.receive);
                     if (permStatus.receive === 'prompt') {
                         permStatus = await PushNotifications.requestPermissions();
+                        localStorage.setItem('native_push_permission', permStatus.receive);
                     }
                     
                     if (permStatus.receive === 'granted') {
@@ -260,6 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // Listen for successful registration and token return
                         PushNotifications.addListener('registration', async (token) => {
                             console.log('[Native Push] APNs Registration successful, token:', token.value);
+                            localStorage.setItem('native_apns_token', token.value);
                             
                             // Save FCM token in user's profile under Firestore 'users' collection for targeted pushes
                             try {
@@ -267,6 +270,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 const fcmTokenResult = await FCM.getToken();
                                 const fcmToken = fcmTokenResult.token;
                                 console.log('[Native Push] FCM token retrieved:', fcmToken);
+                                localStorage.setItem('native_push_token', fcmToken);
+                                localStorage.removeItem('native_push_error');
 
                                 const { doc, updateDoc, arrayUnion } = await import('firebase/firestore');
                                 const targetUid = profile.realUid || user.uid;
@@ -276,18 +281,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                     lastActiveDevice: 'ios'
                                 });
                                 console.log('[Native Push] Associated FCM token in Firestore.');
-                            } catch (e) {
+                            } catch (e: any) {
                                 console.error('[Native Push] Failed to save FCM token in Firestore:', e);
+                                localStorage.setItem('native_push_error', `Save failed: ${e.message || e}`);
                             }
                         });
 
                         // Listen for registration failures
                         PushNotifications.addListener('registrationError', (err) => {
                             console.error('[Native Push] Registration error:', err);
+                            localStorage.setItem('native_push_error', err.error || JSON.stringify(err));
                         });
                     }
-                } catch (error) {
+                } catch (error: any) {
                     console.error('[Native Push] Error during native push setup:', error);
+                    localStorage.setItem('native_push_error', error.message || JSON.stringify(error));
                 }
             }
         };
