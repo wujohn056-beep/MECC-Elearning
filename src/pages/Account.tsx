@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
-import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2, Bell, ShieldAlert, RefreshCw } from 'lucide-react';
+import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -55,118 +55,6 @@ export default function Account() {
     const { user, profile } = useAuth();
     const isNative = Capacitor.isNativePlatform();
     const [openSection, setOpenSection] = useState<'tasks' | 'favorites' | 'milestones' | null>('tasks');
-    
-    // Push Notifications Diagnostic State
-    const [pushPermission, setPushPermission] = useState<string>('unknown');
-    const [pushToken, setPushToken] = useState<string>('');
-    const [apnsToken, setApnsToken] = useState<string>('');
-    const [pushError, setPushError] = useState<string>('');
-    const [isRegistering, setIsRegistering] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (isNative) {
-            setPushPermission(localStorage.getItem('native_push_permission') || 'unknown');
-            setPushToken(localStorage.getItem('native_push_token') || '');
-            setApnsToken(localStorage.getItem('native_apns_token') || '');
-            setPushError(localStorage.getItem('native_push_error') || '');
-        }
-    }, [isNative]);
-
-    const handleRegisterPush = async () => {
-        setIsRegistering(true);
-        setPushError('');
-        
-        // Set a timeout to prevent infinite spinning if iOS fails to callback
-        const timeoutId = setTimeout(() => {
-            setIsRegistering(prev => {
-                if (prev) {
-                    setPushError('注册超时。请检查：\n1. 已经在 Xcode 中开启了 "Push Notifications" Capability。\n2. 使用的是付费苹果开发者账号签名（免费账号不支持推送）。\n3. 手机网络连接正常。');
-                }
-                return false;
-            });
-        }, 15000);
-
-        try {
-            const { PushNotifications } = await import('@capacitor/push-notifications');
-            
-            console.log('[Account Diagnostic] Checking push permissions...');
-            let permStatus = await PushNotifications.checkPermissions();
-            localStorage.setItem('native_push_permission', permStatus.receive);
-            setPushPermission(permStatus.receive);
-            
-            if (permStatus.receive !== 'granted') {
-                console.log('[Account Diagnostic] Requesting push permissions...');
-                permStatus = await PushNotifications.requestPermissions();
-                localStorage.setItem('native_push_permission', permStatus.receive);
-                setPushPermission(permStatus.receive);
-            }
-            
-            if (permStatus.receive === 'granted') {
-                console.log('[Account Diagnostic] Registering for push notifications...');
-                // Setup listeners first to catch the events
-                await PushNotifications.removeAllListeners();
-                
-                await PushNotifications.addListener('registration', async (token) => {
-                    clearTimeout(timeoutId);
-                    console.log('[Account Diagnostic] APNs Registration successful, token:', token.value);
-                    localStorage.setItem('native_apns_token', token.value);
-                    setApnsToken(token.value);
-                    
-                    try {
-                        const { FCM } = await import('@capacitor-community/fcm');
-                        const fcmTokenResult = await FCM.getToken();
-                        const fcmToken = fcmTokenResult.token;
-                        console.log('[Account Diagnostic] FCM token retrieved:', fcmToken);
-                        localStorage.setItem('native_push_token', fcmToken);
-                        setPushToken(fcmToken);
-                        localStorage.removeItem('native_push_error');
-                        setPushError('');
-                        
-                        if (user && profile) {
-                            const { doc, updateDoc, arrayUnion } = await import('firebase/firestore');
-                            const targetUid = profile.realUid || user.uid;
-                            const userRef = doc(db, 'users', targetUid);
-                            await updateDoc(userRef, {
-                                deviceTokens: arrayUnion(fcmToken),
-                                lastActiveDevice: 'ios'
-                            });
-                            console.log('[Account Diagnostic] Associated FCM token in Firestore.');
-                        }
-                    } catch (e: any) {
-                        console.error('[Account Diagnostic] Failed to save FCM token in Firestore:', e);
-                        const errStr = `FCM/Firestore failed: ${e.message || e}`;
-                        localStorage.setItem('native_push_error', errStr);
-                        setPushError(errStr);
-                    }
-                    setIsRegistering(false);
-                });
-                
-                await PushNotifications.addListener('registrationError', (err) => {
-                    clearTimeout(timeoutId);
-                    console.error('[Account Diagnostic] Registration error event:', err);
-                    const errStr = err.error || JSON.stringify(err);
-                    localStorage.setItem('native_push_error', errStr);
-                    setPushError(errStr);
-                    setIsRegistering(false);
-                });
-                
-                await PushNotifications.register();
-            } else {
-                clearTimeout(timeoutId);
-                const errStr = 'Permission not granted';
-                localStorage.setItem('native_push_error', errStr);
-                setPushError(errStr);
-                setIsRegistering(false);
-            }
-        } catch (error: any) {
-            clearTimeout(timeoutId);
-            console.error('[Account Diagnostic] Error during manual registration:', error);
-            const errStr = error.message || JSON.stringify(error);
-            localStorage.setItem('native_push_error', errStr);
-            setPushError(errStr);
-            setIsRegistering(false);
-        }
-    };
     
     // Learning Journey
     const [learningHistory, setLearningHistory] = useState<any[]>([]);
@@ -613,82 +501,6 @@ export default function Account() {
                                 )}
                             </div>
                         )}
-                    </div>
-
-                    {/* Push Diagnostics Group */}
-                    <div className="glass-panel rounded-2xl border border-white bg-white/60 overflow-hidden shadow-sm">
-                        <div className="p-4 bg-white/40 border-b border-slate-100 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
-                                    <Bell className="w-4 h-4" />
-                                </div>
-                                <span className="font-extrabold text-slate-800 text-sm">
-                                    {t('account.push_diagnostics', '推送通知诊断')}
-                                </span>
-                            </div>
-                            <button 
-                                onClick={handleRegisterPush}
-                                disabled={isRegistering}
-                                className="flex items-center gap-1 text-[11px] font-bold text-deep-teal bg-white/80 border border-deep-teal/20 px-2.5 py-1 rounded-lg hover:bg-white active:bg-deep-teal/10 transition-all disabled:opacity-50"
-                            >
-                                <RefreshCw className={`w-3.5 h-3.5 ${isRegistering ? 'animate-spin' : ''}`} />
-                                {isRegistering ? t('account.registering', '注册中...') : t('account.register_push', '请求权限并注册')}
-                            </button>
-                        </div>
-                        <div className="p-4 bg-white/20 space-y-3.5 text-xs text-slate-600">
-                            {/* Permission Status */}
-                            <div className="flex items-center justify-between">
-                                <span className="font-bold text-slate-500">{t('account.permission_status', '系统权限状态')}</span>
-                                <span className={`font-black px-2.5 py-0.5 rounded-full border ${
-                                    pushPermission === 'granted' 
-                                        ? 'bg-green-50 text-green-600 border-green-200' 
-                                        : pushPermission === 'denied' 
-                                            ? 'bg-red-50 text-red-600 border-red-200'
-                                            : 'bg-amber-50 text-amber-600 border-amber-200'
-                                }`}>
-                                    {pushPermission === 'granted' ? t('account.granted', '已允许 (Granted)') : 
-                                     pushPermission === 'denied' ? t('account.denied', '被拒绝 (Denied)') : 
-                                     pushPermission === 'prompt' ? t('account.prompt', '询问 (Prompt)') : pushPermission}
-                                </span>
-                            </div>
-
-                            {/* APNs Token */}
-                            <div className="space-y-1">
-                                <span className="font-bold text-slate-500 block">{t('account.apns_token', '苹果 APNs Token')}</span>
-                                <div className="bg-slate-100/50 p-2 rounded-xl border border-slate-200/50 font-mono text-[10px] break-all select-all min-h-[32px] flex items-center">
-                                    {apnsToken || <span className="text-slate-400 font-sans italic">{t('account.not_registered', '未获取，请点击右上方重新注册')}</span>}
-                                </div>
-                            </div>
-
-                            {/* FCM Token */}
-                            <div className="space-y-1">
-                                <span className="font-bold text-slate-500 block">{t('account.fcm_token', '谷歌 FCM Token')}</span>
-                                <div className="bg-slate-100/50 p-2 rounded-xl border border-slate-200/50 font-mono text-[10px] break-all select-all min-h-[32px] flex items-center">
-                                    {pushToken || <span className="text-slate-400 font-sans italic">{t('account.not_registered', '未获取，请点击右上方重新注册')}</span>}
-                                </div>
-                            </div>
-
-                            {/* Registration Error */}
-                            {pushError && (
-                                <div className="p-3 bg-red-50/70 border border-red-200/50 rounded-2xl flex items-start gap-2.5">
-                                    <ShieldAlert className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                                    <div className="space-y-0.5">
-                                        <p className="font-bold text-red-700">{t('account.registration_error', '注册错误信息')}</p>
-                                        <p className="text-[10px] font-mono text-red-600/90 break-all">{pushError}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Help tips */}
-                            <div className="text-[10.5px] leading-relaxed text-slate-500/80 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                                <p className="font-bold text-slate-600 mb-1">💡 APNs / FCM 调试指南：</p>
-                                <ol className="list-decimal list-inside space-y-1">
-                                    <li>如果提示 APNs 错误，可能由于 Apple 开发者账号没有推送权限或 Xcode Capability 未开启。</li>
-                                    <li>若 APNs 正常（有 APNs Token）但无 FCM Token，可能为 Firebase 初始化、配置或网络连通性问题。</li>
-                                    <li>如果首次打开未弹出权限询问，可在手机设置中找到本应用，手动开启通知权限，并返回本页面重新注册。</li>
-                                </ol>
-                            </div>
-                        </div>
                     </div>
                 </div>
             ) : (
