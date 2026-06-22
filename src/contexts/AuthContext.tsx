@@ -256,11 +256,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     }
                     
                     if (permStatus.receive === 'granted') {
-                        // Register device with Apple APNs / Google FCM
-                        await PushNotifications.register();
+                        // Setup listeners first to catch the events
+                        await PushNotifications.removeAllListeners();
                         
                         // Listen for successful registration and token return
-                        PushNotifications.addListener('registration', async (token) => {
+                        await PushNotifications.addListener('registration', async (token) => {
                             console.log('[Native Push] APNs Registration successful, token:', token.value);
                             localStorage.setItem('native_apns_token', token.value);
                             
@@ -288,10 +288,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         });
 
                         // Listen for registration failures
-                        PushNotifications.addListener('registrationError', (err) => {
+                        await PushNotifications.addListener('registrationError', (err) => {
                             console.error('[Native Push] Registration error:', err);
                             localStorage.setItem('native_push_error', err.error || JSON.stringify(err));
                         });
+
+                        // Register device with Apple APNs / Google FCM
+                        await PushNotifications.register();
                     }
                 } catch (error: any) {
                     console.error('[Native Push] Error during native push setup:', error);
