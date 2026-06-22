@@ -828,6 +828,7 @@ export const handler = async (event, context) => {
                             ? messaging.sendEachForMulticast.bind(messaging) 
                             : messaging.sendMulticast.bind(messaging);
 
+                        const fcmErrors = [];
                         for (const chunk of tokenChunks) {
                             const response = await sendMethod({
                                 tokens: chunk,
@@ -835,10 +836,21 @@ export const handler = async (event, context) => {
                             });
                             fcmSuccessCount += response.successCount;
                             fcmFailureCount += response.failureCount;
+                            if (response.responses) {
+                                response.responses.forEach((res, idx) => {
+                                    if (!res.success && res.error) {
+                                        console.error(`[FCM Task Push] Token index ${idx} failed:`, res.error);
+                                        fcmErrors.push(`${res.error.code || 'unknown'}: ${res.error.message}`);
+                                    }
+                                });
+                            }
                         }
                         
                         fcmSentSuccess = fcmSuccessCount > 0 || fcmFailureCount === 0;
                         console.log(`[FCM Task Push] Success: ${fcmSuccessCount}, Fail: ${fcmFailureCount}`);
+                        if (fcmFailureCount > 0) {
+                            fcmError = `FCM sent completed. Success: ${fcmSuccessCount}, Failures: ${fcmFailureCount}. Details: ${fcmErrors.slice(0, 3).join('; ')}`;
+                        }
                     } catch (fcmErr) {
                         console.error("FCM task push error:", fcmErr);
                         fcmError = fcmErr.message;
@@ -1201,6 +1213,7 @@ export const handler = async (event, context) => {
                             
                             let successCount = 0;
                             let failureCount = 0;
+                            const fcmErrors = [];
                             const messaging = admin.messaging();
                             const sendMethod = typeof messaging.sendEachForMulticast === 'function' 
                                 ? messaging.sendEachForMulticast.bind(messaging) 
@@ -1213,12 +1226,20 @@ export const handler = async (event, context) => {
                                 });
                                 successCount += response.successCount;
                                 failureCount += response.failureCount;
+                                if (response.responses) {
+                                    response.responses.forEach((res, idx) => {
+                                        if (!res.success && res.error) {
+                                            console.error(`[FCM Push] Token index ${idx} failed:`, res.error);
+                                            fcmErrors.push(`${res.error.code || 'unknown'}: ${res.error.message}`);
+                                        }
+                                    });
+                                }
                             }
                             
                             sentSuccess = successCount > 0 || failureCount === 0;
                             console.log(`[FCM Push] Sent material. Success: ${successCount}, Fail: ${failureCount}`);
                             if (failureCount > 0) {
-                                errorMessage = `FCM sent completed. Success: ${successCount}, Failures: ${failureCount}`;
+                                errorMessage = `FCM sent completed. Success: ${successCount}, Failures: ${failureCount}. Details: ${fcmErrors.slice(0, 3).join('; ')}`;
                             }
                         } catch (fcmErr) {
                             console.error("FCM broadcast error:", fcmErr);
@@ -1701,6 +1722,7 @@ export const handler = async (event, context) => {
                             
                             let successCount = 0;
                             let failureCount = 0;
+                            const fcmErrors = [];
                             const messaging = admin.messaging();
                             const sendMethod = typeof messaging.sendEachForMulticast === 'function' 
                                 ? messaging.sendEachForMulticast.bind(messaging) 
@@ -1713,13 +1735,21 @@ export const handler = async (event, context) => {
                                 });
                                 successCount += response.successCount;
                                 failureCount += response.failureCount;
-                            }
-                            
-                            sentSuccess = successCount > 0 || failureCount === 0;
-                            console.log(`[FCM Push] Sent policy. Success: ${successCount}, Fail: ${failureCount}`);
-                            if (failureCount > 0) {
-                                errorMessage = `FCM sent completed. Success: ${successCount}, Failures: ${failureCount}`;
-                            }
+                                if (response.responses) {
+                                    response.responses.forEach((res, idx) => {
+                                        if (!res.success && res.error) {
+                                            console.error(`[FCM Push] Token index ${idx} failed:`, res.error);
+                                            fcmErrors.push(`${res.error.code || 'unknown'}: ${res.error.message}`);
+                                        }
+                                    });
+                                }
+                             }
+                             
+                             sentSuccess = successCount > 0 || failureCount === 0;
+                             console.log(`[FCM Push] Sent policy. Success: ${successCount}, Fail: ${failureCount}`);
+                             if (failureCount > 0) {
+                                 errorMessage = `FCM sent completed. Success: ${successCount}, Failures: ${failureCount}. Details: ${fcmErrors.slice(0, 3).join('; ')}`;
+                             }
                         } catch (fcmErr) {
                             console.error("FCM policy push error:", fcmErr);
                             errorMessage = `FCM send failed: ${fcmErr.message}`;

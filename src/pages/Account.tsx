@@ -106,7 +106,7 @@ export default function Account() {
                 // Setup listeners first to catch the events
                 await PushNotifications.removeAllListeners();
                 
-                PushNotifications.addListener('registration', async (token) => {
+                await PushNotifications.addListener('registration', async (token) => {
                     clearTimeout(timeoutId);
                     console.log('[Account Diagnostic] APNs Registration successful, token:', token.value);
                     localStorage.setItem('native_apns_token', token.value);
@@ -141,7 +141,7 @@ export default function Account() {
                     setIsRegistering(false);
                 });
                 
-                PushNotifications.addListener('registrationError', (err) => {
+                await PushNotifications.addListener('registrationError', (err) => {
                     clearTimeout(timeoutId);
                     console.error('[Account Diagnostic] Registration error event:', err);
                     const errStr = err.error || JSON.stringify(err);
