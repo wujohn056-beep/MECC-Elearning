@@ -252,7 +252,7 @@ export default function TeamTasks() {
                 }
             });
 
-            await addDoc(collection(db, 'learning_tasks'), {
+            const docRef = await addDoc(collection(db, 'learning_tasks'), {
                 title: newTaskTitle || '学习任务',
                 assignerId: user.uid,
                 assignerName: profile?.crmId || 'Leader',
@@ -275,7 +275,8 @@ export default function TeamTasks() {
                         assigneeIds: selectedUserIds,
                         recordingIds: selectedRecordingIds,
                         deadline: deadlineObj.toLocaleString(),
-                        startTime: new Date().toLocaleString()
+                        startTime: new Date().toLocaleString(),
+                        taskId: docRef.id
                     })
                 });
 

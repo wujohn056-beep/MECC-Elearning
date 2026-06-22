@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut, User, Key, AlertCircle, CheckCircle, ChevronDown, X, Compass, CheckSquare, BarChart2, Settings, BookOpen } from 'lucide-react';
@@ -124,6 +124,7 @@ export default function AppLayout() {
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
+    const navigate = useNavigate();
 
     const toggleLanguage = () => {
         const nextLang = i18n.language === 'en' ? 'ar' : (i18n.language === 'ar' ? 'zh' : 'en');
@@ -144,6 +145,49 @@ export default function AppLayout() {
         updateMeta('meta[property="og:title"]', 'content', 'ME Cloud Academy - Premium Sales Recordings');
         updateMeta('meta[property="og:description"]', 'content', 'Review excellent recordings to boost professional growth! Click the link to enter your dedicated Cloud Academy and start learning.');
     }, []);
+
+    // Push Notifications Click Handler
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return;
+
+        let actionListener: any = null;
+
+        const setupActionListener = async () => {
+            try {
+                const { PushNotifications } = await import('@capacitor/push-notifications');
+
+                actionListener = await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+                    console.log('[Native Push] Notification action clicked:', action);
+                    const notification = action.notification;
+                    const data = notification.data;
+
+                    if (data) {
+                        const type = data.type;
+                        if (type === 'recording' && data.recordingId) {
+                            console.log('[Native Push] Navigating to recording:', data.recordingId);
+                            navigate(`/hub?recordingId=${data.recordingId}`);
+                        } else if (type === 'task' && data.taskId) {
+                            console.log('[Native Push] Navigating to task:', data.taskId);
+                            navigate(`/hub?taskId=${data.taskId}`);
+                        } else if (type === 'task') {
+                            console.log('[Native Push] Navigating to tasks list');
+                            navigate('/account');
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('[Native Push] Error setting up click listener:', err);
+            }
+        };
+
+        setupActionListener();
+
+        return () => {
+            if (actionListener && typeof actionListener.remove === 'function') {
+                actionListener.remove();
+            }
+        };
+    }, [navigate]);
 
     // Close menu when clicking outside
     useEffect(() => {

@@ -630,7 +630,7 @@ export const handler = async (event, context) => {
         // ACTION: NOTIFY TASK (Phase 2 Task Pushes)
         // ==========================================
         if (action === 'notifyTask') {
-            const { title, assignerName, assigneeIds, deadline, startTime } = body;
+            const { title, assignerName, assigneeIds, deadline, startTime, taskId } = body;
             if (!assigneeIds || !Array.isArray(assigneeIds)) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing assigneeIds' }) };
             }
@@ -806,7 +806,8 @@ export const handler = async (event, context) => {
                                 title: title,
                                 type: 'task',
                                 deadline: deadline || '',
-                                assignerName: assignerName || ''
+                                assignerName: assignerName || '',
+                                taskId: taskId || ''
                             },
                             apns: {
                                 payload: {
