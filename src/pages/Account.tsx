@@ -75,6 +75,17 @@ export default function Account() {
     const handleRegisterPush = async () => {
         setIsRegistering(true);
         setPushError('');
+        
+        // Set a timeout to prevent infinite spinning if iOS fails to callback
+        const timeoutId = setTimeout(() => {
+            setIsRegistering(prev => {
+                if (prev) {
+                    setPushError('注册超时。请检查：\n1. 已经在 Xcode 中开启了 "Push Notifications" Capability。\n2. 使用的是付费苹果开发者账号签名（免费账号不支持推送）。\n3. 手机网络连接正常。');
+                }
+                return false;
+            });
+        }, 15000);
+
         try {
             const { PushNotifications } = await import('@capacitor/push-notifications');
             
@@ -96,6 +107,7 @@ export default function Account() {
                 await PushNotifications.removeAllListeners();
                 
                 PushNotifications.addListener('registration', async (token) => {
+                    clearTimeout(timeoutId);
                     console.log('[Account Diagnostic] APNs Registration successful, token:', token.value);
                     localStorage.setItem('native_apns_token', token.value);
                     setApnsToken(token.value);
@@ -130,6 +142,7 @@ export default function Account() {
                 });
                 
                 PushNotifications.addListener('registrationError', (err) => {
+                    clearTimeout(timeoutId);
                     console.error('[Account Diagnostic] Registration error event:', err);
                     const errStr = err.error || JSON.stringify(err);
                     localStorage.setItem('native_push_error', errStr);
@@ -139,12 +152,14 @@ export default function Account() {
                 
                 await PushNotifications.register();
             } else {
+                clearTimeout(timeoutId);
                 const errStr = 'Permission not granted';
                 localStorage.setItem('native_push_error', errStr);
                 setPushError(errStr);
                 setIsRegistering(false);
             }
         } catch (error: any) {
+            clearTimeout(timeoutId);
             console.error('[Account Diagnostic] Error during manual registration:', error);
             const errStr = error.message || JSON.stringify(error);
             localStorage.setItem('native_push_error', errStr);
