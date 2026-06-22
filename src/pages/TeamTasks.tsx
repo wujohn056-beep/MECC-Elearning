@@ -265,7 +265,7 @@ export default function TeamTasks() {
 
             // Trigger DingTalk Task Assignment Notifications via Serverless endpoint
             try {
-                fetch('/.netlify/functions/dingtalk', {
+                const res = await fetch('/.netlify/functions/dingtalk', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -277,9 +277,22 @@ export default function TeamTasks() {
                         deadline: deadlineObj.toLocaleString(),
                         startTime: new Date().toLocaleString()
                     })
-                }).catch(err => console.error("DingTalk task notification background error:", err));
-            } catch (notifyErr) {
+                });
+
+                if (!res.ok) {
+                    throw new Error(t('team_tasks.notification_fail', '发送任务通知失败，请检查网络或后台配置。'));
+                }
+
+                const data = await res.json();
+                console.log("[TeamTasks] Notification trigger result:", data);
+                if (data.fcmPush && data.fcmPush.failureCount > 0) {
+                    alert(t('team_tasks.fcm_push_error', `任务已创建，但推送通知发送失败：\n${data.fcmPush.error}`));
+                } else if (data.fcmPush && data.fcmPush.tokensCount === 0) {
+                    alert(t('team_tasks.fcm_no_tokens', '任务已创建，但未找到任何注册了推送通知的 App 设备。'));
+                }
+            } catch (notifyErr: any) {
                 console.error("Failed to initiate DingTalk task notification request:", notifyErr);
+                alert(t('team_tasks.notification_error', `发送任务通知时发生网络或服务错误：${notifyErr.message}`));
             }
 
             setShowCreateModal(false);
