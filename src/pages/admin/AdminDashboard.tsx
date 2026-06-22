@@ -69,6 +69,7 @@ export default function AdminDashboard() {
     const [filterSm, setFilterSm] = useState<string>('all');
     const [filterTeam, setFilterTeam] = useState<string>('all');
     const [filterCc, setFilterCc] = useState<string>('all');
+    const [activityTab, setActivityTab] = useState<'logins' | 'never' | 'inactive'>('logins');
     
     const [users, setUsers] = useState<UserRecord[]>([]);
     const [logs, setLogs] = useState<LearningLog[]>([]);
@@ -254,6 +255,60 @@ export default function AdminDashboard() {
         }).sort((a, b) => b.lastLoginAt?.toDate?.()?.getTime() - a.lastLoginAt?.toDate?.()?.getTime());
     }, [activityLogs, startDate, endDate, displayedUserIds]);
 
+    const loginAnalysis = useMemo(() => {
+        const now = new Date().getTime();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+        const neverLogged: UserRecord[] = [];
+        const inactiveSevenDays: (UserRecord & { lastLogin: Date })[] = [];
+
+        displayedUsers.forEach(u => {
+            const uLogs = activityLogs.filter(log => log.userId === u.id);
+            if (uLogs.length === 0) {
+                neverLogged.push(u);
+            } else {
+                let latestMs = 0;
+                let latestLogDate: Date | null = null;
+                uLogs.forEach(log => {
+                    if (log.lastLoginAt) {
+                        const t = log.lastLoginAt.toDate?.()?.getTime() || new Date(log.lastLoginAt).getTime();
+                        if (t > latestMs) {
+                            latestMs = t;
+                            latestLogDate = log.lastLoginAt.toDate?.() || new Date(log.lastLoginAt);
+                        }
+                    }
+                });
+
+                if (latestMs > 0 && (now - latestMs > sevenDaysMs) && latestLogDate) {
+                    inactiveSevenDays.push({ ...u, lastLogin: latestLogDate });
+                }
+            }
+        });
+
+        const groupByOrg = (list: any[]) => {
+            const groups: Record<string, Record<string, any[]>> = {};
+            list.forEach(item => {
+                const sdName = (item.sd || 'Unassigned SD').trim().toUpperCase();
+                const teamName = (item.team || 'Unassigned Team').trim();
+                if (!groups[sdName]) {
+                    groups[sdName] = {};
+                }
+                if (!groups[sdName][teamName]) {
+                    groups[sdName][teamName] = [];
+                }
+                groups[sdName][teamName].push(item);
+            });
+            return groups;
+        };
+
+        return {
+            neverLogged: groupByOrg(neverLogged),
+            neverLoggedCount: neverLogged.length,
+            inactiveSevenDays: groupByOrg(inactiveSevenDays),
+            inactiveSevenDaysCount: inactiveSevenDays.length
+        };
+    }, [displayedUsers, activityLogs]);
+
     const filteredRecordings = useMemo(() => {
         return recordings.filter(rec => {
             if (!rec.createdAt) return false;
@@ -305,7 +360,8 @@ export default function AdminDashboard() {
     // Top Level Metrics
     const totalDurationSeconds = Object.values(userStats).reduce((acc, curr) => acc + curr.duration, 0);
     const totalDurationHours = (totalDurationSeconds / 3600).toFixed(1);
-    const avgDurationHours = displayedUsers.length > 0 ? (totalDurationSeconds / 3600 / displayedUsers.length).toFixed(2) : '0.00';
+    const learningUsersCount = Object.values(userStats).filter(curr => curr.duration > 0).length;
+    const avgDurationHours = learningUsersCount > 0 ? (totalDurationSeconds / 3600 / learningUsersCount).toFixed(2) : '0.00';
     
     let totalAssigned = 0;
     let totalCompleted = 0;
@@ -443,6 +499,68 @@ export default function AdminDashboard() {
         }
     };
 
+    const renderOrgGroupedList = (groupedData: Record<string, Record<string, any[]>>, showLastLogin = false) => {
+        const sdNames = Object.keys(groupedData).sort();
+        if (sdNames.length === 0) {
+            return (
+                <div className="py-12 text-center text-gray-400 text-sm">
+                    {t('common.no_data', '暂无符合条件的数据')}
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
+                {sdNames.map(sdName => {
+                    const teams = groupedData[sdName];
+                    const teamNames = Object.keys(teams).sort();
+                    
+                    return (
+                        <div key={sdName} className="border border-slate-100 rounded-2xl bg-slate-50/50 p-4 space-y-4">
+                            <h3 className="font-extrabold text-sm text-deep-teal border-b border-deep-teal/10 pb-2 flex items-center gap-2">
+                                <span className="bg-deep-teal text-white text-[10px] font-black px-2 py-0.5 rounded-full">SD</span>
+                                {sdName}
+                            </h3>
+                            <div className="space-y-4">
+                                {teamNames.map(teamName => {
+                                    const members = teams[teamName];
+                                    return (
+                                        <div key={teamName} className="pl-2 space-y-2">
+                                            <h4 className="font-bold text-xs text-slate-500 flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-desert-gold"></span>
+                                                {teamName} ({members.length} {t('dashboard.members', '人')})
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pl-3">
+                                                {members.map(member => (
+                                                    <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
+                                                        <div className="flex justify-between items-start">
+                                                            <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
+                                                            <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
+                                                                {member.role?.toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-500">
+                                                            {member.name || '-'}
+                                                        </div>
+                                                        {showLastLogin && member.lastLogin && (
+                                                            <div className="text-[10px] text-amber-600 font-semibold mt-1">
+                                                                {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     if (loading) {
         return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-deep-teal"></div></div>;
     }
@@ -559,59 +677,83 @@ export default function AdminDashboard() {
 
             {/* Login & Activity Records Table */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative mt-6">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b border-gray-100 pb-4">
                     <h2 className="text-lg font-bold text-deep-teal flex items-center gap-2">
                         <Users className="w-5 h-5 text-desert-gold" />
-                        {t('dashboard.login_activity_records', '团队活跃与登录记录 (Active Users & Logins)')}
+                        {t('dashboard.login_activity_records', '团队活跃与登录分析 (Active Users & Logins)')}
                     </h2>
-                    <span className="text-sm font-semibold text-arabian-night/60 bg-gray-100 px-3 py-1 rounded-full">
-                        {filteredActivities.length} {t('dashboard.records', '条记录')}
-                    </span>
+                    <div className="flex bg-slate-100 p-1 rounded-xl gap-1 text-xs font-bold self-start sm:self-auto">
+                        <button
+                            onClick={() => setActivityTab('logins')}
+                            className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'logins' ? 'bg-white shadow text-deep-teal font-black' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {t('dashboard.activity_logins', '登录流水记录')} ({filteredActivities.length})
+                        </button>
+                        <button
+                            onClick={() => setActivityTab('never')}
+                            className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'never' ? 'bg-white shadow text-red-600 font-black' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {t('dashboard.activity_never', '从未登录')} ({loginAnalysis.neverLoggedCount})
+                        </button>
+                        <button
+                            onClick={() => setActivityTab('inactive')}
+                            className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'inactive' ? 'bg-white shadow text-amber-600 font-black' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {t('dashboard.activity_inactive_7d', '7天以上未登录')} ({loginAnalysis.inactiveSevenDaysCount})
+                        </button>
+                    </div>
                 </div>
-                <div className="overflow-x-auto max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
-                    <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="sticky top-0 bg-white/95 backdrop-blur-sm text-arabian-night/60 font-bold border-b border-gray-100 z-10 shadow-sm">
-                            <tr>
-                                <th className="py-3 px-4 rounded-tl-xl bg-white/95 backdrop-blur-sm">CRM ID</th>
-                                <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('common.name', '姓名')}</th>
-                                <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">Team</th>
-                                <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('dashboard.date', '日期')}</th>
-                                <th className="py-3 px-4 rounded-tr-xl bg-white/95 backdrop-blur-sm">{t('dashboard.last_login_time', '最后登录时间')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredActivities.slice(0, 100).map((act, i) => (
-                                <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="py-3 px-4 font-semibold">{act.crmId || act.userId}</td>
-                                    <td className="py-3 px-4">{act.name || act.crmId || '-'}</td>
-                                    <td className="py-3 px-4">
-                                        <span className="bg-gray-100 text-arabian-night/70 px-2 py-0.5 rounded text-xs font-semibold">
-                                            {act.team || '-'}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4 font-bold text-deep-teal">{act.date}</td>
-                                    <td className="py-3 px-4 text-arabian-night/70">
-                                        {act.lastLoginAt ? act.lastLoginAt.toDate().toLocaleString() : '-'}
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredActivities.length === 0 && (
+
+                {activityTab === 'logins' && (
+                    <div className="overflow-x-auto max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="sticky top-0 bg-white/95 backdrop-blur-sm text-arabian-night/60 font-bold border-b border-gray-100 z-10 shadow-sm">
                                 <tr>
-                                    <td colSpan={5} className="py-8 text-center text-gray-400">
-                                        {t('common.no_data', '暂无数据')}
-                                    </td>
+                                    <th className="py-3 px-4 rounded-tl-xl bg-white/95 backdrop-blur-sm">CRM ID</th>
+                                    <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('common.name', '姓名')}</th>
+                                    <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">Team</th>
+                                    <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('dashboard.date', '日期')}</th>
+                                    <th className="py-3 px-4 rounded-tr-xl bg-white/95 backdrop-blur-sm">{t('dashboard.last_login_time', '最后登录时间')}</th>
                                 </tr>
-                            )}
-                            {filteredActivities.length > 100 && (
-                                <tr>
-                                    <td colSpan={5} className="py-4 text-center text-sm font-semibold text-desert-gold">
-                                        {t('dashboard.showing_top_100', '仅显示最近 100 条记录')}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {filteredActivities.slice(0, 100).map((act, i) => (
+                                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="py-3 px-4 font-semibold">{act.crmId || act.userId}</td>
+                                        <td className="py-3 px-4">{act.name || act.crmId || '-'}</td>
+                                        <td className="py-3 px-4">
+                                            <span className="bg-gray-100 text-arabian-night/70 px-2 py-0.5 rounded text-xs font-semibold">
+                                                {act.team || '-'}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 font-bold text-deep-teal">{act.date}</td>
+                                        <td className="py-3 px-4 text-arabian-night/70">
+                                            {act.lastLoginAt ? (act.lastLoginAt.toDate ? act.lastLoginAt.toDate().toLocaleString() : new Date(act.lastLoginAt).toLocaleString()) : '-'}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredActivities.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="py-8 text-center text-gray-400">
+                                            {t('common.no_data', '暂无数据')}
+                                        </td>
+                                    </tr>
+                                )}
+                                {filteredActivities.length > 100 && (
+                                    <tr>
+                                        <td colSpan={5} className="py-4 text-center text-sm font-semibold text-desert-gold">
+                                            {t('dashboard.showing_top_100', '仅显示最近 100 条记录')}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {activityTab === 'never' && renderOrgGroupedList(loginAnalysis.neverLogged, false)}
+
+                {activityTab === 'inactive' && renderOrgGroupedList(loginAnalysis.inactiveSevenDays, true)}
             </div>
 
             {/* Render SD Level Rankings if user is Super Admin */}
