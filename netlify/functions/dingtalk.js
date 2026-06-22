@@ -933,7 +933,7 @@ export const handler = async (event, context) => {
                 };
 
                 const getMsgBtnText = () => {
-                    return isChinese ? "💬 立即在线查看评论" : "💬 View Comment Online";
+                    return isChinese ? "立即在线查看评论" : "View Comment Online";
                 };
 
                 if (!isMockDingTalk && !isMockFirebase) {
@@ -1013,7 +1013,7 @@ export const handler = async (event, context) => {
             };
 
             const getMsgBtnText = (lang) => {
-                return lang === 'en' ? "🎧 Listen Online Now" : "🎧 立即在线收听";
+                return lang === 'en' ? "Listen Online Now" : "立即在线收听";
             };
 
             const getMsgTitle = (lang) => {
@@ -1485,9 +1485,9 @@ export const handler = async (event, context) => {
 
             const getMsgBtnText = (lang) => {
                 if (isBrand) {
-                    return lang === 'en' ? "🎨 View Brand Material" : "🎨 立即查看品牌物料";
+                    return lang === 'en' ? "View Brand Material" : "立即查看品牌物料";
                 }
-                return lang === 'en' ? "📢 View Policy Online" : "📢 立即查看政策";
+                return lang === 'en' ? "View Policy Online" : "立即查看政策";
             };
 
             const getMsgTitle = (lang) => {
