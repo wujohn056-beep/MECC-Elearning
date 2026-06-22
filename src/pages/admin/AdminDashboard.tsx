@@ -286,17 +286,22 @@ export default function AdminDashboard() {
         });
 
         const groupByOrg = (list: any[]) => {
-            const groups: Record<string, Record<string, any[]>> = {};
+            const groups: Record<string, Record<string, Record<string, any[]>>> = {};
             list.forEach(item => {
-                const sdName = (item.sd || 'Unassigned SD').trim().toUpperCase();
-                const teamName = (item.team || 'Unassigned Team').trim();
+                const sdName = (item.sd || t('dashboard.unassigned_sd', '未分配 SD')).trim().toUpperCase();
+                const smName = (item.sm || t('dashboard.unassigned_sm', '未分配 SM')).trim().toUpperCase();
+                const tlName = (item.tl || t('dashboard.unassigned_tl', '未分配 TL')).trim().toUpperCase();
+                
                 if (!groups[sdName]) {
                     groups[sdName] = {};
                 }
-                if (!groups[sdName][teamName]) {
-                    groups[sdName][teamName] = [];
+                if (!groups[sdName][smName]) {
+                    groups[sdName][smName] = {};
                 }
-                groups[sdName][teamName].push(item);
+                if (!groups[sdName][smName][tlName]) {
+                    groups[sdName][smName][tlName] = [];
+                }
+                groups[sdName][smName][tlName].push(item);
             });
             return groups;
         };
@@ -499,7 +504,7 @@ export default function AdminDashboard() {
         }
     };
 
-    const renderOrgGroupedList = (groupedData: Record<string, Record<string, any[]>>, showLastLogin = false) => {
+    const renderOrgGroupedList = (groupedData: Record<string, Record<string, Record<string, any[]>>>, showLastLogin = false) => {
         const sdNames = Object.keys(groupedData).sort();
         if (sdNames.length === 0) {
             return (
@@ -512,8 +517,8 @@ export default function AdminDashboard() {
         return (
             <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                 {sdNames.map(sdName => {
-                    const teams = groupedData[sdName];
-                    const teamNames = Object.keys(teams).sort();
+                    const sms = groupedData[sdName];
+                    const smNames = Object.keys(sms).sort();
                     
                     return (
                         <div key={sdName} className="border border-slate-100 rounded-2xl bg-slate-50/50 p-4 space-y-4">
@@ -521,34 +526,56 @@ export default function AdminDashboard() {
                                 <span className="bg-deep-teal text-white text-[10px] font-black px-2 py-0.5 rounded-full">SD</span>
                                 {sdName}
                             </h3>
-                            <div className="space-y-4">
-                                {teamNames.map(teamName => {
-                                    const members = teams[teamName];
+                            
+                            <div className="space-y-4 pl-2">
+                                {smNames.map(smName => {
+                                    const tls = sms[smName];
+                                    const tlNames = Object.keys(tls).sort();
+                                    
                                     return (
-                                        <div key={teamName} className="pl-2 space-y-2">
-                                            <h4 className="font-bold text-xs text-slate-500 flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-desert-gold"></span>
-                                                {teamName} ({members.length} {t('dashboard.members', '人')})
+                                        <div key={smName} className="border border-slate-100/60 rounded-xl bg-white p-3 space-y-3">
+                                            <h4 className="font-bold text-xs text-slate-700 flex items-center gap-2">
+                                                <span className="bg-desert-gold/10 text-desert-gold text-[10px] font-black px-2 py-0.5 rounded-full">SM</span>
+                                                {smName}
                                             </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pl-3">
-                                                {members.map(member => (
-                                                    <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
-                                                            <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
-                                                                {member.role?.toUpperCase()}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-[11px] text-slate-500">
-                                                            {member.name || '-'}
-                                                        </div>
-                                                        {showLastLogin && member.lastLogin && (
-                                                            <div className="text-[10px] text-amber-600 font-semibold mt-1">
-                                                                {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
+                                            
+                                            <div className="space-y-4 pl-3">
+                                                {tlNames.map(tlName => {
+                                                    const members = tls[tlName];
+                                                    const teamName = members[0]?.team || '';
+                                                    
+                                                    return (
+                                                        <div key={tlName} className="space-y-2 border-l-2 border-slate-100 pl-3">
+                                                            <h5 className="font-semibold text-xs text-slate-500 flex items-center gap-2">
+                                                                <span className="bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.25 rounded">TL</span>
+                                                                <span>{tlName}</span>
+                                                                {teamName && <span className="text-slate-400 font-normal">({teamName})</span>}
+                                                                <span className="text-slate-400 font-normal ml-1">({members.length} {t('dashboard.members', '人')})</span>
+                                                            </h5>
+                                                            
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                                {members.map(member => (
+                                                                    <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
+                                                                        <div className="flex justify-between items-start">
+                                                                            <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
+                                                                            <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
+                                                                                {member.role?.toUpperCase()}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-slate-500">
+                                                                            {member.name || '-'}
+                                                                        </div>
+                                                                        {showLastLogin && member.lastLogin && (
+                                                                            <div className="text-[10px] text-amber-600 font-semibold mt-1">
+                                                                                {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );

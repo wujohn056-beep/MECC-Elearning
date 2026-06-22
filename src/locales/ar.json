@@ -579,7 +579,15 @@
         "records": "سجلات",
         "date": "التاريخ",
         "last_login_time": "وقت آخر تسجيل دخول",
-        "showing_top_100": "عرض أحدث 100 سجل فقط"
+        "showing_top_100": "عرض أحدث 100 سجل فقط",
+        "activity_logins": "سجلات تسجيل الدخول",
+        "activity_never": "لم يسجل الدخول مطلقاً",
+        "activity_inactive_7d": "غير نشط > 7 أيام",
+        "last_login": "آخر تسجيل دخول",
+        "members": "أعضاء",
+        "unassigned_sd": "SD غير معين",
+        "unassigned_sm": "SM غير معين",
+        "unassigned_tl": "TL غير معين"
     },
     "policy_manager": {
         "title": "سياسات وحوافز المبيعات التشغيلية",
