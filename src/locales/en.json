@@ -189,6 +189,7 @@
         "click_to_view_direct": "Click to view Arabic transcript directly",
         "font_size": "Font Size",
         "tl_bypass_notice": "🔒 TL/SM Management Direct Access Channel Active",
+        "video_transcript_permission_tip": "Arabic transcripts of video materials are only available for SD Directors and higher levels.",
         "comments_btn": "Q&A and Interactive Comments",
         "comments_and_qa": "Q&A and Discussion",
         "comments_count_label": " comments",

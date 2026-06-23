@@ -344,18 +344,20 @@ const RecordingCard = ({
                                 📊 {t('learning_hub.attachments_count', '含课件')} ({rec.attachments.length})
                             </span>
                         )}
-                        {rec.transcript && (
+                        {rec.transcript && (!isVideoUrl(rec.audioUrl) || isSDLevel) && (
                             <span 
                                 onClick={(e) => {
-                                    if (isLeader) {
+                                    const isVideo = isVideoUrl(rec.audioUrl);
+                                    const canView = isVideo ? isSDLevel : isLeader;
+                                    if (canView) {
                                         e.stopPropagation();
                                         onViewTranscript && onViewTranscript(rec);
                                     }
                                 }}
                                 className={`text-[9.5px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-extrabold shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-md transition-all duration-300 ${
-                                    isLeader ? 'cursor-pointer hover:bg-emerald-600 hover:text-white hover:border-transparent active:scale-95' : ''
+                                    (isVideoUrl(rec.audioUrl) ? isSDLevel : isLeader) ? 'cursor-pointer hover:bg-emerald-600 hover:text-white hover:border-transparent active:scale-95' : ''
                                 }`}
-                                title={isLeader ? t('learning_hub.click_to_view_direct', '点击直接查看阿语逐字稿') : ''}
+                                title={(isVideoUrl(rec.audioUrl) ? isSDLevel : isLeader) ? t('learning_hub.click_to_view_direct', '点击直接查看阿语逐字稿') : ''}
                             >
                                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -554,13 +556,14 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                   initialRec.categoryName?.toLowerCase() === 'document';
 
     const { user, profile } = useAuth();
+    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const [comments, setComments] = useState<any[]>([]);
     const [newCommentText, setNewCommentText] = useState('');
     const [replyToId, setReplyToId] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [modalCurrentTime, setModalCurrentTime] = useState(0);
     const [attachTimestamp, setAttachTimestamp] = useState(false);
-    const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>((isVideo || isDoc) ? 'comments' : 'details');
+    const [activeModalTab, setActiveModalTab] = useState<'details' | 'ai_analysis' | 'comments'>(((isVideo && !isSDLevel) || isDoc) ? 'comments' : 'details');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [recordingAnalysis, setRecordingAnalysis] = useState<any>(null);
 
@@ -614,7 +617,6 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
     }, [initialRec?.id]);
 
     // SD translation bypass states
-    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const [activeVideoTab, setActiveVideoTab] = useState<'arabic' | 'chinese'>('arabic');
     const [videoTranscriptZh, setVideoTranscriptZh] = useState<string>(initialRec.transcriptZh || '');
     const [loadingVideoTranslation, setLoadingVideoTranslation] = useState(false);
@@ -1215,7 +1217,7 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                         {rec.title}
                     </h3>
 
-                    {(isVideo || isDoc) && (
+                    {(isDoc || (isVideo && !isSDLevel)) && (
                         <div className="mt-3 mb-5 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in duration-300">
                             {rec.lecturerName && (
                                 <div className="flex items-center gap-1.5 text-xs font-bold text-desert-gold mb-2 select-none">
@@ -1230,7 +1232,7 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                     )}
                     
                     {/* Sleek Tabs Bar */}
-                    {!(isVideo || isDoc) && (
+                    {(!isDoc && (!isVideo || isSDLevel)) && (
                         <div className="flex gap-2 border-b border-gray-100 pb-3 mb-5 mt-4">
                             <button
                                 type="button"
@@ -1274,7 +1276,7 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                     )}
 
                     {/* Tab 1: Course Details */}
-                    {activeModalTab === 'details' && !(isVideo || isDoc) && (
+                    {activeModalTab === 'details' && (!isDoc && (!isVideo || isSDLevel)) && (
                         <div className="space-y-4 animate-in fade-in duration-300">
                             {rec.lecturerName && (
                                 <div className="flex items-center gap-1.5 text-sm font-bold text-desert-gold mb-3">
@@ -1288,7 +1290,7 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                             </p>
 
                             {/* Arabic Transcript Document with Anti-Cheating Unlock */}
-                            {rec.transcript && !isVideo && (
+                            {rec.transcript && (!isVideo || isSDLevel) && (
                                 <div className="mt-6 border-t border-gray-100 pt-5">
                                     {isUnlockedLocal ? (
                                         <div className="animate-in fade-in duration-700">
@@ -2310,12 +2312,35 @@ const DirectTranscriptModal = ({ rec: initialRec, onClose }: DirectTranscriptMod
     const { t } = useTranslation();
     const { profile } = useAuth();
     const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
+    const isVideo = isVideoUrl(initialRec.audioUrl);
     const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
     const [activeTab, setActiveTab] = useState<'arabic' | 'chinese'>('arabic');
     const [transcriptZh, setTranscriptZh] = useState<string>(initialRec.transcriptZh || '');
     const [loadingTranslation, setLoadingTranslation] = useState(false);
 
     const [rec, setRec] = useState<any>(initialRec);
+
+    if (isVideo && !isSDLevel) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl text-center space-y-4 animate-in zoom-in duration-300">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-[#006d77]">
+                        🔒
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800">{t('learning_hub.no_permission', '暂无访问权限')}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed font-semibold">
+                        {t('learning_hub.video_transcript_permission_tip', '视频物料的阿语逐字稿仅供 SD 总监及以上层级查阅。')}
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="w-full py-2.5 bg-deep-teal text-white rounded-xl font-bold hover:bg-deep-teal/90 transition-colors shadow-sm cursor-pointer"
+                    >
+                        {t('common.close', '关闭')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     React.useEffect(() => {
         setRec(initialRec);
@@ -2668,6 +2693,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
 export default function LearningHub() {
     const { t } = useTranslation();
     const { user, profile, isLeader, userTeam } = useAuth();
+    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const isNative = Capacitor.isNativePlatform();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);

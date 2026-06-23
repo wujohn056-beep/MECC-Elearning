@@ -188,6 +188,7 @@
         "click_to_view_direct": "انقر لعرض النص العربي مباشرة",
         "font_size": "حجم الخط",
         "tl_bypass_notice": "🔒 قناة الوصول المباشر للإدارة (TL/SM) نشطة",
+        "video_transcript_permission_tip": "النص التوضيحي للمواد المرئية متاح فقط للمدراء (SD) والمستويات الأعلى.",
         "comments_btn": "المشاركة في الأسئلة والأجوبة والتعليقات",
         "comments_and_qa": "الأسئلة والأجوبة والمناقشة",
         "comments_count_label": " مناقشة",
