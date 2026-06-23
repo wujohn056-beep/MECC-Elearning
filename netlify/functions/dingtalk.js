@@ -930,69 +930,147 @@ export const handler = async (event, context) => {
                 };
             }
 
-            if (uploaderData && uploaderData.dingtalkUserId) {
-                const targetUserId = uploaderData.dingtalkUserId;
+            if (uploaderData) {
                 const isChinese = isUserChineseSpeaker(uploaderData);
+                const hasDingTalk = !!uploaderData.dingtalkUserId;
+                const fcmTokens = Array.isArray(uploaderData.deviceTokens) ? uploaderData.deviceTokens.filter(Boolean) : [];
+                
+                let ddSuccess = !hasDingTalk;
+                let fcmSuccess = (fcmTokens.length === 0);
 
-                const getMsgTitle = () => {
-                    return isChinese ? "💬 您的素材有新评论！" : "💬 New Comment on Your Recording!";
-                };
+                // 1. DINGTALK NOTIFICATION
+                if (hasDingTalk) {
+                    const targetUserId = uploaderData.dingtalkUserId;
+                    const getMsgTitle = () => {
+                        return isChinese ? "💬 您的素材有新评论！" : "💬 New Comment on Your Recording!";
+                    };
 
-                const getMsgMarkdown = () => {
-                    if (isChinese) {
-                        return `### 💬 **您的录音素材有新的评论！**\n\n---\n\n**📋 详情信息：**\n* 🎬 **录音素材：** ${materialTitle}\n* 👤 **评论用户：** \`${commenterName}\`\n* 💬 **评论内容：** \n> ${commentText}\n\n---\n\n*请点击下方按钮立即查看详情并进行回复互动。*`;
+                    const getMsgMarkdown = () => {
+                        if (isChinese) {
+                            return `### 💬 **您的录音素材有新的评论！**\n\n---\n\n**📋 详情信息：**\n* 🎬 **录音素材：** ${materialTitle}\n* 👤 **评论用户：** \`${commenterName}\`\n* 💬 **评论内容：** \n> ${commentText}\n\n---\n\n*请点击下方按钮立即查看详情并进行回复互动。*`;
+                        }
+                        return `### 💬 **New Comment on Your Recording!**\n\n---\n\n**📋 Details:**\n* 🎬 **Recording:** ${materialTitle}\n* 👤 **Commenter:** \`${commenterName}\`\n* 💬 **Comment:** \n> ${commentText}\n\n---\n\n*Click the button below to view details and reply.*`;
+                    };
+
+                    const getMsgBtnText = () => {
+                        return isChinese ? "立即在线查看评论" : "View Comment Online";
+                    };
+
+                    if (!isMockDingTalk && !isMockFirebase) {
+                        try {
+                            const token = await getDingTalkToken();
+                            const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
+                            const notifyRes = await fetch(notifyUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    agent_id: parseInt(agentId),
+                                    userid_list: targetUserId,
+                                    msg: {
+                                        msgtype: "action_card",
+                                        action_card: {
+                                            title: getMsgTitle(),
+                                            markdown: getMsgMarkdown(),
+                                            single_title: getMsgBtnText(),
+                                            single_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub%3FrecordingId%3D${recordingId}`
+                                        }
+                                    }
+                                })
+                            });
+                            const notifyData = await notifyRes.json();
+                            dingtalkApiResponse = notifyData;
+                            ddSuccess = (notifyData.errcode === 0);
+                            if (!ddSuccess) {
+                                errorMessage = `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}`;
+                            }
+                        } catch (pushErr) {
+                            console.error("DingTalk push error in notifyComment:", pushErr);
+                            errorMessage = pushErr.message;
+                        }
+                    } else {
+                        ddSuccess = true;
+                        mockPayload = {
+                            targetUserId,
+                            title: getMsgTitle(),
+                            markdown: getMsgMarkdown(),
+                            btnText: getMsgBtnText(),
+                            url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub%3FrecordingId%3D${recordingId}`
+                        };
+                        console.log("[Mock Comment Notification sent]", mockPayload);
                     }
-                    return `### 💬 **New Comment on Your Recording!**\n\n---\n\n**📋 Details:**\n* 🎬 **Recording:** ${materialTitle}\n* 👤 **Commenter:** \`${commenterName}\`\n* 💬 **Comment:** \n> ${commentText}\n\n---\n\n*Click the button below to view details and reply.*`;
-                };
+                }
 
-                const getMsgBtnText = () => {
-                    return isChinese ? "立即在线查看评论" : "View Comment Online";
-                };
+                // 2. FCM PUSH NOTIFICATION
+                if (fcmTokens.length > 0) {
+                    const fcmTitle = isChinese ? `💬 您的素材有新评论！` : `💬 New Comment on Your Recording!`;
+                    const fcmBody = isChinese
+                        ? `“${commenterName}”评论了您的素材《${materialTitle}》：“${commentText.slice(0, 50)}...”`
+                        : `"${commenterName}" commented on your recording "${materialTitle}": "${commentText.slice(0, 50)}..."`;
 
-                if (!isMockDingTalk && !isMockFirebase) {
-                    try {
-                        const token = await getDingTalkToken();
-                        const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
-                        const notifyRes = await fetch(notifyUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                agent_id: parseInt(agentId),
-                                userid_list: targetUserId,
-                                msg: {
-                                    msgtype: "action_card",
-                                    action_card: {
-                                        title: getMsgTitle(),
-                                        markdown: getMsgMarkdown(),
-                                        single_title: getMsgBtnText(),
-                                        single_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub%3FrecordingId%3D${recordingId}`
+                    if (!isMockFirebase) {
+                        try {
+                            const messaging = admin.messaging();
+                            const sendMethod = typeof messaging.sendEachForMulticast === 'function'
+                                ? messaging.sendEachForMulticast.bind(messaging)
+                                : messaging.sendMulticast.bind(messaging);
+
+                            const fcmPayload = {
+                                notification: {
+                                    title: fcmTitle,
+                                    body: fcmBody
+                                },
+                                data: {
+                                    recordingId: recordingId || '',
+                                    type: 'comment'
+                                },
+                                apns: {
+                                    payload: {
+                                        aps: {
+                                            sound: 'default',
+                                            badge: 1
+                                        }
                                     }
                                 }
-                            })
-                        });
-                        const notifyData = await notifyRes.json();
-                        dingtalkApiResponse = notifyData;
-                        sentSuccess = (notifyData.errcode === 0);
-                        if (!sentSuccess) {
-                            errorMessage = `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}`;
+                            };
+
+                            const tokenChunks = [];
+                            for (let i = 0; i < fcmTokens.length; i += 500) {
+                                tokenChunks.push(fcmTokens.slice(i, i + 500));
+                            }
+
+                            let successCount = 0;
+                            for (const chunk of tokenChunks) {
+                                const response = await sendMethod({
+                                    tokens: chunk,
+                                    ...fcmPayload
+                                });
+                                successCount += response.successCount;
+                            }
+                            fcmSuccess = successCount > 0;
+                            console.log(`[FCM Push] Sent comment notification to author device tokens. Success count: ${successCount}`);
+                        } catch (fcmErr) {
+                            console.error("FCM comment push error in notifyComment:", fcmErr);
+                            fcmSuccess = false;
                         }
-                    } catch (pushErr) {
-                        console.error("DingTalk push error in notifyComment:", pushErr);
-                        errorMessage = pushErr.message;
+                    } else {
+                        fcmSuccess = true;
+                        if (!mockPayload) mockPayload = {};
+                        mockPayload.fcm = {
+                            tokens: fcmTokens,
+                            title: fcmTitle,
+                            body: fcmBody,
+                            data: {
+                                recordingId: recordingId || '',
+                                type: 'comment'
+                            }
+                        };
+                        console.log("[Mock FCM Comment Push sent]", mockPayload.fcm);
                     }
-                } else {
-                    sentSuccess = true;
-                    mockPayload = {
-                        targetUserId,
-                        title: getMsgTitle(),
-                        markdown: getMsgMarkdown(),
-                        btnText: getMsgBtnText(),
-                        url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub%3FrecordingId%3D${recordingId}`
-                    };
-                    console.log("[Mock Comment Notification sent]", mockPayload);
                 }
-            } else if (uploaderData && !uploaderData.dingtalkUserId) {
-                errorMessage = `Author profile exists, but dingtalkUserId is missing.`;
+
+                sentSuccess = ddSuccess && fcmSuccess;
+            } else {
+                errorMessage = `Author profile exists, but uploaderData is missing.`;
             }
 
             return {
