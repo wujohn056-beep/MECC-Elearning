@@ -297,6 +297,55 @@ export const myHandler = async (event, context) => {
             
             diagnostics.scannedTasks.push(taskDiagnostic);
         }
+
+        // ----------------------------------------------------
+        // Auto-bump play counts for newly uploaded recordings
+        // ----------------------------------------------------
+        try {
+            const recordingsSnapshot = await db.collection('recordings').get();
+            const nowMs = Date.now();
+            const tenMinutes = 10 * 60 * 1000;
+            diagnostics.scannedRecordings = [];
+
+            for (const doc of recordingsSnapshot.docs) {
+                const data = doc.data();
+                if (!data.initialPlayCountBumped) {
+                    const createdAt = data.createdAt ? data.createdAt.toDate() : null;
+                    if (createdAt) {
+                        const ageMs = nowMs - createdAt.getTime();
+                        if (ageMs >= tenMinutes) {
+                            const randomBump = Math.floor(Math.random() * 20) + 1; // 1 to 20 plays
+                            await doc.ref.update({
+                                playCount: (data.playCount || 0) + randomBump,
+                                initialPlayCountBumped: true
+                            });
+                            console.log(`[Task Reminder Cron] Seeding play count for new recording "${data.title}" by +${randomBump}.`);
+                            diagnostics.scannedRecordings.push({
+                                id: doc.id,
+                                title: data.title,
+                                bump: randomBump
+                            });
+                        }
+                    } else {
+                        // Fallback for legacy recordings that missed the bump and have no createdAt
+                        const randomBump = Math.floor(Math.random() * 20) + 1;
+                        await doc.ref.update({
+                            playCount: (data.playCount || 0) + randomBump,
+                            initialPlayCountBumped: true
+                        });
+                        console.log(`[Task Reminder Cron] Seeding play count for new recording "${data.title}" (no createdAt) by +${randomBump}.`);
+                        diagnostics.scannedRecordings.push({
+                            id: doc.id,
+                            title: data.title,
+                            bump: randomBump
+                        });
+                    }
+                }
+            }
+        } catch (recErr) {
+            console.error("[Task Reminder Cron] Failed during recordings play count auto-bump:", recErr);
+            diagnostics.errors.push("Recordings play count auto-bump error: " + recErr.message);
+        }
     } catch (err) {
         console.error("[Task Reminder Cron] Job encountered error:", err);
         diagnostics.errors.push("Job general error: " + err.message);
