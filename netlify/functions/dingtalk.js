@@ -1494,14 +1494,14 @@ export const handler = async (event, context) => {
 
                 if (isBrand) {
                     if (lang === 'en') {
-                        return `### 🎨 **ME Cloud Academy**\n**New Brand Material / Poster Published**\n\n---\n\n**📋 Material Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New brand promotion material or poster released. Please review immediately.'}\n\n[👉 Click Here to View Brand Materials](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fbrands)`;
+                        return `### 🎨 **ME Cloud Academy**\n**New Brand Material / Poster Published**\n\n---\n\n**📋 Material Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New brand promotion material or poster released. Please review immediately.'}\n\n[👉 Click Here to View Brand Materials](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fbrands%3FpolicyId%3D${policyId})`;
                     }
-                    return `### 🎨 **ME 云学堂**\n**发布了新的品牌物料/宣导海报**\n\n---\n\n**📋 物料详情：**\n* 🎬 **物料标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '设计/运营团队发布了最新的宣传海报或品牌宣导视频，请及时查看下载。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fbrands)`;
+                    return `### 🎨 **ME 云学堂**\n**发布了新的品牌物料/宣导海报**\n\n---\n\n**📋 物料详情：**\n* 🎬 **物料标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '设计/运营团队发布了最新的宣传海报或品牌宣导视频，请及时查看下载。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fbrands%3FpolicyId%3D${policyId})`;
                 } else {
                     if (lang === 'en') {
-                        return `### 📢 **ME Cloud Academy**\n**New Operations Policy / Incentive Published**\n\n---\n\n**📋 Policy Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}\n\n[👉 Click Here to View Policy](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
+                        return `### 📢 **ME Cloud Academy**\n**New Operations Policy / Incentive Published**\n\n---\n\n**📋 Policy Details:**\n* 🎬 **Title:** ${title}\n* 📂 **Type:** ${typeStr}\n* 👥 **Audience:** ${audienceStr}\n\n---\n\n> 💡 **Description:**\n> ${description || 'New operations policy or incentive scheme released. Please review immediately.'}\n\n[👉 Click Here to View Policy](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies%3FpolicyId%3D${policyId})`;
                     }
-                    return `### 📢 **ME 云学堂**\n**发布了新的运营政策/激励方案**\n\n---\n\n**📋 政策详情：**\n* 🎬 **政策标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '运营团队发布了最新的提成激励或运营政策，请及时查看并研读。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies)`;
+                    return `### 📢 **ME 云学堂**\n**发布了新的运营政策/激励方案**\n\n---\n\n**📋 政策详情：**\n* 🎬 **政策标题**：${title}\n* 📂 **展示类型**：${typeStr}\n* 👥 **受众团队**：${audienceStr}\n\n---\n\n> 💡 **内容简介：**\n> ${description || '运营团队发布了最新的提成激励或运营政策，请及时查看并研读。'}\n\n[👉 点击立即前往查看](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fpolicies%3FpolicyId%3D${policyId})`;
                 }
             };
 
@@ -1569,7 +1569,7 @@ export const handler = async (event, context) => {
                                         btns: [
                                             {
                                                 title: webhookBtnText,
-                                                actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}`
+                                                actionURL: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}%3FpolicyId%3D${policyId}`
                                             }
                                         ]
                                     }
@@ -1894,7 +1894,7 @@ export const handler = async (event, context) => {
                                                 btn_json_list: [
                                                     {
                                                         title: getMsgBtnText(lang),
-                                                        action_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}`
+                                                        action_url: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}%3FpolicyId%3D${policyId}`
                                                     }
                                                 ]
                                             }
@@ -1935,7 +1935,7 @@ export const handler = async (event, context) => {
                             pushType: pushType,
                             markdownZh: getMsgMarkdown('zh'),
                             markdownEn: getMsgMarkdown('en'),
-                            actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}`,
+                            actionUrl: `dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2F${encodedPagePath}%3FpolicyId%3D${policyId}`,
                             queryLogs: queryLogs
                         };
                         console.log("[Mock Policy Push sent]", mockPayload);

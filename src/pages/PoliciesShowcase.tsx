@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, getUserTeam } from '../contexts/AuthContext';
 import { db } from '../services/firebase';
 import { 
@@ -172,6 +172,9 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [activePolicyItem, setActivePolicyItem] = useState<PolicyItem | null>(null);
 
+    const [searchParams, setSearchParams] = useSearchParams();
+    const targetPolicyId = searchParams.get('policyId') || searchParams.get('id');
+
     // Selected tab for super admin viewing preview: defaults to the user's derived team or 'all'
     const [selectedTeamTab, setSelectedTeamTab] = useState<'all' | 'KCC' | 'GCC' | 'Adult' | 'SS'>(() => {
         const team = userTeam !== 'other' ? userTeam : 'all';
@@ -248,6 +251,21 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
     useEffect(() => {
         setCurrentFolderId(null);
     }, [activeTeam]);
+
+    // Auto-open target policy from URL query parameter
+    useEffect(() => {
+        if (targetPolicyId && policies.length > 0) {
+            const targetPolicy = policies.find(p => p.id === targetPolicyId);
+            if (targetPolicy && (!activePolicyItem || activePolicyItem.id !== targetPolicyId)) {
+                // If super admin and target policy team is different, select it
+                if (isSuperAdmin && targetPolicy.targetTeam !== selectedTeamTab) {
+                    setSelectedTeamTab(targetPolicy.targetTeam as any);
+                }
+                setCurrentFolderId(targetPolicy.directoryId);
+                setActivePolicyItem(targetPolicy);
+            }
+        }
+    }, [targetPolicyId, policies, isSuperAdmin, selectedTeamTab, activePolicyItem]);
 
     // Scoped list filtering: targetTeam must match activeTeam or be 'all'
     const sectionPolicies = useMemo(() => {
@@ -522,7 +540,17 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
             {activePolicyItem && (
                 <PolicyPreviewModal
                     policy={activePolicyItem}
-                    onClose={() => setActivePolicyItem(null)}
+                    onClose={() => {
+                        setActivePolicyItem(null);
+                        if (targetPolicyId) {
+                            setSearchParams(prev => {
+                                const newParams = new URLSearchParams(prev);
+                                newParams.delete('policyId');
+                                newParams.delete('id');
+                                return newParams;
+                            });
+                        }
+                    }}
                 />
             )}
         </div>
