@@ -864,20 +864,6 @@ export default function RecordingsManager() {
 
             if (editingId) {
                 await updateDoc(doc(db, 'recordings', editingId), dataToSave);
-                
-                // Auto-trigger background transcription if a new media file was uploaded on edit
-                if (file) {
-                    try {
-                        console.log("Auto-triggering background transcription for edited recording:", editingId);
-                        fetch('/.netlify/functions/transcribe-background', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ recordingId: editingId })
-                        });
-                    } catch (transcribeErr) {
-                        console.error("Failed to auto-trigger transcription on edit:", transcribeErr);
-                    }
-                }
             } else {
                 let maxId = 0;
                 recordings.forEach(rec => {
@@ -890,23 +876,11 @@ export default function RecordingsManager() {
                 });
                 dataToSave.displayId = `RD${(maxId + 1).toString().padStart(4, '0')}`;
 
-                const docRef = await addDoc(collection(db, 'recordings'), {
+                await addDoc(collection(db, 'recordings'), {
                     ...dataToSave,
                     isPinned: false,
                     createdAt: serverTimestamp()
                 });
-
-                // Auto-trigger background transcription for new recording
-                try {
-                    console.log("Auto-triggering background transcription for new recording:", docRef.id);
-                    fetch('/.netlify/functions/transcribe-background', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ recordingId: docRef.id })
-                    });
-                } catch (transcribeErr) {
-                    console.error("Failed to auto-trigger transcription on create:", transcribeErr);
-                }
             }
             
             resetForm();
