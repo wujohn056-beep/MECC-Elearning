@@ -2990,7 +2990,7 @@ export default function LearningHub() {
     useEffect(() => {
         const q = query(
             collection(db, 'policies'),
-            orderBy('sortOrder', 'asc')
+            orderBy('createdAt', 'desc')
         );
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list: any[] = [];
@@ -3741,7 +3741,11 @@ export default function LearningHub() {
                                                             <span className={`text-[10px] font-bold ${
                                                                 businessType === 'leader' ? 'text-white/30' : 'text-slate-400'
                                                             }`}>
-                                                                {t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}
+                                                                {policy.createdAt ? (
+                                                                    <>📅 {policy.createdAt.toDate().toLocaleDateString()}</>
+                                                                ) : (
+                                                                    <>{t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}</>
+                                                                )}
                                                             </span>
                                                             <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
                                                                 {policy.type === 'document' ? t('policy_showcase.action_read', '立即阅读') : policy.type === 'poster' ? t('policy_showcase.action_view_poster', '查看海报') : t('policy_showcase.action_play_video', '播放视频')} →

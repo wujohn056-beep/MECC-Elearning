@@ -190,7 +190,7 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
         setLoading(true);
         
         // 1. Fetch policies
-        const qPolicies = query(collection(db, 'policies'), orderBy('sortOrder', 'asc'));
+        const qPolicies = query(collection(db, 'policies'), orderBy('createdAt', 'desc'));
         const unsubPolicies = onSnapshot(qPolicies, (snapshot) => {
             const list: PolicyItem[] = [];
             snapshot.forEach((docSnapshot) => {
