@@ -487,16 +487,48 @@ export default function UserManager() {
                     }
 
                     if (existingUser) {
-                        await updateDoc(doc(db, 'users', existingUser.id), {
-                            role: role !== 'user' ? role : (existingUser.role && existingUser.role !== 'user' ? existingUser.role : 'user'),
-                            sd: row.sd || existingUser.sd || '',
-                            sm: row.sm || existingUser.sm || '',
-                            tl: row.tl || existingUser.tl || '',
-                            team: row.team || existingUser.team || '',
-                            dep: row.dep || existingUser.dep || 'CC',
-                            email: row.email ? row.email : (existingUser.email || ''),
-                            dingtalkUserId: row.dingtalkUserId ? row.dingtalkUserId : (existingUser.dingtalkUserId || null)
-                        });
+                        try {
+                            // Ensure Auth account exists by attempting to register (in case it was deleted or never created)
+                            const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                            const newUid = userCredential.user.uid;
+                            
+                            setStatusLog(prev => [{msg: `[自动修复] 发现 ${crmId} 的登录身份丢失，已自动在后台创建并同步。`, type: 'warning'}, ...prev]);
+                            
+                            // Write profile under the new UID
+                            await setDoc(doc(db, 'users', newUid), {
+                                role: role !== 'user' ? role : (existingUser.role && existingUser.role !== 'user' ? existingUser.role : 'user'),
+                                sd: row.sd || existingUser.sd || '',
+                                sm: row.sm || existingUser.sm || '',
+                                tl: row.tl || existingUser.tl || '',
+                                team: row.team || existingUser.team || '',
+                                dep: row.dep || existingUser.dep || 'CC',
+                                email: row.email ? row.email : (existingUser.email || ''),
+                                dingtalkUserId: row.dingtalkUserId ? row.dingtalkUserId : (existingUser.dingtalkUserId || null),
+                                policyScope: existingUser.policyScope || 'all',
+                                brandScope: existingUser.brandScope || 'all',
+                                identity: existingUser.identity || null,
+                                createdAt: existingUser.createdAt || serverTimestamp()
+                            });
+                            
+                            // Delete the old orphan profile doc
+                            await deleteDoc(doc(db, 'users', existingUser.id));
+                        } catch (authErr: any) {
+                            if (authErr.code === 'auth/email-already-in-use') {
+                                // Auth account already exists, standard Firestore update is sufficient
+                                await updateDoc(doc(db, 'users', existingUser.id), {
+                                    role: role !== 'user' ? role : (existingUser.role && existingUser.role !== 'user' ? existingUser.role : 'user'),
+                                    sd: row.sd || existingUser.sd || '',
+                                    sm: row.sm || existingUser.sm || '',
+                                    tl: row.tl || existingUser.tl || '',
+                                    team: row.team || existingUser.team || '',
+                                    dep: row.dep || existingUser.dep || 'CC',
+                                    email: row.email ? row.email : (existingUser.email || ''),
+                                    dingtalkUserId: row.dingtalkUserId ? row.dingtalkUserId : (existingUser.dingtalkUserId || null)
+                                });
+                            } else {
+                                throw authErr;
+                            }
+                        }
                         successCount++;
                         setStatusLog(prev => [{msg: `[更新] ${crmId} 架构已更新`, type: 'success'}, ...prev]);
                         setProgress(i + 1);
