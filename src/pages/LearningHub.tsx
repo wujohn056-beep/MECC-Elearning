@@ -199,6 +199,8 @@ const RecordingCard = ({
     isLeader = false
 }: any) => {
     const { t } = useTranslation();
+    const { profile } = useAuth();
+    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const isLiked = rec.likes?.includes(user?.uid || '');
     const isFav = favorites.includes(rec.id);
     const isVideo = isVideoUrl(rec.audioUrl);
