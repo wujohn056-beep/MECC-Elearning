@@ -299,8 +299,12 @@ export default function AppLayout() {
                                 onClick={() => setShowUserMenu(!showUserMenu)}
                                 className="flex items-center gap-1.5 sm:gap-2 bg-white/60 hover:bg-white border border-gray-200 px-2 sm:px-3 py-1.5 rounded-full transition-colors shadow-sm"
                             >
-                                <div className="w-6 h-6 bg-deep-teal text-white rounded-full flex items-center justify-center">
-                                    <User className="w-3.5 h-3.5" />
+                                <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center bg-deep-teal text-white shadow-sm shrink-0">
+                                    {profile?.avatarUrl ? (
+                                        <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-3.5 h-3.5" />
+                                    )}
                                 </div>
                                 <span className="text-sm font-bold text-arabian-night hidden md:block max-w-[80px] truncate">
                                     {profile?.crmId || 'User'}
@@ -312,8 +316,12 @@ export default function AppLayout() {
                                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                                     <div className="p-4 border-b border-gray-50 bg-gradient-to-br from-gray-50 to-white">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-desert-gold to-yellow-600 rounded-full flex items-center justify-center text-white shadow-sm shrink-0 border-2 border-white">
-                                                <User className="w-6 h-6" />
+                                            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-desert-gold to-yellow-600 text-white shadow-sm shrink-0 border-2 border-white">
+                                                {profile?.avatarUrl ? (
+                                                    <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <User className="w-6 h-6" />
+                                                )}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="font-extrabold text-arabian-night truncate text-base">{profile?.crmId}</p>

@@ -29,6 +29,7 @@ export interface UserProfile {
     brandScope?: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all';
     identity?: string;
     realUid?: string;
+    avatarUrl?: string;
 }
 
 export function getUserTeam(profile: UserProfile | null): 'KCC' | 'GCC' | 'Adult' | 'SS' | 'other' {
@@ -66,6 +67,7 @@ interface AuthContextType {
     canAccessTasks: boolean;
     canAccessDashboard: boolean;
     userTeam: 'KCC' | 'GCC' | 'Adult' | 'SS' | 'other';
+    updateProfile: (updates: Partial<UserProfile>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -319,6 +321,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const userTeam = getUserTeam(profile);
 
+    const updateProfile = (updates: Partial<UserProfile>) => {
+        setProfile(prev => prev ? { ...prev, ...updates } : null);
+    };
+
     const value = {
         user,
         profile,
@@ -331,7 +337,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasPermission,
         canAccessTasks,
         canAccessDashboard,
-        userTeam
+        userTeam,
+        updateProfile
     };
 
     return (

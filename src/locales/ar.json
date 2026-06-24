@@ -496,7 +496,10 @@
         "empty_hist_desc": "اذهب واستمع لبعض التسجيلات!",
         "empty_tasks_title": "لا توجد مهام معينة",
         "empty_tasks_desc": "ليس لديك أي مهام تعليمية معلقة في الوقت الحالي",
-        "hide_reflection": "إخفاء التأمل"
+        "hide_reflection": "إخفاء التأمل",
+        "avatar_size_error": "يجب أن يكون حجم الصورة أقل من 5 ميجابايت",
+        "avatar_success": "تم تحديث الصورة الشخصية بنجاح",
+        "avatar_error": "فشل تحديث الصورة الشخصية: "
     },
     "notifications": {
         "title": "المهام والإشعارات",

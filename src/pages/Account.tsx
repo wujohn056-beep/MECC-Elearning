@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { db, storage } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
-import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2, Bell } from 'lucide-react';
+import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2, Bell, Camera } from 'lucide-react';
+import { ref as sRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -52,9 +53,41 @@ const TaskCard = ({ task }: { task: any }) => {
 
 export default function Account() {
     const { t } = useTranslation();
-    const { user, profile } = useAuth();
+    const { user, profile, updateProfile } = useAuth();
     const isNative = Capacitor.isNativePlatform();
     const [openSection, setOpenSection] = useState<'tasks' | 'favorites' | 'milestones' | null>('tasks');
+    const [uploading, setUploading] = useState(false);
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user || !profile) return;
+        
+        // Size validation: e.g. max 5MB
+        if (file.size > 5 * 1024 * 1024) {
+            alert(t('account.avatar_size_error', 'Image size must be less than 5MB'));
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const avatarRef = sRef(storage, `avatars/${profile.crmId || user.uid}_${Date.now()}_${file.name}`);
+            const uploadTask = await uploadBytesResumable(avatarRef, file);
+            const downloadUrl = await getDownloadURL(uploadTask.ref);
+
+            const userProfileRef = doc(db, 'users', profile.realUid || user.uid);
+            await updateDoc(userProfileRef, {
+                avatarUrl: downloadUrl
+            });
+
+            updateProfile({ avatarUrl: downloadUrl });
+            alert(t('account.avatar_success', 'Avatar updated successfully'));
+        } catch (error: any) {
+            console.error("Error uploading avatar:", error);
+            alert(t('account.avatar_error', 'Failed to upload avatar: ') + (error.message || error));
+        } finally {
+            setUploading(false);
+        }
+    };
     
     // Learning Journey
     const [learningHistory, setLearningHistory] = useState<any[]>([]);
@@ -219,49 +252,80 @@ export default function Account() {
 
     return (
         <div className="animate-in fade-in duration-500 space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
-            {/* iOS profile card on native, standard title on web */}
-            {isNative ? (
-                <div className="glass-panel rounded-3xl p-5 border border-white bg-white/60 flex flex-col shadow-sm animate-in fade-in duration-300">
-                    <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-desert-gold to-amber-600 flex items-center justify-center text-white text-2xl font-black shadow-md border-2 border-white select-none shrink-0">
-                            {profile?.crmId ? profile.crmId.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <h2 className="text-xl font-black text-slate-800 truncate">{profile?.crmId || user?.email || 'User'}</h2>
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <span className="text-[10px] font-extrabold text-desert-gold uppercase bg-desert-gold/10 px-2 py-0.5 rounded-full border border-desert-gold/20">
-                                    {profile?.role || 'User'}
-                                </span>
-                                <span className="text-[10px] font-semibold text-slate-500">
-                                    {profile?.team ? profile.team.replace('小组', ` ${t('common.team')}`) : '-'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {(profile?.sd || profile?.sm || profile?.tl) && (
-                        <div className="grid grid-cols-3 gap-2 mt-4 pt-3.5 border-t border-slate-100/80 text-center">
-                            <div>
-                                <span className="block text-[9px] font-bold text-slate-400 uppercase">SD</span>
-                                <span className="text-xs font-bold text-slate-700">{profile?.sd || '-'}</span>
-                            </div>
-                            <div>
-                                <span className="block text-[9px] font-bold text-slate-400 uppercase">SM</span>
-                                <span className="text-xs font-bold text-slate-700">{profile?.sm || '-'}</span>
-                            </div>
-                            <div>
-                                <span className="block text-[9px] font-bold text-slate-400 uppercase">TL</span>
-                                <span className="text-xs font-bold text-slate-700">{profile?.tl || '-'}</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : (
+            {!isNative && (
                 <div>
                     <h1 className="text-3xl font-extrabold text-deep-teal">{t('account.title')}</h1>
                     <p className="text-arabian-night/60 mt-1">{t('account.desc')}</p>
                 </div>
             )}
+
+            {/* Premium Glassmorphic User Profile Card */}
+            <div className="glass-panel rounded-3xl p-6 border border-white bg-white/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-sm animate-in fade-in duration-300">
+                <div className="flex items-center gap-5">
+                    {/* Avatar Container with interactive upload overlay */}
+                    <div className="relative group shrink-0 select-none">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-desert-gold to-amber-600 flex items-center justify-center text-white text-3xl font-black shadow-md border-2 border-white">
+                            {profile?.avatarUrl ? (
+                                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                profile?.crmId ? profile.crmId.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')
+                            )}
+                        </div>
+                        {/* Hidden file input */}
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleAvatarUpload} 
+                            disabled={uploading} 
+                            id="avatar-input" 
+                            className="hidden" 
+                        />
+                        {/* Upload button overlay */}
+                        <label 
+                            htmlFor="avatar-input" 
+                            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-deep-teal hover:bg-teal-700 text-white flex items-center justify-center shadow-md cursor-pointer border-2 border-white transition-all active:scale-90"
+                        >
+                            {uploading ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <Camera className="w-4 h-4" />
+                            )}
+                        </label>
+                    </div>
+
+                    <div className="min-w-0">
+                        <h2 className="text-2xl font-black text-slate-800 truncate flex items-center gap-2">
+                            {profile?.crmId || user?.email || 'User'}
+                        </h2>
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                            <span className="text-[10px] font-extrabold text-desert-gold uppercase bg-desert-gold/10 px-2 py-0.5 rounded-full border border-desert-gold/20">
+                                {profile?.role || 'User'}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-full">
+                                {profile?.team ? profile.team.replace('小组', ` ${t('common.team')}`) : '-'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* SD, SM, TL Hierarchy */}
+                {(profile?.sd || profile?.sm || profile?.tl) && (
+                    <div className="flex items-center gap-6 sm:gap-10 border-t md:border-t-0 md:border-l border-slate-200/80 pt-4 md:pt-0 md:pl-8 w-full md:w-auto">
+                        <div className="text-center flex-1 md:flex-none">
+                            <span className="block text-[10px] font-bold text-slate-400 uppercase">SD</span>
+                            <span className="text-sm font-black text-slate-700">{profile?.sd || '-'}</span>
+                        </div>
+                        <div className="text-center flex-1 md:flex-none">
+                            <span className="block text-[10px] font-bold text-slate-400 uppercase">SM</span>
+                            <span className="text-sm font-black text-slate-700">{profile?.sm || '-'}</span>
+                        </div>
+                        <div className="text-center flex-1 md:flex-none">
+                            <span className="block text-[10px] font-bold text-slate-400 uppercase">TL</span>
+                            <span className="text-sm font-black text-slate-700">{profile?.tl || '-'}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-3 md:gap-6">
