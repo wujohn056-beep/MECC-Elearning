@@ -443,40 +443,48 @@ const RecordingCard = ({
                         <div className="flex items-center gap-2 select-none">
                             <button 
                                 onClick={() => handleToggleFavorite(rec.id)}
-                                className={`flex items-center justify-center transition-all duration-300 outline-none p-1.5 rounded-full shadow-sm hover:shadow hover:border-rose-200 active:scale-90 hover:scale-110 hover:bg-rose-50/30 cursor-pointer ${
+                                className={`flex items-center justify-center transition-all duration-300 outline-none p-1.5 rounded-full shadow-sm hover:shadow hover:scale-110 active:scale-95 cursor-pointer ${
                                     rec.businessType === 'leader'
-                                        ? 'bg-teal-950/60 border-desert-gold/25 text-white/80 border'
-                                        : 'bg-white border border-slate-100'
+                                        ? isFav 
+                                            ? 'bg-rose-500/20 border-rose-500/30 text-rose-400 border'
+                                            : 'bg-teal-950/60 border-desert-gold/25 text-white/80 border hover:bg-rose-950/40 hover:border-rose-500/30'
+                                        : isFav
+                                            ? 'bg-rose-50 border border-rose-200/70 text-rose-600'
+                                            : 'bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-500'
                                 }`}
                                 title={t('common.favorite', '收藏')}
                             >
-                                <Heart className={`h-3.5 w-3.5 transition-all duration-300 ${isFav ? 'fill-rose-500 text-rose-500 scale-110' : 'text-slate-300 hover:text-rose-400'}`} />
+                                <Heart className={`h-3.5 w-3.5 transition-all duration-300 ${isFav ? 'fill-rose-500 text-rose-500 scale-110' : 'text-current'}`} />
                             </button>
                             
                             <button 
                                 onClick={() => handleToggleLike(rec.id, rec.likes)}
-                                className={`flex items-center gap-1 transition-all duration-300 outline-none px-2.5 py-1 rounded-full border shadow-sm hover:shadow hover:border-desert-gold/30 active:scale-90 hover:scale-110 hover:bg-amber-50/10 cursor-pointer ${
+                                className={`flex items-center gap-1 transition-all duration-300 outline-none px-2.5 py-1 rounded-full border shadow-sm hover:shadow hover:scale-110 active:scale-95 cursor-pointer ${
                                     rec.businessType === 'leader'
-                                        ? 'bg-teal-950/60 border-desert-gold/25 text-white/80'
-                                        : 'bg-white border border-slate-100'
+                                        ? isLiked
+                                            ? 'bg-amber-500/20 border-amber-500/30 text-desert-gold'
+                                            : 'bg-teal-950/60 border-desert-gold/25 text-white/80 hover:bg-amber-950/40 hover:border-amber-500/30'
+                                        : isLiked
+                                            ? 'bg-amber-50 border border-amber-200/70 text-amber-600'
+                                            : 'bg-white border border-slate-200 text-slate-400 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-500'
                                 }`}
                             >
-                                <Moon className={`h-3.5 w-3.5 transition-all duration-300 ${isLiked ? 'fill-desert-gold text-desert-gold scale-110' : 'text-slate-300 hover:text-desert-gold'}`} />
-                                <span className={`${isLiked ? 'text-desert-gold font-black' : rec.businessType === 'leader' ? 'text-white/60 font-bold' : 'text-slate-400 font-bold'} text-[11px]`}>
+                                <Moon className={`h-3.5 w-3.5 transition-all duration-300 ${isLiked ? 'fill-desert-gold text-desert-gold scale-110' : 'text-current'}`} />
+                                <span className={`${isLiked ? 'text-desert-gold font-black' : 'text-current font-bold'} text-[11px]`}>
                                     {rec.likes?.length || 0}
                                 </span>
                             </button>
                             
                             <button 
                                 onClick={() => onShare && onShare(rec)}
-                                className={`flex items-center justify-center transition-all duration-300 outline-none p-1.5 rounded-full shadow-sm hover:shadow hover:border-[#008f99]/30 active:scale-90 hover:scale-110 hover:bg-cyan-50/10 cursor-pointer ${
+                                className={`flex items-center justify-center transition-all duration-300 outline-none p-1.5 rounded-full shadow-sm hover:shadow hover:scale-110 active:scale-95 cursor-pointer ${
                                     rec.businessType === 'leader'
-                                        ? 'bg-teal-950/60 border-desert-gold/25 text-white/80'
-                                        : 'bg-white border border-slate-100'
+                                        ? 'bg-teal-950/60 border-desert-gold/25 text-white/80 border hover:bg-cyan-950/40 hover:border-cyan-500/30'
+                                        : 'bg-white border border-slate-200 text-slate-400 hover:bg-cyan-50 hover:border-cyan-200 hover:text-cyan-600'
                                 }`}
                                 title={t('common.share', '分享')}
                             >
-                                <Share2 className="h-3.5 w-3.5 text-slate-300 hover:text-[#008f99] transition-all" />
+                                <Share2 className="h-3.5 w-3.5 transition-all" />
                             </button>
                         </div>
                     </div>
