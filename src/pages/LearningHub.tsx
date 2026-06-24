@@ -3976,53 +3976,7 @@ export default function LearningHub() {
                     )}
                 </header>
 
-                {/* Welcome Banner Card & User Progress Card */}
-                {!taskId && !targetRecordingId && (
-                    <div className="mt-8 flex flex-col md:flex-row gap-6 w-full items-stretch relative z-30">
-                        {/* Welcome Card */}
-                        <div className="flex-1 bg-gradient-to-r from-deep-teal to-teal-800 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg border border-white/10 flex flex-col justify-center min-h-[140px]">
-                            {/* Decorative patterns */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-                            <div className="relative z-10 space-y-1.5">
-                                <span className="text-[10px] bg-desert-gold/20 text-desert-gold border border-desert-gold/30 px-3 py-1 rounded-full font-black tracking-widest uppercase inline-block select-none">
-                                    Ahlan & Welcome 🌹
-                                </span>
-                                <h3 className="text-2xl sm:text-3.5xl font-black tracking-tight leading-tight">
-                                    {t('learning_hub.welcome_academy_title', 'Najah Academy')}
-                                </h3>
-                                <p className="text-white/80 text-xs sm:text-sm font-medium italic max-w-xl">
-                                    "{t('learning_hub.slogan', 'Cloud-Based Wisdom, Boundless Learning.')}"
-                                </p>
-                            </div>
-                        </div>
 
-                        {/* User Progress Card */}
-                        {!isNative && (
-                            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-6 flex flex-col justify-between shadow-[0_8px_30px_rgba(139,92,26,0.02)] w-full md:w-[320px] shrink-0">
-                                <div className="flex items-center gap-3.5">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-desert-gold to-amber-600 flex items-center justify-center text-white font-black text-lg shadow-md border-2 border-white">
-                                        {profile?.name ? profile.name[0].toUpperCase() : 'U'}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <h4 className="text-sm font-black text-deep-teal truncate">Ahlan, {profile?.name || user?.email?.split('@')[0] || 'User'}</h4>
-                                        <span className="text-[9px] bg-desert-gold/15 text-[#a88216] px-2 py-0.5 rounded-full font-black border border-desert-gold/25 uppercase tracking-wider inline-block">
-                                            {profile?.role === 'super_admin' ? 'Super Admin' : profile?.role === 'sd' ? 'Sales Director' : profile?.role === 'sm' ? 'Sales Manager' : 'Sales Member'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5">
-                                    <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-1.5">
-                                        <span className="flex items-center gap-1 select-none">📊 {t('learning_hub.total_progress', '学习总进度')}</span>
-                                        <span className="text-desert-gold font-extrabold">72%</span>
-                                    </div>
-                                    <div className="w-full bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-2">
-                                        <div className="bg-gradient-to-r from-deep-teal to-teal-500 h-2 rounded-full shadow-sm" style={{ width: '72%' }}></div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
 
                 {/* Premium Segmented Switcher for Hub Scopes */}
                 {!taskId && !targetRecordingId && (
