@@ -2715,7 +2715,7 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
 };
 
 export default function LearningHub() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user, profile, isLeader, userTeam } = useAuth();
     const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const isNative = Capacitor.isNativePlatform();
