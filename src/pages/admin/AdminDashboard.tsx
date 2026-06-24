@@ -921,7 +921,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="overflow-x-auto w-full border border-gray-100 rounded-xl">
-                    <table className="w-full text-left border-collapse text-sm text-gray-800" style={{ direction: i18n.language === 'ar' ? 'rtl' : 'ltr' }}>
+                    <table className="w-full text-start border-collapse text-sm text-gray-800" style={{ direction: i18n.language === 'ar' ? 'rtl' : 'ltr' }}>
                         <thead>
                             <tr className="bg-slate-50 text-deep-teal border-b border-gray-100 text-xs font-bold uppercase">
                                 <th className="py-3 px-4 text-center w-12">#</th>

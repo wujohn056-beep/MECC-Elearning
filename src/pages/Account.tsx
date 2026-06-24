@@ -310,7 +310,7 @@ export default function Account() {
 
                 {/* SD, SM, TL Hierarchy */}
                 {(profile?.sd || profile?.sm || profile?.tl) && (
-                    <div className="flex items-center gap-6 sm:gap-10 border-t md:border-t-0 md:border-l border-slate-200/80 pt-4 md:pt-0 md:pl-8 w-full md:w-auto">
+                    <div className="flex items-center gap-6 sm:gap-10 border-t md:border-t-0 md:border-s border-slate-200/80 pt-4 md:pt-0 md:ps-8 w-full md:w-auto">
                         <div className="text-center flex-1 md:flex-none">
                             <span className="block text-[10px] font-bold text-slate-400 uppercase">SD</span>
                             <span className="text-sm font-black text-slate-700">{profile?.sd || '-'}</span>

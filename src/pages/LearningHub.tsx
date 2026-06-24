@@ -4005,7 +4005,7 @@ export default function LearningHub() {
                 <div className="absolute -top-10 -right-10 w-28 h-28 bg-desert-gold/10 rounded-full blur-2xl pointer-events-none"></div>
                 
                 {/* Crest and Rank Header */}
-                <div className="flex items-center gap-3.5 relative z-10 pr-6 w-full">
+                <div className="flex items-center gap-3.5 relative z-10 pe-6 w-full">
                     <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${currentLevelInfo.crestColor} flex items-center justify-center text-white text-2xl shadow-md border border-white/20 transform hover:scale-105 transition-transform`}>
                         {currentLevelInfo.icon}
                     </div>
@@ -4020,7 +4020,7 @@ export default function LearningHub() {
                     </div>
                     <button 
                         onClick={() => setShowRulesModal(true)}
-                        className="absolute right-0 top-1 text-arabian-night/30 hover:text-desert-gold p-1 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
+                        className="absolute end-0 top-1 text-arabian-night/30 hover:text-desert-gold p-1 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
                         title={localT('learning_hub.view_rules', '规则说明', i18n)}
                     >
                         <HelpCircle className="w-4.5 h-4.5" />
@@ -4063,7 +4063,7 @@ export default function LearningHub() {
                         <span className="text-desert-gold font-extrabold font-mono">{stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${localT('common.minutes', '分钟', i18n)}`}</span>
                     </div>
                     {/* Caravan path visualizer */}
-                    <div className="relative w-full h-8 bg-amber-50/45 dark:bg-slate-900/40 rounded-xl border border-[#E6DFD3]/40 dark:border-white/5 overflow-hidden flex items-center px-2.5">
+                    <div className="relative w-full h-8 bg-amber-50/45 dark:bg-slate-900/40 rounded-xl border border-[#E6DFD3]/40 dark:border-white/5 overflow-hidden flex items-center px-2.5" dir="ltr">
                         {/* Sand texture pattern */}
                         <div className="absolute inset-0 bg-[linear-gradient(45deg,#fdfcfb_25%,transparent_25%),linear-gradient(-45deg,#fdfcfb_25%,transparent_25%)] bg-[size:10px_10px] opacity-15 pointer-events-none"></div>
                         
@@ -4156,7 +4156,7 @@ export default function LearningHub() {
                     {/* Close Button */}
                     <button 
                         onClick={() => setShowCertificate(false)}
-                        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer z-50 shadow-md border border-white/10 active:scale-95"
+                        className="absolute top-6 end-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer z-50 shadow-md border border-white/10 active:scale-95"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -4248,12 +4248,12 @@ export default function LearningHub() {
                     {/* Close Button */}
                     <button 
                         onClick={() => setShowRulesModal(false)}
-                        className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-all cursor-pointer shadow-sm active:scale-95"
+                        className="absolute top-6 end-6 p-2 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-all cursor-pointer shadow-sm active:scale-95"
                     >
                         <X className="w-4 h-4" />
                     </button>
 
-                    <h3 className="text-xl font-extrabold text-deep-teal dark:text-white mb-6 pr-8">
+                    <h3 className="text-xl font-extrabold text-deep-teal dark:text-white mb-6 pe-8">
                         {localT('learning_hub.rules_title', '绿洲荣誉机制规则说明', i18n)}
                     </h3>
 
@@ -4399,7 +4399,7 @@ export default function LearningHub() {
 
                                 {/* Search Bar */}
                                 <div ref={searchRef} className="relative w-full md:w-80 lg:w-[420px] shrink-0 group z-50">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
+                                    <div className="absolute inset-y-0 start-0 ps-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
                                         <Search className={`h-5 w-5 transition-colors group-focus-within:text-desert-gold ${
                                             businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
                                         }`} />
@@ -4413,7 +4413,7 @@ export default function LearningHub() {
                                             setShowSuggestions(true);
                                         }}
                                         onFocus={() => setShowSuggestions(true)}
-                                        className={`w-full pl-12 pr-5 py-3 border rounded-full transition-all text-sm font-semibold outline-none ${
+                                        className={`w-full ps-12 pe-5 py-3 border rounded-full transition-all text-sm font-semibold outline-none ${
                                             businessType === 'leader'
                                                 ? 'bg-teal-950/60 border-desert-gold/30 text-white placeholder:text-white/40 focus:ring-4 focus:ring-desert-gold/30 focus:border-desert-gold'
                                                 : 'bg-white border-[#E6DFD3] text-arabian-night placeholder:text-arabian-night/30 focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold hover:bg-white shadow-sm'
