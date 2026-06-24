@@ -3240,6 +3240,9 @@ export default function LearningHub() {
     const displayBanners = React.useMemo(() => {
         let activeBanners = banners.filter(b => b.active !== false);
         if (hubScope === 'team') {
+            if (activeSmId === 'all') {
+                return activeBanners;
+            }
             return activeBanners.filter(b => b.ownerSm === activeSmId);
         } else {
             return []; // Banners should only appear in Team Hub based on SM permissions
@@ -3254,11 +3257,10 @@ export default function LearningHub() {
             if (role === 'sm') {
                 setActiveSmId(profile.crmId || '');
             } else if (role === 'sd' || role === 'super_admin') {
-                const sms = systemUsers.filter(u => u.role === 'sm' && (role === 'super_admin' || u.sd === profile.crmId));
                 if (paramSmId) {
                     setActiveSmId(paramSmId);
-                } else if (sms.length > 0 && !activeSmId) {
-                    setActiveSmId(sms[0].crmId);
+                } else if (!activeSmId) {
+                    setActiveSmId('all');
                 }
             } else {
                 setActiveSmId(profile.sm || '');
@@ -3934,13 +3936,13 @@ export default function LearningHub() {
         
         // Determine level
         let levelKey: 'apprentice' | 'voyager' | 'knight' | 'falcon' | 'guardian' = 'apprentice';
-        if (totalLearningMinutes >= 180 && weeklyTaskCompletionRate >= 95) {
+        if (totalLearningMinutes >= 7200 && weeklyTaskCompletionRate >= 95) {
             levelKey = 'guardian';
-        } else if (totalLearningMinutes >= 120 && weeklyTaskCompletionRate >= 85) {
+        } else if (totalLearningMinutes >= 3600 && weeklyTaskCompletionRate >= 85) {
             levelKey = 'falcon';
-        } else if (totalLearningMinutes >= 80 && weeklyTaskCompletionRate >= 75) {
+        } else if (totalLearningMinutes >= 1800 && weeklyTaskCompletionRate >= 75) {
             levelKey = 'knight';
-        } else if (totalLearningMinutes >= 55) {
+        } else if (totalLearningMinutes >= 600) {
             levelKey = 'voyager';
         }
         
@@ -3959,7 +3961,7 @@ export default function LearningHub() {
             desc: localT('level.apprentice.desc', '知识灌溉的起点，迈出卓越销售的第一步。', i18n),
             crestColor: 'from-[#E6DFD3] to-[#C5A059]',
             icon: '🌱',
-            nextThreshold: 55,
+            nextThreshold: 600,
             nextTitle: localT('level.voyager.title', '沙漠行者', i18n)
         },
         voyager: {
@@ -3968,7 +3970,7 @@ export default function LearningHub() {
             desc: localT('level.voyager.desc', '在沙海中坚韧前行，以毅力累积智慧。', i18n),
             crestColor: 'from-amber-500 to-orange-600',
             icon: '🐫',
-            nextThreshold: 80,
+            nextThreshold: 1800,
             nextTitle: localT('level.knight.title', '智慧骑士', i18n)
         },
         knight: {
@@ -3977,7 +3979,7 @@ export default function LearningHub() {
             desc: localT('level.knight.desc', '出众的执行力与精准度，执行如同骑士般果断。', i18n),
             crestColor: 'from-teal-600 to-emerald-600',
             icon: '🐎',
-            nextThreshold: 120,
+            nextThreshold: 3600,
             nextTitle: localT('level.falcon.title', '凌空猎鹰', i18n)
         },
         falcon: {
@@ -3986,7 +3988,7 @@ export default function LearningHub() {
             desc: localT('level.falcon.desc', '高瞻远瞩，锐意进取，在团队中脱颖而出。', i18n),
             crestColor: 'from-yellow-500 to-amber-600',
             icon: '🦅',
-            nextThreshold: 180,
+            nextThreshold: 7200,
             nextTitle: localT('level.guardian.title', '绿洲守护者', i18n)
         },
         guardian: {
@@ -4309,10 +4311,10 @@ export default function LearningHub() {
                             </h4>
                             <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold text-arabian-night/80 dark:text-slate-400">
                                 <div className="flex items-center gap-1">🌱 {localT('level.apprentice.title', '绿洲学徒', i18n)}: <span className="font-mono text-desert-gold font-bold">0+ mins</span></div>
-                                <div className="flex items-center gap-1">🐫 {localT('level.voyager.title', '沙漠行者', i18n)}: <span className="font-mono text-desert-gold font-bold">55+ mins</span></div>
-                                <div className="flex items-center gap-1">🐎 {localT('level.knight.title', '智慧骑士', i18n)}: <span className="font-mono text-desert-gold font-bold">80+ mins</span></div>
-                                <div className="flex items-center gap-1">🦅 {localT('level.falcon.title', '凌空猎鹰', i18n)}: <span className="font-mono text-desert-gold font-bold">120+ mins</span></div>
-                                <div className="flex items-center gap-1 col-span-2">🌴 {localT('level.guardian.title', '绿洲守护者', i18n)}: <span className="font-mono text-desert-gold font-bold">180+ mins</span></div>
+                                <div className="flex items-center gap-1">🐫 {localT('level.voyager.title', '沙漠行者', i18n)}: <span className="font-mono text-desert-gold font-bold">600+ mins</span></div>
+                                <div className="flex items-center gap-1">🐎 {localT('level.knight.title', '智慧骑士', i18n)}: <span className="font-mono text-desert-gold font-bold">1800+ mins</span></div>
+                                <div className="flex items-center gap-1">🦅 {localT('level.falcon.title', '凌空猎鹰', i18n)}: <span className="font-mono text-desert-gold font-bold">3600+ mins</span></div>
+                                <div className="flex items-center gap-1 col-span-2">🌴 {localT('level.guardian.title', '绿洲守护者', i18n)}: <span className="font-mono text-desert-gold font-bold">7200+ mins</span></div>
                             </div>
                         </div>
                     </div>
@@ -4324,8 +4326,29 @@ export default function LearningHub() {
     const renderTeamHonorDashboard = () => {
         if (hubScope !== 'team' || !isLeader) return null;
         
-        // Filter team members based on selected SM (activeSmId)
-        const teamMembers = systemUsers.filter(u => u && (u.sm === activeSmId || u.crmId === activeSmId));
+        // Filter team members based on logged-in leader's role and selected activeSmId scope
+        let teamMembers: any[] = [];
+        const role = profile?.role || 'user';
+        
+        if (role === 'super_admin') {
+            if (activeSmId && activeSmId !== 'all') {
+                teamMembers = systemUsers.filter(u => u && (u.sm === activeSmId || u.crmId === activeSmId));
+            } else {
+                teamMembers = systemUsers.filter(u => u && u.role !== 'super_admin' && u.role !== 'sd');
+            }
+        } else if (role === 'sd') {
+            if (activeSmId && activeSmId !== 'all') {
+                teamMembers = systemUsers.filter(u => u && (u.sm === activeSmId || u.crmId === activeSmId));
+            } else {
+                teamMembers = systemUsers.filter(u => u && (u.sd === profile?.crmId || u.crmId === profile?.crmId) && u.role !== 'sd');
+            }
+        } else if (role === 'sm') {
+            teamMembers = systemUsers.filter(u => u && (u.sm === profile?.crmId || u.crmId === profile?.crmId));
+        } else if (role === 'tl') {
+            teamMembers = systemUsers.filter(u => u && (u.tl === profile?.crmId || u.crmId === profile?.crmId));
+        } else {
+            teamMembers = systemUsers.filter(u => u && (u.sm === activeSmId || u.crmId === activeSmId));
+        }
         
         if (teamMembers.length === 0) {
             return (
@@ -4393,13 +4416,13 @@ export default function LearningHub() {
                                 const streakCount = Math.min(7, 3 + Math.floor(totalLearningMinutes / 60));
                                 
                                 let levelKey: 'apprentice' | 'voyager' | 'knight' | 'falcon' | 'guardian' = 'apprentice';
-                                if (totalLearningMinutes >= 180 && weeklyTaskCompletionRate >= 95) {
+                                if (totalLearningMinutes >= 7200 && weeklyTaskCompletionRate >= 95) {
                                     levelKey = 'guardian';
-                                } else if (totalLearningMinutes >= 120 && weeklyTaskCompletionRate >= 85) {
+                                } else if (totalLearningMinutes >= 3600 && weeklyTaskCompletionRate >= 85) {
                                     levelKey = 'falcon';
-                                } else if (totalLearningMinutes >= 80 && weeklyTaskCompletionRate >= 75) {
+                                } else if (totalLearningMinutes >= 1800 && weeklyTaskCompletionRate >= 75) {
                                     levelKey = 'knight';
-                                } else if (totalLearningMinutes >= 55) {
+                                } else if (totalLearningMinutes >= 600) {
                                     levelKey = 'voyager';
                                 }
                                 
@@ -4721,6 +4744,9 @@ export default function LearningHub() {
                                         onChange={(e) => setActiveSmId(e.target.value)}
                                         className="bg-white/80 border border-gray-200 rounded-xl px-4 py-2 outline-none text-sm font-bold text-deep-teal cursor-pointer shadow-sm focus:ring-2 focus:ring-desert-gold focus:border-transparent"
                                     >
+                                        <option value="all">
+                                            {i18n.language === 'ar' ? 'جميع الفرق' : i18n.language === 'en' ? 'All Teams' : '所有团队'}
+                                        </option>
                                         {systemUsers
                                             .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
                                             .map(u => (
