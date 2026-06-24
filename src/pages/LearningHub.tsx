@@ -3093,9 +3093,9 @@ export default function LearningHub() {
     const displayBanners = React.useMemo(() => {
         let activeBanners = banners.filter(b => b.active !== false);
         if (hubScope === 'team') {
-            return activeBanners.filter(b => b.ownerSm === activeSmId || (b.hubScope === 'team' && b.targetSmId === activeSmId));
+            return activeBanners.filter(b => b.ownerSm === activeSmId);
         } else {
-            return activeBanners.filter(b => b.ownerSm === 'global' || !b.ownerSm || b.hubScope !== 'team');
+            return []; // Banners should only appear in Team Hub based on SM permissions
         }
     }, [banners, hubScope, activeSmId]);
 
