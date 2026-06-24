@@ -3503,7 +3503,14 @@ export default function LearningHub() {
         }
 
         return recordings
-            .filter(rec => (rec.businessType || 'kid') === businessType)
+            .filter(rec => {
+                if ((rec.businessType || 'kid') !== businessType) return false;
+                if (hubScope === 'team') {
+                    return (rec as any).hubScope === 'team' && (rec as any).targetSmId === activeSmId;
+                } else {
+                    return (rec as any).hubScope !== 'team';
+                }
+            })
             .sort((a, b) => {
                 const countA = favCounts[a.id] || 0;
                 const countB = favCounts[b.id] || 0;
@@ -3526,7 +3533,14 @@ export default function LearningHub() {
         };
 
         return recordings
-            .filter(rec => (rec.businessType || 'kid') === businessType)
+            .filter(rec => {
+                if ((rec.businessType || 'kid') !== businessType) return false;
+                if (hubScope === 'team') {
+                    return (rec as any).hubScope === 'team' && (rec as any).targetSmId === activeSmId;
+                } else {
+                    return (rec as any).hubScope !== 'team';
+                }
+            })
             .sort((a, b) => {
                 const countA = getLikeCount(a);
                 const countB = getLikeCount(b);
