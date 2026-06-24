@@ -4050,9 +4050,7 @@ export default function LearningHub() {
             </div>
 
             {!taskId && !targetRecordingId ? (
-                <div className="flex flex-col xl:flex-row gap-8 items-start mt-8 animate-in slide-in-from-bottom-4 duration-700">
-                    {/* Left Column (75%) */}
-                    <div className="flex-1 w-full min-w-0 space-y-8">
+                <div className="space-y-8 mt-8 animate-in slide-in-from-bottom-4 duration-700">
                         {/* Rolling Banner Slider */}
                         {displayBanners.length > 0 && (
                             <div className="relative w-full rounded-3xl overflow-hidden glass-panel border border-white/60 bg-white/40 shadow-xl group aspect-[21/9] sm:aspect-[21/7] md:aspect-[21/6] z-10 animate-in fade-in duration-500">
@@ -4164,8 +4162,12 @@ export default function LearningHub() {
                             </div>
                         )}
 
-                        {/* Category Tabs */}
-                        <div className={`pt-2 relative z-10 ${
+                        {/* Main Content & Sidebar Columns */}
+                        <div className="flex flex-col xl:flex-row gap-8 items-start">
+                            {/* Left Column */}
+                            <div className="flex-1 w-full min-w-0 space-y-8">
+                                {/* Category Tabs */}
+                                <div className={`pt-2 relative z-10 ${
                             businessType === 'leader' ? 'border-t border-desert-gold/20' : 'border-t border-[#E6DFD3]'
                         }`}>
                             <div className={`flex gap-2.5 py-2 overflow-x-auto scrollbar-none ${isNative ? 'w-full pb-3' : 'flex-wrap'}`}>
@@ -4381,6 +4383,7 @@ export default function LearningHub() {
                         {showLeaderboard && renderLeaderboardWidget(false)}
                     </div>
                 </div>
+            </div>
             ) : (
                 /* Focused Mode: taskId or targetRecordingId is present */
                 <div className="space-y-8 mt-8">
