@@ -132,6 +132,8 @@ export default function RecordingsManager() {
     const [hubScope, setHubScope] = useState<'public' | 'team'>('public');
     const [targetSmId, setTargetSmId] = useState<string>('');
     const [adminSmFilter, setAdminSmFilter] = useState<string>('all');
+    const [promotingRecording, setPromotingRecording] = useState<Recording | null>(null);
+    const [promoteCategoryId, setPromoteCategoryId] = useState<string>('');
     
     // Upload States
     const [uploading, setUploading] = useState(false);
@@ -375,7 +377,9 @@ export default function RecordingsManager() {
                 catData.push({ 
                     id: doc.id, 
                     name: docData.name, 
-                    businessType: docData.businessType || 'kid' 
+                    businessType: docData.businessType || 'kid',
+                    hubScope: docData.hubScope || 'public',
+                    targetSmId: docData.targetSmId || ''
                 });
             });
             setCategories(catData);
@@ -460,11 +464,7 @@ export default function RecordingsManager() {
         }
     };
 
-    const handlePromoteToPublic = async (rec: Recording) => {
-        if (!window.confirm(t('recordings_manager.promote_confirm', '确定要将此团队专属素材晋升同步至公共库吗？这将创建一份完全独立的公共库副本。'))) {
-            return;
-        }
-
+    const handlePromoteToPublic = async (rec: Recording, targetCatId: string) => {
         try {
             setUploading(true);
             setPageError(null);
@@ -487,12 +487,17 @@ export default function RecordingsManager() {
             });
             const nextDisplayId = `RD${(maxId + 1).toString().padStart(4, '0')}`;
 
+            const targetCat = categories.find(c => c.id === targetCatId);
+            const targetCatName = targetCat?.name || t('common.uncategorized');
+
             const promotedData = {
                 ...originalData,
                 displayId: nextDisplayId,
                 hubScope: 'public',
                 targetSmId: '',
                 targetSmName: '',
+                categoryId: targetCatId,
+                categoryName: targetCatName,
                 isPromoted: true,
                 promotedFromTeam: originalData.targetSmName || originalData.targetSmId || '',
                 promotedBy: profile?.crmId || user?.email || '',
@@ -1311,7 +1316,19 @@ export default function RecordingsManager() {
                                     onChange={(e) => setSelectedCategoryId(e.target.value)}
                                 >
                                     <option value="">{t('common.uncategorized', '未分类')}</option>
-                                    {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
+                                    {categories.filter(cat => {
+                                        if ((cat.businessType || 'kid') !== businessType) return false;
+                                        const isSm = profile?.role === 'sm';
+                                        const activeSm = isSm ? profile?.crmId : targetSmId;
+
+                                        if (hubScope === 'team') {
+                                            const catScope = cat.hubScope || 'public';
+                                            return catScope === 'public' || (catScope === 'team' && cat.targetSmId === activeSm);
+                                        } else {
+                                            // Public scope recordings can only use public categories
+                                            return (cat.hubScope || 'public') === 'public';
+                                        }
+                                    }).map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                                     ))}
                                 </select>
@@ -1329,6 +1346,11 @@ export default function RecordingsManager() {
                                         onClick={() => {
                                             setHubScope('public');
                                             setTargetSmId('');
+                                            // Safeguard: Reset category if it is team-scoped
+                                            const currentCat = categories.find(c => c.id === selectedCategoryId);
+                                            if (currentCat && currentCat.hubScope === 'team') {
+                                                setSelectedCategoryId('');
+                                            }
                                         }}
                                         className={`flex-1 py-1.5 rounded-md transition-all duration-200 ${
                                             hubScope === 'public'
@@ -2120,7 +2142,11 @@ export default function RecordingsManager() {
                                                     )}
                                                     {profile?.role === 'super_admin' && (rec as any).hubScope === 'team' && (
                                                         <button 
-                                                            onClick={() => handlePromoteToPublic(rec)} 
+                                                            onClick={() => {
+                                                                setPromotingRecording(rec);
+                                                                const isCatPublic = rec.categoryId && categories.find(c => c.id === rec.categoryId)?.hubScope !== 'team';
+                                                                setPromoteCategoryId(isCatPublic ? rec.categoryId : '');
+                                                            }} 
                                                             disabled={uploading} 
                                                             className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1 shrink-0" 
                                                             title={t('recordings_manager.promote_btn', '一键转为公共库')}
@@ -2733,6 +2759,76 @@ export default function RecordingsManager() {
                                 ) : (
                                     t('recordings_manager.push_btn_individuals', '推送给选定团队 (共 {{count}} 个)', { count: selectedSdsForPush.length })
                                 )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Promotion Category Selector Modal */}
+            {promotingRecording && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arabian-night/50 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-gray-100 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-deep-teal">
+                                {t('recordings_manager.promote_modal_title', '同步晋升至公共库')}
+                            </h3>
+                            <button 
+                                onClick={() => setPromotingRecording(null)} 
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-4 py-2">
+                            <p className="text-xs text-arabian-night/60 leading-relaxed">
+                                {t('recordings_manager.promote_modal_desc', '确定要将此团队专属素材同步复制到公共库吗？晋升后它将被所有业务线用户共享。由于该素材当前属于团队特有目录，请为其指定公共库下的目标分类目录：')}
+                            </p>
+                            
+                            <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100/80">
+                                <div className="text-xs text-arabian-night/40 font-semibold mb-1">{t('recordings_manager.recording_title', '素材名称')}</div>
+                                <div className="text-sm font-bold text-deep-teal truncate">{promotingRecording.title}</div>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('recordings_manager.select_category', '选择公共库分类')}</label>
+                                <select
+                                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white"
+                                    value={promoteCategoryId}
+                                    onChange={(e) => setPromoteCategoryId(e.target.value)}
+                                >
+                                    <option value="">{t('common.uncategorized', '未分类')}</option>
+                                    {categories
+                                        .filter(c => ((c.businessType || 'kid') === promotingRecording.businessType) && ((c as any).hubScope || 'public') === 'public')
+                                        .map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={() => setPromotingRecording(null)}
+                                className="px-4 py-2 text-xs font-bold text-arabian-night/60 hover:text-arabian-night hover:bg-gray-100 rounded-xl transition-all"
+                            >
+                                {t('common.cancel', '取消')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const rec = promotingRecording;
+                                    const catId = promoteCategoryId;
+                                    setPromotingRecording(null);
+                                    await handlePromoteToPublic(rec, catId);
+                                }}
+                                className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 rounded-xl transition-all shadow-lg hover:shadow-xl shadow-amber-500/10 flex items-center gap-1.5 border-0 cursor-pointer"
+                            >
+                                <Sparkles className="h-3.5 w-3.5" />
+                                <span>{t('recordings_manager.promote_confirm_btn', '确认晋升并同步')}</span>
                             </button>
                         </div>
                     </div>

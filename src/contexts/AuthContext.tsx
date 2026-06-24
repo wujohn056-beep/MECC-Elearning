@@ -90,6 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (permission === 'manageRecordings') {
             return isLeader || !!profile?.permissions?.[permission];
         }
+        if (permission === 'manageCategories') {
+            return isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm' || !!profile?.permissions?.[permission];
+        }
         if (permission === 'manageComments' && profile?.role === 'sd' && profile?.dep === 'SS') {
             return true;
         }

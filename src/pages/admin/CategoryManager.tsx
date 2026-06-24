@@ -11,6 +11,8 @@ interface Category {
     name: string;
     createdAt?: any;
     businessType?: 'kid' | 'adult' | 'ss' | 'leader';
+    hubScope?: 'public' | 'team';
+    targetSmId?: string;
 }
 
 export default function CategoryManager() {
@@ -44,7 +46,9 @@ export default function CategoryManager() {
                 data.push({ 
                     id: doc.id, 
                     name: docData.name, 
-                    businessType: docData.businessType || 'kid'
+                    businessType: docData.businessType || 'kid',
+                    hubScope: docData.hubScope || 'public',
+                    targetSmId: docData.targetSmId || ''
                 });
             });
             setCategories(data);
@@ -68,7 +72,16 @@ export default function CategoryManager() {
         }
     }, [profile]);
 
-    const filteredCategories = categories.filter(cat => (cat.businessType || 'kid') === businessType);
+    const filteredCategories = categories.filter(cat => {
+        if ((cat.businessType || 'kid') !== businessType) return false;
+
+        // Super Admin sees all categories
+        if (profile?.role === 'super_admin') return true;
+        // Non-super-admins see public categories + their own team's categories
+        const catScope = cat.hubScope || 'public';
+        if (catScope === 'public') return true;
+        return catScope === 'team' && cat.targetSmId === profile?.crmId;
+    });
 
     const handleCreate = async () => {
         if (!newCategoryName.trim()) return;
@@ -76,9 +89,15 @@ export default function CategoryManager() {
         setPageError(null);
         try {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error(t('common.timeout'))), 10000));
+            const isSuper = profile?.role === 'super_admin';
+            const catScope = isSuper ? 'public' : 'team';
+            const catSmId = isSuper ? '' : (profile?.crmId || '');
+
             const addPromise = addDoc(collection(db, 'categories'), {
                 name: newCategoryName.trim(),
                 businessType: businessType,
+                hubScope: catScope,
+                targetSmId: catSmId,
                 createdAt: serverTimestamp()
             });
             await Promise.race([addPromise, timeoutPromise]);
@@ -97,6 +116,17 @@ export default function CategoryManager() {
             setEditingId(null);
             return;
         }
+        
+        // Safeguard check: only super_admin or the category owner can modify
+        const cat = categories.find(c => c.id === id);
+        const isSuper = profile?.role === 'super_admin';
+        const isOwner = cat && cat.hubScope === 'team' && cat.targetSmId === profile?.crmId;
+        if (!isSuper && !isOwner) {
+            alert(t('category_manager.no_permission', '您没有修改此目录的权限'));
+            setEditingId(null);
+            return;
+        }
+
         setActionLoading(true);
         setPageError(null);
         try {
@@ -128,6 +158,15 @@ export default function CategoryManager() {
     };
 
     const handleDelete = async (id: string) => {
+        // Safeguard check: only super_admin or the category owner can modify
+        const cat = categories.find(c => c.id === id);
+        const isSuper = profile?.role === 'super_admin';
+        const isOwner = cat && cat.hubScope === 'team' && cat.targetSmId === profile?.crmId;
+        if (!isSuper && !isOwner) {
+            alert(t('category_manager.no_permission', '您没有删除此目录的权限'));
+            return;
+        }
+
         if (!window.confirm(t('category_manager.delete_confirm'))) {
             return;
         }
@@ -402,20 +441,24 @@ export default function CategoryManager() {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <button 
-                                                        onClick={() => { setEditingId(cat.id); setEditName(cat.name); }} 
-                                                        disabled={actionLoading}
-                                                        className="p-1.5 bg-desert-gold/10 text-yellow-700 rounded-lg hover:bg-desert-gold/20"
-                                                    >
-                                                        <Edit2 className="h-4 w-4" />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleDelete(cat.id)} 
-                                                        disabled={actionLoading}
-                                                        className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
+                                                    {(profile?.role === 'super_admin' || cat.targetSmId === profile?.crmId) && (
+                                                        <>
+                                                            <button 
+                                                                onClick={() => { setEditingId(cat.id); setEditName(cat.name); }} 
+                                                                disabled={actionLoading}
+                                                                className="p-1.5 bg-desert-gold/10 text-yellow-700 rounded-lg hover:bg-desert-gold/20"
+                                                            >
+                                                                <Edit2 className="h-4 w-4" />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDelete(cat.id)} 
+                                                                disabled={actionLoading}
+                                                                className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
