@@ -3794,8 +3794,8 @@ export default function LearningHub() {
                     )
                 )}
                 
-                <header className="flex flex-col lg:flex-row gap-6 relative z-30 justify-between items-stretch">
-                    <div className="flex-1 min-w-0">
+                <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-30">
+                    <div>
                         {taskId ? (
                             <>
                                 <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.task_exclusive')}</h2>
@@ -3813,47 +3813,14 @@ export default function LearningHub() {
                                 </button>
                             </>
                         ) : (
-                            <div className="flex flex-col sm:flex-row gap-4 w-full items-stretch">
-                                {/* Welcome Card */}
-                                <div className="flex-1 bg-gradient-to-r from-deep-teal to-teal-800 rounded-3xl p-6 text-white relative overflow-hidden shadow-md border border-white/10 flex flex-col justify-center min-h-[140px]">
-                                    {/* Decorative patterns */}
-                                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-                                    <div className="relative z-10 space-y-1">
-                                        <span className="text-[9px] bg-desert-gold/20 text-desert-gold border border-desert-gold/30 px-2 py-0.5 rounded-full font-black tracking-widest uppercase inline-block select-none">
-                                            Ahlan & Welcome 🌹
-                                        </span>
-                                        <h2 className="text-xl sm:text-2.5xl font-black tracking-tight leading-tight">
-                                            {t('learning_hub.explore', 'Explore Courses')}
-                                        </h2>
-                                        <p className="text-white/70 text-[11px] font-semibold italic max-w-sm">
-                                            "{t('learning_hub.slogan', 'Cloud-Based Wisdom, Boundless Learning.')}"
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* User Progress Card */}
+                            <div className="flex flex-col">
+                                <h2 className={isNative ? "text-3xl font-black text-slate-800 tracking-tight" : "text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight"}>{t('learning_hub.explore')}</h2>
                                 {!isNative && (
-                                    <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-5 flex flex-col justify-between shadow-[0_8px_25px_rgba(139,92,26,0.02)] w-full sm:w-[260px] shrink-0">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-desert-gold to-amber-600 flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white">
-                                                {profile?.name ? profile.name[0].toUpperCase() : 'U'}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h4 className="text-xs font-black text-deep-teal truncate">Ahlan, {profile?.name || user?.email?.split('@')[0] || 'User'}</h4>
-                                                <span className="text-[8px] bg-desert-gold/15 text-[#a88216] px-1.5 py-0.5 rounded-full font-black border border-desert-gold/25 uppercase tracking-wider inline-block">
-                                                    {profile?.role === 'super_admin' ? 'Super Admin' : profile?.role === 'sd' ? 'Sales Director' : profile?.role === 'sm' ? 'Sales Manager' : 'Sales Member'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="mt-3 pt-2.5 border-t border-[#E6DFD3] dark:border-white/5">
-                                            <div className="flex justify-between items-center text-[10px] font-bold text-deep-teal mb-1">
-                                                <span className="flex items-center gap-1 select-none">📊 {t('learning_hub.total_progress', '学习总进度')}</span>
-                                                <span className="text-desert-gold font-extrabold">72%</span>
-                                            </div>
-                                            <div className="w-full bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1.5">
-                                                <div className="bg-gradient-to-r from-deep-teal to-teal-500 h-1.5 rounded-full shadow-sm" style={{ width: '72%' }}></div>
-                                            </div>
-                                        </div>
+                                    <div className="mt-3 flex items-center gap-3">
+                                        <span className="w-10 h-1 bg-gradient-to-r from-desert-gold to-yellow-500 rounded-full shadow-sm"></span>
+                                        <p className="text-base font-extrabold text-desert-gold tracking-wide italic bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-yellow-600">
+                                            "{t('learning_hub.slogan')}"
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -3862,9 +3829,9 @@ export default function LearningHub() {
                     
                     {/* Actions Right Side */}
                     {!taskId && !targetRecordingId && (
-                        <div className="flex flex-col gap-4 w-full lg:w-auto items-end justify-between shrink-0">
+                        <div className="flex flex-col gap-4 w-full md:w-auto items-end">
                             {allowedTabs.length > 1 ? (
-                                <div className="p-1 rounded-full flex items-center w-full lg:w-auto self-start lg:self-end overflow-x-auto whitespace-nowrap scrollbar-none bg-white/80 border border-[#E6DFD3] shadow-sm">
+                                <div className="p-1 rounded-full flex items-center w-full md:w-auto self-start md:self-end overflow-x-auto whitespace-nowrap scrollbar-none bg-white/70 backdrop-blur-md border border-white/50 shadow-sm">
                                     {allowedTabs.map(tab => (
                                         <button
                                             key={tab.type}
@@ -3877,7 +3844,7 @@ export default function LearningHub() {
                                                     setSelectedLecturer('');
                                                 }
                                             }}
-                                            className={`flex-1 lg:flex-none px-4 py-2 rounded-full font-extrabold transition-all duration-300 text-xs select-none cursor-pointer ${
+                                            className={`flex-1 md:flex-none px-4 md:px-6 py-2 md:py-2.5 rounded-full font-extrabold transition-all duration-300 text-xs sm:text-sm select-none cursor-pointer ${
                                                 businessType === tab.type 
                                                     ? `bg-gradient-to-r ${tab.gradient} text-white shadow-md shadow-slate-900/10 scale-[1.02] transform`
                                                     : 'text-arabian-night/65 hover:text-arabian-night hover:bg-white/40'
@@ -3888,16 +3855,16 @@ export default function LearningHub() {
                                     ))}
                                 </div>
                             ) : allowedTabs.length === 1 ? (
-                                <div className={`bg-gradient-to-r ${allowedTabs[0].gradient} text-white px-5 py-2.5 rounded-full font-extrabold text-xs shadow-md flex items-center gap-2 select-none self-start lg:self-end`}>
+                                <div className={`bg-gradient-to-r ${allowedTabs[0].gradient} text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-extrabold text-xs sm:text-sm md:text-base shadow-lg shadow-black/10 flex items-center gap-2 select-none self-start md:self-end`}>
                                     <span>✨</span>
                                     <span>{allowedTabs[0].label}</span>
                                 </div>
                             ) : null}
 
                             {/* Search Bar */}
-                            <div ref={searchRef} className="relative w-full lg:w-80 shrink-0 group z-50">
+                            <div ref={searchRef} className="relative w-full md:w-80 lg:w-[420px] shrink-0 group z-50">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
-                                    <Search className={`h-4 w-4 transition-colors group-focus-within:text-desert-gold ${
+                                    <Search className={`h-5 w-5 transition-colors group-focus-within:text-desert-gold ${
                                         businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
                                     }`} />
                                 </div>
@@ -3910,7 +3877,7 @@ export default function LearningHub() {
                                         setShowSuggestions(true);
                                     }}
                                     onFocus={() => setShowSuggestions(true)}
-                                    className={`w-full pl-10 pr-4 py-2.5 border rounded-full transition-all text-xs font-semibold outline-none ${
+                                    className={`w-full pl-12 pr-5 py-3 border rounded-full transition-all text-sm font-semibold outline-none ${
                                         businessType === 'leader'
                                             ? 'bg-teal-950/60 border-desert-gold/30 text-white placeholder:text-white/40 focus:ring-4 focus:ring-desert-gold/30 focus:border-desert-gold'
                                             : 'bg-white border-[#E6DFD3] text-arabian-night placeholder:text-arabian-night/30 focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold hover:bg-white shadow-sm'
@@ -4008,6 +3975,54 @@ export default function LearningHub() {
                         </div>
                     )}
                 </header>
+
+                {/* Welcome Banner Card & User Progress Card */}
+                {!taskId && !targetRecordingId && (
+                    <div className="mt-8 flex flex-col md:flex-row gap-6 w-full items-stretch relative z-30">
+                        {/* Welcome Card */}
+                        <div className="flex-1 bg-gradient-to-r from-deep-teal to-teal-800 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg border border-white/10 flex flex-col justify-center min-h-[140px]">
+                            {/* Decorative patterns */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+                            <div className="relative z-10 space-y-1.5">
+                                <span className="text-[10px] bg-desert-gold/20 text-desert-gold border border-desert-gold/30 px-3 py-1 rounded-full font-black tracking-widest uppercase inline-block select-none">
+                                    Ahlan & Welcome 🌹
+                                </span>
+                                <h3 className="text-2xl sm:text-3.5xl font-black tracking-tight leading-tight">
+                                    {t('learning_hub.welcome_academy_title', 'Najah Academy')}
+                                </h3>
+                                <p className="text-white/80 text-xs sm:text-sm font-medium italic max-w-xl">
+                                    "{t('learning_hub.slogan', 'Cloud-Based Wisdom, Boundless Learning.')}"
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* User Progress Card */}
+                        {!isNative && (
+                            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-6 flex flex-col justify-between shadow-[0_8px_30px_rgba(139,92,26,0.02)] w-full md:w-[320px] shrink-0">
+                                <div className="flex items-center gap-3.5">
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-desert-gold to-amber-600 flex items-center justify-center text-white font-black text-lg shadow-md border-2 border-white">
+                                        {profile?.name ? profile.name[0].toUpperCase() : 'U'}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h4 className="text-sm font-black text-deep-teal truncate">Ahlan, {profile?.name || user?.email?.split('@')[0] || 'User'}</h4>
+                                        <span className="text-[9px] bg-desert-gold/15 text-[#a88216] px-2 py-0.5 rounded-full font-black border border-desert-gold/25 uppercase tracking-wider inline-block">
+                                            {profile?.role === 'super_admin' ? 'Super Admin' : profile?.role === 'sd' ? 'Sales Director' : profile?.role === 'sm' ? 'Sales Manager' : 'Sales Member'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5">
+                                    <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-1.5">
+                                        <span className="flex items-center gap-1 select-none">📊 {t('learning_hub.total_progress', '学习总进度')}</span>
+                                        <span className="text-desert-gold font-extrabold">72%</span>
+                                    </div>
+                                    <div className="w-full bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-2">
+                                        <div className="bg-gradient-to-r from-deep-teal to-teal-500 h-2 rounded-full shadow-sm" style={{ width: '72%' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Premium Segmented Switcher for Hub Scopes */}
                 {!taskId && !targetRecordingId && (
