@@ -432,6 +432,10 @@ export default function RecordingsManager() {
     useEffect(() => {
         if (profile && !hasSetDefaultBusiness) {
             setBusinessType(profile.dep === 'SS' ? 'ss' : 'kid');
+            if (profile.role === 'sm') {
+                setHubScope('team');
+                setTargetSmId(profile.crmId || '');
+            }
             setHasSetDefaultBusiness(true);
         }
     }, [profile, hasSetDefaultBusiness]);
@@ -1616,6 +1620,13 @@ export default function RecordingsManager() {
                                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto scrollbar-thin">
                                                 {systemUsers
                                                     .filter(u => {
+                                                        const isSm = profile?.role === 'sm';
+                                                        if (isSm || hubScope === 'team') {
+                                                            const activeSm = isSm ? profile?.crmId : targetSmId;
+                                                            if (activeSm && u.sm !== activeSm && u.crmId !== activeSm) {
+                                                                return false;
+                                                            }
+                                                        }
                                                         const userDep = u.dep || 'CC';
                                                         if (businessType === 'ss') {
                                                             if (userDep !== 'SS') return false;
@@ -1642,6 +1653,13 @@ export default function RecordingsManager() {
                                                         </div>
                                                     ))}
                                                 {systemUsers.filter(u => {
+                                                    const isSm = profile?.role === 'sm';
+                                                    if (isSm || hubScope === 'team') {
+                                                        const activeSm = isSm ? profile?.crmId : targetSmId;
+                                                        if (activeSm && u.sm !== activeSm && u.crmId !== activeSm) {
+                                                            return false;
+                                                        }
+                                                    }
                                                     const userDep = u.dep || 'CC';
                                                     if (businessType === 'ss') {
                                                         if (userDep !== 'SS') return false;
