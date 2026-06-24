@@ -131,6 +131,11 @@ export default function AppLayout() {
         i18n.changeLanguage(nextLang);
     };
 
+    // Keep document direction updated for RTL support
+    useEffect(() => {
+        document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+    }, [i18n.language]);
+
     // Dynamically update document title and share preview meta tags unconditionally in English to satisfy social platform card standards
     useEffect(() => {
         document.title = "ME Cloud Academy - Premium Sales Recordings";
