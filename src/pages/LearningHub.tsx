@@ -2885,7 +2885,6 @@ export default function LearningHub() {
     const [smListForPreview, setSmListForPreview] = useState<string[]>([]);
     const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const [showRulesModal, setShowRulesModal] = useState(false);
-    const [teamHistory, setTeamHistory] = useState<any[]>([]);
     const [rawFavorites, setRawFavorites] = useState<{ userId: string; recordingIds: string[] }[]>([]);
     const [hubScope, setHubScope] = useState<'public' | 'team'>(() => {
         const paramScope = searchParams.get('scope');
@@ -3130,13 +3129,7 @@ export default function LearningHub() {
                 });
                 setSystemUsers(usersData);
 
-                // Fetch All Learning History globally for team statistics calculation
-                const historySnapshot = await getDocs(collection(db, 'learning_history'));
-                const historyData: any[] = [];
-                historySnapshot.forEach(hDoc => {
-                    historyData.push(hDoc.data());
-                });
-                setTeamHistory(historyData);
+
 
                 // Fetch All Favorites globally to calculate leaderboard
                 const allFavSnapshot = await getDocs(collection(db, 'user_favorites'));
@@ -4323,178 +4316,7 @@ export default function LearningHub() {
         );
     };
 
-    const renderTeamHonorDashboard = () => {
-        if (hubScope !== 'team' || !isLeader) return null;
-        
-        // Filter team members based on logged-in leader's role and selected activeSmId scope
-        let teamMembers: any[] = [];
-        const role = profile?.role || 'user';
-        
-        if (role === 'super_admin') {
-            if (activeSmId && activeSmId !== 'all') {
-                teamMembers = systemUsers.filter(u => u && (u.sm === activeSmId || u.crmId === activeSmId));
-            } else {
-                teamMembers = systemUsers.filter(u => u && u.role !== 'super_admin' && u.role !== 'sd');
-            }
-        } else if (role === 'sd') {
-            if (activeSmId && activeSmId !== 'all') {
-                teamMembers = systemUsers.filter(u => u && (u.sm === activeSmId || u.crmId === activeSmId));
-            } else {
-                teamMembers = systemUsers.filter(u => u && (u.sd === profile?.crmId || u.crmId === profile?.crmId) && u.role !== 'sd');
-            }
-        } else if (role === 'sm') {
-            teamMembers = systemUsers.filter(u => u && (u.sm === profile?.crmId || u.crmId === profile?.crmId));
-        } else if (role === 'tl') {
-            teamMembers = systemUsers.filter(u => u && (u.tl === profile?.crmId || u.crmId === profile?.crmId));
-        } else {
-            teamMembers = systemUsers.filter(u => u && (u.sm === activeSmId || u.crmId === activeSmId));
-        }
-        
-        if (teamMembers.length === 0) {
-            return (
-                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-8 text-center text-arabian-night/50 dark:text-white/40 font-semibold shadow-sm animate-in fade-in duration-300">
-                    <p>{localT('learning_hub.team_empty', '当前团队暂无其他成员数据', i18n)}</p>
-                </div>
-            );
-        }
 
-        return (
-            <div className="w-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-6 md:p-8 shadow-[0_8px_30px_rgba(203,161,53,0.03)] relative overflow-hidden transition-all duration-300 mb-8 animate-in fade-in duration-500">
-                {/* Gold glow decoration */}
-                <div className="absolute -top-24 -left-24 w-48 h-48 bg-desert-gold/5 rounded-full blur-3xl pointer-events-none"></div>
-                <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
-
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 relative z-10">
-                    <div>
-                        <h3 className="text-lg md:text-xl font-extrabold text-deep-teal dark:text-white flex items-center gap-2">
-                            {localT('learning_hub.team_dashboard_title', '👥 团队学习激励与荣誉大盘', i18n)}
-                        </h3>
-                        <p className="text-xs text-arabian-night/55 dark:text-slate-400 mt-1 font-semibold">
-                            {i18n.language === 'ar' 
-                                ? 'مراقبة أداء التعلم لأعضاء الفريق وأوسمتهم المحققة' 
-                                : i18n.language === 'en' 
-                                    ? 'Monitor learning performance and honor levels for team members' 
-                                    : '监控团队成员的学习表现与当前解锁的绿洲荣誉等级'}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="overflow-x-auto w-full rounded-2xl border border-gray-100 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40">
-                    <table className="w-full text-left border-collapse" style={{ direction: i18n.language === 'ar' ? 'rtl' : 'ltr' }}>
-                        <thead>
-                            <tr className="bg-amber-50/40 dark:bg-slate-800/40 text-deep-teal dark:text-white/80 border-b border-gray-150 dark:border-slate-800 text-xs md:text-sm font-black uppercase">
-                                <th className="py-4 px-4 text-center w-12">#</th>
-                                <th className="py-4 px-4 text-start min-w-[150px]">{localT('learning_hub.member_name', '成员姓名', i18n)}</th>
-                                <th className="py-4 px-4 text-start min-w-[120px]">
-                                    {i18n.language === 'ar' ? 'تحدي القهوة' : i18n.language === 'en' ? 'Coffee Streak' : '咖啡连击'}
-                                </th>
-                                <th className="py-4 px-4 text-start min-w-[200px]">
-                                    {i18n.language === 'ar' ? 'دقائق التعلم (القافلة)' : i18n.language === 'en' ? 'Learning Mins (Caravan)' : '学习学时 (商队)'}
-                                </th>
-                                <th className="py-4 px-4 text-start min-w-[120px]">
-                                    {i18n.language === 'ar' ? 'معدل إكمال المهام' : i18n.language === 'en' ? 'Task Completion' : '任务完成率'}
-                                </th>
-                                <th className="py-4 px-4 text-start min-w-[150px]">
-                                    {i18n.language === 'ar' ? 'مرتبة الشرف' : i18n.language === 'en' ? 'Honor Level' : '荣誉等级'}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-slate-800 text-xs md:text-sm font-bold text-arabian-night/80 dark:text-slate-300">
-                            {teamMembers.map((member, idx) => {
-                                // Compute member's stats
-                                const memberHistory = teamHistory.filter(h => h && h.userId === member.id && h.recordingId);
-                                const memberCompletedAudioIds = Array.from(new Set(memberHistory.map(h => h.recordingId)));
-                                
-                                const baseMins = 45;
-                                const totalLearningMinutes = baseMins + (memberCompletedAudioIds.length * 12);
-                                
-                                let weeklyTaskCompletionRate = 60;
-                                if (memberCompletedAudioIds.length > 0) {
-                                    weeklyTaskCompletionRate = Math.min(100, 60 + memberCompletedAudioIds.length * 8);
-                                }
-                                
-                                const streakCount = Math.min(7, 3 + Math.floor(totalLearningMinutes / 60));
-                                
-                                let levelKey: 'apprentice' | 'voyager' | 'knight' | 'falcon' | 'guardian' = 'apprentice';
-                                if (totalLearningMinutes >= 7200 && weeklyTaskCompletionRate >= 95) {
-                                    levelKey = 'guardian';
-                                } else if (totalLearningMinutes >= 3600 && weeklyTaskCompletionRate >= 85) {
-                                    levelKey = 'falcon';
-                                } else if (totalLearningMinutes >= 1800 && weeklyTaskCompletionRate >= 75) {
-                                    levelKey = 'knight';
-                                } else if (totalLearningMinutes >= 600) {
-                                    levelKey = 'voyager';
-                                }
-                                
-                                const currentLevelInfo = honorLevels[levelKey];
-                                
-                                return (
-                                    <tr key={member.id} className="hover:bg-amber-50/10 dark:hover:bg-slate-800/10 transition-colors">
-                                        <td className="py-4 px-4 text-center font-mono text-gray-400 dark:text-slate-500 font-bold">{idx + 1}</td>
-                                        <td className="py-4 px-4 text-start">
-                                            <div className="flex items-center gap-3">
-                                                {/* Avatar */}
-                                                <div className="w-9 h-9 rounded-xl bg-[#0D5C75]/10 dark:bg-white/5 border border-[#0D5C75]/20 dark:border-white/10 flex items-center justify-center text-deep-teal dark:text-white font-extrabold shadow-sm select-none">
-                                                    {(member.name || member.crmId || '?').substring(0, 2).toUpperCase()}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-extrabold text-deep-teal dark:text-white truncate max-w-[120px] md:max-w-[160px]">{member.name || member.crmId}</p>
-                                                    <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold tracking-wider mt-0.5">{member.role?.toUpperCase() || 'AGENT'} • {member.crmId}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-4 text-start">
-                                            <div className="flex items-center gap-1.5 font-bold">
-                                                <span className="text-base select-none">☕</span>
-                                                <span className="font-mono text-desert-gold font-extrabold">{streakCount}</span>
-                                                <span className="text-gray-400 dark:text-slate-500 text-[10px]">
-                                                    {i18n.language === 'ar' ? 'أيام' : i18n.language === 'en' ? 'days' : '天'}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-4 text-start">
-                                            <div className="flex flex-col gap-1 w-full max-w-[180px]">
-                                                <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 dark:text-slate-400">
-                                                    <span className="font-mono text-desert-gold font-extrabold">{totalLearningMinutes} mins</span>
-                                                    <span>{currentLevelInfo.icon}</span>
-                                                </div>
-                                                <div className="w-full bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                                    <div 
-                                                        className="bg-gradient-to-r from-deep-teal to-desert-gold h-full rounded-full transition-all duration-500 ease-out" 
-                                                        style={{ width: `${Math.min(100, (totalLearningMinutes / (currentLevelInfo.nextThreshold === 9999 ? 180 : currentLevelInfo.nextThreshold)) * 100)}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-4 text-start">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-full max-w-[80px] bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                                    <div 
-                                                        className="bg-emerald-500 h-full rounded-full transition-all duration-500 ease-out" 
-                                                        style={{ width: `${weeklyTaskCompletionRate}%` }}
-                                                    ></div>
-                                                </div>
-                                                <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-xs">{weeklyTaskCompletionRate}%</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-4 text-start">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg select-none">{currentLevelInfo.icon}</span>
-                                                <div>
-                                                    <p className="text-deep-teal dark:text-white font-extrabold text-xs leading-none">{currentLevelInfo.title}</p>
-                                                    <p className="text-[9px] text-desert-gold font-bold font-mono mt-0.5 leading-none bg-desert-gold/5 px-1 py-0.5 rounded border border-desert-gold/10 inline-block">{currentLevelInfo.titleAr || 'مبتدئ'}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        );
-    };
 
     // Leaderboard should only show on the main tab without active searches
     const showLeaderboard = activeTab === 'all' && sortType !== 'leaderboard' && !searchQuery && !taskId && !targetRecordingId;
@@ -4929,8 +4751,7 @@ export default function LearningHub() {
                             </div>
                         )}
 
-                        {/* Team Leader Honor Dashboard */}
-                        {renderTeamHonorDashboard()}
+
 
                         {/* Main Content & Sidebar Columns */}
                         <div className="flex flex-col xl:flex-row gap-8 items-start">
