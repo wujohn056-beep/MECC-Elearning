@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Cache and Scratch directories
+.npm-cache
+.npm-cache-temp
+local-npm-cache
+scratch

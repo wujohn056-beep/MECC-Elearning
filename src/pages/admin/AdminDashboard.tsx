@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Download, Calendar, Users, Clock, CheckCircle, BarChart3 } from 'lucide-react';
+import { Download, Calendar, Users, Clock, CheckCircle, BarChart3, UserX, UserMinus } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
@@ -514,6 +514,126 @@ export default function AdminDashboard() {
             );
         }
 
+        const userRole = profile?.role;
+
+        // 1. TL Level Grouping: skip SD and SM cards, directly show TL and members
+        if (userRole === 'tl') {
+            const tlGroups: Record<string, any[]> = {};
+            Object.values(groupedData).forEach(sms => {
+                Object.values(sms).forEach(tls => {
+                    Object.entries(tls).forEach(([tlName, members]) => {
+                        if (!tlGroups[tlName]) tlGroups[tlName] = [];
+                        tlGroups[tlName].push(...members);
+                    });
+                });
+            });
+
+            return (
+                <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
+                    {Object.entries(tlGroups).sort(([a], [b]) => a.localeCompare(b)).map(([tlName, members]) => {
+                        const teamName = members[0]?.team || '';
+                        return (
+                            <div key={tlName} className="border border-slate-100 rounded-2xl bg-slate-50/50 p-4 space-y-4">
+                                <h5 className="font-semibold text-xs text-slate-700 flex items-center gap-2 pb-2 border-b border-slate-100/65">
+                                    <span className="bg-slate-200 text-slate-700 text-[9px] font-bold px-1.5 py-0.25 rounded">TL</span>
+                                    <span>{tlName}</span>
+                                    {teamName && <span className="text-slate-400 font-normal">({teamName})</span>}
+                                    <span className="text-slate-400 font-normal ml-1">({members.length} {t('dashboard.members', '人')})</span>
+                                </h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
+                                    {members.map(member => (
+                                        <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
+                                            <div className="flex justify-between items-start">
+                                                <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
+                                                <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
+                                                    {member.role?.toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <div className="text-[11px] text-slate-500">
+                                                {member.name || '-'}
+                                            </div>
+                                            {showLastLogin && member.lastLogin && (
+                                                <div className="text-[10px] text-amber-600 font-semibold mt-1">
+                                                    {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // 2. SM Level Grouping: skip SD card, show SM and then TL and members
+        if (userRole === 'sm') {
+            const smGroups: Record<string, Record<string, any[]>> = {};
+            Object.values(groupedData).forEach(sms => {
+                Object.entries(sms).forEach(([smName, tls]) => {
+                    if (!smGroups[smName]) smGroups[smName] = {};
+                    Object.entries(tls).forEach(([tlName, members]) => {
+                        if (!smGroups[smName][tlName]) smGroups[smName][tlName] = [];
+                        smGroups[smName][tlName].push(...members);
+                    });
+                });
+            });
+
+            return (
+                <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
+                    {Object.entries(smGroups).sort(([a], [b]) => a.localeCompare(b)).map(([smName, tls]) => {
+                        const tlNames = Object.keys(tls).sort();
+                        return (
+                            <div key={smName} className="border border-slate-100 rounded-2xl bg-slate-50/50 p-4 space-y-4">
+                                <h4 className="font-bold text-xs text-slate-700 flex items-center gap-2 border-b border-slate-100 pb-2">
+                                    <span className="bg-desert-gold/10 text-desert-gold text-[10px] font-black px-2 py-0.5 rounded-full">SM</span>
+                                    {smName}
+                                </h4>
+                                <div className="space-y-4 pl-2">
+                                    {tlNames.map(tlName => {
+                                        const members = tls[tlName];
+                                        const teamName = members[0]?.team || '';
+                                        return (
+                                            <div key={tlName} className="space-y-2 border-l-2 border-slate-100 pl-3">
+                                                <h5 className="font-semibold text-xs text-slate-500 flex items-center gap-2">
+                                                    <span className="bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.25 rounded">TL</span>
+                                                    <span>{tlName}</span>
+                                                    {teamName && <span className="text-slate-400 font-normal">({teamName})</span>}
+                                                    <span className="text-slate-400 font-normal ml-1">({members.length} {t('dashboard.members', '人')})</span>
+                                                </h5>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                    {members.map(member => (
+                                                        <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
+                                                            <div className="flex justify-between items-start">
+                                                                <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
+                                                                <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
+                                                                    {member.role?.toUpperCase()}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-[11px] text-slate-500">
+                                                                {member.name || '-'}
+                                                            </div>
+                                                            {showLastLogin && member.lastLogin && (
+                                                                <div className="text-[10px] text-amber-600 font-semibold mt-1">
+                                                                    {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // 3. Default SD -> SM -> TL Grouping (SD and Super Admin)
         return (
             <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                 {sdNames.map(sdName => {
@@ -679,11 +799,21 @@ export default function AdminDashboard() {
             </div>
 
             {/* Top Level Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
                     <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform"><Users className="w-24 h-24" /></div>
                     <p className="text-sm font-semibold text-arabian-night/50 mb-1">{t('dashboard.total_users', '范围内总人数')}</p>
                     <p className="text-3xl font-bold text-deep-teal">{displayedUsers.length}</p>
+                </div>
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform"><UserX className="w-24 h-24 text-red-500" /></div>
+                    <p className="text-sm font-semibold text-arabian-night/50 mb-1">{t('dashboard.activity_never', '从未登录')}</p>
+                    <p className="text-3xl font-bold text-red-600">{loginAnalysis.neverLoggedCount}</p>
+                </div>
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform"><UserMinus className="w-24 h-24 text-amber-500" /></div>
+                    <p className="text-sm font-semibold text-arabian-night/50 mb-1">{t('dashboard.activity_inactive_7d', '7天以上未登录')}</p>
+                    <p className="text-3xl font-bold text-amber-600">{loginAnalysis.inactiveSevenDaysCount}</p>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
                     <div className="absolute -right-4 -top-4 opacity-5 group-hover:scale-110 transition-transform"><Clock className="w-24 h-24" /></div>
