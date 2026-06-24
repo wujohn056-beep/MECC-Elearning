@@ -3468,12 +3468,11 @@ export default function LearningHub() {
     };
 
     const renderCompactPoliciesWidget = () => {
-        const list = filteredPoliciesForHub.slice(0, 4);
-        const hasPolicies = list.length > 0;
-        const featuredItem = list.find(item => item.type === 'poster' || item.type === 'video');
+        const hasPolicies = filteredPoliciesForHub.length > 0;
+        const featuredItem = filteredPoliciesForHub.find(item => item.type === 'poster' || item.type === 'video');
         const otherItems = featuredItem 
-            ? list.filter(item => item.id !== featuredItem.id).slice(0, 3)
-            : list;
+            ? filteredPoliciesForHub.filter(item => item.id !== featuredItem.id).slice(0, 1)
+            : filteredPoliciesForHub.slice(0, 2);
         
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 ${
@@ -3553,12 +3552,11 @@ export default function LearningHub() {
     };
 
     const renderCompactBrandsWidget = () => {
-        const list = filteredBrandsForHub.slice(0, 4);
-        const hasBrands = list.length > 0;
-        const featuredItem = list.find(item => item.type === 'poster' || item.type === 'video');
+        const hasBrands = filteredBrandsForHub.length > 0;
+        const featuredItem = filteredBrandsForHub.find(item => item.type === 'poster' || item.type === 'video');
         const otherItems = featuredItem 
-            ? list.filter(item => item.id !== featuredItem.id).slice(0, 3)
-            : list;
+            ? filteredBrandsForHub.filter(item => item.id !== featuredItem.id).slice(0, 1)
+            : filteredBrandsForHub.slice(0, 2);
         
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 ${
