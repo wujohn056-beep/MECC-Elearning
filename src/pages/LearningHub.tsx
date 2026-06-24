@@ -3411,9 +3411,69 @@ export default function LearningHub() {
         })
         .slice(0, 10);
 
+    const renderFeaturedMediaCard = (item: any) => {
+        if (!item) return null;
+        const isVideo = item.type === 'video';
+        const isPoster = item.type === 'poster';
+
+        return (
+            <div 
+                onClick={() => setActivePolicyItem(item)}
+                className="group relative w-full aspect-[16/10] rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-500 border border-white/20 mb-3.5 hover:-translate-y-1 active:scale-[0.99]"
+            >
+                {/* Background rendering */}
+                {isPoster ? (
+                    <div className="absolute inset-0 bg-slate-900">
+                        <img 
+                            src={item.url} 
+                            alt={item.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                            loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out"></div>
+                    </div>
+                ) : isVideo ? (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-deep-teal to-teal-900 flex flex-col items-center justify-center p-4">
+                        <div className="absolute w-32 h-32 bg-desert-gold/10 rounded-full blur-xl -top-6 -right-6 group-hover:bg-desert-gold/20 transition-all duration-700"></div>
+                        <div className="absolute w-24 h-24 bg-teal-400/5 rounded-full blur-lg -bottom-4 -left-4"></div>
+                        
+                        <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-white shadow-lg group-hover:scale-110 group-hover:bg-desert-gold group-hover:border-desert-gold/50 group-hover:shadow-desert-gold/20 transition-all duration-500 ease-out z-10">
+                            <span className="text-base pl-0.5 group-hover:text-deep-teal transition-colors">▶️</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-desert-gold/10 via-white/5 to-transparent flex flex-col items-center justify-center p-4">
+                        <span className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-500">📄</span>
+                    </div>
+                )}
+
+                {/* Dark gradient overlay at the bottom for readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 flex flex-col justify-end p-4 text-white">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="px-2 py-0.5 bg-desert-gold/90 text-deep-teal text-[9px] font-black rounded-md uppercase tracking-wider shadow-sm">
+                            {isVideo ? t('policy_showcase.video_promo', '🎥 视频') : isPoster ? t('policy_showcase.poster_incentive', '🖼️ 海报') : t('policy_showcase.doc_policy', '📄 文档')}
+                        </span>
+                        {item.createdAt && (
+                            <span className="text-[10px] text-white/60 font-semibold tracking-wide">
+                                {item.createdAt.toDate().toLocaleDateString()}
+                            </span>
+                        )}
+                    </div>
+                    <h4 className="text-xs sm:text-sm font-black truncate leading-snug tracking-wide group-hover:text-desert-gold transition-colors duration-300">
+                        {item.title}
+                    </h4>
+                </div>
+            </div>
+        );
+    };
+
     const renderCompactPoliciesWidget = () => {
         const list = filteredPoliciesForHub.slice(0, 4);
         const hasPolicies = list.length > 0;
+        const featuredItem = list.find(item => item.type === 'poster' || item.type === 'video');
+        const otherItems = featuredItem 
+            ? list.filter(item => item.id !== featuredItem.id).slice(0, 3)
+            : list;
         
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 ${
@@ -3439,48 +3499,53 @@ export default function LearningHub() {
                         {t('learning_hub.no_policies_showcase', '暂无政策激励')}
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {list.map((policy) => {
-                            const isVideo = policy.type === 'video';
-                            const isPoster = policy.type === 'poster';
-                            const icon = isVideo ? '🎥' : isPoster ? '🖼️' : '📄';
-                            
-                            return (
-                                <div
-                                    key={policy.id}
-                                    onClick={() => setActivePolicyItem(policy)}
-                                    className={`flex items-center gap-3 group cursor-pointer p-2 rounded-xl transition-all border border-transparent ${
-                                        businessType === 'leader'
-                                            ? 'hover:bg-white/5 hover:border-desert-gold/15'
-                                            : 'hover:bg-white hover:border-white/60 hover:shadow-sm'
-                                    }`}
-                                >
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 shadow-sm border ${
-                                        businessType === 'leader'
-                                            ? 'bg-teal-900/30 border-desert-gold/10 text-white'
-                                            : 'bg-deep-teal/5 border-deep-teal/10 text-deep-teal'
-                                    }`}>
-                                        {icon}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className={`text-xs sm:text-sm font-bold truncate line-clamp-1 group-hover:text-desert-gold transition-colors ${
-                                            businessType === 'leader' ? 'text-white/90' : 'text-arabian-night'
-                                        }`} title={policy.title}>
-                                            {policy.title}
-                                        </h4>
-                                        <div className={`text-[10px] truncate font-medium mt-0.5 ${
-                                            businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
-                                        }`}>
-                                            {policy.createdAt ? (
-                                                <span>📅 {policy.createdAt.toDate().toLocaleDateString()}</span>
-                                            ) : (
-                                                <span>{t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}</span>
-                                            )}
+                    <div className="flex flex-col">
+                        {featuredItem && renderFeaturedMediaCard(featuredItem)}
+                        {otherItems.length > 0 && (
+                            <div className="space-y-2">
+                                {otherItems.map((policy) => {
+                                    const isVideo = policy.type === 'video';
+                                    const isPoster = policy.type === 'poster';
+                                    const icon = isVideo ? '🎥' : isPoster ? '🖼️' : '📄';
+                                    
+                                    return (
+                                        <div
+                                            key={policy.id}
+                                            onClick={() => setActivePolicyItem(policy)}
+                                            className={`flex items-center gap-3 group cursor-pointer p-2 rounded-xl transition-all border border-transparent ${
+                                                businessType === 'leader'
+                                                    ? 'hover:bg-white/5 hover:border-desert-gold/15'
+                                                    : 'hover:bg-white hover:border-white/60 hover:shadow-sm'
+                                            }`}
+                                        >
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 shadow-sm border ${
+                                                businessType === 'leader'
+                                                    ? 'bg-teal-900/30 border-desert-gold/10 text-white'
+                                                    : 'bg-deep-teal/5 border-deep-teal/10 text-deep-teal'
+                                            }`}>
+                                                {icon}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className={`text-xs sm:text-sm font-bold truncate line-clamp-1 group-hover:text-desert-gold transition-colors ${
+                                                    businessType === 'leader' ? 'text-white/90' : 'text-arabian-night'
+                                                }`} title={policy.title}>
+                                                    {policy.title}
+                                                </h4>
+                                                <div className={`text-[10px] truncate font-medium mt-0.5 ${
+                                                    businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
+                                                }`}>
+                                                    {policy.createdAt ? (
+                                                        <span>📅 {policy.createdAt.toDate().toLocaleDateString()}</span>
+                                                    ) : (
+                                                        <span>{t('policy_showcase.label_sort', '排序')}: {policy.sortOrder}</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -3490,6 +3555,10 @@ export default function LearningHub() {
     const renderCompactBrandsWidget = () => {
         const list = filteredBrandsForHub.slice(0, 4);
         const hasBrands = list.length > 0;
+        const featuredItem = list.find(item => item.type === 'poster' || item.type === 'video');
+        const otherItems = featuredItem 
+            ? list.filter(item => item.id !== featuredItem.id).slice(0, 3)
+            : list;
         
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 ${
@@ -3515,48 +3584,53 @@ export default function LearningHub() {
                         {t('learning_hub.no_brands_showcase', '暂无品牌物料')}
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {list.map((brand) => {
-                            const isVideo = brand.type === 'video';
-                            const isPoster = brand.type === 'poster';
-                            const icon = isVideo ? '🎥' : isPoster ? '🖼️' : '📄';
-                            
-                            return (
-                                <div
-                                    key={brand.id}
-                                    onClick={() => setActivePolicyItem(brand)}
-                                    className={`flex items-center gap-3 group cursor-pointer p-2 rounded-xl transition-all border border-transparent ${
-                                        businessType === 'leader'
-                                            ? 'hover:bg-white/5 hover:border-desert-gold/15'
-                                            : 'hover:bg-white hover:border-white/60 hover:shadow-sm'
-                                    }`}
-                                >
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 shadow-sm border ${
-                                        businessType === 'leader'
-                                            ? 'bg-teal-900/30 border-desert-gold/10 text-white'
-                                            : 'bg-deep-teal/5 border-deep-teal/10 text-deep-teal'
-                                    }`}>
-                                        {icon}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className={`text-xs sm:text-sm font-bold truncate line-clamp-1 group-hover:text-desert-gold transition-colors ${
-                                            businessType === 'leader' ? 'text-white/90' : 'text-arabian-night'
-                                        }`} title={brand.title}>
-                                            {brand.title}
-                                        </h4>
-                                        <div className={`text-[10px] truncate font-medium mt-0.5 ${
-                                            businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
-                                        }`}>
-                                            {brand.createdAt ? (
-                                                <span>📅 {brand.createdAt.toDate().toLocaleDateString()}</span>
-                                            ) : (
-                                                <span>{t('policy_showcase.label_sort', '排序')}: {brand.sortOrder}</span>
-                                            )}
+                    <div className="flex flex-col">
+                        {featuredItem && renderFeaturedMediaCard(featuredItem)}
+                        {otherItems.length > 0 && (
+                            <div className="space-y-2">
+                                {otherItems.map((brand) => {
+                                    const isVideo = brand.type === 'video';
+                                    const isPoster = brand.type === 'poster';
+                                    const icon = isVideo ? '🎥' : isPoster ? '🖼️' : '📄';
+                                    
+                                    return (
+                                        <div
+                                            key={brand.id}
+                                            onClick={() => setActivePolicyItem(brand)}
+                                            className={`flex items-center gap-3 group cursor-pointer p-2 rounded-xl transition-all border border-transparent ${
+                                                businessType === 'leader'
+                                                    ? 'hover:bg-white/5 hover:border-desert-gold/15'
+                                                    : 'hover:bg-white hover:border-white/60 hover:shadow-sm'
+                                            }`}
+                                        >
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 shadow-sm border ${
+                                                businessType === 'leader'
+                                                    ? 'bg-teal-900/30 border-desert-gold/10 text-white'
+                                                    : 'bg-deep-teal/5 border-deep-teal/10 text-deep-teal'
+                                            }`}>
+                                                {icon}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className={`text-xs sm:text-sm font-bold truncate line-clamp-1 group-hover:text-desert-gold transition-colors ${
+                                                    businessType === 'leader' ? 'text-white/90' : 'text-arabian-night'
+                                                }`} title={brand.title}>
+                                                    {brand.title}
+                                                </h4>
+                                                <div className={`text-[10px] truncate font-medium mt-0.5 ${
+                                                    businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
+                                                }`}>
+                                                    {brand.createdAt ? (
+                                                        <span>📅 {brand.createdAt.toDate().toLocaleDateString()}</span>
+                                                    ) : (
+                                                        <span>{t('policy_showcase.label_sort', '排序')}: {brand.sortOrder}</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -4154,14 +4228,14 @@ export default function LearningHub() {
 
                     {/* Right Column / Sidebar (25%) */}
                     <div className="w-full xl:w-[320px] 2xl:w-[360px] shrink-0 flex flex-col gap-6">
-                        {/* Leaderboard Widget */}
-                        {showLeaderboard && renderLeaderboardWidget(false)}
-
                         {/* Compact Policies Widget */}
                         {renderCompactPoliciesWidget()}
 
                         {/* Compact Brands Widget */}
                         {renderCompactBrandsWidget()}
+
+                        {/* Leaderboard Widget */}
+                        {showLeaderboard && renderLeaderboardWidget(false)}
                     </div>
                 </div>
             ) : (
