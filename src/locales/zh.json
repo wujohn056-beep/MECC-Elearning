@@ -95,7 +95,8 @@
         "policies": "政策运营",
         "return_hub": "返回学习广场",
         "referrals": "推荐素材管理",
-        "brands": "品牌运营"
+        "brands": "品牌运营",
+        "banners": "Banner 管理"
     },
     "login": {
         "email_label": "CRM 账号",
@@ -257,7 +258,8 @@
         "marketing_brand_desc": "品牌视觉物料与宣传宣导海报，一键掌握",
         "view_all_brands": "查看全部",
         "no_brands_showcase": "暂无本业务线相关的品牌物料",
-        "pinned": "置顶"
+        "pinned": "置顶",
+        "team_task_badge": "🎯 团队学习任务: "
     },
     "category_manager": {
         "title": "目录分类管理",
@@ -453,7 +455,8 @@
             "user": "普通销售/用户 (Ordinary User / Sales)"
         },
         "perm_manage_referrals": "推荐素材管理",
-        "perm_manage_brands": "市场品牌管理"
+        "perm_manage_brands": "市场品牌管理",
+        "perm_manage_banners": "Banner 管理"
     },
     "account": {
         "title": "个人学习中心",
@@ -830,5 +833,35 @@
         "content_label": "文本内容",
         "content_placeholder": "在此输入或复制粘贴文本内容...\n支持以下格式：\n# 标题\n## 子标题\n- 列表项\n> 强调框\n**加粗文字**",
         "formatting_hint": "排版规则：输入 # 代表大标题，## 代表小标题，- 代表列表，> 代表高亮块，用 **包裹** 代表加粗。"
+    },
+    "banner_manager": {
+        "title": "Banner 海报管理",
+        "subtitle": "设置和管理首页的滚动 Banner 模块。SM 可以维护自己团队的 Banner，并关联学习任务或业务分类。",
+        "upload_banner": "上传新 Banner",
+        "banner_title": "Banner 标题",
+        "link_category": "关联学习分类",
+        "link_task": "关联学习任务 (可选)",
+        "no_task": "无关联任务",
+        "save_success": "保存 Banner 成功！",
+        "delete_confirm": "确定要删除此 Banner 吗？",
+        "active": "启用中",
+        "inactive": "未启用",
+        "global_banner": "全局默认 Banner",
+        "team_banner": "团队专属 Banner",
+        "category": "分类",
+        "task": "任务",
+        "scope": "范围",
+        "select_image": "选择 Banner 海报图片",
+        "edit_banner": "编辑 Banner",
+        "image_required": "请选择海报图片",
+        "title_required": "请输入标题",
+        "category_required": "请选择关联分类",
+        "saving": "正在保存...",
+        "delete_success": "删除 Banner 成功！",
+        "no_banners": "暂无配置 Banner，去上传一个吧！",
+        "select_task_placeholder": "-- 选择学习任务 --",
+        "select_category_placeholder": "-- 选择学习分类 --",
+        "all_teams": "全局/所有团队",
+        "team_exclusive": "团队专属 ({{sm}})"
     }
 }

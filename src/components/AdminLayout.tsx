@@ -48,6 +48,9 @@ export default function AdminLayout() {
         if (hasPermission('manageComments')) {
             return <Navigate to="/admin/comments" replace />;
         }
+        if (hasPermission('manageBanners')) {
+            return <Navigate to="/admin/banners" replace />;
+        }
         return <Navigate to="/hub" replace />;
     }
 
@@ -124,6 +127,9 @@ export default function AdminLayout() {
                     )}
                     {hasPermission('manageBrands') && (
                         <Link to="/admin/brands" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/brands')}>{t('admin_menu.brands', '品牌运营')}</Link>
+                    )}
+                    {hasPermission('manageBanners') && (
+                        <Link to="/admin/banners" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/banners')}>{t('admin_menu.banners', 'Banner 管理')}</Link>
                     )}
                 </nav>
                 <div className="px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:pb-4 border-t border-white/10 space-y-2">

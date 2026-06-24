@@ -20,6 +20,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import CommentManager from './pages/admin/CommentManager';
 import PolicyManager from './pages/admin/PolicyManager';
 import ReferralManager from './pages/admin/ReferralManager';
+import BannerManager from './pages/admin/BannerManager';
 
 const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
 
@@ -72,6 +73,7 @@ function App() {
             <Route path="policies" element={<PolicyManager initialSection="policy" />} />
             <Route path="brands" element={<PolicyManager initialSection="brand" />} />
             <Route path="referrals" element={<ReferralManager />} />
+            <Route path="banners" element={<BannerManager />} />
 
           </Route>
         </Routes>

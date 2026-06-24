@@ -30,6 +30,20 @@ interface Recording {
 interface Category {
     id: string;
     name: string;
+    businessType?: string;
+}
+
+interface Banner {
+    id: string;
+    imageUrl: string;
+    title: string;
+    categoryId: string;
+    categoryName: string;
+    ownerSm: string;
+    ownerSmName: string;
+    linkedTaskId?: string;
+    linkedTaskTitle?: string;
+    active: boolean;
 }
 
 const CustomAudioPlayer = ({ src, onEnded, onUnlock, disableSeek = false }: { src: string, onEnded: (duration: number, actualSec?: number) => void, onUnlock?: (duration: number) => void, disableSeek?: boolean }) => {
@@ -2720,6 +2734,11 @@ export default function LearningHub() {
     const [selectedLecturer, setSelectedLecturer] = useState<string>('');
     const [showAllLecturers, setShowAllLecturers] = useState(false);
     
+    const [banners, setBanners] = useState<Banner[]>([]);
+    const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+    const [previewSmFilter, setPreviewSmFilter] = useState<string>('all');
+    const [smListForPreview, setSmListForPreview] = useState<string[]>([]);
+    
     const allowedTabs = React.useMemo(() => {
         const tabs: { type: 'kid' | 'adult' | 'ss' | 'leader' | 'referral'; label: string; gradient: string }[] = [];
         
@@ -2902,6 +2921,32 @@ export default function LearningHub() {
                 });
                 setCategories(catData);
 
+                // Fetch Banners
+                const bannerSnapshot = await getDocs(query(collection(db, 'banners'), where('active', '==', true)));
+                const bannerData: Banner[] = [];
+                bannerSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    bannerData.push({
+                        id: doc.id,
+                        imageUrl: data.imageUrl || '',
+                        title: data.title || '',
+                        categoryId: data.categoryId || '',
+                        categoryName: data.categoryName || '',
+                        ownerSm: data.ownerSm || '',
+                        ownerSmName: data.ownerSmName || '',
+                        linkedTaskId: data.linkedTaskId || '',
+                        linkedTaskTitle: data.linkedTaskTitle || '',
+                        active: data.active !== false
+                    });
+                });
+                setBanners(bannerData);
+                
+                // Get unique ownerSm values for preview scoping dropdown
+                const previewSms = bannerData
+                    .map(b => b.ownerSm)
+                    .filter((v, i, a) => v && v !== 'global' && a.indexOf(v) === i);
+                setSmListForPreview(previewSms);
+
                 // Fetch Recordings
                 const q = query(collection(db, 'recordings'), orderBy('createdAt', 'desc'));
                 const querySnapshot = await getDocs(q);
@@ -3006,6 +3051,58 @@ export default function LearningHub() {
         });
         return () => unsubscribe();
     }, []);
+
+    // Filter active banners based on user profile and role
+    const displayBanners = React.useMemo(() => {
+        const userRole = profile?.role || 'user';
+        const userSm = profile?.sm || (profile?.role === 'sm' ? profile?.crmId : '');
+        
+        let activeBanners = banners.filter(b => b.active !== false);
+        if (userRole === 'super_admin' || userRole === 'sd') {
+            if (previewSmFilter !== 'all') {
+                return activeBanners.filter(b => b.ownerSm === previewSmFilter);
+            }
+            // By default, super admin/SD see global banners
+            const globals = activeBanners.filter(b => b.ownerSm === 'global' || !b.ownerSm);
+            return globals.length > 0 ? globals : activeBanners;
+        } else {
+            // Regular user, TL, SM
+            const smBanners = activeBanners.filter(b => b.ownerSm === userSm);
+            if (smBanners.length > 0) {
+                return smBanners;
+            }
+            // fallback
+            return activeBanners.filter(b => b.ownerSm === 'global' || !b.ownerSm);
+        }
+    }, [banners, profile, previewSmFilter]);
+
+    // Autoplay sliding banner effect
+    useEffect(() => {
+        if (displayBanners.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentBannerIndex(prev => (prev + 1) % displayBanners.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [displayBanners.length]);
+
+    // Reset banner index on scope/banners change
+    useEffect(() => {
+        setCurrentBannerIndex(0);
+    }, [displayBanners.length]);
+
+    // Handle banner click action
+    const handleBannerClick = (banner: Banner) => {
+        if (banner.linkedTaskId) {
+            setSearchParams({ taskId: banner.linkedTaskId });
+        } else if (banner.categoryId) {
+            // Find category to see if we need to switch businessType
+            const cat = categories.find(c => c.id === banner.categoryId);
+            if (cat && cat.businessType) {
+                setBusinessType(cat.businessType as any);
+            }
+            setActiveTab(banner.categoryId);
+        }
+    };
 
     const filteredPoliciesForHub = React.useMemo(() => {
         const mapBusinessTypeToTeam = (bt: string) => {
@@ -3581,6 +3678,117 @@ export default function LearningHub() {
                         </div>
                     )}
                 </header>
+
+                {/* Rolling Banner Slider */}
+                {!taskId && !targetRecordingId && displayBanners.length > 0 && (
+                    <div className="relative w-full rounded-3xl overflow-hidden glass-panel border border-white/60 bg-white/40 shadow-xl mt-8 group aspect-[21/9] sm:aspect-[21/7] md:aspect-[21/6] z-10 animate-in fade-in duration-500">
+                        {/* Slides container */}
+                        <div className="relative w-full h-full">
+                            {displayBanners.map((banner, index) => (
+                                <div
+                                    key={banner.id}
+                                    onClick={() => handleBannerClick(banner)}
+                                    className={`absolute inset-0 w-full h-full cursor-pointer transition-all duration-700 ease-in-out transform flex items-center justify-center ${
+                                        index === currentBannerIndex 
+                                            ? 'opacity-100 scale-100 pointer-events-auto' 
+                                            : 'opacity-0 scale-[1.03] pointer-events-none'
+                                    }`}
+                                >
+                                    {/* Slide image */}
+                                    <img 
+                                        src={banner.imageUrl} 
+                                        alt={banner.title} 
+                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
+                                    />
+                                    
+                                    {/* Glassmorphic Overlay Text Panel */}
+                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 text-white flex flex-col justify-end h-2/3">
+                                        <div className="max-w-xl space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-3 py-1 bg-desert-gold text-deep-teal font-black text-[10px] rounded-full uppercase tracking-wider shadow-sm">
+                                                    {banner.categoryName || t('common.uncategorized')}
+                                                </span>
+                                                {banner.linkedTaskId && (
+                                                    <span className="px-3 py-1 bg-rose-600 text-white font-black text-[10px] rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm animate-pulse">
+                                                        <span>🎯</span>
+                                                        <span>{t('learning_hub.team_task_badge', '团队任务')}</span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h3 className="text-xl sm:text-2xl font-black tracking-tight drop-shadow-md line-clamp-1">
+                                                {banner.title}
+                                            </h3>
+                                            {banner.linkedTaskId && (
+                                                <p className="text-xs text-white/80 font-semibold drop-shadow-sm truncate">
+                                                    {t('banner_manager.task')}: {banner.linkedTaskTitle}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Left/Right Chevron Navigation */}
+                        {displayBanners.length > 1 && (
+                            <>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCurrentBannerIndex(prev => (prev - 1 + displayBanners.length) % displayBanners.length);
+                                    }}
+                                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md transition-all cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 shadow-md border border-white/10 animate-in fade-in duration-300"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCurrentBannerIndex(prev => (prev + 1) % displayBanners.length);
+                                    }}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur-md transition-all cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 shadow-md border border-white/10 animate-in fade-in duration-300"
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+
+                                {/* Bottom Indicator Dots */}
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                                    {displayBanners.map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setCurrentBannerIndex(index);
+                                            }}
+                                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                                index === currentBannerIndex 
+                                                    ? 'bg-desert-gold w-6 shadow-md' 
+                                                    : 'bg-white/50 hover:bg-white/80'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* Super Admin / SD Scoping Filter Dropdown */}
+                {(profile?.role === 'super_admin' || profile?.role === 'sd') && smListForPreview.length > 0 && !taskId && !targetRecordingId && (
+                    <div className="mt-4 flex items-center justify-end gap-2 text-xs font-bold text-arabian-night/60 animate-in fade-in duration-300">
+                        <span>👁️ {t('banner_manager.scope', '可见团队/范围')}:</span>
+                        <select
+                            value={previewSmFilter}
+                            onChange={(e) => setPreviewSmFilter(e.target.value)}
+                            className="bg-white/50 border border-gray-200/50 rounded-lg px-2.5 py-1 outline-none text-xs font-bold text-deep-teal cursor-pointer"
+                        >
+                            <option value="all">{t('banner_manager.all_teams', '全局 / 所有团队')}</option>
+                            {smListForPreview.map(smId => (
+                                <option key={smId} value={smId}>{t('banner_manager.team_exclusive', { sm: smId })}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {taskId && (
                     <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 mt-8 relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 shadow-sm">

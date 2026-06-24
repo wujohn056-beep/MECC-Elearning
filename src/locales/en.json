@@ -95,7 +95,8 @@
         "policies": "Policy Operations",
         "return_hub": "Return to Hub",
         "referrals": "Referral Management",
-        "brands": "Branding Management"
+        "brands": "Branding Management",
+        "banners": "Banner Management"
     },
     "login": {
         "email_label": "CRM Account",
@@ -258,7 +259,8 @@
         "marketing_brand_desc": "Brand visual assets and promotion posters at your fingertips",
         "view_all_brands": "View All",
         "no_brands_showcase": "No brand materials for this business line at the moment.",
-        "pinned": "Pinned"
+        "pinned": "Pinned",
+        "team_task_badge": "🎯 Team Task: "
     },
     "category_manager": {
         "title": "Category Management",
@@ -454,7 +456,8 @@
             "user": "Ordinary User / Sales"
         },
         "perm_manage_referrals": "Referral Management",
-        "perm_manage_brands": "Marketing Brand Management"
+        "perm_manage_brands": "Marketing Brand Management",
+        "perm_manage_banners": "Banner Management"
     },
     "account": {
         "title": "Personal Learning Center",
@@ -831,5 +834,35 @@
         "content_label": "Text Content",
         "content_placeholder": "Enter or paste text content here...\nSupports the following formats:\n# Title\n## Subheading\n- List Item\n> Highlight Box\n**Bold Text**",
         "formatting_hint": "Formatting rules: # for heading 1, ## for heading 2, - for lists, > for callouts, and wrap in ** for bold text."
+    },
+    "banner_manager": {
+        "title": "Banner Management",
+        "subtitle": "Configure and manage the rolling banner module on the home page. SMs can manage banners for their own team and link them to learning tasks or business categories.",
+        "upload_banner": "Upload New Banner",
+        "banner_title": "Banner Title",
+        "link_category": "Link Category",
+        "link_task": "Link Learning Task (Optional)",
+        "no_task": "No Linked Task",
+        "save_success": "Banner saved successfully!",
+        "delete_confirm": "Are you sure you want to delete this banner?",
+        "active": "Active",
+        "inactive": "Inactive",
+        "global_banner": "Global Default Banner",
+        "team_banner": "Team Exclusive Banner",
+        "category": "Category",
+        "task": "Task",
+        "scope": "Scope",
+        "select_image": "Select Banner Image",
+        "edit_banner": "Edit Banner",
+        "image_required": "Please select a banner image",
+        "title_required": "Please enter a title",
+        "category_required": "Please select a category",
+        "saving": "Saving...",
+        "delete_success": "Banner deleted successfully!",
+        "no_banners": "No banners configured. Upload one now!",
+        "select_task_placeholder": "-- Select Learning Task --",
+        "select_category_placeholder": "-- Select Category --",
+        "all_teams": "Global / All Teams",
+        "team_exclusive": "Team Exclusive ({{sm}})"
     }
 }
