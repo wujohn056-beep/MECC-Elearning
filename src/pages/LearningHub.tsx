@@ -3981,18 +3981,30 @@ export default function LearningHub() {
                 {!taskId && !targetRecordingId && (
                     <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
                         {/* Scope Toggle buttons */}
-                        <div className="flex bg-gray-100/80 dark:bg-slate-900/60 p-1 rounded-2xl border border-gray-200/40 w-full md:w-auto self-start">
+                        <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[380px] self-start shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
+                            {/* Sliding Background Indicator */}
+                            <div
+                                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl bg-gradient-to-r from-[#0D5C75] to-teal-600 dark:from-desert-gold dark:to-amber-500 shadow-md shadow-teal-900/20 dark:shadow-desert-gold/20 transition-all duration-300 ease-out z-0 ${
+                                    i18n.language?.startsWith('ar') ? 'right-1' : 'left-1'
+                                }`}
+                                style={{
+                                    transform: i18n.language?.startsWith('ar')
+                                        ? (hubScope === 'public' ? 'translateX(0)' : 'translateX(-100%)')
+                                        : (hubScope === 'public' ? 'translateX(0)' : 'translateX(100%)'),
+                                }}
+                            />
                             <button
                                 onClick={() => {
                                     setHubScope('public');
                                 }}
-                                className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                                className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                                     hubScope === 'public'
-                                        ? 'bg-white text-deep-teal shadow-md font-extrabold border-gray-200/50 scale-[1.02]'
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/30 dark:text-slate-400 dark:hover:text-white'
+                                        ? 'text-white dark:text-arabian-night'
+                                        : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
                                 }`}
                             >
-                                🌍 {t('learning_hub.public_hub', '公共学习中心')}
+                                <span className={`transition-transform duration-300 ${hubScope === 'public' ? 'scale-110 rotate-12' : ''}`}>🌍</span>
+                                {t('learning_hub.public_hub', '公共学习中心')}
                             </button>
                             <button
                                 onClick={() => {
@@ -4001,13 +4013,14 @@ export default function LearningHub() {
                                         setActiveSmId(profile.crmId || '');
                                     }
                                 }}
-                                className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                                className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                                     hubScope === 'team'
-                                        ? 'bg-white text-deep-teal shadow-md font-extrabold border-gray-200/50 scale-[1.02]'
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/30 dark:text-slate-400 dark:hover:text-white'
+                                        ? 'text-white dark:text-arabian-night'
+                                        : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
                                 }`}
                             >
-                                👥 {t('learning_hub.team_hub', '团队学习中心')}
+                                <span className={`transition-transform duration-300 ${hubScope === 'team' ? 'scale-110 -rotate-12' : ''}`}>👥</span>
+                                {t('learning_hub.team_hub', '团队学习中心')}
                             </button>
                         </div>
 
