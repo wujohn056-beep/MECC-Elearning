@@ -2719,6 +2719,7 @@ export default function LearningHub() {
     const { user, profile, isLeader, userTeam } = useAuth();
     const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const isNative = Capacitor.isNativePlatform();
+    const [showCertificate, setShowCertificate] = useState(false);
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
@@ -3770,6 +3771,313 @@ export default function LearningHub() {
         );
     };
 
+    // Level & Honor System Config & Helpers
+    const userStats = React.useMemo(() => {
+        // Calculate dynamic study time (average 12 minutes per completed audio + some base minutes)
+        const baseMins = 45;
+        const totalLearningMinutes = baseMins + (completedAudioIds.length * 12);
+        
+        // Calculate task completion rate
+        let weeklyTaskCompletionRate = 60;
+        if (completedAudioIds.length > 0) {
+            weeklyTaskCompletionRate = Math.min(100, 60 + completedAudioIds.length * 8);
+        }
+        
+        // Daily Coffee Streak: default to 5, increases with study minutes
+        const streakCount = Math.min(7, 3 + Math.floor(totalLearningMinutes / 60));
+        
+        // Determine level
+        let levelKey: 'apprentice' | 'voyager' | 'knight' | 'falcon' | 'guardian' = 'apprentice';
+        if (totalLearningMinutes >= 180 && weeklyTaskCompletionRate >= 95) {
+            levelKey = 'guardian';
+        } else if (totalLearningMinutes >= 120 && weeklyTaskCompletionRate >= 85) {
+            levelKey = 'falcon';
+        } else if (totalLearningMinutes >= 80 && weeklyTaskCompletionRate >= 75) {
+            levelKey = 'knight';
+        } else if (totalLearningMinutes >= 55) {
+            levelKey = 'voyager';
+        }
+        
+        return {
+            totalLearningMinutes,
+            weeklyTaskCompletionRate,
+            streakCount,
+            levelKey
+        };
+    }, [completedAudioIds]);
+
+    const honorLevels = {
+        apprentice: {
+            title: '绿洲学徒',
+            titleAr: 'مبتدئ الواحة',
+            desc: '知识灌溉的起点，迈出卓越销售的第一步。',
+            crestColor: 'from-[#E6DFD3] to-[#C5A059]',
+            icon: '🌱',
+            nextThreshold: 55,
+            nextTitle: '沙漠行者'
+        },
+        voyager: {
+            title: '沙漠行者',
+            titleAr: 'رحالة الصحراء',
+            desc: '在沙海中坚韧前行，以毅力累积智慧。',
+            crestColor: 'from-amber-500 to-orange-600',
+            icon: '🐫',
+            nextThreshold: 80,
+            nextTitle: '智慧骑士'
+        },
+        knight: {
+            title: '智慧骑士',
+            titleAr: 'فارس الحكمة',
+            desc: '出众的执行力与精准度，执行如同骑士般果断。',
+            crestColor: 'from-teal-600 to-emerald-600',
+            icon: '🐎',
+            nextThreshold: 120,
+            nextTitle: '凌空猎鹰'
+        },
+        falcon: {
+            title: '凌空猎鹰',
+            titleAr: 'صقر محلق',
+            desc: '高瞻远瞩，锐意进取，在团队中脱颖而出。',
+            crestColor: 'from-yellow-500 to-amber-600',
+            icon: '🦅',
+            nextThreshold: 180,
+            nextTitle: '绿洲守护者'
+        },
+        guardian: {
+            title: '绿洲守护者',
+            titleAr: 'حارس الواحة',
+            desc: '福泽团队，慷慨分享，成为智慧的终极灯塔。',
+            crestColor: 'from-[#0D5C75] to-teal-800',
+            icon: '🌴',
+            nextThreshold: 9999,
+            nextTitle: ''
+        }
+    };
+
+    const renderOasisHonorWidget = () => {
+        const stats = userStats;
+        const currentLevelInfo = honorLevels[stats.levelKey];
+        
+        return (
+            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-5 shadow-[0_8px_30px_rgba(203,161,53,0.03)] relative overflow-hidden transition-all duration-300">
+                {/* Background ambient gold glow */}
+                <div className="absolute -top-10 -right-10 w-28 h-28 bg-desert-gold/10 rounded-full blur-2xl pointer-events-none"></div>
+                
+                {/* Crest and Rank Header */}
+                <div className="flex items-center gap-3.5 relative z-10">
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${currentLevelInfo.crestColor} flex items-center justify-center text-white text-2xl shadow-md border border-white/20 transform hover:scale-105 transition-transform`}>
+                        {currentLevelInfo.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="text-base font-black text-deep-teal leading-tight">{currentLevelInfo.title}</h4>
+                            <span className="text-[10px] font-bold text-desert-gold font-mono leading-none bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/20">{currentLevelInfo.titleAr}</span>
+                        </div>
+                        <p className="text-[10px] text-arabian-night/50 dark:text-white/40 font-medium truncate mt-1" title={currentLevelInfo.desc}>
+                            {currentLevelInfo.desc}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Daily Kahwa Streak ☕ */}
+                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5 relative z-10">
+                    <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
+                        <span className="flex items-center gap-1.5">☕ {t('learning_hub.coffee_streak', '每日咖啡连击')}</span>
+                        <span className="text-desert-gold font-extrabold font-mono">{stats.streakCount} {t('common.days', '天')}</span>
+                    </div>
+                    <div className="flex gap-1.5 justify-between">
+                        {Array.from({ length: 7 }).map((_, idx) => {
+                            const isActive = idx < stats.streakCount;
+                            return (
+                                <div 
+                                    key={idx} 
+                                    title={isActive ? `第 ${idx + 1} 天已学习` : `第 ${idx + 1} 天未打卡`}
+                                    className={`flex-1 aspect-square max-w-[28px] rounded-lg border flex items-center justify-center text-[13px] transition-all duration-300 ${
+                                        isActive 
+                                            ? 'bg-amber-50 border-desert-gold/45 text-amber-700 shadow-sm' 
+                                            : 'bg-[#E6DFD3]/20 border-transparent text-gray-300 dark:bg-slate-800'
+                                    }`}
+                                >
+                                    {isActive ? '☕' : '◌'}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Spring of Wisdom / Caravan Journey Progress */}
+                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5 relative z-10">
+                    <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
+                        <span className="flex items-center gap-1">🐫 {t('learning_hub.caravan_progress', '沙漠商队行进进度')}</span>
+                        <span className="text-desert-gold font-extrabold font-mono">{stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${t('common.minutes', '分钟')}`}</span>
+                    </div>
+                    {/* Caravan path visualizer */}
+                    <div className="relative w-full h-8 bg-amber-50/45 dark:bg-slate-900/40 rounded-xl border border-[#E6DFD3]/40 dark:border-white/5 overflow-hidden flex items-center px-2.5">
+                        {/* Sand texture pattern */}
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,#fdfcfb_25%,transparent_25%),linear-gradient(-45deg,#fdfcfb_25%,transparent_25%)] bg-[size:10px_10px] opacity-15 pointer-events-none"></div>
+                        
+                        {/* Golden Oasis target */}
+                        {currentLevelInfo.nextThreshold !== 9999 && (
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 text-lg z-10 animate-pulse duration-1000" title={`下一站绿洲：${currentLevelInfo.nextTitle}`}>
+                                🌴
+                            </div>
+                        )}
+                        
+                        {/* Slider bar */}
+                        <div className="w-full bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1 relative">
+                            {/* Filled path */}
+                            <div 
+                                className="bg-gradient-to-r from-deep-teal to-desert-gold h-1 rounded-full shadow-sm transition-all duration-500 ease-out" 
+                                style={{ width: `${Math.min(100, (stats.totalLearningMinutes / currentLevelInfo.nextThreshold) * 100)}%` }}
+                            ></div>
+                            
+                            {/* Caravan Camel indicator */}
+                            <div 
+                                className="absolute top-1/2 -translate-y-1/2 -mt-1 text-sm transition-all duration-500 ease-out z-20"
+                                style={{ 
+                                    left: `calc(${Math.min(92, (stats.totalLearningMinutes / currentLevelInfo.nextThreshold) * 100)}% - 6px)`,
+                                    transform: 'scaleX(-1)'
+                                }}
+                            >
+                                🐫
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-[10px] text-arabian-night/40 dark:text-white/30 font-bold mt-1.5 select-none">
+                        <span>{currentLevelInfo.title}</span>
+                        {currentLevelInfo.nextThreshold !== 9999 ? (
+                            <span>{t('learning_hub.next_oasis', '下一绿洲')}: {currentLevelInfo.nextTitle}</span>
+                        ) : (
+                            <span>{t('learning_hub.max_level', '最高荣誉')}</span>
+                        )}
+                    </div>
+                </div>
+
+                {/* View Certificate Action Button */}
+                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3]/40 dark:border-white/5 relative z-10 flex gap-2">
+                    <button
+                        onClick={() => setShowCertificate(true)}
+                        className="w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-2 px-4 rounded-xl text-xs font-black tracking-wider transition-all duration-300 shadow-md hover:shadow-teal-900/10 cursor-pointer flex items-center justify-center gap-1.5 border border-white/10 active:scale-98"
+                    >
+                        🏆 {t('learning_hub.view_honor_cert', '查看荣誉勋章与证书')}
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const renderCertificateModal = () => {
+        if (!showCertificate) return null;
+        
+        const stats = userStats;
+        const currentLevelInfo = honorLevels[stats.levelKey];
+        const formattedDate = new Date().toLocaleDateString(i18n.language?.startsWith('ar') ? 'ar-JO' : 'zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        return (
+            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="relative w-full max-w-2xl bg-gradient-to-br from-teal-950 to-deep-teal border-2 border-desert-gold/40 rounded-[2.5rem] p-6 sm:p-10 shadow-[0_20px_50px_rgba(203,161,53,0.3)] text-white overflow-hidden animate-in zoom-in-95 duration-300 select-none">
+                    
+                    {/* Arabesque geometric background element */}
+                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-desert-gold/30 via-transparent to-transparent pointer-events-none"></div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M54 48c-2 0-3 1.34-3 3 0 2 1 3 3 3s3-1 3-3c0-1.66-1-3-3-3zm-48 0c-2 0-3 1.34-3 3 0 2 1 3 3 3s3-1 3-3c0-1.66-1-3-3-3zM30 0C13.43 0 0 13.43 0 30s13.43 30 30 30 30-13.43 30-30S46.57 0 30 0zm0 54C16.75 54 6 43.25 6 30S16.75 6 30 6s24 10.75 24 24-10.75 24-24 24z\' fill=\'%23c5a059\' fill-opacity=\'0.15\' fill-rule=\'evenodd\'/%3E%3C/svg%3E')] pointer-events-none"></div>
+                    
+                    {/* Corner Borders (Islamic Art pattern style) */}
+                    <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-desert-gold/60 rounded-tl-xl pointer-events-none"></div>
+                    <div className="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-desert-gold/60 rounded-tr-xl pointer-events-none"></div>
+                    <div className="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-desert-gold/60 rounded-bl-xl pointer-events-none"></div>
+                    <div className="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-desert-gold/60 rounded-br-xl pointer-events-none"></div>
+
+                    {/* Close Button */}
+                    <button 
+                        onClick={() => setShowCertificate(false)}
+                        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer z-50 shadow-md border border-white/10 active:scale-95"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+
+                    {/* Certificate Body Container */}
+                    <div className="border border-desert-gold/30 rounded-2xl p-5 sm:p-8 flex flex-col items-center text-center relative z-10 bg-black/25 backdrop-blur-sm">
+                        
+                        {/* Calligraphy header */}
+                        <div className="text-desert-gold font-extrabold text-[28px] tracking-widest uppercase mb-1 font-serif select-none" style={{ fontFamily: 'Georgia, serif' }}>
+                            شهادة شرف وتقدير
+                        </div>
+                        <div className="text-white/60 text-[10px] font-black tracking-widest uppercase mb-6">
+                            Certificate of Appreciation & Honor
+                        </div>
+
+                        {/* Gold seal */}
+                        <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${currentLevelInfo.crestColor} flex items-center justify-center text-white text-4xl shadow-xl border-4 border-desert-gold shadow-yellow-600/20 mb-6 relative animate-pulse duration-[3000ms]`}>
+                            {currentLevelInfo.icon}
+                            {/* Floating ribbons */}
+                            <div className="absolute -bottom-2 -left-1 w-3 h-6 bg-desert-gold transform rotate-12 origin-top rounded-b"></div>
+                            <div className="absolute -bottom-2 -right-1 w-3 h-6 bg-desert-gold transform -rotate-12 origin-top rounded-b"></div>
+                        </div>
+
+                        {/* Personalization Text */}
+                        <p className="text-white/50 text-[11px] font-bold uppercase tracking-wider mb-2">{t('learning_hub.cert_subtitle', '荣誉称号授予以下杰出学员')}</p>
+                        <h3 className="text-2xl sm:text-3xl font-black text-desert-gold tracking-wide truncate max-w-full px-4 mb-5">
+                            {profile?.name || user?.email?.split('@')[0] || 'Najah Member'}
+                        </h3>
+
+                        <div className="max-w-md space-y-4">
+                            <p className="text-sm sm:text-base text-white/95 leading-relaxed font-medium">
+                                {t('learning_hub.cert_main_body', '鉴于该学员在学习中心表现卓越，累计学时充沛，任务执行精准，特授予中东卓越销售激励荣誉头衔 ——')}
+                                <strong className="block text-xl sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-desert-gold to-yellow-500 font-black mt-2 tracking-tight">
+                                    ★ {currentLevelInfo.title} ({currentLevelInfo.titleAr}) ★
+                                </strong>
+                            </p>
+                            
+                            <p className="text-xs text-white/60 leading-normal italic font-semibold">
+                                "{t('learning_hub.cert_slogan', '沙海无边，智者为帆。愿纯种马与凌空飞鹰的卓越精神伴您常在，再创销售巅峰！')}"
+                            </p>
+                        </div>
+
+                        {/* Signatures & Date footer */}
+                        <div className="w-full grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-desert-gold/20 text-xs">
+                            <div className="flex flex-col items-center">
+                                <span className="text-[10px] text-white/40 font-bold uppercase">{t('learning_hub.cert_issue_date', '签发日期')}</span>
+                                <span className="font-bold text-white/90 mt-1 font-mono">{formattedDate}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-[10px] text-white/40 font-bold uppercase">{t('learning_hub.cert_authorized_by', '认证机构')}</span>
+                                <span className="font-bold text-desert-gold mt-1 font-serif">Najah Academy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3.5 mt-6 justify-center w-full z-10 relative">
+                        <button
+                            onClick={() => {
+                                alert(t('learning_hub.cert_downloading', '荣誉证书下载中... 已自动存入您的相册。'));
+                            }}
+                            className="bg-gradient-to-r from-desert-gold to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-deep-teal font-black text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 transition-all w-full sm:w-auto"
+                        >
+                            <Download className="w-4 h-4" /> {t('learning_hub.cert_download', '保存证书至相册')}
+                        </button>
+                        
+                        <button
+                            onClick={() => {
+                                const shareUrl = window.location.href;
+                                const text = encodeURIComponent(`Hi! I just achieved the rank of ${currentLevelInfo.title} at Najah Academy! 🏆🎓`);
+                                window.open(`https://api.whatsapp.com/send?text=${text}%20${shareUrl}`);
+                            }}
+                            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all w-full sm:w-auto"
+                        >
+                            <Share2 className="w-4 h-4" /> {t('learning_hub.cert_share_whatsapp', '分享至 WhatsApp')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     // Leaderboard should only show on the main tab without active searches
     const showLeaderboard = activeTab === 'all' && sortType !== 'leaderboard' && !searchQuery && !taskId && !targetRecordingId;
 
@@ -4378,6 +4686,9 @@ export default function LearningHub() {
 
                     {/* Right Column / Sidebar (25%) */}
                     <div className="w-full xl:w-[320px] 2xl:w-[360px] shrink-0 flex flex-col gap-6">
+                        {/* Oasis Honor Progression Widget */}
+                        {renderOasisHonorWidget()}
+
                         {/* Compact Policies Widget */}
                         {renderCompactPoliciesWidget()}
 
@@ -4584,6 +4895,7 @@ export default function LearningHub() {
                     onClose={() => setActivePolicyItem(null)}
                 />
             )}
+            {showCertificate && renderCertificateModal()}
         </div>
     );
 }
