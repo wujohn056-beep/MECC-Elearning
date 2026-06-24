@@ -94,7 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return true;
         }
         if (permission === 'managePolicies') {
-            return isSuperAdmin || !!profile?.permissions?.[permission];
+            return isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm' || !!profile?.permissions?.[permission];
+        }
+        if (permission === 'manageBrands') {
+            return isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm' || !!profile?.permissions?.[permission];
         }
         if (permission === 'manageBanners') {
             return isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm' || !!profile?.permissions?.[permission];

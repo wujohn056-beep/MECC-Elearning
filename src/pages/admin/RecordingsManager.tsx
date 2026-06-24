@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, query, orderBy, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight, BookOpen, Pin } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight, BookOpen, Pin, Sparkles } from 'lucide-react';
 
 interface Attachment {
     id: string;
@@ -43,7 +43,7 @@ export default function RecordingsManager() {
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const { hasPermission, profile, isLeader, user, isSuperAdmin } = useAuth();
-    const isWriteAllowed = isSuperAdmin;
+    const isWriteAllowed = isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm';
     const [transcribingIds, setTranscribingIds] = useState<Record<string, boolean>>({});
     
     // DingTalk Multi-Target Push States
@@ -129,6 +129,9 @@ export default function RecordingsManager() {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
     const [hasSetDefaultBusiness, setHasSetDefaultBusiness] = useState(false);
+    const [hubScope, setHubScope] = useState<'public' | 'team'>('public');
+    const [targetSmId, setTargetSmId] = useState<string>('');
+    const [adminSmFilter, setAdminSmFilter] = useState<string>('all');
     
     // Upload States
     const [uploading, setUploading] = useState(false);
@@ -310,8 +313,34 @@ export default function RecordingsManager() {
     }, [sdList, depList, systemUsers, profile, t, getTlTeamName]);
 
     const filteredRecordings = recordings.filter(rec => {
-        const isSuperAdmin = profile?.role === 'super_admin';
-        if (!isSuperAdmin) {
+        const isSuper = profile?.role === 'super_admin';
+        const isSd = profile?.role === 'sd';
+        const isSm = profile?.role === 'sm';
+
+        if (isSm) {
+            if ((rec as any).hubScope !== 'team' || (rec as any).targetSmId !== profile.crmId) {
+                return false;
+            }
+        } else if (isSd) {
+            const smId = (rec as any).targetSmId;
+            const isDownlineSm = systemUsers.some(u => u.crmId === smId && u.sd === profile.crmId);
+            if ((rec as any).hubScope !== 'team' || !isDownlineSm) {
+                return false;
+            }
+            if (adminSmFilter !== 'all' && smId !== adminSmFilter) {
+                return false;
+            }
+        } else if (isSuper) {
+            if (adminSmFilter === 'public') {
+                if ((rec as any).hubScope === 'team') return false;
+            } else if (adminSmFilter !== 'all') {
+                if ((rec as any).hubScope !== 'team' || (rec as any).targetSmId !== adminSmFilter) {
+                    return false;
+                }
+            }
+        }
+
+        if (!isSuper) {
             if (profile?.dep === 'SS') {
                 if (isLeader) {
                     if (rec.businessType !== 'ss' && rec.businessType !== 'leader') return false;
@@ -427,6 +456,59 @@ export default function RecordingsManager() {
         }
     };
 
+    const handlePromoteToPublic = async (rec: Recording) => {
+        if (!window.confirm(t('recordings_manager.promote_confirm', '确定要将此团队专属素材晋升同步至公共库吗？这将创建一份完全独立的公共库副本。'))) {
+            return;
+        }
+
+        try {
+            setUploading(true);
+            setPageError(null);
+
+            const docRef = doc(db, 'recordings', rec.id);
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists()) {
+                throw new Error("Recording not found");
+            }
+            const originalData = docSnap.data();
+
+            let maxId = 0;
+            recordings.forEach(r => {
+                if (r.displayId && r.displayId.startsWith('RD')) {
+                    const numPart = parseInt(r.displayId.substring(2), 10);
+                    if (!isNaN(numPart) && numPart > maxId) {
+                        maxId = numPart;
+                    }
+                }
+            });
+            const nextDisplayId = `RD${(maxId + 1).toString().padStart(4, '0')}`;
+
+            const promotedData = {
+                ...originalData,
+                displayId: nextDisplayId,
+                hubScope: 'public',
+                targetSmId: '',
+                targetSmName: '',
+                isPromoted: true,
+                promotedFromTeam: originalData.targetSmName || originalData.targetSmId || '',
+                promotedBy: profile?.crmId || user?.email || '',
+                promotedAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                playCount: 0,
+                likes: []
+            };
+
+            await addDoc(collection(db, 'recordings'), promotedData);
+            alert(t('recordings_manager.promote_success', '成功同步晋升至公共库！'));
+            await fetchData();
+        } catch (error: any) {
+            console.error("Promotion failed:", error);
+            setPageError(`${t('common.process_fail')} ${error.message}`);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const resetForm = () => {
         setEditingId(null);
         setTitle('');
@@ -437,6 +519,8 @@ export default function RecordingsManager() {
         setAvatarFile(null);
         setAvatarPreview(null);
         setBusinessType(profile?.dep === 'SS' ? 'ss' : 'kid');
+        setHubScope(profile?.role === 'sm' ? 'team' : 'public');
+        setTargetSmId(profile?.role === 'sm' ? (profile?.crmId || '') : '');
         setAttachments([]);
         setUploadingAttachments({});
         setProgress(0);
@@ -672,6 +756,8 @@ export default function RecordingsManager() {
         setSelectedCategoryId(rec.categoryId || '');
         setAvatarPreview(rec.avatarUrl || null);
         setBusinessType(rec.businessType || (profile?.dep === 'SS' ? 'ss' : 'kid'));
+        setHubScope((rec as any).hubScope || 'public');
+        setTargetSmId((rec as any).targetSmId || '');
         setFile(null);
         setAvatarFile(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -859,7 +945,10 @@ export default function RecordingsManager() {
                 businessType: resolvedBusinessType,
                 uploaderId: user?.uid || '',
                 uploaderCrmId: profile?.crmId || '',
-                attachments: attachments || []
+                attachments: attachments || [],
+                hubScope,
+                targetSmId,
+                targetSmName: hubScope === 'team' && targetSmId ? (systemUsers.find(u => u.crmId === targetSmId)?.name || targetSmId) : ''
             };
 
             if (editingId) {
@@ -1223,6 +1312,82 @@ export default function RecordingsManager() {
                                     ))}
                                 </select>
                             </div>
+
+                            {/* Publish Scope Selection */}
+                            <div>
+                                <label className="block text-sm font-semibold text-deep-teal mb-1">
+                                    {t('recordings_manager.scope_label', '发布范围')}
+                                </label>
+                                <div className="flex bg-gray-100 p-0.5 rounded-lg text-xs font-semibold border border-gray-200">
+                                    <button
+                                        type="button"
+                                        disabled={profile?.role === 'sm'}
+                                        onClick={() => {
+                                            setHubScope('public');
+                                            setTargetSmId('');
+                                        }}
+                                        className={`flex-1 py-1.5 rounded-md transition-all duration-200 ${
+                                            hubScope === 'public'
+                                                ? 'bg-white text-deep-teal shadow-sm border-gray-200/50 font-bold'
+                                                : 'text-gray-400 hover:text-gray-600 disabled:opacity-50'
+                                        }`}
+                                    >
+                                        {t('recordings_manager.scope_public', '公共公共库')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setHubScope('team');
+                                            if (profile?.role === 'sm') {
+                                                setTargetSmId(profile.crmId || '');
+                                            } else {
+                                                const sms = systemUsers.filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId));
+                                                if (sms.length > 0 && !targetSmId) {
+                                                    setTargetSmId(sms[0].crmId);
+                                                }
+                                            }
+                                        }}
+                                        className={`flex-1 py-1.5 rounded-md transition-all duration-200 ${
+                                            hubScope === 'team'
+                                                ? 'bg-white text-deep-teal shadow-sm border-gray-200/50 font-bold'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                        }`}
+                                    >
+                                        {t('recordings_manager.scope_team', '团队专属库')}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Target SM Selector */}
+                            {hubScope === 'team' && (
+                                <div>
+                                    <label className="block text-sm font-semibold text-deep-teal mb-1">
+                                        {t('learning_hub.select_sm_team', '选择SM团队')}
+                                    </label>
+                                    {profile?.role === 'sm' ? (
+                                        <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm font-bold">
+                                            {profile.crmId} ({t('recordings_manager.direct_team', '直带团队')})
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={targetSmId}
+                                            onChange={(e) => setTargetSmId(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/50 text-sm font-semibold"
+                                            required
+                                        >
+                                            <option value="">{t('recordings_manager.select_placeholder', '请选择团队...')}</option>
+                                            {systemUsers
+                                                .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
+                                                .map(u => (
+                                                    <option key={u.crmId} value={u.crmId}>
+                                                        {u.name || u.crmId} ({u.crmId})
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
+                                    )}
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-semibold text-deep-teal mb-1">{t('common.business_type', '业务线')}</label>
@@ -1724,6 +1889,30 @@ export default function RecordingsManager() {
                                         className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none transition-all"
                                     />
                                 </div>
+                                {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
+                                    <select
+                                        value={adminSmFilter}
+                                        onChange={(e) => setAdminSmFilter(e.target.value)}
+                                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/50 focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none transition-all font-semibold"
+                                    >
+                                        {profile?.role === 'super_admin' ? (
+                                            <>
+                                                <option value="all">{t('learning_hub.all_content', '全部可见')}</option>
+                                                <option value="public">{t('recordings_manager.scope_public', '公共公共库')}</option>
+                                            </>
+                                        ) : (
+                                            <option value="all">{t('learning_hub.all_content', '下辖所有团队')}</option>
+                                        )}
+                                        {systemUsers
+                                            .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
+                                            .map(u => (
+                                                <option key={u.crmId} value={u.crmId}>
+                                                    {u.name || u.crmId} ({u.crmId})
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                )}
                                 {selectedIds.length > 0 && isWriteAllowed && (
                                     <button
                                         onClick={handleBatchDelete}
@@ -1803,6 +1992,16 @@ export default function RecordingsManager() {
                                                         </span>
                                                         <span className="text-[10px] bg-desert-gold text-white px-2 py-0.5 rounded-full font-semibold">
                                                             {rec.categoryName || t('common.uncategorized')}
+                                                        </span>
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                                            (rec as any).hubScope === 'team'
+                                                                ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                        }`}>
+                                                            {(rec as any).hubScope === 'team'
+                                                                ? `👥 ${t('recordings_manager.scope_team', '团队专属')}: ${(rec as any).targetSmId}`
+                                                                : `🌍 ${t('recordings_manager.scope_public', '公共')}`
+                                                            }
                                                         </span>
                                                                                         {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && (
                                                              <span 
@@ -1899,6 +2098,17 @@ export default function RecordingsManager() {
                                                             title={rec.isPinned ? t('recordings_manager.unpin', '取消置顶') : t('recordings_manager.pin', '置顶')}
                                                         >
                                                             <Pin className={`h-4 w-4 ${rec.isPinned ? 'fill-current' : ''}`} />
+                                                        </button>
+                                                    )}
+                                                    {profile?.role === 'super_admin' && (rec as any).hubScope === 'team' && (
+                                                        <button 
+                                                            onClick={() => handlePromoteToPublic(rec)} 
+                                                            disabled={uploading} 
+                                                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1 shrink-0" 
+                                                            title={t('recordings_manager.promote_btn', '一键转为公共库')}
+                                                        >
+                                                            <Sparkles className="h-3.5 w-3.5" />
+                                                            <span>{t('recordings_manager.promote_btn', '转为公共库')}</span>
                                                         </button>
                                                     )}
                                                     <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>

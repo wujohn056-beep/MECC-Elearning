@@ -106,6 +106,9 @@
         "subtitle": "ME 云学堂"
     },
     "learning_hub": {
+        "public_hub": "公共学习中心",
+        "team_hub": "团队学习中心",
+        "select_sm_team": "选择SM团队",
         "explore": "探索课程",
         "explore_desc": "按分类浏览优秀的销售录音与实战案例",
         "slogan": "云端汇智，让学习无界。",
@@ -293,6 +296,11 @@
         "confirm_delete": "确认下架并永久删除此条互动内容？下架后该内容将无法恢复且对所有用户不可见。"
     },
     "recordings_manager": {
+        "scope_label": "发布范围",
+        "scope_public": "公共公共库",
+        "scope_team": "团队专属库",
+        "promote_btn": "一键转为公共库",
+        "promote_success": "成功同步晋升至公共库！",
         "title": "内容与目录管理",
         "desc": "分类管理、上传销售录音与讲师头像",
         "upload_materials": "上传学习资料",

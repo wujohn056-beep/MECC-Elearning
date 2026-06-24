@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { Plus, Trash2, Edit2, Save, X, Upload, CheckCircle2, AlertCircle, Image, Sliders, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, Upload, CheckCircle2, AlertCircle, Image, Sliders, ToggleLeft, ToggleRight, Sparkles } from 'lucide-react';
 
 interface Banner {
     id: string;
@@ -120,6 +120,11 @@ export default function BannerManager() {
                 const smData: SmUser[] = [];
                 userSnapshot.forEach(doc => {
                     const data = doc.data();
+                    if (isSd && profile) {
+                        const uSd = (data.sd || '').trim().toUpperCase();
+                        const myCrm = (profile.crmId || '').trim().toUpperCase();
+                        if (uSd !== myCrm) return;
+                    }
                     smData.push({
                         crmId: data.crmId || '',
                         name: data.name || data.crmId || ''
@@ -273,6 +278,11 @@ export default function BannerManager() {
 
             const ownerSmName = formOwnerSm === 'global' ? 'global' : formOwnerSm;
 
+            const isGlobal = formOwnerSm === 'global';
+            const hubScope = isGlobal ? 'public' : 'team';
+            const targetSmId = isGlobal ? '' : formOwnerSm;
+            const targetSmName = isGlobal ? '' : (smList.find(s => s.crmId === formOwnerSm)?.name || formOwnerSm);
+
             const bannerData: any = {
                 title: formTitle.trim(),
                 imageUrl: finalImageUrl,
@@ -283,6 +293,9 @@ export default function BannerManager() {
                 ownerSm: formOwnerSm,
                 ownerSmName: ownerSmName,
                 active: formActive,
+                hubScope,
+                targetSmId,
+                targetSmName
             };
 
             if (editingId) {
@@ -353,6 +366,57 @@ export default function BannerManager() {
             setActionLoading(false);
         }
     };
+
+    const handlePromoteToPublic = async (banner: Banner) => {
+        if (!window.confirm(t('banner_manager.promote_confirm', '确定要将此团队专属 Banner 晋升同步至公共库吗？这将创建一份完全独立的公共库副本。'))) {
+            return;
+        }
+
+        setActionLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const promotedData = {
+                title: banner.title,
+                imageUrl: banner.imageUrl,
+                categoryId: banner.categoryId,
+                categoryName: banner.categoryName,
+                linkedTaskId: banner.linkedTaskId || '',
+                linkedTaskTitle: banner.linkedTaskTitle || '',
+                ownerSm: 'global',
+                ownerSmName: 'global',
+                active: true,
+                hubScope: 'public',
+                targetSmId: '',
+                targetSmName: '',
+                isPromoted: true,
+                promotedFromTeam: banner.ownerSmName || banner.ownerSm || '',
+                promotedBy: profile?.crmId || user?.email || '',
+                promotedAt: serverTimestamp(),
+                createdAt: serverTimestamp()
+            };
+
+            await addDoc(collection(db, 'banners'), promotedData);
+            setSuccess(t('recordings_manager.promote_success', '成功同步晋升至公共库！'));
+            await fetchData();
+        } catch (err: any) {
+            console.error("Banner promotion failed:", err);
+            setError(`${t('common.process_fail')} ${err.message}`);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const filteredBanners = banners.filter(banner => {
+        if (isSm) {
+            return banner.ownerSm === profile?.crmId;
+        }
+        if (isSd) {
+            return smList.some(sm => sm.crmId === banner.ownerSm);
+        }
+        return true;
+    });
 
     return (
         <div className="space-y-6">
@@ -580,14 +644,14 @@ export default function BannerManager() {
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-desert-gold"></div>
                     <span className="text-sm font-semibold text-arabian-night/50">{t('common.loading')}</span>
                 </div>
-            ) : banners.length === 0 ? (
+            ) : filteredBanners.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center bg-white/30 backdrop-blur-sm rounded-2xl border border-white/40 p-8 shadow-sm">
                     <Image className="w-12 h-12 text-gray-300 mb-3" />
                     <h3 className="text-base font-extrabold text-arabian-night/70">{t('banner_manager.no_banners', '暂无配置 Banner，去上传一个吧！')}</h3>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {banners.map((banner) => (
+                    {filteredBanners.map((banner) => (
                         <div
                             key={banner.id}
                             className={`glass-panel rounded-2xl overflow-hidden border bg-white/40 border-white/60 shadow-md hover:shadow-lg transition-all flex flex-col relative ${
@@ -656,6 +720,17 @@ export default function BannerManager() {
                                     </button>
 
                                     <div className="flex items-center gap-3">
+                                        {isSuperAdmin && banner.ownerSm !== 'global' && (
+                                            <button
+                                                onClick={() => handlePromoteToPublic(banner)}
+                                                className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all cursor-pointer active:scale-95 text-[10px] font-bold flex items-center gap-1 shadow-sm shrink-0"
+                                                title={t('recordings_manager.promote_btn', '一键转为公共库')}
+                                                disabled={actionLoading}
+                                            >
+                                                <Sparkles className="w-3 h-3" />
+                                                <span>{t('recordings_manager.promote_btn', '转为公共库')}</span>
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => handleEdit(banner)}
                                             className="p-2 bg-white/70 hover:bg-desert-gold hover:text-deep-teal border border-gray-200 text-gray-600 rounded-lg transition-all cursor-pointer active:scale-95"

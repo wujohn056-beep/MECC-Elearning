@@ -27,7 +27,8 @@ import {
     ChevronRight,
     ChevronDown,
     Send,
-    User
+    User,
+    Sparkles
 } from 'lucide-react';
 
 interface PolicyItem {
@@ -45,6 +46,13 @@ interface PolicyItem {
     createdAt?: any;
     updatedAt?: any;
     updatedBy?: string;
+    hubScope?: 'public' | 'team';
+    targetSmId?: string;
+    targetSmName?: string;
+    isPromoted?: boolean;
+    promotedFromTeam?: string;
+    promotedBy?: string;
+    promotedAt?: any;
 }
 
 interface PolicyDirectory {
@@ -121,6 +129,9 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
     const [sortOrder, setSortOrder] = useState<number>(0);
     const [visible, setVisible] = useState(true);
     const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+    const [hubScope, setHubScope] = useState<'public' | 'team'>('public');
+    const [targetSmId, setTargetSmId] = useState<string>('');
+    const [adminSmFilter, setAdminSmFilter] = useState<string>('all');
     
     // Directory Form states
     const [editingDirId, setEditingDirId] = useState<string | null>(null);
@@ -244,9 +255,39 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
 
     // Filter policies and directories based on admin boundary scope
     const filteredPolicies = useMemo(() => {
-        if (adminScope === 'all') return sectionPolicies;
-        return sectionPolicies.filter(p => p.targetTeam === adminScope);
-    }, [sectionPolicies, adminScope]);
+        let items = sectionPolicies;
+
+        // Apply admin boundary scope if not 'all'
+        if (adminScope !== 'all') {
+            items = items.filter(p => p.targetTeam === adminScope);
+        }
+
+        // Apply hubScope and team filters
+        const isSuper = profile?.role === 'super_admin';
+        const isSd = profile?.role === 'sd';
+        const isSm = profile?.role === 'sm';
+
+        if (isSm) {
+            items = items.filter(p => p.hubScope === 'team' && p.targetSmId === profile.crmId);
+        } else if (isSd) {
+            items = items.filter(p => {
+                if (p.hubScope !== 'team') return false;
+                const smId = p.targetSmId;
+                const isDownlineSm = systemUsers.some(u => u.crmId === smId && u.sd === profile.crmId);
+                if (!isDownlineSm) return false;
+                if (adminSmFilter !== 'all' && smId !== adminSmFilter) return false;
+                return true;
+            });
+        } else if (isSuper) {
+            if (adminSmFilter === 'public') {
+                items = items.filter(p => p.hubScope !== 'team');
+            } else if (adminSmFilter !== 'all') {
+                items = items.filter(p => p.hubScope === 'team' && p.targetSmId === adminSmFilter);
+            }
+        }
+
+        return items;
+    }, [sectionPolicies, adminScope, profile, systemUsers, adminSmFilter]);
 
     const filteredDirectories = useMemo(() => {
         if (adminScope === 'all') return sectionDirectories;
@@ -593,6 +634,8 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         setUploadProgress(null);
         setUploading(false);
         setUploadedFileName(null);
+        setHubScope(profile?.role === 'sm' ? 'team' : 'public');
+        setTargetSmId(profile?.role === 'sm' ? (profile?.crmId || '') : '');
     };
 
     const resetDirForm = () => {
@@ -747,7 +790,10 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                 visible,
                 section: activeSection,
                 updatedAt: serverTimestamp(),
-                updatedBy: profile?.crmId || 'admin'
+                updatedBy: profile?.crmId || 'admin',
+                hubScope,
+                targetSmId,
+                targetSmName: hubScope === 'team' && targetSmId ? (systemUsers.find(u => u.crmId === targetSmId)?.name || targetSmId) : ''
             };
 
             if (editingId) {
@@ -854,6 +900,52 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         setUploadFile(null);
         setUploadProgress(null);
         setUploadedFileName(null);
+        setHubScope(item.hubScope || 'public');
+        setTargetSmId(item.targetSmId || '');
+    };
+
+    const handlePromoteToPublic = async (item: PolicyItem) => {
+        if (!window.confirm(t('policy_manager.promote_confirm', '确定要将此团队专属政策/品牌素材晋升同步至公共库吗？这将创建一份完全独立的公共库副本。'))) {
+            return;
+        }
+
+        setActionLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const promotedData = {
+                title: item.title,
+                description: item.description || '',
+                type: item.type,
+                url: item.url,
+                thumbnailUrl: item.thumbnailUrl || '',
+                targetTeam: item.targetTeam || 'all',
+                directoryId: item.directoryId || null,
+                sortOrder: item.sortOrder || 0,
+                visible: true,
+                section: item.section || 'policy',
+                hubScope: 'public',
+                targetSmId: '',
+                targetSmName: '',
+                isPromoted: true,
+                promotedFromTeam: item.targetSmName || item.targetSmId || '',
+                promotedBy: profile?.crmId || 'admin',
+                promotedAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                updatedBy: profile?.crmId || 'admin'
+            };
+
+            await addDoc(collection(db, 'policies'), promotedData);
+            setSuccess(t('recordings_manager.promote_success', '成功同步晋升至公共库！'));
+            await fetchPolicies();
+        } catch (err: any) {
+            console.error("Policy promotion failed:", err);
+            setError(`${t('common.process_fail')} ${err.message}`);
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const handleDirEdit = (item: PolicyDirectory) => {
@@ -1266,6 +1358,82 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                         </div>
                                     )}
 
+                                    {/* Scope Selection */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-bold text-deep-teal mb-1">
+                                            {t('recordings_manager.scope_label', '发布范围')}
+                                        </label>
+                                        <div className="flex bg-gray-100 p-0.5 rounded-lg text-xs font-semibold border border-gray-200">
+                                            <button
+                                                type="button"
+                                                disabled={profile?.role === 'sm'}
+                                                onClick={() => {
+                                                    setHubScope('public');
+                                                    setTargetSmId('');
+                                                }}
+                                                className={`flex-1 py-1.5 rounded-md transition-all duration-200 ${
+                                                    hubScope === 'public'
+                                                        ? 'bg-white text-deep-teal shadow-sm border-gray-200/50 font-bold'
+                                                        : 'text-gray-400 hover:text-gray-600 disabled:opacity-50'
+                                                }`}
+                                            >
+                                                {t('recordings_manager.scope_public', '公共公共库')}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setHubScope('team');
+                                                    if (profile?.role === 'sm') {
+                                                        setTargetSmId(profile.crmId || '');
+                                                    } else {
+                                                        const sms = systemUsers.filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId));
+                                                        if (sms.length > 0 && !targetSmId) {
+                                                            setTargetSmId(sms[0].crmId);
+                                                        }
+                                                    }
+                                                }}
+                                                className={`flex-1 py-1.5 rounded-md transition-all duration-200 ${
+                                                    hubScope === 'team'
+                                                        ? 'bg-white text-deep-teal shadow-sm border-gray-200/50 font-bold'
+                                                        : 'text-gray-400 hover:text-gray-600'
+                                                }`}
+                                            >
+                                                {t('recordings_manager.scope_team', '团队专属库')}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Target SM Selector */}
+                                    {hubScope === 'team' && (
+                                        <div className="space-y-1.5">
+                                            <label className="block text-xs font-bold text-deep-teal mb-1">
+                                                {t('learning_hub.select_sm_team', '选择SM团队')}
+                                            </label>
+                                            {profile?.role === 'sm' ? (
+                                                <div className="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 text-xs font-bold">
+                                                    {profile.crmId} ({t('recordings_manager.direct_team', '直带团队')})
+                                                </div>
+                                            ) : (
+                                                <select
+                                                    value={targetSmId}
+                                                    onChange={(e) => setTargetSmId(e.target.value)}
+                                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 text-xs font-semibold"
+                                                    required
+                                                >
+                                                    <option value="">{t('recordings_manager.select_placeholder', '请选择团队...')}</option>
+                                                    {systemUsers
+                                                        .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
+                                                        .map(u => (
+                                                            <option key={u.crmId} value={u.crmId}>
+                                                                {u.name || u.crmId} ({u.crmId})
+                                                            </option>
+                                                        ))
+                                                    }
+                                                </select>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-2 gap-4 border-t border-deep-teal/10 pt-4 mt-2">
                                         <div>
                                             <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.sort_order', '排序权重')}</label>
@@ -1320,10 +1488,36 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                         {/* List */}
                         <div className="lg:col-span-7">
                             <div className="glass-panel rounded-2xl p-6 border border-white/40 bg-white/40 min-h-[500px]">
-                                <h2 className="text-xl font-bold text-deep-teal mb-6 flex items-center gap-2 border-b border-deep-teal/10 pb-3">
-                                    <FileText className="text-desert-gold h-5 w-5" />
-                                    {activeSection === 'brand' ? t('policy_manager.brand_list_title', '已发布品牌物料列表') : t('policy_manager.list_title', '已发布文件列表')} ({filteredPolicies.length})
-                                </h2>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b border-deep-teal/10 pb-3">
+                                    <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
+                                        <FileText className="text-desert-gold h-5 w-5" />
+                                        {activeSection === 'brand' ? t('policy_manager.brand_list_title', '已发布品牌物料列表') : t('policy_manager.list_title', '已发布文件列表')} ({filteredPolicies.length})
+                                    </h2>
+                                    {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
+                                        <select
+                                            value={adminSmFilter}
+                                            onChange={(e) => setAdminSmFilter(e.target.value)}
+                                            className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white/50 focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none transition-all font-semibold"
+                                        >
+                                            {profile?.role === 'super_admin' ? (
+                                                <>
+                                                    <option value="all">{t('learning_hub.all_content', '全部可见')}</option>
+                                                    <option value="public">{t('recordings_manager.scope_public', '公共公共库')}</option>
+                                                </>
+                                            ) : (
+                                                <option value="all">{t('learning_hub.all_content', '下辖所有团队')}</option>
+                                            )}
+                                            {systemUsers
+                                                .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
+                                                .map(u => (
+                                                    <option key={u.crmId} value={u.crmId}>
+                                                        {u.name || u.crmId} ({u.crmId})
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
+                                    )}
+                                </div>
 
                                 {loading ? (
                                     <div className="flex justify-center py-24">
@@ -1364,6 +1558,16 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                                             <span className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/50 rounded-full font-bold">
                                                                 📁 {getParentFolderName(item.directoryId)}
                                                             </span>
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                                                                item.hubScope === 'team'
+                                                                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            }`}>
+                                                                {item.hubScope === 'team'
+                                                                    ? `👥 ${t('recordings_manager.scope_team', '团队专属')}: ${item.targetSmName || item.targetSmId}`
+                                                                    : `🌍 ${t('recordings_manager.scope_public', '公共')}`
+                                                                }
+                                                            </span>
                                                             {!item.visible && (
                                                                 <span className="text-[10px] px-2 py-0.5 bg-gray-200 text-gray-500 font-bold rounded-full flex items-center gap-1">
                                                                     <EyeOff className="h-3 w-3" />
@@ -1400,6 +1604,16 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                                     {/* Actions */}
                                                     <div className="flex flex-col gap-1 items-end self-start shrink-0">
                                                         <div className="flex gap-1">
+                                                            {isSuperAdmin && item.hubScope === 'team' && (
+                                                                <button 
+                                                                    onClick={() => handlePromoteToPublic(item)}
+                                                                    className="p-2 hover:bg-amber-50 text-amber-600 rounded-lg transition-colors border border-transparent hover:border-amber-200 cursor-pointer"
+                                                                    title={t('recordings_manager.promote_btn', '一键转为公共库')}
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    <Sparkles className="h-4 w-4 animate-pulse" />
+                                                                </button>
+                                                            )}
                                                             <button 
                                                                 onClick={() => handlePushToDingTalkClick(item)}
                                                                 className="p-2 hover:bg-white text-deep-teal rounded-lg transition-colors border border-transparent hover:border-gray-200 cursor-pointer"

@@ -210,7 +210,10 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                         directoryId: data.directoryId || null,
                         sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
                         visible: data.visible !== false,
-                        section: data.section || 'policy'
+                        section: data.section || 'policy',
+                        hubScope: data.hubScope || 'public',
+                        targetSmId: data.targetSmId || '',
+                        targetSmName: data.targetSmName || ''
                     });
                 }
             });
@@ -277,9 +280,20 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
     }, [directories, section]);
 
     const visiblePolicies = useMemo(() => {
-        if (activeTeam === 'all') return sectionPolicies;
-        return sectionPolicies.filter(p => p.targetTeam === 'all' || p.targetTeam === activeTeam);
-    }, [sectionPolicies, activeTeam]);
+        const paramScope = searchParams.get('scope');
+        const paramSmId = searchParams.get('smId');
+
+        let filtered = sectionPolicies;
+        if (paramScope === 'team' && paramSmId) {
+            filtered = filtered.filter(p => p.hubScope === 'team' && p.targetSmId === paramSmId);
+        } else {
+            // public scope by default
+            filtered = filtered.filter(p => p.hubScope !== 'team');
+        }
+
+        if (activeTeam === 'all') return filtered;
+        return filtered.filter(p => p.targetTeam === 'all' || p.targetTeam === activeTeam);
+    }, [sectionPolicies, activeTeam, searchParams]);
 
     const visibleDirectories = useMemo(() => {
         if (activeTeam === 'all') return sectionDirectories;
@@ -327,7 +341,15 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                     <button 
-                        onClick={() => navigate('/hub')}
+                        onClick={() => {
+                            const scope = searchParams.get('scope');
+                            const smId = searchParams.get('smId');
+                            if (scope === 'team' && smId) {
+                                navigate(`/hub?scope=team&smId=${smId}`);
+                            } else {
+                                navigate('/hub');
+                            }
+                        }}
                         className="p-2.5 bg-white/80 hover:bg-white rounded-xl border border-gray-200/50 shadow-sm transition-all hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
                         title={t('learning_hub.back_to_courses', '返回全部课程')}
                     >

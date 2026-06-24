@@ -107,6 +107,9 @@
         "subtitle": "ME Cloud Academy"
     },
     "learning_hub": {
+        "public_hub": "Public Hub",
+        "team_hub": "Team Hub",
+        "select_sm_team": "Select Team",
         "explore": "Explore Courses",
         "explore_desc": "Browse excellent sales recordings and case studies by category",
         "slogan": "Cloud-Based Wisdom, Boundless Learning.",
@@ -294,6 +297,11 @@
         "confirm_delete": "Are you sure you want to remove and permanently delete this interaction? This action cannot be undone and it will be hidden from all users."
     },
     "recordings_manager": {
+        "scope_label": "Publish Scope",
+        "scope_public": "Public Library",
+        "scope_team": "Team Exclusive",
+        "promote_btn": "Promote to Public",
+        "promote_success": "Promoted successfully!",
         "title": "Content & Category Management",
         "desc": "Manage categories, upload sales recordings and lecturer avatars",
         "upload_materials": "Upload Learning Materials",

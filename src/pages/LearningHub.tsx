@@ -2746,6 +2746,15 @@ export default function LearningHub() {
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [previewSmFilter, setPreviewSmFilter] = useState<string>('all');
     const [smListForPreview, setSmListForPreview] = useState<string[]>([]);
+    const [systemUsers, setSystemUsers] = useState<any[]>([]);
+    const [rawFavorites, setRawFavorites] = useState<{ userId: string; recordingIds: string[] }[]>([]);
+    const [hubScope, setHubScope] = useState<'public' | 'team'>(() => {
+        const paramScope = searchParams.get('scope');
+        return (paramScope === 'team') ? 'team' : 'public';
+    });
+    const [activeSmId, setActiveSmId] = useState<string>(() => {
+        return searchParams.get('smId') || '';
+    });
     
     const allowedTabs = React.useMemo(() => {
         const tabs: { type: 'kid' | 'adult' | 'ss' | 'leader' | 'referral'; label: string; gradient: string }[] = [];
@@ -2969,15 +2978,29 @@ export default function LearningHub() {
                 });
                 setRecordings(recData);
 
+                // Fetch All Users
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const usersData: any[] = [];
+                usersSnapshot.forEach(uDoc => {
+                    usersData.push({ id: uDoc.id, ...uDoc.data() });
+                });
+                setSystemUsers(usersData);
+
                 // Fetch All Favorites globally to calculate leaderboard
                 const allFavSnapshot = await getDocs(collection(db, 'user_favorites'));
                 const favCounts: Record<string, number> = {};
-                allFavSnapshot.forEach(doc => {
-                    const ids = doc.data().recordingIds || [];
+                const rawFavs: { userId: string; recordingIds: string[] }[] = [];
+                allFavSnapshot.forEach(fDoc => {
+                    const ids = fDoc.data().recordingIds || [];
+                    rawFavs.push({
+                        userId: fDoc.id,
+                        recordingIds: ids
+                    });
                     ids.forEach((id: string) => {
                         favCounts[id] = (favCounts[id] || 0) + 1;
                     });
                 });
+                setRawFavorites(rawFavs);
                 setAllFavoritesCount(favCounts);
 
                 // Fetch current User's Favorites
@@ -3061,28 +3084,59 @@ export default function LearningHub() {
     }, []);
 
     // Filter active banners based on user profile and role
+    // Filter active banners based on user profile and role
     const displayBanners = React.useMemo(() => {
-        const userRole = profile?.role || 'user';
-        const userSm = profile?.sm || (profile?.role === 'sm' ? profile?.crmId : '');
-        
         let activeBanners = banners.filter(b => b.active !== false);
-        if (userRole === 'super_admin' || userRole === 'sd') {
-            if (previewSmFilter !== 'all') {
-                return activeBanners.filter(b => b.ownerSm === previewSmFilter);
-            }
-            // By default, super admin/SD see global banners
-            const globals = activeBanners.filter(b => b.ownerSm === 'global' || !b.ownerSm);
-            return globals.length > 0 ? globals : activeBanners;
+        if (hubScope === 'team') {
+            return activeBanners.filter(b => b.ownerSm === activeSmId || (b.hubScope === 'team' && b.targetSmId === activeSmId));
         } else {
-            // Regular user, TL, SM
-            const smBanners = activeBanners.filter(b => b.ownerSm === userSm);
-            if (smBanners.length > 0) {
-                return smBanners;
-            }
-            // fallback
-            return activeBanners.filter(b => b.ownerSm === 'global' || !b.ownerSm);
+            return activeBanners.filter(b => b.ownerSm === 'global' || !b.ownerSm || b.hubScope !== 'team');
         }
-    }, [banners, profile, previewSmFilter]);
+    }, [banners, hubScope, activeSmId]);
+
+    // Handle SM ID defaults for roles
+    useEffect(() => {
+        if (profile) {
+            const role = profile.role || 'user';
+            const paramSmId = searchParams.get('smId');
+            if (role === 'sm') {
+                setActiveSmId(profile.crmId || '');
+            } else if (role === 'sd' || role === 'super_admin') {
+                const sms = systemUsers.filter(u => u.role === 'sm' && (role === 'super_admin' || u.sd === profile.crmId));
+                if (paramSmId) {
+                    setActiveSmId(paramSmId);
+                } else if (sms.length > 0 && !activeSmId) {
+                    setActiveSmId(sms[0].crmId);
+                }
+            } else {
+                setActiveSmId(profile.sm || '');
+            }
+        }
+    }, [profile, systemUsers]);
+
+    // Sync state back to URL parameters
+    useEffect(() => {
+        const currentScope = searchParams.get('scope');
+        const currentSmId = searchParams.get('smId');
+        
+        if (hubScope === 'team') {
+            if (currentScope !== 'team' || currentSmId !== activeSmId) {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('scope', 'team');
+                if (activeSmId) {
+                    newParams.set('smId', activeSmId);
+                }
+                setSearchParams(newParams);
+            }
+        } else {
+            if (currentScope === 'team') {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.delete('scope');
+                newParams.delete('smId');
+                setSearchParams(newParams);
+            }
+        }
+    }, [hubScope, activeSmId, searchParams, setSearchParams]);
 
     // Autoplay sliding banner effect
     useEffect(() => {
@@ -3126,6 +3180,17 @@ export default function LearningHub() {
         return policies.filter(p => {
             if ((p.section || 'policy') !== 'policy') return false;
 
+            // 0. Hub Scope Filtering
+            if (hubScope === 'team') {
+                if (p.hubScope !== 'team' || p.targetSmId !== activeSmId) {
+                    return false;
+                }
+            } else {
+                if (p.hubScope === 'team') {
+                    return false;
+                }
+            }
+
             const team = p.targetTeam || mapBusinessTypeToTeam(p.businessType || 'all');
             
             // 1. Business line tab filtering
@@ -3154,7 +3219,7 @@ export default function LearningHub() {
 
             return team === 'all' || team === userTeam;
         });
-    }, [policies, userTeam, profile, businessType]);
+    }, [policies, userTeam, profile, businessType, hubScope, activeSmId]);
 
     const filteredBrandsForHub = React.useMemo(() => {
         const mapBusinessTypeToTeam = (bt: string) => {
@@ -3169,6 +3234,17 @@ export default function LearningHub() {
 
         return policies.filter(p => {
             if (p.section !== 'brand') return false;
+
+            // 0. Hub Scope Filtering
+            if (hubScope === 'team') {
+                if (p.hubScope !== 'team' || p.targetSmId !== activeSmId) {
+                    return false;
+                }
+            } else {
+                if (p.hubScope === 'team') {
+                    return false;
+                }
+            }
 
             const team = p.targetTeam || mapBusinessTypeToTeam(p.businessType || 'all');
             
@@ -3198,7 +3274,7 @@ export default function LearningHub() {
 
             return team === 'all' || team === userTeam;
         });
-    }, [policies, userTeam, profile, businessType]);
+    }, [policies, userTeam, profile, businessType, hubScope, activeSmId]);
 
     const handleToggleLike = async (recId: string, currentLikes: string[] = []) => {
         if (!user) return;
@@ -3328,6 +3404,18 @@ export default function LearningHub() {
             return rec.id === targetRecordingId;
         }
         
+        // Filter by Hub Scope (Public vs Team)
+        if (hubScope === 'team') {
+            if ((rec as any).hubScope !== 'team' || (rec as any).targetSmId !== activeSmId) {
+                return false;
+            }
+        } else {
+            // Public scope: do not show team-specific items
+            if ((rec as any).hubScope === 'team') {
+                return false;
+            }
+        }
+
         // Filter by businessType (default old recordings to 'kid' as per user request)
         if ((rec.businessType || 'kid') !== businessType) {
             return false;
@@ -3398,26 +3486,55 @@ export default function LearningHub() {
     // Calculate display slice
     const displayedRecordings = sortedRecordings.slice(0, displayCount);
 
-    // Calculate Leaderboard (Scoped by selected businessType)
-    const displayTopFavorited = recordings
-        .filter(rec => (rec.businessType || 'kid') === businessType)
-        .sort((a, b) => {
-            const countA = allFavoritesCount[a.id] || 0;
-            const countB = allFavoritesCount[b.id] || 0;
-            if (countB === countA) return (b.playCount || 0) - (a.playCount || 0);
-            return countB - countA;
-        })
-        .slice(0, 10);
+    // Calculate Leaderboard (Scoped by selected businessType and optionally filtered by Team)
+    const displayTopFavorited = React.useMemo(() => {
+        let favCounts = allFavoritesCount;
+        if (hubScope === 'team' && activeSmId) {
+            const teamFavCounts: Record<string, number> = {};
+            rawFavorites.forEach(item => {
+                const u = systemUsers.find(user => user.id === item.userId);
+                if (u && (u.sm === activeSmId || u.crmId === activeSmId)) {
+                    item.recordingIds.forEach((id: string) => {
+                        teamFavCounts[id] = (teamFavCounts[id] || 0) + 1;
+                    });
+                }
+            });
+            favCounts = teamFavCounts;
+        }
+
+        return recordings
+            .filter(rec => (rec.businessType || 'kid') === businessType)
+            .sort((a, b) => {
+                const countA = favCounts[a.id] || 0;
+                const countB = favCounts[b.id] || 0;
+                if (countB === countA) return (b.playCount || 0) - (a.playCount || 0);
+                return countB - countA;
+            })
+            .slice(0, 10);
+    }, [recordings, businessType, allFavoritesCount, rawFavorites, systemUsers, hubScope, activeSmId]);
     
-    const displayTopLiked = recordings
-        .filter(rec => (rec.businessType || 'kid') === businessType)
-        .sort((a, b) => {
-            const countA = a.likes?.length || 0;
-            const countB = b.likes?.length || 0;
-            if (countB === countA) return (b.playCount || 0) - (a.playCount || 0);
-            return countB - countA;
-        })
-        .slice(0, 10);
+    const displayTopLiked = React.useMemo(() => {
+        const getLikeCount = (rec: Recording) => {
+            if (!rec.likes) return 0;
+            if (hubScope === 'team' && activeSmId) {
+                return rec.likes.filter(uid => {
+                    const u = systemUsers.find(user => user.id === uid);
+                    return u && (u.sm === activeSmId || u.crmId === activeSmId);
+                }).length;
+            }
+            return rec.likes.length;
+        };
+
+        return recordings
+            .filter(rec => (rec.businessType || 'kid') === businessType)
+            .sort((a, b) => {
+                const countA = getLikeCount(a);
+                const countB = getLikeCount(b);
+                if (countB === countA) return (b.playCount || 0) - (a.playCount || 0);
+                return countB - countA;
+            })
+            .slice(0, 10);
+    }, [recordings, businessType, systemUsers, hubScope, activeSmId]);
 
     const renderFeaturedMediaCard = (item: any) => {
         if (!item) return null;
@@ -3571,33 +3688,64 @@ export default function LearningHub() {
                 </div>
 
                 <div className="space-y-1">
-                    {(leaderboardTab === 'favorites' ? displayTopFavorited : displayTopLiked).map((rec, idx) => (
-                        <div 
-                            key={rec.id} 
-                            className="flex items-center gap-3 group cursor-pointer hover:bg-white p-2.5 rounded-xl transition-all border border-transparent hover:border-white/60 hover:shadow-sm" 
-                            onClick={() => setSearchParams({ recordingId: rec.id })}
-                        >
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600 shadow-sm' : idx === 1 ? 'bg-gray-200 text-gray-600 shadow-sm' : idx === 2 ? 'bg-orange-100 text-orange-600 shadow-sm' : 'bg-gray-50 text-gray-400'}`}>
-                                {idx + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-bold text-arabian-night line-clamp-2 leading-tight group-hover:text-desert-gold transition-colors" title={rec.title}>
-                                    {rec.displayId && <span className="text-desert-gold mr-1 text-xs inline-block font-black">[{rec.displayId}]</span>}
-                                    {rec.title}
-                                </h4>
-                                <div className="text-[10px] text-arabian-night/50 flex items-center gap-2 mt-0.5">
-                                    <span className="truncate font-semibold">{rec.lecturerName || t('learning_hub.unknown_lecturer')}</span>
-                                    <span className="flex items-center gap-0.5 font-semibold">
-                                        {leaderboardTab === 'favorites' ? <Heart className="w-3 h-3 text-red-400 fill-red-400"/> : <Moon className="w-3 h-3 text-desert-gold fill-desert-gold"/>}
-                                        {leaderboardTab === 'favorites' ? (allFavoritesCount[rec.id] || 0) : (rec.likes?.length || 0)}
-                                    </span>
+                    {(leaderboardTab === 'favorites' ? displayTopFavorited : displayTopLiked).map((rec, idx) => {
+                        const favCount = (() => {
+                            if (hubScope === 'team' && activeSmId) {
+                                let count = 0;
+                                rawFavorites.forEach(item => {
+                                    const u = systemUsers.find(user => user.id === item.userId);
+                                    if (u && (u.sm === activeSmId || u.crmId === activeSmId) && item.recordingIds.includes(rec.id)) {
+                                        count++;
+                                    }
+                                });
+                                return count;
+                            }
+                            return allFavoritesCount[rec.id] || 0;
+                        })();
+
+                        const likeCount = (() => {
+                            if (!rec.likes) return 0;
+                            if (hubScope === 'team' && activeSmId) {
+                                return rec.likes.filter(uid => {
+                                    const u = systemUsers.find(user => user.id === uid);
+                                    return u && (u.sm === activeSmId || u.crmId === activeSmId);
+                                }).length;
+                            }
+                            return rec.likes.length;
+                        })();
+
+                        return (
+                            <div 
+                                key={rec.id} 
+                                className="flex items-center gap-3 group cursor-pointer hover:bg-white p-2.5 rounded-xl transition-all border border-transparent hover:border-white/60 hover:shadow-sm" 
+                                onClick={() => {
+                                    const newParams = new URLSearchParams(searchParams);
+                                    newParams.set('recordingId', rec.id);
+                                    setSearchParams(newParams);
+                                }}
+                            >
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600 shadow-sm' : idx === 1 ? 'bg-gray-200 text-gray-600 shadow-sm' : idx === 2 ? 'bg-orange-100 text-orange-600 shadow-sm' : 'bg-gray-50 text-gray-400'}`}>
+                                    {idx + 1}
                                 </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-bold text-arabian-night line-clamp-2 leading-tight group-hover:text-desert-gold transition-colors" title={rec.title}>
+                                        {rec.displayId && <span className="text-desert-gold mr-1 text-xs inline-block font-black">[{rec.displayId}]</span>}
+                                        {rec.title}
+                                    </h4>
+                                    <div className="text-[10px] text-arabian-night/50 flex items-center gap-2 mt-0.5">
+                                        <span className="truncate font-semibold">{rec.lecturerName || t('learning_hub.unknown_lecturer')}</span>
+                                        <span className="flex items-center gap-0.5 font-semibold">
+                                            {leaderboardTab === 'favorites' ? <Heart className="w-3 h-3 text-red-400 fill-red-400"/> : <Moon className="w-3 h-3 text-desert-gold fill-desert-gold"/>}
+                                            {leaderboardTab === 'favorites' ? favCount : likeCount}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button className="w-7 h-7 rounded-full bg-deep-teal/5 flex items-center justify-center text-deep-teal opacity-0 group-hover:opacity-100 group-hover:bg-deep-teal/10 transition-all shrink-0">
+                                    <PlayCircle className="w-4 h-4" />
+                                </button>
                             </div>
-                            <button className="w-7 h-7 rounded-full bg-deep-teal/5 flex items-center justify-center text-deep-teal opacity-0 group-hover:opacity-100 group-hover:bg-deep-teal/10 transition-all shrink-0">
-                                <PlayCircle className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -3814,6 +3962,63 @@ export default function LearningHub() {
                         </div>
                     )}
                 </header>
+
+                {/* Premium Segmented Switcher for Hub Scopes */}
+                {!taskId && !targetRecordingId && (
+                    <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
+                        {/* Scope Toggle buttons */}
+                        <div className="flex bg-gray-100/80 dark:bg-slate-900/60 p-1 rounded-2xl border border-gray-200/40 w-full md:w-auto self-start">
+                            <button
+                                onClick={() => {
+                                    setHubScope('public');
+                                }}
+                                className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                                    hubScope === 'public'
+                                        ? 'bg-white text-deep-teal shadow-md font-extrabold border-gray-200/50 scale-[1.02]'
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/30 dark:text-slate-400 dark:hover:text-white'
+                                }`}
+                            >
+                                🌍 {t('learning_hub.public_hub', '公共学习中心')}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setHubScope('team');
+                                    if (profile?.role === 'sm') {
+                                        setActiveSmId(profile.crmId || '');
+                                    }
+                                }}
+                                className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                                    hubScope === 'team'
+                                        ? 'bg-white text-deep-teal shadow-md font-extrabold border-gray-200/50 scale-[1.02]'
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/30 dark:text-slate-400 dark:hover:text-white'
+                                }`}
+                            >
+                                👥 {t('learning_hub.team_hub', '团队学习中心')}
+                            </button>
+                        </div>
+
+                        {/* Team Dropdown Filter (Visible to SD / Super Admin in Team Scope) */}
+                        {hubScope === 'team' && (profile?.role === 'super_admin' || profile?.role === 'sd') && (
+                            <div className="flex items-center gap-2.5 text-sm font-bold text-deep-teal self-start md:self-end">
+                                <span>🎯 {t('learning_hub.select_sm_team', '所属团队')}:</span>
+                                <select
+                                    value={activeSmId}
+                                    onChange={(e) => setActiveSmId(e.target.value)}
+                                    className="bg-white/80 border border-gray-200 rounded-xl px-4 py-2 outline-none text-sm font-bold text-deep-teal cursor-pointer shadow-sm focus:ring-2 focus:ring-desert-gold focus:border-transparent"
+                                >
+                                    {systemUsers
+                                        .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
+                                        .map(u => (
+                                            <option key={u.crmId} value={u.crmId}>
+                                                {u.name || u.crmId} ({u.crmId})
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {!taskId && !targetRecordingId ? (
