@@ -2764,7 +2764,7 @@ export default function LearningHub() {
             // tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
             // tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
-            tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
+            // tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
             return tabs;
         }
@@ -2772,7 +2772,8 @@ export default function LearningHub() {
         // 2. If SS department
         if (profile?.dep === 'SS') {
             // tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
-            tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
+            // tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
+            tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
             if (isLeader) {
                 tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
             }
@@ -2873,14 +2874,18 @@ export default function LearningHub() {
     }, []);
 
     useEffect(() => {
-        if (profile?.dep === 'SS') {
-            setBusinessType('ss');
+        // Default to the first allowed tab or 'kid' as fallback
+        if (allowedTabs.length > 0) {
+            const allowedTypes = allowedTabs.map(t => t.type);
+            if (!allowedTypes.includes(businessType as any)) {
+                setBusinessType(allowedTypes[0] as any);
+            }
         } else {
             setBusinessType('kid');
         }
         setActiveTab('all');
         setSelectedLecturer('');
-    }, [profile]);
+    }, [profile, allowedTabs]);
 
 
     useEffect(() => {
