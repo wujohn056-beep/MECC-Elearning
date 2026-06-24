@@ -2714,6 +2714,106 @@ const PolicyPreviewModal = ({ policy, onClose }: { policy: any, onClose: () => v
     );
 };
 
+// Localized Translation Helper for Honor Reward System
+const localT = (key: string, defaultVal: string, i18n: any) => {
+    const lang = i18n?.language || 'zh';
+    const dict: Record<string, Record<string, string>> = {
+        zh: {
+            'learning_hub.coffee_streak': '每日咖啡连击',
+            'learning_hub.caravan_progress': '沙漠商队行进进度',
+            'learning_hub.next_oasis': '下一绿洲',
+            'learning_hub.max_level': '最高荣誉',
+            'learning_hub.view_honor_cert': '查看荣誉勋章与证书',
+            'learning_hub.cert_subtitle': '荣誉称号授予以下杰出学员',
+            'learning_hub.cert_main_body': '鉴于该学员在学习中心表现卓越，累计学时充沛，任务执行精准，特授予中东卓越销售激励荣誉头衔 ——',
+            'learning_hub.cert_slogan': '沙海无边，智者为帆。愿纯种马与凌空飞鹰的卓越精神伴您常在，再创销售巅峰！',
+            'learning_hub.cert_issue_date': '签发日期',
+            'learning_hub.cert_authorized_by': '认证机构',
+            'learning_hub.cert_downloading': '荣誉证书下载中... 已自动存入您的相册。',
+            'learning_hub.cert_download': '保存证书至相册',
+            'learning_hub.cert_share_whatsapp': '分享至 WhatsApp',
+            'common.days': '天',
+            'common.minutes': '分钟',
+            'learning_hub.streak_active_tooltip': '第 {day} 天已学习',
+            'learning_hub.streak_inactive_tooltip': '第 {day} 天未打卡',
+            'learning_hub.next_oasis_tooltip': '下一站绿洲：{title}',
+            'level.apprentice.title': '绿洲学徒',
+            'level.apprentice.desc': '知识灌溉的起点，迈出卓越销售的第一步。',
+            'level.voyager.title': '沙漠行者',
+            'level.voyager.desc': '在沙海中坚韧前行，以毅力累积智慧。',
+            'level.knight.title': '智慧骑士',
+            'level.knight.desc': '出众的执行力与精准度，执行如同骑士般果断。',
+            'level.falcon.title': '凌空猎鹰',
+            'level.falcon.desc': '高瞻远瞩，锐意进取，在团队中脱颖而出。',
+            'level.guardian.title': '绿洲守护者',
+            'level.guardian.desc': '福泽团队，慷慨分享，成为智慧的终极灯塔。'
+        },
+        en: {
+            'learning_hub.coffee_streak': 'Daily Coffee Streak',
+            'learning_hub.caravan_progress': 'Desert Caravan Progress',
+            'learning_hub.next_oasis': 'Next Oasis',
+            'learning_hub.max_level': 'Max Honor',
+            'learning_hub.view_honor_cert': 'View Badges & Honor Certificate',
+            'learning_hub.cert_subtitle': 'HONOR CERTIFICATE AWARDED TO',
+            'learning_hub.cert_main_body': 'For outstanding learning perseverance, consistent daily habits, and exceptional execution in the Learning Hub, this Middle Eastern sales honor title is proudly conferred:',
+            'learning_hub.cert_slogan': '"The desert is vast, but wisdom is the sail. May the spirit of the Arabian horse and soaring falcon accompany you to new sales peaks!"',
+            'learning_hub.cert_issue_date': 'Issue Date',
+            'learning_hub.cert_authorized_by': 'Authorized By',
+            'learning_hub.cert_downloading': 'Downloading honor certificate... Saved to your library.',
+            'learning_hub.cert_download': 'Save Certificate to Library',
+            'learning_hub.cert_share_whatsapp': 'Share on WhatsApp',
+            'common.days': 'days',
+            'common.minutes': 'mins',
+            'learning_hub.streak_active_tooltip': 'Day {day} Completed',
+            'learning_hub.streak_inactive_tooltip': 'Day {day} Incomplete',
+            'learning_hub.next_oasis_tooltip': 'Next Oasis: {title}',
+            'level.apprentice.title': 'Oasis Apprentice',
+            'level.apprentice.desc': 'The origin of knowledge watering, taking the first step of sales excellence.',
+            'level.voyager.title': 'Desert Voyager',
+            'level.voyager.desc': 'Persevering forward in the sand sea, accumulating wisdom with determination.',
+            'level.knight.title': 'Knight of Wisdom',
+            'level.knight.desc': 'Outstanding execution and precision, executing as decisively as a knight.',
+            'level.falcon.title': 'Soaring Falcon',
+            'level.falcon.desc': 'High-flying vision, sharp execution, standing out in the team.',
+            'level.guardian.title': 'Oasis Guardian',
+            'level.guardian.desc': 'Nourishing the team, sharing generously, becoming the ultimate beacon of wisdom.'
+        },
+        ar: {
+            'learning_hub.coffee_streak': 'تحدي القهوة اليومي',
+            'learning_hub.caravan_progress': 'مسار القافلة الصحراوية',
+            'learning_hub.next_oasis': 'الواحة التالية',
+            'learning_hub.max_level': 'المرتبة القصوى',
+            'learning_hub.view_honor_cert': 'عرض أوسمة وشهادة الشرف',
+            'learning_hub.cert_subtitle': 'شهادة شرف وتقدير تمنح لـ',
+            'learning_hub.cert_main_body': 'تقديراً للمثابرة المتميزة في التعلم والعادات اليومية المتسقة والتنفيذ الاستثنائي في مركز التعلم، تُمنح هذه الشهادة الفخرية:',
+            'learning_hub.cert_slogan': '"الصحراء واسعة، لكن الحكمة هي الشراع. نرجو أن تلازمك روح الفرس الأصيل والصقر المحلق لتحقيق قمم مبيعات جديدة!"',
+            'learning_hub.cert_issue_date': 'تاريخ الإصدار',
+            'learning_hub.cert_authorized_by': 'الجهة المعتمدة',
+            'learning_hub.cert_downloading': 'جاري تحميل شهادة الشرف... تم حفظها في ألبوم الصور الخاص بك.',
+            'learning_hub.cert_download': 'حفظ الشهادة في ألبوم الصور',
+            'learning_hub.cert_share_whatsapp': 'مشاركة عبر واتساب',
+            'common.days': 'أيام',
+            'common.minutes': 'دقيقة',
+            'learning_hub.streak_active_tooltip': 'تم التعلم في اليوم {day}',
+            'learning_hub.streak_inactive_tooltip': 'لم يتم تسجيل التعلم في اليوم {day}',
+            'learning_hub.next_oasis_tooltip': 'الواحة التالية: {title}',
+            'level.apprentice.title': 'مبتدئ الواحة',
+            'level.apprentice.desc': 'بداية ري المعرفة، اتخاذ الخطوة الأولى في التميز بالمبيعات.',
+            'level.voyager.title': 'رحالة الصحراء',
+            'level.voyager.desc': 'المثابرة في المضي قدماً في بحر الرمال، وجمع الحكمة بعزيمة.',
+            'level.knight.title': 'فارس الحكمة',
+            'level.knight.desc': 'تنفيذ دقيق وأداء متميز، بتصميم وحسم كالفارس.',
+            'level.falcon.title': 'صقر محلق',
+            'level.falcon.desc': 'رؤية بعيدة المدى، طموح وتفوق مستمر في الفريق.',
+            'level.guardian.title': 'حارس الواحة',
+            'level.guardian.desc': 'دعم الفريق ومشاركة المعرفة بكرم، لتصبح منارة الحكمة المطلقة.'
+        }
+    };
+
+    const activeLang = lang.startsWith('ar') ? 'ar' : lang.startsWith('en') ? 'en' : 'zh';
+    return dict[activeLang][key] || defaultVal;
+};
+
 export default function LearningHub() {
     const { t, i18n } = useTranslation();
     const { user, profile, isLeader, userTeam } = useAuth();
@@ -3808,45 +3908,45 @@ export default function LearningHub() {
 
     const honorLevels = {
         apprentice: {
-            title: '绿洲学徒',
+            title: localT('level.apprentice.title', '绿洲学徒', i18n),
             titleAr: 'مبتدئ الواحة',
-            desc: '知识灌溉的起点，迈出卓越销售的第一步。',
+            desc: localT('level.apprentice.desc', '知识灌溉的起点，迈出卓越销售的第一步。', i18n),
             crestColor: 'from-[#E6DFD3] to-[#C5A059]',
             icon: '🌱',
             nextThreshold: 55,
-            nextTitle: '沙漠行者'
+            nextTitle: localT('level.voyager.title', '沙漠行者', i18n)
         },
         voyager: {
-            title: '沙漠行者',
+            title: localT('level.voyager.title', '沙漠行者', i18n),
             titleAr: 'رحالة الصحراء',
-            desc: '在沙海中坚韧前行，以毅力累积智慧。',
+            desc: localT('level.voyager.desc', '在沙海中坚韧前行，以毅力累积智慧。', i18n),
             crestColor: 'from-amber-500 to-orange-600',
             icon: '🐫',
             nextThreshold: 80,
-            nextTitle: '智慧骑士'
+            nextTitle: localT('level.knight.title', '智慧骑士', i18n)
         },
         knight: {
-            title: '智慧骑士',
+            title: localT('level.knight.title', '智慧骑士', i18n),
             titleAr: 'فارس الحكمة',
-            desc: '出众的执行力与精准度，执行如同骑士般果断。',
+            desc: localT('level.knight.desc', '出众的执行力与精准度，执行如同骑士般果断。', i18n),
             crestColor: 'from-teal-600 to-emerald-600',
             icon: '🐎',
             nextThreshold: 120,
-            nextTitle: '凌空猎鹰'
+            nextTitle: localT('level.falcon.title', '凌空猎鹰', i18n)
         },
         falcon: {
-            title: '凌空猎鹰',
+            title: localT('level.falcon.title', '凌空猎鹰', i18n),
             titleAr: 'صقر محلق',
-            desc: '高瞻远瞩，锐意进取，在团队中脱颖而出。',
+            desc: localT('level.falcon.desc', '高瞻远瞩，锐意进取，在团队中脱颖而出。', i18n),
             crestColor: 'from-yellow-500 to-amber-600',
             icon: '🦅',
             nextThreshold: 180,
-            nextTitle: '绿洲守护者'
+            nextTitle: localT('level.guardian.title', '绿洲守护者', i18n)
         },
         guardian: {
-            title: '绿洲守护者',
+            title: localT('level.guardian.title', '绿洲守护者', i18n),
             titleAr: 'حارس الواحة',
-            desc: '福泽团队，慷慨分享，成为智慧的终极灯塔。',
+            desc: localT('level.guardian.desc', '福泽团队，慷慨分享，成为智慧的终极灯塔。', i18n),
             crestColor: 'from-[#0D5C75] to-teal-800',
             icon: '🌴',
             nextThreshold: 9999,
@@ -3859,7 +3959,7 @@ export default function LearningHub() {
         const currentLevelInfo = honorLevels[stats.levelKey];
         
         return (
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-5 shadow-[0_8px_30px_rgba(203,161,53,0.03)] relative overflow-hidden transition-all duration-300">
+            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-5 shadow-[0_8px_30px_rgba(203,161,53,0.03)] relative overflow-hidden transition-all duration-300 w-full h-full flex flex-col justify-between">
                 {/* Background ambient gold glow */}
                 <div className="absolute -top-10 -right-10 w-28 h-28 bg-desert-gold/10 rounded-full blur-2xl pointer-events-none"></div>
                 
@@ -3882,8 +3982,8 @@ export default function LearningHub() {
                 {/* Daily Kahwa Streak ☕ */}
                 <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5 relative z-10">
                     <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
-                        <span className="flex items-center gap-1.5">☕ {t('learning_hub.coffee_streak', '每日咖啡连击')}</span>
-                        <span className="text-desert-gold font-extrabold font-mono">{stats.streakCount} {t('common.days', '天')}</span>
+                        <span className="flex items-center gap-1.5">☕ {localT('learning_hub.coffee_streak', '每日咖啡连击', i18n)}</span>
+                        <span className="text-desert-gold font-extrabold font-mono">{stats.streakCount} {localT('common.days', '天', i18n)}</span>
                     </div>
                     <div className="flex gap-1.5 justify-between">
                         {Array.from({ length: 7 }).map((_, idx) => {
@@ -3891,7 +3991,10 @@ export default function LearningHub() {
                             return (
                                 <div 
                                     key={idx} 
-                                    title={isActive ? `第 ${idx + 1} 天已学习` : `第 ${idx + 1} 天未打卡`}
+                                    title={isActive 
+                                        ? localT('learning_hub.streak_active_tooltip', '第 {day} 天已学习', i18n).replace('{day}', String(idx + 1))
+                                        : localT('learning_hub.streak_inactive_tooltip', '第 {day} 天未打卡', i18n).replace('{day}', String(idx + 1))
+                                    }
                                     className={`flex-1 aspect-square max-w-[28px] rounded-lg border flex items-center justify-center text-[13px] transition-all duration-300 ${
                                         isActive 
                                             ? 'bg-amber-50 border-desert-gold/45 text-amber-700 shadow-sm' 
@@ -3908,8 +4011,8 @@ export default function LearningHub() {
                 {/* Spring of Wisdom / Caravan Journey Progress */}
                 <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5 relative z-10">
                     <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
-                        <span className="flex items-center gap-1">🐫 {t('learning_hub.caravan_progress', '沙漠商队行进进度')}</span>
-                        <span className="text-desert-gold font-extrabold font-mono">{stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${t('common.minutes', '分钟')}`}</span>
+                        <span className="flex items-center gap-1">🐫 {localT('learning_hub.caravan_progress', '沙漠商队行进进度', i18n)}</span>
+                        <span className="text-desert-gold font-extrabold font-mono">{stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${localT('common.minutes', '分钟', i18n)}`}</span>
                     </div>
                     {/* Caravan path visualizer */}
                     <div className="relative w-full h-8 bg-amber-50/45 dark:bg-slate-900/40 rounded-xl border border-[#E6DFD3]/40 dark:border-white/5 overflow-hidden flex items-center px-2.5">
@@ -3918,7 +4021,10 @@ export default function LearningHub() {
                         
                         {/* Golden Oasis target */}
                         {currentLevelInfo.nextThreshold !== 9999 && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 text-lg z-10 animate-pulse duration-1000" title={`下一站绿洲：${currentLevelInfo.nextTitle}`}>
+                            <div 
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-lg z-10 animate-pulse duration-1000" 
+                                title={localT('learning_hub.next_oasis_tooltip', '下一站绿洲：{title}', i18n).replace('{title}', currentLevelInfo.nextTitle)}
+                            >
                                 🌴
                             </div>
                         )}
@@ -3947,9 +4053,9 @@ export default function LearningHub() {
                     <div className="flex justify-between items-center text-[10px] text-arabian-night/40 dark:text-white/30 font-bold mt-1.5 select-none">
                         <span>{currentLevelInfo.title}</span>
                         {currentLevelInfo.nextThreshold !== 9999 ? (
-                            <span>{t('learning_hub.next_oasis', '下一绿洲')}: {currentLevelInfo.nextTitle}</span>
+                            <span>{localT('learning_hub.next_oasis', '下一绿洲', i18n)}: {currentLevelInfo.nextTitle}</span>
                         ) : (
-                            <span>{t('learning_hub.max_level', '最高荣誉')}</span>
+                            <span>{localT('learning_hub.max_level', '最高荣誉', i18n)}</span>
                         )}
                     </div>
                 </div>
@@ -3960,7 +4066,7 @@ export default function LearningHub() {
                         onClick={() => setShowCertificate(true)}
                         className="w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-2 px-4 rounded-xl text-xs font-black tracking-wider transition-all duration-300 shadow-md hover:shadow-teal-900/10 cursor-pointer flex items-center justify-center gap-1.5 border border-white/10 active:scale-98"
                     >
-                        🏆 {t('learning_hub.view_honor_cert', '查看荣誉勋章与证书')}
+                        🏆 {localT('learning_hub.view_honor_cert', '查看荣誉勋章与证书', i18n)}
                     </button>
                 </div>
             </div>
@@ -3972,11 +4078,18 @@ export default function LearningHub() {
         
         const stats = userStats;
         const currentLevelInfo = honorLevels[stats.levelKey];
-        const formattedDate = new Date().toLocaleDateString(i18n.language?.startsWith('ar') ? 'ar-JO' : 'zh-CN', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        const formattedDate = new Date().toLocaleDateString(
+            i18n.language?.startsWith('ar') 
+                ? 'ar-JO' 
+                : i18n.language?.startsWith('en') 
+                    ? 'en-US' 
+                    : 'zh-CN', 
+            {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }
+        );
 
         return (
             <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
@@ -4020,32 +4133,32 @@ export default function LearningHub() {
                         </div>
 
                         {/* Personalization Text */}
-                        <p className="text-white/50 text-[11px] font-bold uppercase tracking-wider mb-2">{t('learning_hub.cert_subtitle', '荣誉称号授予以下杰出学员')}</p>
+                        <p className="text-white/50 text-[11px] font-bold uppercase tracking-wider mb-2">{localT('learning_hub.cert_subtitle', '荣誉称号授予以下杰出学员', i18n)}</p>
                         <h3 className="text-2xl sm:text-3xl font-black text-desert-gold tracking-wide truncate max-w-full px-4 mb-5">
                             {profile?.name || user?.email?.split('@')[0] || 'Najah Member'}
                         </h3>
 
                         <div className="max-w-md space-y-4">
                             <p className="text-sm sm:text-base text-white/95 leading-relaxed font-medium">
-                                {t('learning_hub.cert_main_body', '鉴于该学员在学习中心表现卓越，累计学时充沛，任务执行精准，特授予中东卓越销售激励荣誉头衔 ——')}
+                                {localT('learning_hub.cert_main_body', '鉴于该学员在学习中心表现卓越，累计学时充沛，任务执行精准，特授予中东卓越销售激励荣誉头衔 ——', i18n)}
                                 <strong className="block text-xl sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-desert-gold to-yellow-500 font-black mt-2 tracking-tight">
                                     ★ {currentLevelInfo.title} ({currentLevelInfo.titleAr}) ★
                                 </strong>
                             </p>
                             
                             <p className="text-xs text-white/60 leading-normal italic font-semibold">
-                                "{t('learning_hub.cert_slogan', '沙海无边，智者为帆。愿纯种马与凌空飞鹰的卓越精神伴您常在，再创销售巅峰！')}"
+                                {localT('learning_hub.cert_slogan', '沙海无边，智者为帆。愿纯种马与凌空飞鹰的卓越精神伴您常在，再创销售巅峰！', i18n)}
                             </p>
                         </div>
 
                         {/* Signatures & Date footer */}
                         <div className="w-full grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-desert-gold/20 text-xs">
                             <div className="flex flex-col items-center">
-                                <span className="text-[10px] text-white/40 font-bold uppercase">{t('learning_hub.cert_issue_date', '签发日期')}</span>
+                                <span className="text-[10px] text-white/40 font-bold uppercase">{localT('learning_hub.cert_issue_date', '签发日期', i18n)}</span>
                                 <span className="font-bold text-white/90 mt-1 font-mono">{formattedDate}</span>
                             </div>
                             <div className="flex flex-col items-center">
-                                <span className="text-[10px] text-white/40 font-bold uppercase">{t('learning_hub.cert_authorized_by', '认证机构')}</span>
+                                <span className="text-[10px] text-white/40 font-bold uppercase">{localT('learning_hub.cert_authorized_by', '认证机构', i18n)}</span>
                                 <span className="font-bold text-desert-gold mt-1 font-serif">Najah Academy</span>
                             </div>
                         </div>
@@ -4055,11 +4168,11 @@ export default function LearningHub() {
                     <div className="flex flex-col sm:flex-row gap-3.5 mt-6 justify-center w-full z-10 relative">
                         <button
                             onClick={() => {
-                                alert(t('learning_hub.cert_downloading', '荣誉证书下载中... 已自动存入您的相册。'));
+                                alert(localT('learning_hub.cert_downloading', '荣誉证书下载中... 已自动存入您的相册。', i18n));
                             }}
                             className="bg-gradient-to-r from-desert-gold to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-deep-teal font-black text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 transition-all w-full sm:w-auto"
                         >
-                            <Download className="w-4 h-4" /> {t('learning_hub.cert_download', '保存证书至相册')}
+                            <Download className="w-4 h-4" /> {localT('learning_hub.cert_download', '保存证书至相册', i18n)}
                         </button>
                         
                         <button
@@ -4070,7 +4183,7 @@ export default function LearningHub() {
                             }}
                             className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black text-xs py-3 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all w-full sm:w-auto"
                         >
-                            <Share2 className="w-4 h-4" /> {t('learning_hub.cert_share_whatsapp', '分享至 WhatsApp')}
+                            <Share2 className="w-4 h-4" /> {localT('learning_hub.cert_share_whatsapp', '分享至 WhatsApp', i18n)}
                         </button>
                     </div>
                 </div>
@@ -4083,284 +4196,317 @@ export default function LearningHub() {
 
     return (
         <div className={`space-y-8 animate-in fade-in duration-500 pb-12 overflow-x-hidden ${isNative ? 'pt-2' : ''}`}>
-            <div className={`relative transition-all duration-700 ${
-                isNative 
-                    ? 'p-0 border-0 bg-transparent shadow-none'
-                    : `backdrop-blur-xl rounded-[2.5rem] border p-6 sm:p-8 md:p-10 overflow-hidden ${
-                        businessType === 'leader'
-                            ? 'bg-gradient-to-r from-teal-950 via-deep-teal to-desert-gold/20 shadow-[0_12px_50px_rgba(203,161,53,0.15)] border-desert-gold/30'
-                            : 'bg-[#F8F5F0]/95 border-[#E6DFD3] shadow-[0_12px_45px_rgba(139,92,26,0.05)]'
-                      }`
-            }`}>
-                {/* Premium Decorative Background Elements */}
-                {!isNative && (
-                    businessType === 'leader' ? (
-                        <>
-                            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/30 via-yellow-500/10 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[8000ms]"></div>
-                            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-yellow-600/15 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="absolute top-0 right-0 w-[650px] h-[650px] bg-gradient-to-bl from-desert-gold/15 via-amber-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[10000ms]"></div>
-                            <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-gradient-to-tr from-deep-teal/10 via-teal-500/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-3xl"></div>
-                        </>
-                    )
-                )}
-                
-                <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-30">
-                    <div>
-                        {taskId ? (
-                            <>
-                                <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.task_exclusive')}</h2>
-                                <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.task_need_listen')} <span className="font-bold text-arabian-night">{taskTitle}</span></p>
-                                <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
-                                    <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
+            {!taskId && !targetRecordingId ? (
+                <div className="flex flex-col lg:flex-row gap-6 items-stretch w-full relative z-30">
+                    <div className={`flex-1 relative transition-all duration-700 ${
+                        isNative 
+                            ? 'p-0 border-0 bg-transparent shadow-none'
+                            : `backdrop-blur-xl rounded-[2.5rem] border p-6 sm:p-8 md:p-10 overflow-hidden ${
+                                businessType === 'leader'
+                                    ? 'bg-gradient-to-r from-teal-950 via-deep-teal to-desert-gold/20 shadow-[0_12px_50px_rgba(203,161,53,0.15)] border-desert-gold/30'
+                                    : 'bg-[#F8F5F0]/95 border-[#E6DFD3] shadow-[0_12px_45px_rgba(139,92,26,0.05)]'
+                              }`
+                    }`}>
+                        {/* Premium Decorative Background Elements */}
+                        {!isNative && (
+                            businessType === 'leader' ? (
+                                <>
+                                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/30 via-yellow-500/10 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[8000ms]"></div>
+                                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-yellow-600/15 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="absolute top-0 right-0 w-[650px] h-[650px] bg-gradient-to-bl from-desert-gold/15 via-amber-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[10000ms]"></div>
+                                    <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-gradient-to-tr from-deep-teal/10 via-teal-500/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-3xl"></div>
+                                </>
+                            )
+                        )}
+                        
+                        <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-30">
+                            <div>
+                                <div className="flex flex-col">
+                                    <h2 className={isNative ? "text-3xl font-black text-slate-800 tracking-tight" : "text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight"}>{t('learning_hub.explore')}</h2>
+                                    {!isNative && (
+                                        <div className="mt-3 flex items-center gap-3">
+                                            <span className="w-10 h-1 bg-gradient-to-r from-desert-gold to-yellow-500 rounded-full shadow-sm"></span>
+                                            <p className="text-base font-extrabold text-desert-gold tracking-wide italic bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-yellow-600">
+                                                "{t('learning_hub.slogan')}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* Actions Right Side */}
+                            <div className="flex flex-col gap-4 w-full md:w-auto items-end">
+                                {allowedTabs.length > 1 ? (
+                                    <div className="p-1 rounded-full flex items-center w-full md:w-auto self-start md:self-end overflow-x-auto whitespace-nowrap scrollbar-none bg-white/70 backdrop-blur-md border border-white/50 shadow-sm">
+                                        {allowedTabs.map(tab => (
+                                            <button
+                                                key={tab.type}
+                                                onClick={() => {
+                                                    if (tab.type === 'referral') {
+                                                        navigate('/referrals');
+                                                    } else {
+                                                        setBusinessType(tab.type);
+                                                        setActiveTab('all');
+                                                        setSelectedLecturer('');
+                                                    }
+                                                }}
+                                                className={`flex-1 md:flex-none px-4 md:px-6 py-2 md:py-2.5 rounded-full font-extrabold transition-all duration-300 text-xs sm:text-sm select-none cursor-pointer ${
+                                                    businessType === tab.type 
+                                                        ? `bg-gradient-to-r ${tab.gradient} text-white shadow-md shadow-slate-900/10 scale-[1.02] transform`
+                                                        : 'text-arabian-night/65 hover:text-arabian-night hover:bg-white/40'
+                                                }`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : allowedTabs.length === 1 ? (
+                                    <div className={`bg-gradient-to-r ${allowedTabs[0].gradient} text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-extrabold text-xs sm:text-sm md:text-base shadow-lg shadow-black/10 flex items-center gap-2 select-none self-start md:self-end`}>
+                                        <span>✨</span>
+                                        <span>{allowedTabs[0].label}</span>
+                                    </div>
+                                ) : null}
+
+                                {/* Search Bar */}
+                                <div ref={searchRef} className="relative w-full md:w-80 lg:w-[420px] shrink-0 group z-50">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
+                                        <Search className={`h-5 w-5 transition-colors group-focus-within:text-desert-gold ${
+                                            businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
+                                        }`} />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder={t('learning_hub.search_placeholder')}
+                                        value={searchQuery}
+                                        onChange={(e) => {
+                                            setSearchQuery(e.target.value);
+                                            setShowSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowSuggestions(true)}
+                                        className={`w-full pl-12 pr-5 py-3 border rounded-full transition-all text-sm font-semibold outline-none ${
+                                            businessType === 'leader'
+                                                ? 'bg-teal-950/60 border-desert-gold/30 text-white placeholder:text-white/40 focus:ring-4 focus:ring-desert-gold/30 focus:border-desert-gold'
+                                                : 'bg-white border-[#E6DFD3] text-arabian-night placeholder:text-arabian-night/30 focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold hover:bg-white shadow-sm'
+                                        }`}
+                                    />
+
+                                    {/* Autocomplete Suggestions Panel */}
+                                    {showSuggestions && searchQuery.trim().length > 0 && (matchingLecturers.length > 0 || matchingTitles.length > 0) && (
+                                        <div className={`absolute top-full left-0 right-0 mt-2 backdrop-blur-xl border rounded-2xl shadow-xl py-3 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50 max-h-[380px] overflow-y-auto scrollbar-thin ${
+                                            businessType === 'leader'
+                                                ? 'bg-teal-950/95 border-desert-gold/30 text-white shadow-[0_4px_25px_rgba(203,161,53,0.15)]'
+                                                : 'bg-white/95 border-gray-200/60 text-arabian-night shadow-xl'
+                                        }`}>
+                                            {/* Lecturers Section */}
+                                            {matchingLecturers.length > 0 && (
+                                                <div className="mb-2">
+                                                    <div className={`px-4 py-1.5 text-[11px] font-black tracking-wider uppercase flex items-center gap-1.5 select-none ${
+                                                        businessType === 'leader' ? 'text-desert-gold bg-teal-900/40' : 'text-deep-teal bg-gray-50'
+                                                    }`}>
+                                                        <User className="w-3.5 h-3.5 text-desert-gold" />
+                                                        <span>{t('learning_hub.suggested_lecturers', '推荐讲师')}</span>
+                                                    </div>
+                                                    <div className="mt-1">
+                                                        {matchingLecturers.map((name) => (
+                                                            <div
+                                                                key={name}
+                                                                onClick={() => {
+                                                                    setSearchQuery(name);
+                                                                    setShowSuggestions(false);
+                                                                }}
+                                                                className={`px-5 py-2.5 cursor-pointer text-sm font-bold transition-colors flex items-center gap-2 ${
+                                                                    businessType === 'leader'
+                                                                        ? 'hover:bg-teal-900/40 text-white hover:text-desert-gold'
+                                                                        : 'hover:bg-gradient-to-r hover:from-desert-gold/10 hover:to-transparent hover:text-desert-gold text-arabian-night'
+                                                                }`}
+                                                            >
+                                                                <div className="w-6 h-6 rounded-full bg-desert-gold/10 flex items-center justify-center text-[10px] text-desert-gold font-extrabold shrink-0">
+                                                                    {name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <span className="truncate">{highlightMatch(name, searchQuery)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Recordings Section */}
+                                            {matchingTitles.length > 0 && (
+                                                <div>
+                                                    <div className={`px-4 py-1.5 text-[11px] font-black tracking-wider uppercase flex items-center gap-1.5 select-none ${
+                                                        businessType === 'leader' ? 'text-desert-gold bg-teal-900/40' : 'text-deep-teal bg-gray-50'
+                                                    }`}>
+                                                        <PlayCircle className="w-3.5 h-3.5 text-desert-gold" />
+                                                        <span>{t('learning_hub.suggested_courses', '推荐课程')}</span>
+                                                    </div>
+                                                    <div className="mt-1">
+                                                        {matchingTitles.map((rec) => (
+                                                            <div
+                                                                key={rec.id}
+                                                                onClick={() => {
+                                                                    setSearchQuery(rec.title);
+                                                                    setShowSuggestions(false);
+                                                                }}
+                                                                className={`px-5 py-2.5 cursor-pointer text-sm font-bold transition-colors flex items-center gap-2.5 ${
+                                                                    businessType === 'leader'
+                                                                        ? 'hover:bg-teal-900/40 text-white hover:text-desert-gold'
+                                                                        : 'hover:bg-gradient-to-r hover:from-desert-gold/10 hover:to-transparent hover:text-desert-gold text-arabian-night'
+                                                                }`}
+                                                            >
+                                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold shrink-0 border ${
+                                                                    businessType === 'leader'
+                                                                        ? 'bg-teal-900/30 border-desert-gold/20'
+                                                                        : 'bg-deep-teal/5 border-deep-teal/10'
+                                                                }`}>
+                                                                    🎬
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className={`truncate text-sm font-bold ${
+                                                                        businessType === 'leader' ? 'text-white' : 'text-arabian-night'
+                                                                    }`}>{highlightMatch(rec.title, searchQuery)}</div>
+                                                                    {rec.lecturerName && (
+                                                                        <div className={`text-[10px] truncate font-semibold mt-0.5 ${
+                                                                            businessType === 'leader' ? 'text-white/45' : 'text-arabian-night/50'
+                                                                        }`}>{rec.lecturerName}</div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </header>
+
+                        {/* Premium Segmented Switcher for Hub Scopes */}
+                        <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
+                            {/* Scope Toggle buttons */}
+                            <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[380px] self-start shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
+                                {/* Sliding Background Indicator */}
+                                <div
+                                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl bg-gradient-to-r from-[#0D5C75] to-teal-600 dark:from-desert-gold dark:to-amber-500 shadow-md shadow-teal-900/20 dark:shadow-desert-gold/20 transition-all duration-300 ease-out z-0 ${
+                                        i18n.language?.startsWith('ar') ? 'right-1' : 'left-1'
+                                    }`}
+                                    style={{
+                                        transform: i18n.language?.startsWith('ar')
+                                            ? (hubScope === 'public' ? 'translateX(0)' : 'translateX(-100%)')
+                                            : (hubScope === 'public' ? 'translateX(0)' : 'translateX(100%)'),
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        setHubScope('public');
+                                    }}
+                                    className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                                        hubScope === 'public'
+                                            ? 'text-white dark:text-arabian-night'
+                                            : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <span className={`transition-transform duration-300 ${hubScope === 'public' ? 'scale-110 rotate-12' : ''}`}>🌍</span>
+                                    {t('learning_hub.public_hub', '公共学习中心')}
                                 </button>
-                            </>
-                        ) : targetRecordingId ? (
-                            <>
-                                <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.shared_recording_title', '推荐学习素材')}</h2>
-                                <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.shared_recording_desc', '正在播放为您推荐的精品销售实战录音，助推专业成长！')}</p>
-                                <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
-                                    <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
+                                <button
+                                    onClick={() => {
+                                        setHubScope('team');
+                                        if (profile?.role === 'sm') {
+                                            setActiveSmId(profile.crmId || '');
+                                        }
+                                    }}
+                                    className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                                        hubScope === 'team'
+                                            ? 'text-white dark:text-arabian-night'
+                                            : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <span className={`transition-transform duration-300 ${hubScope === 'team' ? 'scale-110 -rotate-12' : ''}`}>👥</span>
+                                    {t('learning_hub.team_hub', '团队学习中心')}
                                 </button>
+                            </div>
+
+                            {/* Team Dropdown Filter (Visible to SD / Super Admin in Team Scope) */}
+                            {hubScope === 'team' && (profile?.role === 'super_admin' || profile?.role === 'sd') && (
+                                <div className="flex items-center gap-2.5 text-sm font-bold text-deep-teal self-start md:self-end">
+                                    <span>🎯 {t('learning_hub.select_sm_team', '所属团队')}:</span>
+                                    <select
+                                        value={activeSmId}
+                                        onChange={(e) => setActiveSmId(e.target.value)}
+                                        className="bg-white/80 border border-gray-200 rounded-xl px-4 py-2 outline-none text-sm font-bold text-deep-teal cursor-pointer shadow-sm focus:ring-2 focus:ring-desert-gold focus:border-transparent"
+                                    >
+                                        {systemUsers
+                                            .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
+                                            .map(u => (
+                                                <option key={u.crmId} value={u.crmId}>
+                                                    {u.name || u.crmId} ({u.crmId})
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Oasis Honor progression widget next to it on desktop */}
+                    <div className="w-full lg:w-80 xl:w-[320px] 2xl:w-[360px] shrink-0">
+                        {renderOasisHonorWidget()}
+                    </div>
+                </div>
+            ) : (
+                /* Focused view: taskId or targetRecordingId is present */
+                <div className={`relative transition-all duration-700 ${
+                    isNative 
+                        ? 'p-0 border-0 bg-transparent shadow-none'
+                        : `backdrop-blur-xl rounded-[2.5rem] border p-6 sm:p-8 md:p-10 overflow-hidden ${
+                            businessType === 'leader'
+                                ? 'bg-gradient-to-r from-teal-950 via-deep-teal to-desert-gold/20 shadow-[0_12px_50px_rgba(203,161,53,0.15)] border-desert-gold/30'
+                                : 'bg-[#F8F5F0]/95 border-[#E6DFD3] shadow-[0_12px_45px_rgba(139,92,26,0.05)]'
+                          }`
+                }`}>
+                    {/* Premium Decorative Background Elements */}
+                    {!isNative && (
+                        businessType === 'leader' ? (
+                            <>
+                                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/30 via-yellow-500/10 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[8000ms]"></div>
+                                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-yellow-600/15 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
                             </>
                         ) : (
-                            <div className="flex flex-col">
-                                <h2 className={isNative ? "text-3xl font-black text-slate-800 tracking-tight" : "text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-800 tracking-tight"}>{t('learning_hub.explore')}</h2>
-                                {!isNative && (
-                                    <div className="mt-3 flex items-center gap-3">
-                                        <span className="w-10 h-1 bg-gradient-to-r from-desert-gold to-yellow-500 rounded-full shadow-sm"></span>
-                                        <p className="text-base font-extrabold text-desert-gold tracking-wide italic bg-clip-text text-transparent bg-gradient-to-r from-desert-gold to-yellow-600">
-                                            "{t('learning_hub.slogan')}"
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* Actions Right Side */}
-                    {!taskId && !targetRecordingId && (
-                        <div className="flex flex-col gap-4 w-full md:w-auto items-end">
-                            {allowedTabs.length > 1 ? (
-                                <div className="p-1 rounded-full flex items-center w-full md:w-auto self-start md:self-end overflow-x-auto whitespace-nowrap scrollbar-none bg-white/70 backdrop-blur-md border border-white/50 shadow-sm">
-                                    {allowedTabs.map(tab => (
-                                        <button
-                                            key={tab.type}
-                                            onClick={() => {
-                                                if (tab.type === 'referral') {
-                                                    navigate('/referrals');
-                                                } else {
-                                                    setBusinessType(tab.type);
-                                                    setActiveTab('all');
-                                                    setSelectedLecturer('');
-                                                }
-                                            }}
-                                            className={`flex-1 md:flex-none px-4 md:px-6 py-2 md:py-2.5 rounded-full font-extrabold transition-all duration-300 text-xs sm:text-sm select-none cursor-pointer ${
-                                                businessType === tab.type 
-                                                    ? `bg-gradient-to-r ${tab.gradient} text-white shadow-md shadow-slate-900/10 scale-[1.02] transform`
-                                                    : 'text-arabian-night/65 hover:text-arabian-night hover:bg-white/40'
-                                            }`}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            ) : allowedTabs.length === 1 ? (
-                                <div className={`bg-gradient-to-r ${allowedTabs[0].gradient} text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-extrabold text-xs sm:text-sm md:text-base shadow-lg shadow-black/10 flex items-center gap-2 select-none self-start md:self-end`}>
-                                    <span>✨</span>
-                                    <span>{allowedTabs[0].label}</span>
-                                </div>
-                            ) : null}
-
-                            {/* Search Bar */}
-                            <div ref={searchRef} className="relative w-full md:w-80 lg:w-[420px] shrink-0 group z-50">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-desert-gold">
-                                    <Search className={`h-5 w-5 transition-colors group-focus-within:text-desert-gold ${
-                                        businessType === 'leader' ? 'text-white/40' : 'text-arabian-night/40'
-                                    }`} />
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder={t('learning_hub.search_placeholder')}
-                                    value={searchQuery}
-                                    onChange={(e) => {
-                                        setSearchQuery(e.target.value);
-                                        setShowSuggestions(true);
-                                    }}
-                                    onFocus={() => setShowSuggestions(true)}
-                                    className={`w-full pl-12 pr-5 py-3 border rounded-full transition-all text-sm font-semibold outline-none ${
-                                        businessType === 'leader'
-                                            ? 'bg-teal-950/60 border-desert-gold/30 text-white placeholder:text-white/40 focus:ring-4 focus:ring-desert-gold/30 focus:border-desert-gold'
-                                            : 'bg-white border-[#E6DFD3] text-arabian-night placeholder:text-arabian-night/30 focus:ring-4 focus:ring-desert-gold/20 focus:border-desert-gold hover:bg-white shadow-sm'
-                                    }`}
-                                />
-
-                                {/* Autocomplete Suggestions Panel */}
-                                {showSuggestions && searchQuery.trim().length > 0 && (matchingLecturers.length > 0 || matchingTitles.length > 0) && (
-                                    <div className={`absolute top-full left-0 right-0 mt-2 backdrop-blur-xl border rounded-2xl shadow-xl py-3 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50 max-h-[380px] overflow-y-auto scrollbar-thin ${
-                                        businessType === 'leader'
-                                            ? 'bg-teal-950/95 border-desert-gold/30 text-white shadow-[0_4px_25px_rgba(203,161,53,0.15)]'
-                                            : 'bg-white/95 border-gray-200/60 text-arabian-night shadow-xl'
-                                    }`}>
-                                        {/* Lecturers Section */}
-                                        {matchingLecturers.length > 0 && (
-                                            <div className="mb-2">
-                                                <div className={`px-4 py-1.5 text-[11px] font-black tracking-wider uppercase flex items-center gap-1.5 select-none ${
-                                                    businessType === 'leader' ? 'text-desert-gold bg-teal-900/40' : 'text-deep-teal bg-gray-50'
-                                                }`}>
-                                                    <User className="w-3.5 h-3.5 text-desert-gold" />
-                                                    <span>{t('learning_hub.suggested_lecturers', '推荐讲师')}</span>
-                                                </div>
-                                                <div className="mt-1">
-                                                    {matchingLecturers.map((name) => (
-                                                        <div
-                                                            key={name}
-                                                            onClick={() => {
-                                                                setSearchQuery(name);
-                                                                setShowSuggestions(false);
-                                                            }}
-                                                            className={`px-5 py-2.5 cursor-pointer text-sm font-bold transition-colors flex items-center gap-2 ${
-                                                                businessType === 'leader'
-                                                                    ? 'hover:bg-teal-900/40 text-white hover:text-desert-gold'
-                                                                    : 'hover:bg-gradient-to-r hover:from-desert-gold/10 hover:to-transparent hover:text-desert-gold text-arabian-night'
-                                                            }`}
-                                                        >
-                                                            <div className="w-6 h-6 rounded-full bg-desert-gold/10 flex items-center justify-center text-[10px] text-desert-gold font-extrabold shrink-0">
-                                                                {name.charAt(0).toUpperCase()}
-                                                            </div>
-                                                            <span className="truncate">{highlightMatch(name, searchQuery)}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Recordings Section */}
-                                        {matchingTitles.length > 0 && (
-                                            <div>
-                                                <div className={`px-4 py-1.5 text-[11px] font-black tracking-wider uppercase flex items-center gap-1.5 select-none ${
-                                                    businessType === 'leader' ? 'text-desert-gold bg-teal-900/40' : 'text-deep-teal bg-gray-50'
-                                                }`}>
-                                                    <PlayCircle className="w-3.5 h-3.5 text-desert-gold" />
-                                                    <span>{t('learning_hub.suggested_courses', '推荐课程')}</span>
-                                                </div>
-                                                <div className="mt-1">
-                                                    {matchingTitles.map((rec) => (
-                                                        <div
-                                                            key={rec.id}
-                                                            onClick={() => {
-                                                                setSearchQuery(rec.title);
-                                                                setShowSuggestions(false);
-                                                            }}
-                                                            className={`px-5 py-2.5 cursor-pointer text-sm font-bold transition-colors flex items-center gap-2.5 ${
-                                                                businessType === 'leader'
-                                                                    ? 'hover:bg-teal-900/40 text-white hover:text-desert-gold'
-                                                                    : 'hover:bg-gradient-to-r hover:from-desert-gold/10 hover:to-transparent hover:text-desert-gold text-arabian-night'
-                                                            }`}
-                                                        >
-                                                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold shrink-0 border ${
-                                                                businessType === 'leader'
-                                                                    ? 'bg-teal-900/30 border-desert-gold/20'
-                                                                    : 'bg-deep-teal/5 border-deep-teal/10'
-                                                            }`}>
-                                                                🎬
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className={`truncate text-sm font-bold ${
-                                                                    businessType === 'leader' ? 'text-white' : 'text-arabian-night'
-                                                                }`}>{highlightMatch(rec.title, searchQuery)}</div>
-                                                                {rec.lecturerName && (
-                                                                    <div className={`text-[10px] truncate font-semibold mt-0.5 ${
-                                                                        businessType === 'leader' ? 'text-white/45' : 'text-arabian-night/50'
-                                                                    }`}>{rec.lecturerName}</div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                            <>
+                                <div className="absolute top-0 right-0 w-[650px] h-[650px] bg-gradient-to-bl from-desert-gold/15 via-amber-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[10000ms]"></div>
+                                <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-gradient-to-tr from-deep-teal/10 via-teal-500/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-3xl"></div>
+                            </>
+                        )
                     )}
-                </header>
-
-
-
-                {/* Premium Segmented Switcher for Hub Scopes */}
-                {!taskId && !targetRecordingId && (
-                    <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
-                        {/* Scope Toggle buttons */}
-                        <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[380px] self-start shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
-                            {/* Sliding Background Indicator */}
-                            <div
-                                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl bg-gradient-to-r from-[#0D5C75] to-teal-600 dark:from-desert-gold dark:to-amber-500 shadow-md shadow-teal-900/20 dark:shadow-desert-gold/20 transition-all duration-300 ease-out z-0 ${
-                                    i18n.language?.startsWith('ar') ? 'right-1' : 'left-1'
-                                }`}
-                                style={{
-                                    transform: i18n.language?.startsWith('ar')
-                                        ? (hubScope === 'public' ? 'translateX(0)' : 'translateX(-100%)')
-                                        : (hubScope === 'public' ? 'translateX(0)' : 'translateX(100%)'),
-                                }}
-                            />
-                            <button
-                                onClick={() => {
-                                    setHubScope('public');
-                                }}
-                                className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                                    hubScope === 'public'
-                                        ? 'text-white dark:text-arabian-night'
-                                        : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
-                                }`}
-                            >
-                                <span className={`transition-transform duration-300 ${hubScope === 'public' ? 'scale-110 rotate-12' : ''}`}>🌍</span>
-                                {t('learning_hub.public_hub', '公共学习中心')}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setHubScope('team');
-                                    if (profile?.role === 'sm') {
-                                        setActiveSmId(profile.crmId || '');
-                                    }
-                                }}
-                                className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                                    hubScope === 'team'
-                                        ? 'text-white dark:text-arabian-night'
-                                        : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
-                                }`}
-                            >
-                                <span className={`transition-transform duration-300 ${hubScope === 'team' ? 'scale-110 -rotate-12' : ''}`}>👥</span>
-                                {t('learning_hub.team_hub', '团队学习中心')}
-                            </button>
+                    
+                    <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-30">
+                        <div>
+                            {taskId ? (
+                                <>
+                                    <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.task_exclusive')}</h2>
+                                    <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.task_need_listen')} <span className="font-bold text-arabian-night">{taskTitle}</span></p>
+                                    <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
+                                        <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.shared_recording_title', '推荐学习素材')}</h2>
+                                    <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.shared_recording_desc', '正在播放为您推荐的精品销售实战录音，助推专业成长！')}</p>
+                                    <button onClick={() => setSearchParams({})} className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group">
+                                        <span className="group-hover:-translate-x-1 transition-transform">←</span> {t('learning_hub.back_to_courses')}
+                                    </button>
+                                </>
+                            )}
                         </div>
-
-                        {/* Team Dropdown Filter (Visible to SD / Super Admin in Team Scope) */}
-                        {hubScope === 'team' && (profile?.role === 'super_admin' || profile?.role === 'sd') && (
-                            <div className="flex items-center gap-2.5 text-sm font-bold text-deep-teal self-start md:self-end">
-                                <span>🎯 {t('learning_hub.select_sm_team', '所属团队')}:</span>
-                                <select
-                                    value={activeSmId}
-                                    onChange={(e) => setActiveSmId(e.target.value)}
-                                    className="bg-white/80 border border-gray-200 rounded-xl px-4 py-2 outline-none text-sm font-bold text-deep-teal cursor-pointer shadow-sm focus:ring-2 focus:ring-desert-gold focus:border-transparent"
-                                >
-                                    {systemUsers
-                                        .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
-                                        .map(u => (
-                                            <option key={u.crmId} value={u.crmId}>
-                                                {u.name || u.crmId} ({u.crmId})
-                                            </option>
-                                        ))
-                                    }
-                                </select>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
+                    </header>
+                </div>
+            )}
 
             {!taskId && !targetRecordingId ? (
                 <div className="space-y-8 mt-8 animate-in slide-in-from-bottom-4 duration-700">
@@ -4686,9 +4832,6 @@ export default function LearningHub() {
 
                     {/* Right Column / Sidebar (25%) */}
                     <div className="w-full xl:w-[320px] 2xl:w-[360px] shrink-0 flex flex-col gap-6">
-                        {/* Oasis Honor Progression Widget */}
-                        {renderOasisHonorWidget()}
-
                         {/* Compact Policies Widget */}
                         {renderCompactPoliciesWidget()}
 
