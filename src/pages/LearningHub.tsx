@@ -225,10 +225,10 @@ const RecordingCard = ({
                   rec.categoryName?.toLowerCase() === 'document';
 
     return (
-        <div className={`glass-panel rounded-2xl hover:-translate-y-2 overflow-hidden relative flex flex-col transition-all duration-500 ease-out group ${className} ${
+        <div className={`rounded-[1.75rem] border overflow-hidden relative flex flex-col transition-all duration-500 ease-out group ${className} ${
             rec.businessType === 'leader'
-                ? 'border-desert-gold/40 shadow-[0_0_15px_rgba(203,161,53,0.15)] hover:shadow-[0_0_25px_rgba(203,161,53,0.3)] bg-gradient-to-br from-teal-950/20 to-desert-gold/5'
-                : 'border-white/60 hover:shadow-[0_25px_60px_rgba(26,43,60,0.06)] shadow-sm bg-white/60'
+                ? 'border-desert-gold/30 shadow-[0_12px_45px_rgba(203,161,53,0.15)] hover:shadow-[0_20px_55px_rgba(203,161,53,0.25)] bg-gradient-to-br from-teal-950 via-deep-teal/40 to-desert-gold/5 hover:-translate-y-1.5'
+                : 'bg-white border-[#E6DFD3] hover:border-desert-gold/40 shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_45px_rgba(139,92,26,0.06)] hover:-translate-y-1.5'
         }`}>
             {rec.isPinned && (
                 <span className="absolute top-2.5 left-2.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[9.5px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-rose-400/30 shadow-md flex items-center gap-1 z-20 select-none animate-in fade-in duration-300">
@@ -236,10 +236,10 @@ const RecordingCard = ({
                 </span>
             )}
             {isDoc ? (
-                /* Premium Document Cover with sunset-to-indigo gradient and floating glassmorphic shapes */
+                /* Premium Document Cover with sandstone-to-gold gradient and floating glassmorphic shapes */
                 <div 
                     onClick={() => onPlayVideo(rec, disableSeek)}
-                    className="w-full h-28 bg-gradient-to-br from-amber-500 via-rose-500 to-indigo-600 relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-white/10 group/doc shrink-0 animate-in fade-in duration-500"
+                    className="w-full h-28 bg-gradient-to-br from-[#F5EFEB] via-[#EADBCE] to-[#C5A059] relative flex items-center justify-center cursor-pointer overflow-hidden border-b border-[#E6DFD3] group/doc shrink-0 animate-in fade-in duration-500"
                 >
                     <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h24v24H0z\' fill=\'none\'/%3E%3Cpath d=\'M12 2L2 22h20L12 2z\' fill=\'%23ffffff\' fill-opacity=\'0.1\'/%3E%3C/svg%3E')]"></div>
                     {/* Floating light streaks */}
@@ -501,7 +501,7 @@ const RecordingCard = ({
                             <div className="flex gap-2.5 mt-1.5 w-full">
                                 <button 
                                     onClick={() => onPlayVideo(rec, disableSeek)}
-                                    className="flex-1 bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_4px_12px_rgba(0,109,119,0.2)] hover:scale-[1.01] text-white text-[11px] font-bold py-2.5 px-2 rounded-xl shadow-sm flex items-center justify-center gap-1 active:scale-[0.98] transition-all cursor-pointer border border-white/10"
+                                    className={`flex-1 bg-gradient-to-r ${rec.businessType === 'leader' ? 'from-desert-gold to-yellow-600 hover:shadow-[0_4px_15px_rgba(212,175,55,0.35)]' : 'from-deep-teal to-teal-700 hover:shadow-[0_4px_12px_rgba(13,92,117,0.2)]'} hover:scale-[1.01] text-white text-[11px] font-black py-2.5 px-2 rounded-xl shadow-sm flex items-center justify-center gap-1 active:scale-[0.98] transition-all cursor-pointer border border-white/10`}
                                 >
                                     <MessageSquare className="w-3.5 h-3.5 text-desert-gold fill-desert-gold/20" />
                                     <span>{t('learning_hub.comments_btn', '参与互动交流与问答')}</span>
@@ -522,7 +522,7 @@ const RecordingCard = ({
                                                 onPlayVideo(rec, disableSeek);
                                             }
                                         }}
-                                        className="flex-1 bg-white hover:bg-deep-teal/5 border border-deep-teal/20 text-deep-teal hover:border-deep-teal/40 hover:shadow-sm text-[11px] font-bold py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                                        className="flex-1 bg-white hover:bg-[#F8F5F0] border border-[#E6DFD3] hover:border-desert-gold/50 text-[#0D5C75] text-[11px] font-black py-2.5 px-2 rounded-xl flex items-center justify-center gap-1 active:scale-[0.98] transition-all duration-300 cursor-pointer shadow-sm"
                                     >
                                         <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
                                         <span>{t('learning_hub.view_transcript_unlocked_btn', '查看阿语逐字稿')}</span>
@@ -536,7 +536,7 @@ const RecordingCard = ({
                         <div className="flex flex-col gap-2 pt-1">
                             <button 
                                 onClick={() => onPlayVideo(rec, disableSeek)}
-                                className="w-full bg-gradient-to-r from-deep-teal via-[#005f66] to-[#124d52] hover:shadow-[0_6px_20px_rgba(0,109,119,0.25)] hover:scale-[1.01] text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/10"
+                                className={`w-full bg-gradient-to-r ${rec.businessType === 'leader' ? 'from-desert-gold to-yellow-600 hover:shadow-[0_4px_15px_rgba(212,175,55,0.35)]' : 'from-deep-teal to-teal-700 hover:shadow-[0_4px_12px_rgba(13,92,117,0.2)]'} hover:scale-[1.01] text-white text-xs font-black py-2.5 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer border border-white/10`}
                             >
                                 <MessageSquare className="w-3.5 h-3.5 text-desert-gold fill-desert-gold/20" />
                                 <span>{t('learning_hub.comments_btn', '参与互动交流与问答')}</span>
@@ -550,7 +550,7 @@ const RecordingCard = ({
                                 href={rec.audioUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-full bg-white hover:bg-deep-teal/5 border border-deep-teal/20 text-deep-teal hover:border-deep-teal/40 hover:shadow-md text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer text-center"
+                                className="w-full bg-white hover:bg-[#F8F5F0] border border-[#E6DFD3] hover:border-desert-gold/50 text-[#0D5C75] text-xs font-black py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer text-center shadow-sm"
                             >
                                 <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
                                 <span>{t('learning_hub.open_document_btn', '打开并阅读文档')}</span>
@@ -3770,14 +3770,13 @@ export default function LearningHub() {
 
     return (
         <div className={`space-y-8 animate-in fade-in duration-500 pb-12 overflow-x-hidden ${isNative ? 'pt-2' : ''}`}>
-            {/* Control Center Card */}
             <div className={`relative transition-all duration-700 ${
                 isNative 
                     ? 'p-0 border-0 bg-transparent shadow-none'
-                    : `backdrop-blur-xl rounded-[2rem] border p-6 sm:p-8 md:p-10 overflow-hidden ${
+                    : `backdrop-blur-xl rounded-[2.5rem] border p-6 sm:p-8 md:p-10 overflow-hidden ${
                         businessType === 'leader'
                             ? 'bg-gradient-to-r from-teal-950 via-deep-teal to-desert-gold/20 shadow-[0_12px_50px_rgba(203,161,53,0.15)] border-desert-gold/30'
-                            : 'bg-white/80 border-white shadow-[0_8px_40px_rgb(0,0,0,0.04)]'
+                            : 'bg-[#F8F5F0]/95 border-[#E6DFD3] shadow-[0_12px_45px_rgba(139,92,26,0.05)]'
                       }`
             }`}>
                 {/* Premium Decorative Background Elements */}
@@ -3789,8 +3788,8 @@ export default function LearningHub() {
                         </>
                     ) : (
                         <>
-                            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-desert-gold/10 via-teal-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl"></div>
-                            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-deep-teal/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-2xl"></div>
+                            <div className="absolute top-0 right-0 w-[650px] h-[650px] bg-gradient-to-bl from-desert-gold/15 via-amber-500/5 to-transparent rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none blur-3xl animate-pulse duration-[10000ms]"></div>
+                            <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-gradient-to-tr from-deep-teal/10 via-teal-500/5 to-transparent rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none blur-3xl"></div>
                         </>
                     )
                 )}
@@ -4165,19 +4164,19 @@ export default function LearningHub() {
 
                         {/* Category Tabs */}
                         <div className={`pt-2 relative z-10 ${
-                            businessType === 'leader' ? 'border-t border-desert-gold/20' : 'border-t border-gray-100/60'
+                            businessType === 'leader' ? 'border-t border-desert-gold/20' : 'border-t border-[#E6DFD3]'
                         }`}>
                             <div className={`flex gap-2.5 py-2 overflow-x-auto scrollbar-none ${isNative ? 'w-full pb-3' : 'flex-wrap'}`}>
                                 <button
                                     onClick={() => { setActiveTab('all'); setSelectedLecturer(''); if (sortType === 'leaderboard') setSortType('latest'); }}
-                                    className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
+                                    className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap cursor-pointer ${
                                         activeTab === 'all' 
                                             ? businessType === 'leader'
-                                                ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent'
-                                                : 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
+                                                ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent font-black'
+                                                : 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md shadow-teal-900/20 scale-[1.03] border-transparent font-black' 
                                             : businessType === 'leader'
                                                 ? 'bg-teal-950/40 backdrop-blur-sm text-white/70 border border-desert-gold/30 hover:border-desert-gold hover:text-white hover:bg-teal-900/60 hover:-translate-y-0.5 hover:shadow-md'
-                                                : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
+                                                : 'bg-white border border-[#E6DFD3] text-slate-800 hover:border-desert-gold/60 hover:text-desert-gold hover:-translate-y-0.5 hover:shadow-sm'
                                     }`}
                                 >
                                     {t('learning_hub.all_content')}
@@ -4186,14 +4185,14 @@ export default function LearningHub() {
                                     <button
                                         key={cat.id}
                                         onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); if (sortType === 'leaderboard') setSortType('latest'); }}
-                                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap ${
+                                        className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 whitespace-nowrap cursor-pointer ${
                                             activeTab === cat.id 
                                                 ? businessType === 'leader'
-                                                    ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent'
-                                                    : 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-lg shadow-teal-900/20 scale-105 border-transparent' 
+                                                    ? 'bg-gradient-to-r from-desert-gold to-yellow-600 text-white shadow-lg shadow-yellow-600/30 scale-105 border-transparent font-black'
+                                                    : 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md shadow-teal-900/20 scale-[1.03] border-transparent font-black' 
                                                 : businessType === 'leader'
                                                     ? 'bg-teal-950/40 backdrop-blur-sm text-white/70 border border-desert-gold/30 hover:border-desert-gold hover:text-white hover:bg-teal-900/60 hover:-translate-y-0.5 hover:shadow-md'
-                                                    : 'bg-white/60 backdrop-blur-sm text-arabian-night/60 border border-gray-200/80 hover:border-desert-gold/50 hover:text-desert-gold hover:bg-white hover:-translate-y-0.5 hover:shadow-md'
+                                                    : 'bg-white border border-[#E6DFD3] text-slate-800 hover:border-desert-gold/60 hover:text-desert-gold hover:-translate-y-0.5 hover:shadow-sm'
                                         }`}
                                     >
                                         {cat.name}
