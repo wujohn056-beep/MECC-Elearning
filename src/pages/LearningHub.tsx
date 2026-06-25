@@ -2905,6 +2905,13 @@ export default function LearningHub() {
     const [showRulesModal, setShowRulesModal] = useState(false);
     const [showHonorModal, setShowHonorModal] = useState(false);
     const [plazaMode, setPlazaMode] = useState<'recordings' | 'policies' | 'brands'>('recordings');
+    
+    // Ensure Web client only displays recordings mode (hiding policies/brands tabs)
+    useEffect(() => {
+        if (!isNative && plazaMode !== 'recordings') {
+            setPlazaMode('recordings');
+        }
+    }, [isNative, plazaMode]);
     const [rawFavorites, setRawFavorites] = useState<{ userId: string; recordingIds: string[] }[]>([]);
     const [hubScope, setHubScope] = useState<'public' | 'team'>(() => {
         const paramScope = searchParams.get('scope');
@@ -4677,38 +4684,40 @@ export default function LearningHub() {
                         </div>
 
                         {/* Primary Plaza Mode Tab Switcher */}
-                        <div className="mt-6 relative z-30 flex bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-1 rounded-2xl border border-[#E6DFD3] dark:border-white/10 w-full md:w-[480px] self-start shadow-sm shadow-[#8b5c1a]/5">
-                            <button
-                                onClick={() => setPlazaMode('recordings')}
-                                className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
-                                    plazaMode === 'recordings'
-                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
-                                        : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
-                                }`}
-                            >
-                                <span>🎙️</span> {localT('learning_hub.tab_recordings', '录音广场', i18n)}
-                            </button>
-                            <button
-                                onClick={() => setPlazaMode('policies')}
-                                className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
-                                    plazaMode === 'policies'
-                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
-                                        : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
-                                }`}
-                            >
-                                <span>📋</span> {localT('learning_hub.tab_policies', '政策激励', i18n)}
-                            </button>
-                            <button
-                                onClick={() => setPlazaMode('brands')}
-                                className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
-                                    plazaMode === 'brands'
-                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
-                                        : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
-                                }`}
-                            >
-                                <span>🎨</span> {localT('learning_hub.tab_brands', '品牌专栏', i18n)}
-                            </button>
-                        </div>
+                        {isNative && (
+                            <div className="mt-6 relative z-30 flex bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-1 rounded-2xl border border-[#E6DFD3] dark:border-white/10 w-full md:w-[480px] self-start shadow-sm shadow-[#8b5c1a]/5">
+                                <button
+                                    onClick={() => setPlazaMode('recordings')}
+                                    className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        plazaMode === 'recordings'
+                                            ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
+                                            : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
+                                    }`}
+                                >
+                                    <span>🎙️</span> {localT('learning_hub.tab_recordings', '录音广场', i18n)}
+                                </button>
+                                <button
+                                    onClick={() => setPlazaMode('policies')}
+                                    className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        plazaMode === 'policies'
+                                            ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
+                                            : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
+                                    }`}
+                                >
+                                    <span>📋</span> {localT('learning_hub.tab_policies', '政策激励', i18n)}
+                                </button>
+                                <button
+                                    onClick={() => setPlazaMode('brands')}
+                                    className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        plazaMode === 'brands'
+                                            ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
+                                            : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
+                                    }`}
+                                >
+                                    <span>🎨</span> {localT('learning_hub.tab_brands', '品牌专栏', i18n)}
+                                </button>
+                            </div>
+                        )}
 
                         {/* Premium Segmented Switcher for Hub Scopes */}
                         {plazaMode === 'recordings' && (

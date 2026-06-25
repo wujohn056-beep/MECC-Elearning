@@ -122,6 +122,26 @@ export default function AppLayout() {
     const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission, canAccessTasks, canAccessDashboard } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [appTheme, setAppTheme] = useState<'oasis' | 'dusk' | 'dark'>(() => {
+        return (localStorage.getItem('app-theme') as 'oasis' | 'dusk' | 'dark') || 'oasis';
+    });
+
+    const cycleTheme = () => {
+        setAppTheme(prev => {
+            const next = prev === 'oasis' ? 'dusk' : prev === 'dusk' ? 'dark' : 'oasis';
+            localStorage.setItem('app-theme', next);
+            return next;
+        });
+    };
+
+    useEffect(() => {
+        if (appTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        document.documentElement.setAttribute('data-theme', appTheme);
+    }, [appTheme]);
     const menuRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
     const navigate = useNavigate();
@@ -249,11 +269,27 @@ export default function AppLayout() {
 
     return (
         <div 
-            className="min-h-screen text-arabian-night transition-colors duration-300 relative bg-cover bg-center bg-fixed"
-            style={{ backgroundImage: "url('/images/app-bg.png')" }}
+            className={`min-h-screen transition-colors duration-500 relative bg-cover bg-center bg-fixed ${
+                appTheme === 'dark' ? 'text-slate-100 bg-slate-950' : 'text-arabian-night'
+            }`}
+            style={{ 
+                backgroundImage: `url(${
+                    appTheme === 'dusk' 
+                        ? '/images/app-bg-dusk.png' 
+                        : appTheme === 'dark' 
+                            ? '/images/app-bg-dark.png' 
+                            : '/images/app-bg.png'
+                })` 
+            }}
         >
             {/* Subtle glass overlay for the entire app background */}
-            <div className="fixed inset-0 bg-white/15 backdrop-blur-[1px] pointer-events-none z-0"></div>
+            <div className={`fixed inset-0 pointer-events-none z-0 transition-colors duration-500 ${
+                appTheme === 'dark' 
+                    ? 'bg-slate-950/60 backdrop-blur-[0.5px]' 
+                    : appTheme === 'dusk'
+                        ? 'bg-orange-950/10 backdrop-blur-[1px]'
+                        : 'bg-white/15 backdrop-blur-[1px]'
+            }`}></div>
             
             <div className="relative z-10 flex flex-col min-h-screen">
                 {/* Navigation Bar */}
@@ -283,6 +319,30 @@ export default function AppLayout() {
                             </div>
                         )}
                         
+                        {/* Theme Toggle Switcher */}
+                        <button
+                            onClick={cycleTheme}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm transition-all duration-300 active:scale-95 cursor-pointer ${
+                                appTheme === 'dark'
+                                    ? 'bg-slate-900/60 border-slate-700/50 text-amber-400 hover:bg-slate-800'
+                                    : appTheme === 'dusk'
+                                        ? 'bg-orange-950/15 border-orange-200/30 text-orange-500 hover:bg-orange-100/40'
+                                        : 'bg-deep-teal/10 border-deep-teal/15 text-deep-teal hover:bg-deep-teal/20'
+                            }`}
+                            title={t('navbar.toggle_theme', '切换视觉主题')}
+                        >
+                            <span className="text-sm">
+                                {appTheme === 'oasis' ? '🌴' : appTheme === 'dusk' ? '🌅' : '🌌'}
+                            </span>
+                            <span className="text-xs font-black hidden sm:inline">
+                                {appTheme === 'oasis' 
+                                    ? t('theme.oasis', '约旦绿洲') 
+                                    : appTheme === 'dusk' 
+                                        ? t('theme.dusk', '佩特拉暮色') 
+                                        : t('theme.dark', '阿拉伯星空')}
+                            </span>
+                        </button>
+
                         <NotificationBell />
                         
                         {isNative ? (
