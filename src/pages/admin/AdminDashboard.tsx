@@ -593,19 +593,19 @@ export default function AdminDashboard() {
                 </div>
                 {showLastLogin && member.lastLogin && (
                     <div className="text-[10px] text-amber-600 font-semibold mt-1">
-                        {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
+                        {localT('dashboard.last_login', '最后登录', i18n)}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
                     </div>
                 )}
                 {showAppVersion && (
                     <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex flex-col gap-1">
                         <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-slate-400">{t('dashboard.platform', '端/平台')}:</span>
+                            <span className="text-slate-400">{localT('dashboard.platform', '端/平台', i18n)}:</span>
                             <span className="font-bold text-slate-700">
                                 {member.platform === 'web' ? '🌐 Web' : member.platform === 'ios' ? '🍏 iOS' : member.platform === 'android' ? '🤖 Android' : '📱 Native'}
                             </span>
                         </div>
                         <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-slate-400">{t('dashboard.version', '版本')}:</span>
+                            <span className="text-slate-400">{localT('dashboard.version', '版本', i18n)}:</span>
                             <span className={`font-extrabold ${
                                 member.platform === 'web' || member.appVersion === '1.0.4' 
                                     ? 'text-emerald-600' 
@@ -618,7 +618,7 @@ export default function AdminDashboard() {
                         </div>
                         {member.lastActiveAt && (
                             <div className="text-[9px] text-slate-400 font-semibold">
-                                {t('dashboard.last_active', '最近活跃')}: {
+                                {localT('dashboard.last_active', '最近活跃', i18n)}: {
                                     member.lastActiveAt.toDate 
                                         ? member.lastActiveAt.toDate().toLocaleDateString()
                                         : new Date(member.lastActiveAt).toLocaleDateString()
@@ -806,6 +806,13 @@ export default function AdminDashboard() {
                 'learning_hub.team_dashboard_title': '👥 团队学习激励与荣誉大盘',
                 'learning_hub.member_name': '成员姓名',
                 'learning_hub.team_empty': '当前团队暂无其他成员数据',
+                'dashboard.activity_app_not': '未安装 App',
+                'dashboard.activity_app_outdated': 'App 待更新',
+                'dashboard.activity_app_latest': 'App 最新版/Web',
+                'dashboard.platform': '端/平台',
+                'dashboard.version': '版本',
+                'dashboard.last_active': '最近活跃',
+                'dashboard.last_login': '最后登录',
                 'level.apprentice.title': '寻宝新手',
                 'level.apprentice.desc': '开启您的寻宝任务，在沙海中寻找宝贵的销售知识。',
                 'level.voyager.title': '沙漠追踪者',
@@ -848,6 +855,13 @@ export default function AdminDashboard() {
                 'learning_hub.team_dashboard_title': '👥 Team Learning Incentives & Honor Dashboard',
                 'learning_hub.member_name': 'Member',
                 'learning_hub.team_empty': 'No team member data available',
+                'dashboard.activity_app_not': 'App Not Installed',
+                'dashboard.activity_app_outdated': 'App Needs Update',
+                'dashboard.activity_app_latest': 'App Latest/Web',
+                'dashboard.platform': 'Platform',
+                'dashboard.version': 'Version',
+                'dashboard.last_active': 'Last Active',
+                'dashboard.last_login': 'Last Login',
                 'level.apprentice.title': 'Treasure Seeker',
                 'level.apprentice.desc': 'Begin your quest, seeking out valuable sales knowledge in the desert.',
                 'level.voyager.title': 'Desert Tracker',
@@ -890,6 +904,13 @@ export default function AdminDashboard() {
                 'learning_hub.team_dashboard_title': '👥 لوحة مكافآت الشرف والتعلم للفريق',
                 'learning_hub.member_name': 'العضو',
                 'learning_hub.team_empty': 'لا توجد بيانات لأعضاء الفريق حالياً',
+                'dashboard.activity_app_not': 'لم يتم تثبيت التطبيق',
+                'dashboard.activity_app_outdated': 'التطبيق بحاجة لتحديث',
+                'dashboard.activity_app_latest': 'أحدث إصدار/ويب',
+                'dashboard.platform': 'المنصة',
+                'dashboard.version': 'الإصدار',
+                'dashboard.last_active': 'آخر نشاط',
+                'dashboard.last_login': 'آخر دخول',
                 'level.apprentice.title': 'باحث عن الكنز',
                 'level.apprentice.desc': 'ابدأ مسعاك، وابحث عن المعرفة القيمة للمبيعات في الصحراء.',
                 'level.voyager.title': 'مقتفي أثر الصحراء',
@@ -1256,19 +1277,19 @@ export default function AdminDashboard() {
                             onClick={() => setActivityTab('app_download_not')}
                             className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'app_download_not' ? 'bg-white shadow text-red-500 font-black' : 'text-slate-500 hover:text-slate-700'}`}
                         >
-                            {t('dashboard.activity_app_not', '未安装 App')} ({appVersionAnalysis.neverInstalledCount})
+                            {localT('dashboard.activity_app_not', '未安装 App', i18n)} ({appVersionAnalysis.neverInstalledCount})
                         </button>
                         <button
                             onClick={() => setActivityTab('app_download_outdated')}
                             className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'app_download_outdated' ? 'bg-white shadow text-amber-500 font-black' : 'text-slate-500 hover:text-slate-700'}`}
                         >
-                            {t('dashboard.activity_app_outdated', 'App 待更新')} ({appVersionAnalysis.outdatedCount})
+                            {localT('dashboard.activity_app_outdated', 'App 待更新', i18n)} ({appVersionAnalysis.outdatedCount})
                         </button>
                         <button
                             onClick={() => setActivityTab('app_download_latest')}
                             className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'app_download_latest' ? 'bg-white shadow text-emerald-600 font-black' : 'text-slate-500 hover:text-slate-700'}`}
                         >
-                            {t('dashboard.activity_app_latest', 'App 最新版/Web')} ({appVersionAnalysis.latestCount})
+                            {localT('dashboard.activity_app_latest', 'App 最新版/Web', i18n)} ({appVersionAnalysis.latestCount})
                         </button>
                     </div>
                 </div>
