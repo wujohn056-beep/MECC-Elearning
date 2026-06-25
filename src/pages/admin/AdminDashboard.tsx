@@ -789,16 +789,16 @@ export default function AdminDashboard() {
                 'learning_hub.team_dashboard_title': '👥 Team Learning Incentives & Honor Dashboard',
                 'learning_hub.member_name': 'Member',
                 'learning_hub.team_empty': 'No team member data available',
-                'level.apprentice.title': 'Oasis Trainee',
-                'level.apprentice.desc': 'Start your learning journey and take your first step in sales growth.',
-                'level.voyager.title': 'Oasis Explorer',
-                'level.voyager.desc': 'Keep learning and continuously accumulate sales experience.',
-                'level.knight.title': 'Oasis Knight',
-                'level.knight.desc': 'Master sales skills and demonstrate outstanding execution.',
-                'level.falcon.title': 'Oasis Falcon',
-                'level.falcon.desc': 'Have a broad sales vision and stand out with excellent performance.',
-                'level.guardian.title': 'Oasis Champion',
-                'level.guardian.desc': 'Empower the team, share success wisdom, and be a role model.'
+                'level.apprentice.title': 'Treasure Seeker',
+                'level.apprentice.desc': 'Begin your quest, seeking out valuable sales knowledge in the desert.',
+                'level.voyager.title': 'Desert Tracker',
+                'level.voyager.desc': 'Uncovering pathways in the sands, tracking down key success insights.',
+                'level.knight.title': 'Petra Pathfinder',
+                'level.knight.desc': 'Finding the hidden entry to the rose city, unlocking premium skills.',
+                'level.falcon.title': 'Elite Hunter',
+                'level.falcon.desc': 'Recovering legendary treasures, demonstrating masterful execution.',
+                'level.guardian.title': 'Al-Khazneh Legend',
+                'level.guardian.desc': 'Entering the inner chamber of Petra, crowned as the ultimate success champion.'
             },
             ar: {
                 'learning_hub.coffee_streak': 'تحدي القهوة اليومي',
@@ -831,16 +831,16 @@ export default function AdminDashboard() {
                 'learning_hub.team_dashboard_title': '👥 لوحة مكافآت الشرف والتعلم للفريق',
                 'learning_hub.member_name': 'العضو',
                 'learning_hub.team_empty': 'لا توجد بيانات لأعضاء الفريق حالياً',
-                'level.apprentice.title': 'متدرب الواحة',
-                'level.apprentice.desc': 'ابدأ رحلة التعلم الخاصة بك واتخذ خطوتك الأولى في نمو المبيعات.',
-                'level.voyager.title': 'مستكشف الواحة',
-                'level.voyager.desc': 'استمر في التعلم وتراكم الخبرات العملية في المبيعات باستمرار.',
-                'level.knight.title': 'فارس الواحة',
-                'level.knight.desc': 'أتقن مهارات المبيعات وأظهر تنفيذاً متميزاً.',
-                'level.falcon.title': 'صقر الواحة',
-                'level.falcon.desc': 'امتلك رؤية مبيعات واسعة وتميز بأداء ممتاز.',
-                'level.guardian.title': 'بطل الواحة',
-                'level.guardian.desc': 'قم بتمكين الفريق ومشاركة حكمة النجاح لتكون قدوة للفريق.'
+                'level.apprentice.title': 'باحث عن الكنز',
+                'level.apprentice.desc': 'ابدأ مسعاك، وابحث عن المعرفة القيمة للمبيعات في الصحراء.',
+                'level.voyager.title': 'مقتفي أثر الصحراء',
+                'level.voyager.desc': 'كشف المسارات في الرمال، وتتبع الرؤى الرئيسية للنجاح.',
+                'level.knight.title': 'مستكشف البتراء',
+                'level.knight.desc': 'العثور على المدخل الخفي للمدينة الوردية، وفتح المهارات المميزة.',
+                'level.falcon.title': 'صائد الكنوز النخبة',
+                'level.falcon.desc': 'استعادة الكنوز الأسطورية، وإظهار مهارة فائقة في التنفيذ.',
+                'level.guardian.title': 'أسطورة الخزنة',
+                'level.guardian.desc': 'دخول الغرفة الداخلية للبتراء، والتتويج كبطل النجاح المطلق.'
             }
         };
         return dict[lang]?.[key] || defaultVal;

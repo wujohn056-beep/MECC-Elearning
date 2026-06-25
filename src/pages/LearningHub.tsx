@@ -2803,17 +2803,17 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.team_dashboard_title': '👥 Team Learning Incentives & Honor Dashboard',
             'learning_hub.member_name': 'Member',
             'learning_hub.team_empty': 'No team member data available',
-            'level.apprentice.title': 'Oasis Trainee',
-            'level.apprentice.desc': 'Start your learning journey and take your first step in sales growth.',
-            'level.voyager.title': 'Oasis Explorer',
-            'level.voyager.desc': 'Keep learning and continuously accumulate sales experience.',
-            'level.knight.title': 'Oasis Knight',
-            'level.knight.desc': 'Master sales skills and demonstrate outstanding execution.',
-            'level.falcon.title': 'Oasis Falcon',
-            'level.falcon.desc': 'Have a broad sales vision and stand out with excellent performance.',
-            'level.guardian.title': 'Oasis Champion',
-            'level.guardian.desc': 'Empower the team, share success wisdom, and be a role model.',
-            'learning_hub.incentive_explain_line': '🏆 Learn & Earn: Listen to recordings to earn minutes. Meet thresholds to unlock Najah Academy certificates & badges (Click to view details).'
+            'level.apprentice.title': 'Treasure Seeker',
+            'level.apprentice.desc': 'Begin your quest, seeking out valuable sales knowledge in the desert.',
+            'level.voyager.title': 'Desert Tracker',
+            'level.voyager.desc': 'Uncovering pathways in the sands, tracking down key success insights.',
+            'level.knight.title': 'Petra Pathfinder',
+            'level.knight.desc': 'Finding the hidden entry to the rose city, unlocking premium skills.',
+            'level.falcon.title': 'Elite Hunter',
+            'level.falcon.desc': 'Recovering legendary treasures, demonstrating masterful execution.',
+            'level.guardian.title': 'Al-Khazneh Legend',
+            'level.guardian.desc': 'Entering the inner chamber of Petra, crowned as the ultimate success champion.',
+            'learning_hub.incentive_explain_line': '🏆 Treasure Hunters: Listen to recordings to search for wisdom. Meet thresholds to unlock Najah Academy certificates & Al-Khazneh rewards (Click to view details).'
         },
         ar: {
             'learning_hub.tab_recordings': 'ساحة التسجيلات',
@@ -2852,17 +2852,17 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.team_dashboard_title': '👥 لوحة مكافآت الشرف والتعلم للفريق',
             'learning_hub.member_name': 'العضو',
             'learning_hub.team_empty': 'لا توجد بيانات لأعضاء الفريق حالياً',
-            'level.apprentice.title': 'متدرب الواحة',
-            'level.apprentice.desc': 'ابدأ رحلة التعلم الخاصة بك واتخذ خطوتك الأولى في نمو المبيعات.',
-            'level.voyager.title': 'مستكشف الواحة',
-            'level.voyager.desc': 'استمر في التعلم وتراكم الخبرات العملية في المبيعات باستمرار.',
-            'level.knight.title': 'فارس الواحة',
-            'level.knight.desc': 'أتقن مهارات المبيعات وأظهر تنفيذاً متميزاً.',
-            'level.falcon.title': 'صقر الواحة',
-            'level.falcon.desc': 'امتلك رؤية مبيعات واسعة وتميز بأداء ممتاز.',
-            'level.guardian.title': 'بطل الواحة',
-            'level.guardian.desc': 'قم بتمكين الفريق ومشاركة حكمة النجاح لتكون قدوة للفريق.',
-            'learning_hub.incentive_explain_line': '🏆 تعلّم وحقّق: استمع إلى التسجيلات لتجميع الدقائق. حقق المتطلبات لفتح شهادات وأوسمة أكاديمية نجاح المتميزة (اضغط لعرض التفاصيل).'
+            'level.apprentice.title': 'باحث عن الكنز',
+            'level.apprentice.desc': 'ابدأ مسعاك، وابحث عن المعرفة القيمة للمبيعات في الصحراء.',
+            'level.voyager.title': 'مقتفي أثر الصحراء',
+            'level.voyager.desc': 'كشف المسارات في الرمال، وتتبع الرؤى الرئيسية للنجاح.',
+            'level.knight.title': 'مستكشف البتراء',
+            'level.knight.desc': 'العثور على المدخل الخفي للمدينة الوردية، وفتح المهارات المميزة.',
+            'level.falcon.title': 'صائد الكنوز النخبة',
+            'level.falcon.desc': 'استعادة الكنوز الأسطورية، وإظهار مهارة فائقة في التنفيذ.',
+            'level.guardian.title': 'أسطورة الخزنة',
+            'level.guardian.desc': 'دخول الغرفة الداخلية للبتراء، والتتويج كبطل النجاح المطلق.',
+            'learning_hub.incentive_explain_line': '🏆 صائدو الكنوز: استمع إلى التسجيلات للبحث عن الحكمة. حقق المتطلبات لفتح شهادات أكاديمية نجاح ومكافآت الخزنة (اضغط لعرض التفاصيل).'
         }
     };
 
@@ -4043,45 +4043,45 @@ export default function LearningHub() {
 
     const honorLevels = {
         apprentice: {
-            title: localT('level.apprentice.title', '绿洲新手', i18n),
-            titleAr: 'متدرب الواحة',
-            desc: localT('level.apprentice.desc', '开始您的学习旅程，迈出销售成长第一步。', i18n),
+            title: localT('level.apprentice.title', '寻宝新手', i18n),
+            titleAr: 'باحث عن الكنز',
+            desc: localT('level.apprentice.desc', '开启您的寻宝任务，在沙海中寻找宝贵的销售知识。', i18n),
             crestColor: 'from-[#E6DFD3] to-[#C5A059]',
             icon: '🌱',
             nextThreshold: 600,
-            nextTitle: localT('level.voyager.title', '绿洲探索者', i18n)
+            nextTitle: localT('level.voyager.title', '沙漠追踪者', i18n)
         },
         voyager: {
-            title: localT('level.voyager.title', '绿洲探索者', i18n),
-            titleAr: 'مستكشف الواحة',
-            desc: localT('level.voyager.desc', '持续学习，不断积累销售实战经验。', i18n),
+            title: localT('level.voyager.title', '沙漠追踪者', i18n),
+            titleAr: 'مقتفي أثر الصحراء',
+            desc: localT('level.voyager.desc', '在沙海中辨识路径，追踪成功的核心线索。', i18n),
             crestColor: 'from-amber-500 to-orange-600',
             icon: '🐫',
             nextThreshold: 1800,
-            nextTitle: localT('level.knight.title', '绿洲骑士', i18n)
+            nextTitle: localT('level.knight.title', '佩特拉开拓者', i18n)
         },
         knight: {
-            title: localT('level.knight.title', '绿洲骑士', i18n),
-            titleAr: 'فارس الواحة',
-            desc: localT('level.knight.desc', '精通销售技巧，展示卓越的执行力。', i18n),
+            title: localT('level.knight.title', '佩特拉开拓者', i18n),
+            titleAr: 'مستكشف البتراء',
+            desc: localT('level.knight.desc', '寻获玫瑰古城的秘道，解锁核心的销售高阶技能。', i18n),
             crestColor: 'from-teal-600 to-emerald-600',
             icon: '🐎',
             nextThreshold: 3600,
-            nextTitle: localT('level.falcon.title', '绿洲之鹰', i18n)
+            nextTitle: localT('level.falcon.title', '精英猎人', i18n)
         },
         falcon: {
-            title: localT('level.falcon.title', '绿洲之鹰', i18n),
-            titleAr: 'صقر الواحة',
-            desc: localT('level.falcon.desc', '拥有开阔的销售视野，业绩脱颖而出。', i18n),
+            title: localT('level.falcon.title', '精英猎人', i18n),
+            titleAr: 'صائد الكنوز النخبة',
+            desc: localT('level.falcon.desc', '发掘传奇级宝藏，展现精湛的执行力与业务素养。', i18n),
             crestColor: 'from-yellow-500 to-amber-600',
             icon: '🦅',
             nextThreshold: 7200,
-            nextTitle: localT('level.guardian.title', '绿洲先锋', i18n)
+            nextTitle: localT('level.guardian.title', '宝库传奇', i18n)
         },
         guardian: {
-            title: localT('level.guardian.title', '绿洲先锋', i18n),
-            titleAr: 'بطل الواحة',
-            desc: localT('level.guardian.desc', '赋能团队，分享成功智慧，成为团队榜样。', i18n),
+            title: localT('level.guardian.title', '宝库传奇', i18n),
+            titleAr: 'أسطورة الخزنة',
+            desc: localT('level.guardian.desc', '步入佩特拉宝库库深处，冠以终极寻宝传奇勋章。', i18n),
             crestColor: 'from-[#0D5C75] to-teal-800',
             icon: '🌴',
             nextThreshold: 9999,
