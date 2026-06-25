@@ -2764,7 +2764,13 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.falcon.title': '凌空猎鹰',
             'level.falcon.desc': '高瞻远瞩，锐意进取，在团队中脱颖而出。',
             'level.guardian.title': '绿洲守护者',
-            'level.guardian.desc': '福泽团队，慷慨分享，成为智慧的终极灯塔。'
+            'level.guardian.desc': '福泽团队，慷慨分享，成为智慧的终极灯塔。',
+            'campaign.issued_by': '发起人',
+            'learning_hub.courses': '门课',
+            'learning_hub.go_learn': '去学习',
+            'learning_hub.cert_download_fail': '证书生成失败，请重试。',
+            'learning_hub.claim_cert': '✨ 领取荣誉证书',
+            'learning_hub.generating': '生成中...'
         },
         en: {
             'learning_hub.tab_recordings': 'Recordings',
@@ -2813,7 +2819,13 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.falcon.desc': 'Recovering legendary treasures, demonstrating masterful execution.',
             'level.guardian.title': 'Al-Khazneh Legend',
             'level.guardian.desc': 'Entering the inner chamber of Petra, crowned as the ultimate success champion.',
-            'learning_hub.incentive_explain_line': '🏆 Treasure Hunters: Listen to recordings to search for wisdom. Meet thresholds to unlock 51Talk certificates & Al-Khazneh rewards (Click to view details).'
+            'learning_hub.incentive_explain_line': '🏆 Treasure Hunters: Listen to recordings to search for wisdom. Meet thresholds to unlock 51Talk certificates & Al-Khazneh rewards (Click to view details).',
+            'campaign.issued_by': 'Issued By',
+            'learning_hub.courses': 'courses',
+            'learning_hub.go_learn': 'Go Learn',
+            'learning_hub.cert_download_fail': 'Failed to generate certificate, please try again.',
+            'learning_hub.claim_cert': '✨ Claim Certificate',
+            'learning_hub.generating': 'Generating...'
         },
         ar: {
             'learning_hub.tab_recordings': 'ساحة التسجيلات',
@@ -2862,7 +2874,13 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.falcon.desc': 'استعادة الكنوز الأسطورية، وإظهار مهارة فائقة في التنفيذ.',
             'level.guardian.title': 'أسطورة الخزنة',
             'level.guardian.desc': 'دخول الغرفة الداخلية للبتراء، والتتويج كبطل النجاح المطلق.',
-            'learning_hub.incentive_explain_line': '🏆 صائدو الكنوز: استمع إلى التسجيلات للبحث عن الحكمة. حقق المتطلبات لفتح شهادات أكاديمية نجاح ومكافآت الخزنة (اضغط لعرض التفاصيل).'
+            'learning_hub.incentive_explain_line': '🏆 صائدو الكنوز: استمع إلى التسجيلات للبحث عن الحكمة. حقق المتطلبات لفتح شهادات أكاديمية نجاح ومكافآت الخزنة (اضغط لعرض التفاصيل).',
+            'campaign.issued_by': 'الجهة المصدرة',
+            'learning_hub.courses': 'دروس',
+            'learning_hub.go_learn': 'اذهب للتعلم',
+            'learning_hub.cert_download_fail': 'فشل إنشاء الشهادة، يرجى المحاولة مرة أخرى.',
+            'learning_hub.claim_cert': '✨ الحصول على الشهادة',
+            'learning_hub.generating': 'جاري الإنشاء...'
         }
     };
 
@@ -4462,7 +4480,7 @@ export default function LearningHub() {
                             : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
                     }`}
                 >
-                    {completed ? '✨ 领取荣誉证书' : localT('learning_hub.go_learn', '去学习', i18n)}
+                    {completed ? localT('learning_hub.claim_cert', '✨ 领取荣誉证书', i18n) : localT('learning_hub.go_learn', '去学习', i18n)}
                 </button>
             </div>
         );
@@ -4632,7 +4650,7 @@ export default function LearningHub() {
                             ) : (
                                 <Download className="w-4 h-4" />
                             )}
-                            {isDownloadingCampaignCert ? '生成中...' : localT('learning_hub.cert_download', '保存证书至相册', i18n)}
+                            {isDownloadingCampaignCert ? localT('learning_hub.generating', '生成中...', i18n) : localT('learning_hub.cert_download', '保存证书至相册', i18n)}
                         </button>
                         
                         <button
@@ -4903,7 +4921,7 @@ export default function LearningHub() {
                             ) : (
                                 <Download className="w-4 h-4" />
                             )}
-                            {isDownloadingCert ? '生成中...' : localT('learning_hub.cert_download', '保存证书至相册', i18n)}
+                            {isDownloadingCert ? localT('learning_hub.generating', '生成中...', i18n) : localT('learning_hub.cert_download', '保存证书至相册', i18n)}
                         </button>
                         
                         <button
