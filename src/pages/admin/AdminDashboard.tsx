@@ -983,22 +983,22 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto w-full border border-gray-100 rounded-xl">
+                <div className="overflow-x-auto max-h-[400px] overflow-y-auto w-full border border-gray-100 rounded-xl scrollbar-thin scrollbar-thumb-gray-200">
                     <table className="w-full text-start border-collapse text-sm text-gray-800" style={{ direction: i18n.language === 'ar' ? 'rtl' : 'ltr' }}>
-                        <thead>
-                            <tr className="bg-slate-50 text-deep-teal border-b border-gray-100 text-xs font-bold uppercase">
-                                <th className="py-3 px-4 text-center w-12">#</th>
-                                <th className="py-3 px-4 text-start min-w-[150px]">{localT('learning_hub.member_name', '成员姓名', i18n)}</th>
-                                <th className="py-3 px-4 text-start min-w-[120px]">
+                        <thead className="sticky top-0 z-10 shadow-sm bg-slate-50 border-b border-gray-100">
+                            <tr className="bg-slate-50 text-deep-teal text-xs font-bold uppercase">
+                                <th className="py-3 px-4 text-center w-12 bg-slate-50">#</th>
+                                <th className="py-3 px-4 text-start min-w-[150px] bg-slate-50">{localT('learning_hub.member_name', '成员姓名', i18n)}</th>
+                                <th className="py-3 px-4 text-start min-w-[120px] bg-slate-50">
                                     {i18n.language === 'ar' ? 'تحدي القهوة' : i18n.language === 'en' ? 'Coffee Streak' : '咖啡连击'}
                                 </th>
-                                <th className="py-3 px-4 text-start min-w-[200px]">
+                                <th className="py-3 px-4 text-start min-w-[200px] bg-slate-50">
                                     {i18n.language === 'ar' ? 'دقائق التعلم (القافلة)' : i18n.language === 'en' ? 'Learning Mins (Caravan)' : '学习学时 (商队)'}
                                 </th>
-                                <th className="py-3 px-4 text-start min-w-[120px]">
+                                <th className="py-3 px-4 text-start min-w-[120px] bg-slate-50">
                                     {i18n.language === 'ar' ? 'معدل إكمال المهام' : i18n.language === 'en' ? 'Task Completion' : '任务完成率'}
                                 </th>
-                                <th className="py-3 px-4 text-start min-w-[150px]">
+                                <th className="py-3 px-4 text-start min-w-[150px] bg-slate-50">
                                     {i18n.language === 'ar' ? 'مرتبة الشرف' : i18n.language === 'en' ? 'Honor Level' : '荣誉等级'}
                                 </th>
                             </tr>
