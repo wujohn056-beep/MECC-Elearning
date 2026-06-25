@@ -250,10 +250,10 @@ export default function AppLayout() {
     return (
         <div 
             className="min-h-screen text-arabian-night transition-colors duration-300 relative bg-cover bg-center bg-fixed"
-            style={{ backgroundImage: "url('/images/app-bg.jpg')" }}
+            style={{ backgroundImage: "url('/images/app-bg.png')" }}
         >
             {/* Subtle glass overlay for the entire app background */}
-            <div className="fixed inset-0 bg-white/40 backdrop-blur-[4px] pointer-events-none z-0"></div>
+            <div className="fixed inset-0 bg-white/15 backdrop-blur-[1px] pointer-events-none z-0"></div>
             
             <div className="relative z-10 flex flex-col min-h-screen">
                 {/* Navigation Bar */}

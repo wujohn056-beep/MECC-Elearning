@@ -2924,22 +2924,22 @@ export default function LearningHub() {
 
         // 1. If super admin, they have access to all tabs
         if (profile?.role === 'super_admin') {
-            tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+            tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-[#BD7F37] to-[#8C581F]' });
+            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-[#A83F2C] to-[#BD7F37]' });
             return tabs;
         }
 
         // 2. If SS department
         if (profile?.dep === 'SS') {
-            tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+            tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-[#BD7F37] to-[#8C581F]' });
+            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-[#A83F2C] to-[#BD7F37]' });
             return tabs;
         }
 
         // 3. For CC / standard departments
-        tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
+        tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-[#BD7F37] to-[#8C581F]' });
         if (isLeader) {
-            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
+            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-[#A83F2C] to-[#BD7F37]' });
         }
         return tabs;
     }, [profile, isLeader, t]);
@@ -4491,7 +4491,7 @@ export default function LearningHub() {
                             : `backdrop-blur-xl rounded-[2.5rem] border p-6 sm:p-8 md:p-10 overflow-hidden ${
                                 businessType === 'leader'
                                     ? 'bg-gradient-to-r from-teal-950 via-deep-teal to-desert-gold/20 shadow-[0_12px_50px_rgba(203,161,53,0.15)] border-desert-gold/30'
-                                    : 'bg-[#F8F5F0]/95 border-[#E6DFD3] shadow-[0_12px_45px_rgba(139,92,26,0.05)]'
+                                    : 'bg-gradient-to-br from-white/92 via-[#FCFAF5]/88 to-[#F5ECE2]/80 border-[#E6DFD3]/80 shadow-[0_16px_45px_rgba(139,92,26,0.06)] backdrop-blur-2xl'
                               }`
                     }`}>
                         {/* Premium Decorative Background Elements */}
