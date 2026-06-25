@@ -2719,6 +2719,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
     const lang = i18n?.language || 'zh';
     const dict: Record<string, Record<string, string>> = {
         zh: {
+            'learning_hub.tab_recordings': '录音广场',
+            'learning_hub.tab_policies': '政策激励',
+            'learning_hub.tab_brands': '品牌专栏',
             'learning_hub.view_honor_detail': '查看荣誉详情',
             'learning_hub.view_rules_detail': '查看详细规则说明',
             'learning_hub.rules_title_modal': '绿洲学习荣誉机制',
@@ -2764,6 +2767,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.guardian.desc': '福泽团队，慷慨分享，成为智慧的终极灯塔。'
         },
         en: {
+            'learning_hub.tab_recordings': 'Recordings',
+            'learning_hub.tab_policies': 'Policies & Incentives',
+            'learning_hub.tab_brands': 'Marketing Brands',
             'learning_hub.view_honor_detail': 'View Details',
             'learning_hub.view_rules_detail': 'View Detailed Rules',
             'learning_hub.rules_title_modal': 'Oasis Learning Honor System',
@@ -2809,6 +2815,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.guardian.desc': 'Nourishing the team, sharing generously, becoming the ultimate beacon of wisdom.'
         },
         ar: {
+            'learning_hub.tab_recordings': 'ساحة التسجيلات',
+            'learning_hub.tab_policies': 'السياسات والحوافز',
+            'learning_hub.tab_brands': 'ركن العلامة التجارية',
             'learning_hub.view_honor_detail': 'عرض التفاصيل',
             'learning_hub.view_rules_detail': 'عرض القواعد التفصيلية',
             'learning_hub.rules_title_modal': 'نظام أوسمة التعلم للواحة',
@@ -2895,6 +2904,7 @@ export default function LearningHub() {
     const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const [showRulesModal, setShowRulesModal] = useState(false);
     const [showHonorModal, setShowHonorModal] = useState(false);
+    const [plazaMode, setPlazaMode] = useState<'recordings' | 'policies' | 'brands'>('recordings');
     const [rawFavorites, setRawFavorites] = useState<{ userId: string; recordingIds: string[] }[]>([]);
     const [hubScope, setHubScope] = useState<'public' | 'team'>(() => {
         const paramScope = searchParams.get('scope');
@@ -3828,6 +3838,78 @@ export default function LearningHub() {
         );
     };
 
+    const renderFullPoliciesPlaza = () => {
+        // Filter by searchQuery if present
+        const searchFiltered = searchQuery.trim()
+            ? filteredPoliciesForHub.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || (p.description || '').toLowerCase().includes(searchQuery.toLowerCase()))
+            : filteredPoliciesForHub;
+            
+        return (
+            <div className="space-y-6 mt-8 animate-in fade-in duration-500">
+                <div className="flex items-center gap-3 pl-3 border-l-4 border-deep-teal">
+                    <h3 className="text-xl font-extrabold text-deep-teal dark:text-white">
+                        📋 {t('learning_hub.operations_policies_title', '运营政策与激励')}
+                    </h3>
+                </div>
+                
+                {searchFiltered.length === 0 ? (
+                    <div className="py-20 text-center bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl border border-gray-250 dark:border-slate-800">
+                        <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                            <span className="text-2xl">📋</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-deep-teal dark:text-desert-gold mb-1">
+                            {t('learning_hub.no_policies_showcase', '暂无政策激励')}
+                        </h3>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {searchFiltered.map((policy) => (
+                            <div key={policy.id} className="flex flex-col">
+                                {renderFeaturedMediaCard(policy)}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderFullBrandsPlaza = () => {
+        // Filter by searchQuery if present
+        const searchFiltered = searchQuery.trim()
+            ? filteredBrandsForHub.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || (p.description || '').toLowerCase().includes(searchQuery.toLowerCase()))
+            : filteredBrandsForHub;
+
+        return (
+            <div className="space-y-6 mt-8 animate-in fade-in duration-500">
+                <div className="flex items-center gap-3 pl-3 border-l-4 border-deep-teal">
+                    <h3 className="text-xl font-extrabold text-deep-teal dark:text-white">
+                        🎨 {t('learning_hub.marketing_brand_title', '市场品牌专栏')}
+                    </h3>
+                </div>
+                
+                {searchFiltered.length === 0 ? (
+                    <div className="py-20 text-center bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl border border-gray-250 dark:border-slate-800">
+                        <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                            <span className="text-2xl">🎨</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-deep-teal dark:text-desert-gold mb-1">
+                            {t('learning_hub.no_brands_showcase', '暂无品牌物料')}
+                        </h3>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {searchFiltered.map((brand) => (
+                            <div key={brand.id} className="flex flex-col">
+                                {renderFeaturedMediaCard(brand)}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const renderLeaderboardWidget = (isFullWidth = false) => {
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 ${isFullWidth ? 'w-full max-w-2xl mx-auto shadow-sm bg-white/70 backdrop-blur-md' : 'xl:sticky xl:top-28 bg-white/60 backdrop-blur-md'}`}>
@@ -4594,8 +4676,43 @@ export default function LearningHub() {
                             {renderCompactOasisHonorWidget()}
                         </div>
 
+                        {/* Primary Plaza Mode Tab Switcher */}
+                        <div className="mt-6 relative z-30 flex bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-1 rounded-2xl border border-[#E6DFD3] dark:border-white/10 w-full md:w-[480px] self-start shadow-sm shadow-[#8b5c1a]/5">
+                            <button
+                                onClick={() => setPlazaMode('recordings')}
+                                className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                    plazaMode === 'recordings'
+                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
+                                        : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
+                                }`}
+                            >
+                                <span>🎙️</span> {localT('learning_hub.tab_recordings', '录音广场', i18n)}
+                            </button>
+                            <button
+                                onClick={() => setPlazaMode('policies')}
+                                className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                    plazaMode === 'policies'
+                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
+                                        : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
+                                }`}
+                            >
+                                <span>📋</span> {localT('learning_hub.tab_policies', '政策激励', i18n)}
+                            </button>
+                            <button
+                                onClick={() => setPlazaMode('brands')}
+                                className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                    plazaMode === 'brands'
+                                        ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md'
+                                        : 'text-[#0D5C75]/75 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white hover:bg-white/40'
+                                }`}
+                            >
+                                <span>🎨</span> {localT('learning_hub.tab_brands', '品牌专栏', i18n)}
+                            </button>
+                        </div>
+
                         {/* Premium Segmented Switcher for Hub Scopes */}
-                        <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
+                        {plazaMode === 'recordings' && (
+                            <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
                             {/* Scope Toggle buttons */}
                             <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[380px] self-start shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
                                 {/* Sliding Background Indicator */}
@@ -4664,6 +4781,7 @@ export default function LearningHub() {
                                 </div>
                             )}
                         </div>
+                    )}
                     </div>
                 </div>
             ) : (
@@ -4835,7 +4953,9 @@ export default function LearningHub() {
                         <div className="flex flex-col xl:flex-row gap-8 items-start">
                             {/* Left Column */}
                             <div className="flex-1 w-full min-w-0 space-y-8">
-                                {/* Category Tabs */}
+                                {plazaMode === 'recordings' && (
+                                    <>
+                                        {/* Category Tabs */}
                                 <div className={`pt-2 relative z-10 ${
                             businessType === 'leader' ? 'border-t border-desert-gold/20' : 'border-t border-[#E6DFD3]'
                         }`}>
@@ -5038,24 +5158,31 @@ export default function LearningHub() {
                                 )}
                             </div>
                         )}
-                    </div>
+                                    </>
+                                )}
 
-                    {/* Right Column / Sidebar (25%) */}
-                    <div className="w-full xl:w-[320px] 2xl:w-[360px] shrink-0 flex flex-col gap-6">
-                        {/* Compact Policies Widget */}
-                        {renderCompactPoliciesWidget()}
-
-                        {/* Compact Brands Widget */}
-                        {renderCompactBrandsWidget()}
-
-                        {/* Leaderboard Widget */}
-                        {showLeaderboard && (
-                            <div className="hidden xl:block">
-                                {renderLeaderboardWidget(false)}
+                                {plazaMode === 'policies' && renderFullPoliciesPlaza()}
+                                {plazaMode === 'brands' && renderFullBrandsPlaza()}
                             </div>
-                        )}
-                    </div>
-                </div>
+
+                            {/* Right Column / Sidebar (25%) */}
+                            {plazaMode === 'recordings' && (
+                                <div className="w-full xl:w-[320px] 2xl:w-[360px] shrink-0 flex flex-col gap-6">
+                                    {/* Compact Policies Widget */}
+                                    {renderCompactPoliciesWidget()}
+
+                                    {/* Compact Brands Widget */}
+                                    {renderCompactBrandsWidget()}
+
+                                    {/* Leaderboard Widget */}
+                                    {showLeaderboard && (
+                                        <div className="hidden xl:block">
+                                            {renderLeaderboardWidget(false)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
             </div>
             ) : (
                 /* Focused Mode: taskId or targetRecordingId is present */
