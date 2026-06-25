@@ -2719,6 +2719,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
     const lang = i18n?.language || 'zh';
     const dict: Record<string, Record<string, string>> = {
         zh: {
+            'learning_hub.view_honor_detail': '查看荣誉详情',
+            'learning_hub.view_rules_detail': '查看详细规则说明',
+            'learning_hub.rules_title_modal': '绿洲学习荣誉机制',
             'learning_hub.coffee_streak': '每日咖啡连击',
             'learning_hub.caravan_progress': '沙漠商队行进进度',
             'learning_hub.next_oasis': '下一绿洲',
@@ -2761,6 +2764,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.guardian.desc': '福泽团队，慷慨分享，成为智慧的终极灯塔。'
         },
         en: {
+            'learning_hub.view_honor_detail': 'View Details',
+            'learning_hub.view_rules_detail': 'View Detailed Rules',
+            'learning_hub.rules_title_modal': 'Oasis Learning Honor System',
             'learning_hub.coffee_streak': 'Daily Coffee Streak',
             'learning_hub.caravan_progress': 'Desert Caravan Progress',
             'learning_hub.next_oasis': 'Next Oasis',
@@ -2803,6 +2809,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.guardian.desc': 'Nourishing the team, sharing generously, becoming the ultimate beacon of wisdom.'
         },
         ar: {
+            'learning_hub.view_honor_detail': 'عرض التفاصيل',
+            'learning_hub.view_rules_detail': 'عرض القواعد التفصيلية',
+            'learning_hub.rules_title_modal': 'نظام أوسمة التعلم للواحة',
             'learning_hub.coffee_streak': 'تحدي القهوة اليومي',
             'learning_hub.caravan_progress': 'مسار القافلة الصحراوية',
             'learning_hub.next_oasis': 'الواحة التالية',
@@ -2885,6 +2894,7 @@ export default function LearningHub() {
     const [smListForPreview, setSmListForPreview] = useState<string[]>([]);
     const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const [showRulesModal, setShowRulesModal] = useState(false);
+    const [showHonorModal, setShowHonorModal] = useState(false);
     const [rawFavorites, setRawFavorites] = useState<{ userId: string; recordingIds: string[] }[]>([]);
     const [hubScope, setHubScope] = useState<'public' | 'team'>(() => {
         const paramScope = searchParams.get('scope');
@@ -2897,34 +2907,27 @@ export default function LearningHub() {
     const allowedTabs = React.useMemo(() => {
         const tabs: { type: 'kid' | 'adult' | 'ss' | 'leader' | 'referral'; label: string; gradient: string }[] = [];
         
+        // If not a leader (TL and above), do not show any business tabs/badges
+        if (!isLeader) {
+            return [];
+        }
+
         // 1. If super admin, they have access to all tabs
         if (profile?.role === 'super_admin') {
-            // tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
             tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-            // tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
-            // tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
             return tabs;
         }
 
         // 2. If SS department
         if (profile?.dep === 'SS') {
-            // tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
-            // tabs.push({ type: 'ss', label: t('common.type_ss', 'SS 业务'), gradient: 'from-orange-500 to-amber-600' });
             tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-            if (isLeader) {
-                tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
-            }
+            tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
             return tabs;
         }
 
         // 3. For CC / standard departments
-        // Show referral tab to CC department users (or anyone who has referral admin permission for preview)
-        // if (profile?.dep === 'CC' || !!profile?.permissions?.manageReferrals) {
-        //     tabs.push({ type: 'referral', label: t('common.type_referral', '推荐业务'), gradient: 'from-amber-500 to-rose-600' });
-        // }
         tabs.push({ type: 'kid', label: t('common.type_kid', '青少业务'), gradient: 'from-blue-500 to-blue-600' });
-        // tabs.push({ type: 'adult', label: t('common.type_adult', '成人业务'), gradient: 'from-purple-500 to-purple-600' });
         if (isLeader) {
             tabs.push({ type: 'leader', label: t('common.type_leader', 'Leader 学院'), gradient: 'from-teal-600 to-emerald-600' });
         }
@@ -3995,127 +3998,202 @@ export default function LearningHub() {
         }
     };
 
-    const renderOasisHonorWidget = () => {
+    const renderCompactOasisHonorWidget = () => {
         const stats = userStats;
         const currentLevelInfo = honorLevels[stats.levelKey];
         
         return (
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-5 shadow-[0_8px_30px_rgba(203,161,53,0.03)] relative overflow-hidden transition-all duration-300 w-full h-full flex flex-col justify-between">
-                {/* Background ambient gold glow */}
-                <div className="absolute -top-10 -right-10 w-28 h-28 bg-desert-gold/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div 
+                onClick={() => setShowHonorModal(true)}
+                className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex items-center justify-between gap-4 group active:scale-[0.99] relative overflow-hidden"
+            >
+                {/* Subtle golden ambient background glow */}
+                <div className="absolute -right-6 -top-6 w-16 h-16 bg-desert-gold/5 rounded-full blur-xl pointer-events-none"></div>
                 
-                {/* Crest and Rank Header */}
-                <div className="flex items-center gap-3.5 relative z-10 pe-6 w-full">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${currentLevelInfo.crestColor} flex items-center justify-center text-white text-2xl shadow-md border border-white/20 transform hover:scale-105 transition-transform`}>
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    {/* Rank icon badge */}
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${currentLevelInfo.crestColor} flex items-center justify-center text-white text-xl shadow-sm shrink-0 border border-white/20`}>
                         {currentLevelInfo.icon}
                     </div>
+                    
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <h4 className="text-base font-black text-deep-teal leading-tight">{currentLevelInfo.title}</h4>
-                            <span className="text-[10px] font-bold text-desert-gold font-mono leading-none bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/20">{currentLevelInfo.titleAr}</span>
+                            <span className="text-sm font-black text-deep-teal leading-tight">{currentLevelInfo.title}</span>
+                            <span className="text-[9px] font-bold text-desert-gold font-mono bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/15">{currentLevelInfo.titleAr}</span>
                         </div>
-                        <p className="text-[10px] text-arabian-night/50 dark:text-white/40 font-medium truncate mt-1" title={currentLevelInfo.desc}>
-                            {currentLevelInfo.desc}
-                        </p>
-                    </div>
-                    <button 
-                        onClick={() => setShowRulesModal(true)}
-                        className="absolute end-0 top-1 text-arabian-night/30 hover:text-desert-gold p-1 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
-                        title={localT('learning_hub.view_rules', '规则说明', i18n)}
-                    >
-                        <HelpCircle className="w-4.5 h-4.5" />
-                    </button>
-                </div>
-
-                {/* Daily Kahwa Streak ☕ */}
-                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5 relative z-10">
-                    <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
-                        <span className="flex items-center gap-1.5">☕ {localT('learning_hub.coffee_streak', '每日咖啡连击', i18n)}</span>
-                        <span className="text-desert-gold font-extrabold font-mono">{stats.streakCount} {localT('common.days', '天', i18n)}</span>
-                    </div>
-                    <div className="flex gap-1.5 justify-between">
-                        {Array.from({ length: 7 }).map((_, idx) => {
-                            const isActive = idx < stats.streakCount;
-                            return (
+                        {/* Compact Caravan progress bar */}
+                        <div className="flex items-center gap-2 mt-1.5 w-full">
+                            <div className="flex-1 bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1.5 relative overflow-hidden">
                                 <div 
-                                    key={idx} 
-                                    title={isActive 
-                                        ? localT('learning_hub.streak_active_tooltip', '第 {day} 天已学习', i18n).replace('{day}', String(idx + 1))
-                                        : localT('learning_hub.streak_inactive_tooltip', '第 {day} 天未打卡', i18n).replace('{day}', String(idx + 1))
-                                    }
-                                    className={`flex-1 aspect-square max-w-[28px] rounded-lg border flex items-center justify-center text-[13px] transition-all duration-300 ${
-                                        isActive 
-                                            ? 'bg-amber-50 border-desert-gold/45 text-amber-700 shadow-sm' 
-                                            : 'bg-[#E6DFD3]/20 border-transparent text-gray-300 dark:bg-slate-800'
-                                    }`}
-                                >
-                                    {isActive ? '☕' : '◌'}
-                                </div>
-                            );
-                        })}
+                                    className="bg-gradient-to-r from-deep-teal to-desert-gold h-full rounded-full transition-all duration-500 ease-out" 
+                                    style={{ width: `${Math.min(100, (stats.totalLearningMinutes / currentLevelInfo.nextThreshold) * 100)}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-[10px] font-bold text-desert-gold font-mono shrink-0">
+                                {stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${localT('common.minutes', '分钟', i18n)}`}
+                            </span>
+                        </div>
                     </div>
                 </div>
+                
+                {/* Arrow Action indicator */}
+                <div className="flex items-center gap-1 text-desert-gold shrink-0 pl-1">
+                    <span className="text-[11px] font-black tracking-wider uppercase hidden sm:inline-block group-hover:translate-x-[-2px] transition-transform duration-300">
+                        {localT('learning_hub.view_honor_detail', '荣誉详情', i18n)}
+                    </span>
+                    <span className="text-sm font-bold group-hover:translate-x-1 transition-transform duration-300">
+                        {i18n.language === 'ar' ? '←' : '→'}
+                    </span>
+                </div>
+            </div>
+        );
+    };
 
-                {/* Spring of Wisdom / Caravan Journey Progress */}
-                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3] dark:border-white/5 relative z-10">
-                    <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
-                        <span className="flex items-center gap-1">🐫 {localT('learning_hub.caravan_progress', '沙漠商队行进进度', i18n)}</span>
-                        <span className="text-desert-gold font-extrabold font-mono">{stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${localT('common.minutes', '分钟', i18n)}`}</span>
-                    </div>
-                    {/* Caravan path visualizer */}
-                    <div className="relative w-full h-8 bg-amber-50/45 dark:bg-slate-900/40 rounded-xl border border-[#E6DFD3]/40 dark:border-white/5 overflow-hidden flex items-center px-2.5" dir="ltr">
-                        {/* Sand texture pattern */}
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,#fdfcfb_25%,transparent_25%),linear-gradient(-45deg,#fdfcfb_25%,transparent_25%)] bg-[size:10px_10px] opacity-15 pointer-events-none"></div>
-                        
-                        {/* Golden Oasis target */}
-                        {currentLevelInfo.nextThreshold !== 9999 && (
-                            <div 
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-lg z-10 animate-pulse duration-1000" 
-                                title={localT('learning_hub.next_oasis_tooltip', '下一站绿洲：{title}', i18n).replace('{title}', currentLevelInfo.nextTitle)}
-                            >
-                                🌴
+    const renderOasisHonorDetailModal = () => {
+        if (!showHonorModal) return null;
+        
+        const stats = userStats;
+        const currentLevelInfo = honorLevels[stats.levelKey];
+        
+        return (
+            <div 
+                className="fixed inset-0 z-[990] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300"
+                onClick={() => setShowHonorModal(false)}
+            >
+                <div 
+                    className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl border border-[#E6DFD3] dark:border-slate-800 animate-in zoom-in-95 duration-300 flex flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Close Button */}
+                    <button 
+                        onClick={() => setShowHonorModal(false)}
+                        className="absolute top-6 end-6 p-2 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-all cursor-pointer shadow-sm active:scale-95 z-50"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                    
+                    <h3 className="text-xl font-extrabold text-deep-teal dark:text-white mb-6 pe-8 flex items-center gap-2">
+                        <span>🏆</span>
+                        {localT('learning_hub.rules_title_modal', '绿洲学习荣誉机制', i18n)}
+                    </h3>
+                    
+                    <div className="space-y-6">
+                        {/* Crest and Rank Header */}
+                        <div className="flex items-center gap-3.5 relative z-10 w-full bg-amber-50/20 dark:bg-slate-800/40 p-4 rounded-2xl border border-[#E6DFD3]/40 dark:border-white/5">
+                            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${currentLevelInfo.crestColor} flex items-center justify-center text-white text-2xl shadow-md border border-white/20 transform hover:scale-105 transition-transform`}>
+                                {currentLevelInfo.icon}
                             </div>
-                        )}
-                        
-                        {/* Slider bar */}
-                        <div className="w-full bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1 relative">
-                            {/* Filled path */}
-                            <div 
-                                className="bg-gradient-to-r from-deep-teal to-desert-gold h-1 rounded-full shadow-sm transition-all duration-500 ease-out" 
-                                style={{ width: `${Math.min(100, (stats.totalLearningMinutes / currentLevelInfo.nextThreshold) * 100)}%` }}
-                            ></div>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <h4 className="text-base font-black text-deep-teal leading-tight">{currentLevelInfo.title}</h4>
+                                    <span className="text-[10px] font-bold text-desert-gold font-mono leading-none bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/20">{currentLevelInfo.titleAr}</span>
+                                </div>
+                                <p className="text-[11px] text-arabian-night/60 dark:text-white/40 font-semibold mt-1">
+                                    {currentLevelInfo.desc}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Daily Kahwa Streak ☕ */}
+                        <div>
+                            <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
+                                <span className="flex items-center gap-1.5">☕ {localT('learning_hub.coffee_streak', '每日咖啡连击', i18n)}</span>
+                                <span className="text-desert-gold font-extrabold font-mono">{stats.streakCount} / 7 {localT('common.days', '天', i18n)}</span>
+                            </div>
+                            <div className="flex gap-1.5 justify-between">
+                                {Array.from({ length: 7 }).map((_, idx) => {
+                                    const isActive = idx < stats.streakCount;
+                                    return (
+                                        <div 
+                                            key={idx} 
+                                            title={isActive 
+                                                ? localT('learning_hub.streak_active_tooltip', '第 {day} 天已学习', i18n).replace('{day}', String(idx + 1))
+                                                : localT('learning_hub.streak_inactive_tooltip', '第 {day} 天未打卡', i18n).replace('{day}', String(idx + 1))
+                                            }
+                                            className={`flex-1 aspect-square max-w-[40px] rounded-xl border flex items-center justify-center text-base transition-all duration-300 ${
+                                                isActive 
+                                                    ? 'bg-amber-50 border-desert-gold/45 text-amber-700 shadow-sm' 
+                                                    : 'bg-[#E6DFD3]/20 border-transparent text-gray-300 dark:bg-slate-800'
+                                            }`}
+                                        >
+                                            {isActive ? '☕' : '◌'}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Spring of Wisdom / Caravan Journey Progress */}
+                        <div>
+                            <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
+                                <span className="flex items-center gap-1">🐫 {localT('learning_hub.caravan_progress', '沙漠商队行进进度', i18n)}</span>
+                                <span className="text-desert-gold font-extrabold font-mono">{stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${localT('common.minutes', '分钟', i18n)}`}</span>
+                            </div>
                             
-                            {/* Caravan Camel indicator */}
-                            <div 
-                                className="absolute top-1/2 -translate-y-1/2 -mt-1 text-sm transition-all duration-500 ease-out z-20"
-                                style={{ 
-                                    left: `calc(${Math.min(92, (stats.totalLearningMinutes / currentLevelInfo.nextThreshold) * 100)}% - 6px)`,
-                                    transform: 'scaleX(-1)'
-                                }}
-                            >
-                                🐫
+                            {/* Caravan path visualizer */}
+                            <div className="relative w-full h-8 bg-amber-50/45 dark:bg-slate-900/40 rounded-xl border border-[#E6DFD3]/40 dark:border-white/5 overflow-hidden flex items-center px-2.5" dir="ltr">
+                                <div className="absolute inset-0 bg-[linear-gradient(45deg,#fdfcfb_25%,transparent_25%),linear-gradient(-45deg,#fdfcfb_25%,transparent_25%)] bg-[size:10px_10px] opacity-15 pointer-events-none"></div>
+                                
+                                {currentLevelInfo.nextThreshold !== 9999 && (
+                                    <div 
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-lg z-10 animate-pulse duration-1000" 
+                                        title={localT('learning_hub.next_oasis_tooltip', '下一站绿洲：{title}', i18n).replace('{title}', currentLevelInfo.nextTitle)}
+                                    >
+                                        🌴
+                                    </div>
+                                )}
+                                
+                                <div className="w-full bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1 relative">
+                                    <div 
+                                        className="bg-gradient-to-r from-deep-teal to-desert-gold h-1 rounded-full shadow-sm transition-all duration-500 ease-out" 
+                                        style={{ width: `${Math.min(100, (stats.totalLearningMinutes / currentLevelInfo.nextThreshold) * 100)}%` }}
+                                    ></div>
+                                    
+                                    <div 
+                                        className="absolute top-1/2 -translate-y-1/2 -mt-1 text-sm transition-all duration-500 ease-out z-20"
+                                        style={{ 
+                                            left: `calc(${Math.min(92, (stats.totalLearningMinutes / currentLevelInfo.nextThreshold) * 100)}% - 6px)`,
+                                            transform: 'scaleX(-1)'
+                                        }}
+                                    >
+                                        🐫
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-between items-center text-[10px] text-arabian-night/40 dark:text-white/30 font-bold mt-1.5 select-none">
+                                <span>{currentLevelInfo.title}</span>
+                                {currentLevelInfo.nextThreshold !== 9999 ? (
+                                    <span>{localT('learning_hub.next_oasis', '下一绿洲', i18n)}: {currentLevelInfo.nextTitle}</span>
+                                ) : (
+                                    <span>{localT('learning_hub.max_level', '最高荣誉', i18n)}</span>
+                                )}
                             </div>
                         </div>
                     </div>
                     
-                    <div className="flex justify-between items-center text-[10px] text-arabian-night/40 dark:text-white/30 font-bold mt-1.5 select-none">
-                        <span>{currentLevelInfo.title}</span>
-                        {currentLevelInfo.nextThreshold !== 9999 ? (
-                            <span>{localT('learning_hub.next_oasis', '下一绿洲', i18n)}: {currentLevelInfo.nextTitle}</span>
-                        ) : (
-                            <span>{localT('learning_hub.max_level', '最高荣誉', i18n)}</span>
-                        )}
+                    {/* View Certificate Action Button */}
+                    <div className="mt-8 flex flex-col gap-2.5">
+                        <button
+                            onClick={() => {
+                                setShowHonorModal(false);
+                                setShowCertificate(true);
+                            }}
+                            className="w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-3 px-4 rounded-xl text-xs font-black tracking-wider transition-all duration-300 shadow-md hover:shadow-teal-900/10 cursor-pointer flex items-center justify-center gap-1.5 border border-white/10 active:scale-98"
+                        >
+                            🏆 {localT('learning_hub.view_honor_cert', '查看荣誉勋章与证书', i18n)}
+                        </button>
+                        
+                        <button
+                            onClick={() => {
+                                setShowHonorModal(false);
+                                setShowRulesModal(true);
+                            }}
+                            className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 py-3 px-4 rounded-xl text-xs font-black hover:bg-gray-50 dark:hover:bg-slate-750 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-98"
+                        >
+                            📋 {localT('learning_hub.view_rules_detail', '查看详细规则说明', i18n)}
+                        </button>
                     </div>
-                </div>
-
-                {/* View Certificate Action Button */}
-                <div className="mt-4 pt-3.5 border-t border-[#E6DFD3]/40 dark:border-white/5 relative z-10 flex gap-2">
-                    <button
-                        onClick={() => setShowCertificate(true)}
-                        className="w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-2 px-4 rounded-xl text-xs font-black tracking-wider transition-all duration-300 shadow-md hover:shadow-teal-900/10 cursor-pointer flex items-center justify-center gap-1.5 border border-white/10 active:scale-98"
-                    >
-                        🏆 {localT('learning_hub.view_honor_cert', '查看荣誉勋章与证书', i18n)}
-                    </button>
                 </div>
             </div>
         );
@@ -4511,6 +4589,11 @@ export default function LearningHub() {
                             </div>
                         </header>
 
+                        {/* Oasis Honor Compact Widget */}
+                        <div className="mt-6 z-30 relative">
+                            {renderCompactOasisHonorWidget()}
+                        </div>
+
                         {/* Premium Segmented Switcher for Hub Scopes */}
                         <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
                             {/* Scope Toggle buttons */}
@@ -4581,11 +4664,6 @@ export default function LearningHub() {
                                 </div>
                             )}
                         </div>
-                    </div>
-
-                    {/* Oasis Honor progression widget next to it on desktop */}
-                    <div className="w-full lg:w-80 xl:w-[320px] 2xl:w-[360px] shrink-0">
-                        {renderOasisHonorWidget()}
                     </div>
                 </div>
             ) : (
@@ -4971,7 +5049,11 @@ export default function LearningHub() {
                         {renderCompactBrandsWidget()}
 
                         {/* Leaderboard Widget */}
-                        {showLeaderboard && renderLeaderboardWidget(false)}
+                        {showLeaderboard && (
+                            <div className="hidden xl:block">
+                                {renderLeaderboardWidget(false)}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -5172,6 +5254,7 @@ export default function LearningHub() {
             )}
             {showCertificate && renderCertificateModal()}
             {renderRulesModal()}
+            {showHonorModal && renderOasisHonorDetailModal()}
         </div>
     );
 }
