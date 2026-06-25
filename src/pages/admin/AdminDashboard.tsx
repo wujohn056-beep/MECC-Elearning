@@ -1309,8 +1309,8 @@ export default function AdminDashboard() {
                             <tbody className="divide-y divide-gray-50">
                                 {filteredActivities.slice(0, 100).map((act, i) => (
                                     <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="py-3 px-4 font-semibold">{act.crmId || act.userId}</td>
-                                        <td className="py-3 px-4">{act.name || act.crmId || '-'}</td>
+                                        <td className="py-3 px-4 font-semibold text-slate-800">{act.crmId || act.userId}</td>
+                                        <td className="py-3 px-4 text-slate-600">{act.name || act.crmId || '-'}</td>
                                         <td className="py-3 px-4">
                                             <span className="bg-gray-100 text-arabian-night/70 px-2 py-0.5 rounded text-xs font-semibold">
                                                 {act.team || '-'}
