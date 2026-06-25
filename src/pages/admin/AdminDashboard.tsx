@@ -789,16 +789,16 @@ export default function AdminDashboard() {
                 'learning_hub.team_dashboard_title': '👥 Team Learning Incentives & Honor Dashboard',
                 'learning_hub.member_name': 'Member',
                 'learning_hub.team_empty': 'No team member data available',
-                'level.apprentice.title': 'Oasis Apprentice',
-                'level.apprentice.desc': 'The origin of knowledge watering, taking the first step of sales excellence.',
-                'level.voyager.title': 'Desert Voyager',
-                'level.voyager.desc': 'Persevering forward in the sand sea, accumulating wisdom with determination.',
-                'level.knight.title': 'Knight of Wisdom',
-                'level.knight.desc': 'Outstanding execution and precision, executing as decisively as a knight.',
-                'level.falcon.title': 'Soaring Falcon',
-                'level.falcon.desc': 'High-flying vision, sharp execution, standing out in the team.',
-                'level.guardian.title': 'Oasis Guardian',
-                'level.guardian.desc': 'Nourishing the team, sharing generously, becoming the ultimate beacon of wisdom.'
+                'level.apprentice.title': 'Oasis Trainee',
+                'level.apprentice.desc': 'Start your learning journey and take your first step in sales growth.',
+                'level.voyager.title': 'Oasis Explorer',
+                'level.voyager.desc': 'Keep learning and continuously accumulate sales experience.',
+                'level.knight.title': 'Oasis Knight',
+                'level.knight.desc': 'Master sales skills and demonstrate outstanding execution.',
+                'level.falcon.title': 'Oasis Falcon',
+                'level.falcon.desc': 'Have a broad sales vision and stand out with excellent performance.',
+                'level.guardian.title': 'Oasis Champion',
+                'level.guardian.desc': 'Empower the team, share success wisdom, and be a role model.'
             },
             ar: {
                 'learning_hub.coffee_streak': 'تحدي القهوة اليومي',
@@ -831,12 +831,16 @@ export default function AdminDashboard() {
                 'learning_hub.team_dashboard_title': '👥 لوحة مكافآت الشرف والتعلم للفريق',
                 'learning_hub.member_name': 'العضو',
                 'learning_hub.team_empty': 'لا توجد بيانات لأعضاء الفريق حالياً',
-                'level.apprentice.title': 'مبتدئ الواحة',
-                'level.apprentice.desc': 'بداية ري المعرفة، اتخاذ الخطوة الأولى في التميز بالمبيعات.',
-                'level.voyager.title': 'رحالة الصحراء',
-                'level.voyager.desc': 'المثابرة في المضي قدماً في بحر الرمال، وجمع الحكمة بعزيمة.',
-                'level.knight.title': 'فارس الحكمة',
-                'level.knight.desc': 'فارس الحكمة، الموثوقية العالية في الاستجابة والتنفيذ.'
+                'level.apprentice.title': 'متدرب الواحة',
+                'level.apprentice.desc': 'ابدأ رحلة التعلم الخاصة بك واتخذ خطوتك الأولى في نمو المبيعات.',
+                'level.voyager.title': 'مستكشف الواحة',
+                'level.voyager.desc': 'استمر في التعلم وتراكم الخبرات العملية في المبيعات باستمرار.',
+                'level.knight.title': 'فارس الواحة',
+                'level.knight.desc': 'أتقن مهارات المبيعات وأظهر تنفيذاً متميزاً.',
+                'level.falcon.title': 'صقر الواحة',
+                'level.falcon.desc': 'امتلك رؤية مبيعات واسعة وتميز بأداء ممتاز.',
+                'level.guardian.title': 'بطل الواحة',
+                'level.guardian.desc': 'قم بتمكين الفريق ومشاركة حكمة النجاح لتكون قدوة للفريق.'
             }
         };
         return dict[lang]?.[key] || defaultVal;
@@ -844,45 +848,45 @@ export default function AdminDashboard() {
 
     const honorLevels = {
         apprentice: {
-            title: localT('level.apprentice.title', '绿洲学徒', i18n),
-            titleAr: 'مبتدئ الواحة',
-            desc: localT('level.apprentice.desc', '知识灌溉的起点，迈出卓越销售的第一步。', i18n),
+            title: localT('level.apprentice.title', '绿洲新手', i18n),
+            titleAr: 'متدرب الواحة',
+            desc: localT('level.apprentice.desc', '开始您的学习旅程，迈出销售成长第一步。', i18n),
             crestColor: 'from-[#E6DFD3] to-[#C5A059]',
             icon: '🌱',
             nextThreshold: 600,
-            nextTitle: localT('level.voyager.title', '沙漠行者', i18n)
+            nextTitle: localT('level.voyager.title', '绿洲探索者', i18n)
         },
         voyager: {
-            title: localT('level.voyager.title', '沙漠行者', i18n),
-            titleAr: 'رحالة الصحراء',
-            desc: localT('level.voyager.desc', '在沙海中坚韧前行，以毅力累积智慧。', i18n),
+            title: localT('level.voyager.title', '绿洲探索者', i18n),
+            titleAr: 'مستكشف الواحة',
+            desc: localT('level.voyager.desc', '持续学习，不断积累销售实战经验。', i18n),
             crestColor: 'from-amber-500 to-orange-600',
             icon: '🐫',
             nextThreshold: 1800,
-            nextTitle: localT('level.knight.title', '智慧骑士', i18n)
+            nextTitle: localT('level.knight.title', '绿洲骑士', i18n)
         },
         knight: {
-            title: localT('level.knight.title', '智慧骑士', i18n),
-            titleAr: 'فارس الحكمة',
-            desc: localT('level.knight.desc', '出众的执行力与精准度，执行如同骑士般果断。', i18n),
+            title: localT('level.knight.title', '绿洲骑士', i18n),
+            titleAr: 'فارس الواحة',
+            desc: localT('level.knight.desc', '精通销售技巧，展示卓越的执行力。', i18n),
             crestColor: 'from-teal-600 to-emerald-600',
             icon: '🐎',
             nextThreshold: 3600,
-            nextTitle: localT('level.falcon.title', '凌空猎鹰', i18n)
+            nextTitle: localT('level.falcon.title', '绿洲之鹰', i18n)
         },
         falcon: {
-            title: localT('level.falcon.title', '凌空猎鹰', i18n),
-            titleAr: 'صقر محلق',
-            desc: localT('level.falcon.desc', '高瞻远瞩，锐意进取，在团队中脱颖而出。', i18n),
+            title: localT('level.falcon.title', '绿洲之鹰', i18n),
+            titleAr: 'صقر الواحة',
+            desc: localT('level.falcon.desc', '拥有开阔的销售视野，业绩脱颖而出。', i18n),
             crestColor: 'from-yellow-500 to-amber-600',
             icon: '🦅',
             nextThreshold: 7200,
-            nextTitle: localT('level.guardian.title', '绿洲守护者', i18n)
+            nextTitle: localT('level.guardian.title', '绿洲先锋', i18n)
         },
         guardian: {
-            title: localT('level.guardian.title', '绿洲守护者', i18n),
-            titleAr: 'حارس الواحة',
-            desc: localT('level.guardian.desc', '福泽团队，慷慨分享，成为智慧的终极灯塔。', i18n),
+            title: localT('level.guardian.title', '绿洲先锋', i18n),
+            titleAr: 'بطل الواحة',
+            desc: localT('level.guardian.desc', '赋能团队，分享成功智慧，成为团队榜样。', i18n),
             crestColor: 'from-[#0D5C75] to-teal-800',
             icon: '🌴',
             nextThreshold: 9999,
