@@ -4659,7 +4659,7 @@ export default function LearningHub() {
                                 const text = encodeURIComponent(`Hi! I just unlocked the custom honor certificate: ${config.bannerTitle} at 51Talk! 🏆🎓`);
                                 window.open(`https://api.whatsapp.com/send?text=${text}%20${shareUrl}`);
                             }}
-                            className="bg-slate-150 hover:bg-slate-200 border border-slate-200 text-slate-700 font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all w-full sm:w-auto"
+                            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all w-full sm:w-auto shadow-sm"
                         >
                             <Share2 className="w-4 h-4" /> {localT('learning_hub.cert_share_whatsapp', '分享至 WhatsApp', i18n)}
                         </button>
@@ -4930,7 +4930,7 @@ export default function LearningHub() {
                                 const text = encodeURIComponent(`Hi! I just achieved the rank of ${currentLevelInfo.title} at 51Talk! 🏆🎓`);
                                 window.open(`https://api.whatsapp.com/send?text=${text}%20${shareUrl}`);
                             }}
-                            className="bg-slate-150 hover:bg-slate-200 border border-slate-200 text-slate-700 font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all w-full sm:w-auto"
+                            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all w-full sm:w-auto shadow-sm"
                         >
                             <Share2 className="w-4 h-4" /> {localT('learning_hub.cert_share_whatsapp', '分享至 WhatsApp', i18n)}
                         </button>
