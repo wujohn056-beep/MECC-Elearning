@@ -2724,10 +2724,10 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.tab_brands': '品牌专栏',
             'learning_hub.view_honor_detail': '查看荣誉详情',
             'learning_hub.view_rules_detail': '查看详细规则说明',
-            'learning_hub.rules_title_modal': '绿洲学习荣誉机制',
+            'learning_hub.rules_title_modal': '宝藏猎人荣誉机制',
             'learning_hub.coffee_streak': '每日咖啡连击',
-            'learning_hub.caravan_progress': '沙漠商队行进进度',
-            'learning_hub.next_oasis': '下一绿洲',
+            'learning_hub.caravan_progress': '寻宝之旅进度',
+            'learning_hub.next_oasis': '下一目标',
             'learning_hub.max_level': '最高荣誉',
             'learning_hub.view_honor_cert': '查看荣誉勋章与证书',
             'learning_hub.cert_subtitle': '荣誉称号授予以下杰出学员',
@@ -2742,35 +2742,36 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'common.minutes': '分钟',
             'learning_hub.streak_active_tooltip': '第 {day} 天已学习',
             'learning_hub.streak_inactive_tooltip': '第 {day} 天未打卡',
-            'learning_hub.next_oasis_tooltip': '下一站绿洲：{title}',
+            'learning_hub.next_oasis_tooltip': '下一目标：{title}',
             'learning_hub.view_rules': '规则说明',
-            'learning_hub.rules_title': '绿洲荣誉机制规则说明',
+            'learning_hub.rules_title': '宝藏猎人荣誉机制规则说明',
             'learning_hub.rules_streak_title': '每日咖啡连击',
             'learning_hub.rules_streak_desc': '每天学习任一课程即可完成今日打卡，连续打卡可累积咖啡连击天数。',
-            'learning_hub.rules_caravan_title': '沙漠商队进度',
-            'learning_hub.rules_caravan_desc': '累积有效学习时长（分钟），商队将向下一个绿洲进发。学时与任务完成率达到门槛即可解锁更高荣誉等级。',
+            'learning_hub.rules_caravan_title': '寻宝寻航路线',
+            'learning_hub.rules_caravan_desc': '累积有效学习时长（分钟），以推进您的寻宝旅程。学时与任务完成率达到门槛即可解锁更高荣誉等级。',
             'learning_hub.rules_cert_title': '荣誉勋章与证书',
             'learning_hub.rules_cert_desc': '解锁每个荣誉等级均可获得 51Talk 官方认证的荣誉证书，可下载并分享至社交媒体。',
             'learning_hub.rules_levels_title': '荣誉等级门槛：',
             'learning_hub.team_dashboard_title': '👥 团队学习激励与荣誉大盘',
             'learning_hub.member_name': '成员姓名',
             'learning_hub.team_empty': '当前团队暂无其他成员数据',
-            'level.apprentice.title': '绿洲学徒',
-            'level.apprentice.desc': '知识灌溉的起点，迈出卓越销售的第一步。',
-            'level.voyager.title': '沙漠行者',
-            'level.voyager.desc': '在沙海中坚韧前行，以毅力累积智慧。',
-            'level.knight.title': '智慧骑士',
-            'level.knight.desc': '出众的执行力与精准度，执行如同骑士般果断。',
-            'level.falcon.title': '凌空猎鹰',
-            'level.falcon.desc': '高瞻远瞩，锐意进取，在团队中脱颖而出。',
-            'level.guardian.title': '绿洲守护者',
-            'level.guardian.desc': '福泽团队，慷慨分享，成为智慧的终极灯塔。',
+            'level.apprentice.title': '寻宝新手',
+            'level.apprentice.desc': '开启您的寻宝任务，在沙海中寻找宝贵的销售知识。',
+            'level.voyager.title': '沙漠追踪者',
+            'level.voyager.desc': '在沙海中辨识路径，追踪成功的核心线索。',
+            'level.knight.title': '佩特拉开拓者',
+            'level.knight.desc': '寻获玫瑰古城的秘道，解锁核心的销售高阶技能。',
+            'level.falcon.title': '精英猎人',
+            'level.falcon.desc': '发掘传奇级宝藏，展现精湛的执行力与业务素养。',
+            'level.guardian.title': '宝库传奇',
+            'level.guardian.desc': '步入佩特拉宝库深处，冠以终极寻宝传奇勋章。',
             'campaign.issued_by': '发起人',
             'learning_hub.courses': '门课',
             'learning_hub.go_learn': '去学习',
             'learning_hub.cert_download_fail': '证书生成失败，请重试。',
             'learning_hub.claim_cert': '✨ 领取荣誉证书',
-            'learning_hub.generating': '生成中...'
+            'learning_hub.generating': '生成中...',
+            'learning_hub.incentive_explain_line': '🏆 宝藏猎人：听录音进行智慧寻宝。达到时间与任务门槛即可解锁 Najah 学院荣誉证书与宝藏勋章奖励（点击查看详情）。'
         },
         en: {
             'learning_hub.tab_recordings': 'Recordings',
@@ -4139,7 +4140,7 @@ export default function LearningHub() {
         guardian: {
             title: localT('level.guardian.title', '宝库传奇', i18n),
             titleAr: 'أسطورة الخزنة',
-            desc: localT('level.guardian.desc', '步入佩特拉宝库库深处，冠以终极寻宝传奇勋章。', i18n),
+            desc: localT('level.guardian.desc', '步入佩特拉宝库深处，冠以终极寻宝传奇勋章。', i18n),
             crestColor: 'from-[#0D5C75] to-teal-800',
             icon: '🌴',
             nextThreshold: 9999,
@@ -4168,7 +4169,9 @@ export default function LearningHub() {
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-sm font-black text-deep-teal leading-tight">{currentLevelInfo.title}</span>
-                            <span className="text-[9px] font-bold text-desert-gold font-mono bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/15">{currentLevelInfo.titleAr}</span>
+                            {!i18n.language?.startsWith('ar') && (
+                                <span className="text-[9px] font-bold text-desert-gold font-mono bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/15">{currentLevelInfo.titleAr}</span>
+                            )}
                         </div>
                         {/* Compact Caravan progress bar */}
                         <div className="flex items-center gap-2 mt-1.5 w-full">
@@ -4239,7 +4242,9 @@ export default function LearningHub() {
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                     <h4 className="text-base font-black text-deep-teal leading-tight">{currentLevelInfo.title}</h4>
-                                    <span className="text-[10px] font-bold text-desert-gold font-mono leading-none bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/20">{currentLevelInfo.titleAr}</span>
+                                    {!i18n.language?.startsWith('ar') && (
+                                        <span className="text-[10px] font-bold text-desert-gold font-mono leading-none bg-desert-gold/10 px-1.5 py-0.5 rounded border border-desert-gold/20">{currentLevelInfo.titleAr}</span>
+                                    )}
                                 </div>
                                 <p className="text-[11px] text-arabian-night/60 dark:text-white/40 font-semibold mt-1">
                                     {currentLevelInfo.desc}
@@ -4845,7 +4850,9 @@ export default function LearningHub() {
                                 <div className="relative w-full max-w-md bg-gradient-to-r from-blue-700 via-blue-800 to-blue-700 text-white font-extrabold text-xs sm:text-sm py-2 px-6 rounded-md shadow-md border-y border-yellow-400/50 mb-3 flex items-center justify-center gap-1.5">
                                     <span className="text-yellow-400">★</span>
                                     <span className="uppercase tracking-wider">{currentLevelInfo.title}</span>
-                                    <span className="text-yellow-350">({currentLevelInfo.titleAr})</span>
+                                    {!i18n.language?.startsWith('ar') && (
+                                        <span className="text-yellow-350">({currentLevelInfo.titleAr})</span>
+                                    )}
                                     <span className="text-yellow-400">★</span>
                                     {/* Mini Ribbon Fold Effects */}
                                     <div className="absolute -left-1.5 top-1.5 w-1.5 h-5 bg-blue-900 rounded-l transform -skew-y-12"></div>

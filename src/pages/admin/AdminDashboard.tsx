@@ -928,45 +928,45 @@ export default function AdminDashboard() {
 
     const honorLevels = {
         apprentice: {
-            title: localT('level.apprentice.title', '绿洲新手', i18n),
-            titleAr: 'متدرب الواحة',
-            desc: localT('level.apprentice.desc', '开始您的学习旅程，迈出销售成长第一步。', i18n),
+            title: localT('level.apprentice.title', '寻宝新手', i18n),
+            titleAr: 'باحث عن الكنز',
+            desc: localT('level.apprentice.desc', '开启您的寻宝任务，在沙海中寻找宝贵的销售知识。', i18n),
             crestColor: 'from-[#E6DFD3] to-[#C5A059]',
             icon: '🌱',
             nextThreshold: 600,
-            nextTitle: localT('level.voyager.title', '绿洲探索者', i18n)
+            nextTitle: localT('level.voyager.title', '沙漠追踪者', i18n)
         },
         voyager: {
-            title: localT('level.voyager.title', '绿洲探索者', i18n),
-            titleAr: 'مستكشف الواحة',
-            desc: localT('level.voyager.desc', '持续学习，不断积累销售实战经验。', i18n),
+            title: localT('level.voyager.title', '沙漠追踪者', i18n),
+            titleAr: 'مقتفي أثر الصحراء',
+            desc: localT('level.voyager.desc', '在沙海中辨识路径，追踪成功的核心线索。', i18n),
             crestColor: 'from-amber-500 to-orange-600',
             icon: '🐫',
             nextThreshold: 1800,
-            nextTitle: localT('level.knight.title', '绿洲骑士', i18n)
+            nextTitle: localT('level.knight.title', '佩特拉开拓者', i18n)
         },
         knight: {
-            title: localT('level.knight.title', '绿洲骑士', i18n),
-            titleAr: 'فارس الواحة',
-            desc: localT('level.knight.desc', '精通销售技巧，展示卓越的执行力。', i18n),
+            title: localT('level.knight.title', '佩特拉开拓者', i18n),
+            titleAr: 'مستكشف البتراء',
+            desc: localT('level.knight.desc', '寻获玫瑰古城的秘道，解锁核心的销售高阶技能。', i18n),
             crestColor: 'from-teal-600 to-emerald-600',
             icon: '🐎',
             nextThreshold: 3600,
-            nextTitle: localT('level.falcon.title', '绿洲之鹰', i18n)
+            nextTitle: localT('level.falcon.title', '精英猎人', i18n)
         },
         falcon: {
-            title: localT('level.falcon.title', '绿洲之鹰', i18n),
-            titleAr: 'صقر الواحة',
-            desc: localT('level.falcon.desc', '拥有开阔的销售视野，业绩脱颖而出。', i18n),
+            title: localT('level.falcon.title', '精英猎人', i18n),
+            titleAr: 'صائد الكنوز النخبة',
+            desc: localT('level.falcon.desc', '发掘传奇级宝藏，展现精湛的执行力与业务素养。', i18n),
             crestColor: 'from-yellow-500 to-amber-600',
             icon: '🦅',
             nextThreshold: 7200,
-            nextTitle: localT('level.guardian.title', '绿洲先锋', i18n)
+            nextTitle: localT('level.guardian.title', '宝库传奇', i18n)
         },
         guardian: {
-            title: localT('level.guardian.title', '绿洲先锋', i18n),
-            titleAr: 'بطل الواحة',
-            desc: localT('level.guardian.desc', '赋能团队，分享成功智慧，成为团队榜样。', i18n),
+            title: localT('level.guardian.title', '宝库传奇', i18n),
+            titleAr: 'أسطورة الخزنة',
+            desc: localT('level.guardian.desc', '步入佩特拉宝库深处，冠以终极寻宝传奇勋章。', i18n),
             crestColor: 'from-[#0D5C75] to-teal-800',
             icon: '🌴',
             nextThreshold: 9999,
@@ -1106,7 +1106,9 @@ export default function AdminDashboard() {
                                                 <span className="text-lg select-none">{currentLevelInfo.icon}</span>
                                                 <div>
                                                     <p className="text-deep-teal font-extrabold text-xs leading-none">{currentLevelInfo.title}</p>
-                                                    <p className="text-[9px] text-desert-gold font-bold font-mono mt-0.5 leading-none bg-desert-gold/5 px-1 py-0.5 rounded border border-desert-gold/10 inline-block">{currentLevelInfo.titleAr || 'مبتدئ'}</p>
+                                                    {!i18n.language?.startsWith('ar') && (
+                                                        <p className="text-[9px] text-desert-gold font-bold font-mono mt-0.5 leading-none bg-desert-gold/5 px-1 py-0.5 rounded border border-desert-gold/10 inline-block">{currentLevelInfo.titleAr || 'مبتدئ'}</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
