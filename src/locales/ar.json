@@ -531,6 +531,7 @@
         "desc": "تعيين مهام التعلم وتتبع تقدم الفريق",
         "tab_in_progress": "قيد التنفيذ",
         "tab_expired": "منتهية",
+        "tab_campaigns": "تحديات الشهادات الحصرية",
         "tab_uncompleted": "غير مكتملة",
         "tab_completed": "مكتملة",
         "tab_progress": "لوحة التقدم",

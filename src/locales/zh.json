@@ -531,6 +531,7 @@
         "desc": "指派学习任务并追踪团队成员进度",
         "tab_in_progress": "进行中",
         "tab_expired": "已截止",
+        "tab_campaigns": "专属证书挑战",
         "tab_uncompleted": "未完成",
         "tab_completed": "已完成",
         "tab_progress": "进度看板",

@@ -5,6 +5,8 @@ import { db } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
 import { Users, FileAudio, Calendar, CheckCircle, Clock, AlertCircle, Search, LayoutDashboard, ClipboardList, Edit2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
+import CampaignManager from './admin/CampaignManager';
+
 
 interface UserRecord {
     id: string;
@@ -66,7 +68,7 @@ export default function TeamTasks() {
     const [updatingDeadline, setUpdatingDeadline] = useState(false);
     
     // Tabs state
-    const [activeTab, setActiveTab] = useState<'in_progress' | 'expired'>('in_progress');
+    const [activeTab, setActiveTab] = useState<'in_progress' | 'expired' | 'campaigns'>('in_progress');
     const [activeSubTab, setActiveSubTab] = useState<'uncompleted' | 'completed'>('uncompleted');
     
     // Form state
@@ -452,12 +454,14 @@ export default function TeamTasks() {
                         <h1 className="text-xl font-black text-slate-800">{t('team_tasks.title', '团队任务')}</h1>
                         <p className="text-xs text-slate-500 mt-0.5">{t('team_tasks.desc', '指派学习任务并追踪团队成员进度')}</p>
                     </div>
-                    <button 
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-desert-gold text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm active:scale-95 transition-all shrink-0"
-                    >
-                        + {t('team_tasks.new_task', '新建')}
-                    </button>
+                    {activeTab !== 'campaigns' && (
+                        <button 
+                            onClick={() => setShowCreateModal(true)}
+                            className="bg-desert-gold text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm active:scale-95 transition-all shrink-0"
+                        >
+                            + {t('team_tasks.new_task', '新建')}
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="flex flex-col mb-6 gap-6">
@@ -467,93 +471,107 @@ export default function TeamTasks() {
                             <p className="text-arabian-night/60 mt-1">{t('team_tasks.desc', '指派学习任务并追踪团队成员进度')}</p>
                         </div>
                         
-                        <button 
-                            onClick={() => setShowCreateModal(true)}
-                            className="bg-desert-gold text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-yellow-600 transition-colors"
-                        >
-                            + {t('team_tasks.new_task', '新建任务')}
-                        </button>
+                        {activeTab !== 'campaigns' && (
+                            <button 
+                                onClick={() => setShowCreateModal(true)}
+                                className="bg-desert-gold text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-yellow-600 transition-colors"
+                            >
+                                + {t('team_tasks.new_task', '新建任务')}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
 
             {/* Tabs */}
-            {!loadingTasks && tasks.length > 0 && (
-                <div className="flex flex-col gap-3 mb-6">
-                    <div className={`p-1 rounded-full flex items-center w-full md:w-auto overflow-x-auto whitespace-nowrap scrollbar-none ${
-                        isNative 
-                            ? 'bg-slate-200/60 border border-slate-300/10'
-                            : 'bg-gray-50/50 w-fit'
-                    }`}>
+            <div className="flex flex-col gap-3 mb-6">
+                <div className={`p-1 rounded-full flex items-center w-full md:w-auto overflow-x-auto whitespace-nowrap scrollbar-none ${
+                    isNative 
+                        ? 'bg-slate-200/60 border border-slate-300/10'
+                        : 'bg-gray-50/50 w-fit'
+                }`}>
+                    <button 
+                        onClick={() => setActiveTab('in_progress')}
+                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-bold rounded-full transition-all ${
+                            activeTab === 'in_progress' 
+                                ? isNative
+                                    ? 'bg-white text-slate-800 shadow-sm font-black'
+                                    : 'bg-white shadow text-deep-teal' 
+                                : 'text-gray-500 hover:bg-gray-100/50'
+                        }`}
+                    >
+                        {t('team_tasks.tab_in_progress', 'In Progress')} ({loadingTasks ? 0 : tasks.filter(t => t.deadline?.toDate() >= new Date()).length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('expired')}
+                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-bold rounded-full transition-all ${
+                            activeTab === 'expired' 
+                                ? isNative
+                                    ? 'bg-white text-slate-800 shadow-sm font-black'
+                                    : 'bg-white shadow text-red-500' 
+                                : 'text-gray-500 hover:bg-gray-100/50'
+                        }`}
+                    >
+                        {t('team_tasks.tab_expired', 'Expired')} ({loadingTasks ? 0 : tasks.filter(t => t.deadline?.toDate() < new Date()).length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('campaigns')}
+                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-bold rounded-full transition-all ${
+                            activeTab === 'campaigns' 
+                                ? isNative
+                                    ? 'bg-white text-slate-800 shadow-sm font-black'
+                                    : 'bg-white shadow text-desert-gold' 
+                                : 'text-gray-500 hover:bg-gray-100/50'
+                        }`}
+                    >
+                        {t('team_tasks.tab_campaigns', 'Exclusive Challenges')}
+                    </button>
+                </div>
+
+                {!loadingTasks && tasks.length > 0 && activeTab === 'expired' && (
+                    <div className="flex gap-2 ml-1">
                         <button 
-                            onClick={() => setActiveTab('in_progress')}
-                            className={`flex-1 md:flex-none px-6 py-2 text-sm font-bold rounded-full transition-all ${
-                                activeTab === 'in_progress' 
-                                    ? isNative
-                                        ? 'bg-white text-slate-800 shadow-sm font-black'
-                                        : 'bg-white shadow text-deep-teal' 
-                                    : 'text-gray-500 hover:bg-gray-100/50'
-                            }`}
+                            onClick={() => setActiveSubTab('uncompleted')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'uncompleted' ? 'bg-red-50 text-red-600 border border-red-200' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
                         >
-                            {t('team_tasks.tab_in_progress', 'In Progress')} ({tasks.filter(t => t.deadline?.toDate() >= new Date()).length})
+                            {t('team_tasks.tab_uncompleted', 'Uncompleted')} ({
+                                tasks.filter(t => {
+                                    if (t.deadline?.toDate() >= new Date()) return false;
+                                    const total = t.assigneeIds.length;
+                                    const completed = Object.values(t.assignees).filter(a => a.status === 'completed').length;
+                                    return total === 0 || completed < total;
+                                }).length
+                            })
                         </button>
                         <button 
-                            onClick={() => setActiveTab('expired')}
-                            className={`flex-1 md:flex-none px-6 py-2 text-sm font-bold rounded-full transition-all ${
-                                activeTab === 'expired' 
-                                    ? isNative
-                                        ? 'bg-white text-slate-800 shadow-sm font-black'
-                                        : 'bg-white shadow text-red-500' 
-                                    : 'text-gray-500 hover:bg-gray-100/50'
-                            }`}
+                            onClick={() => setActiveSubTab('completed')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'completed' ? 'bg-green-50 text-green-600 border border-green-200' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
                         >
-                            {t('team_tasks.tab_expired', 'Expired')} ({tasks.filter(t => t.deadline?.toDate() < new Date()).length})
+                            {t('team_tasks.tab_completed', 'Completed')} ({
+                                tasks.filter(t => {
+                                    if (t.deadline?.toDate() >= new Date()) return false;
+                                    const total = t.assigneeIds.length;
+                                    const completed = Object.values(t.assignees).filter(a => a.status === 'completed').length;
+                                    return total > 0 && completed === total;
+                                }).length
+                            })
                         </button>
                     </div>
+                )}
+            </div>
 
-                    {activeTab === 'expired' && (
-                        <div className="flex gap-2 ml-1">
-                            <button 
-                                onClick={() => setActiveSubTab('uncompleted')}
-                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'uncompleted' ? 'bg-red-50 text-red-600 border border-red-200' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
-                            >
-                                {t('team_tasks.tab_uncompleted', 'Uncompleted')} ({
-                                    tasks.filter(t => {
-                                        if (t.deadline?.toDate() >= new Date()) return false;
-                                        const total = t.assigneeIds.length;
-                                        const completed = Object.values(t.assignees).filter(a => a.status === 'completed').length;
-                                        return total === 0 || completed < total;
-                                    }).length
-                                })
-                            </button>
-                            <button 
-                                onClick={() => setActiveSubTab('completed')}
-                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'completed' ? 'bg-green-50 text-green-600 border border-green-200' : 'text-gray-500 hover:bg-gray-100 border border-transparent'}`}
-                            >
-                                {t('team_tasks.tab_completed', 'Completed')} ({
-                                    tasks.filter(t => {
-                                        if (t.deadline?.toDate() >= new Date()) return false;
-                                        const total = t.assigneeIds.length;
-                                        const completed = Object.values(t.assignees).filter(a => a.status === 'completed').length;
-                                        return total > 0 && completed === total;
-                                    }).length
-                                })
-                            </button>
-                        </div>
-                    )}
+            {activeTab === 'campaigns' ? (
+                <CampaignManager />
+            ) : loadingTasks ? (
+                <div className="flex justify-center p-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-desert-gold"></div>
                 </div>
-            )}
-
-            {loadingTasks ? (
-                        <div className="flex justify-center p-12">
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-desert-gold"></div>
-                        </div>
-                    ) : tasks.length === 0 ? (
-                        <div className="glass-panel rounded-2xl p-12 text-center text-arabian-night/40 border border-white">
-                            <Calendar className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                            <p className="text-lg">{t('team_tasks.empty_state')}</p>
-                        </div>
-                    ) : (() => {
+            ) : tasks.length === 0 ? (
+                <div className="glass-panel rounded-2xl p-12 text-center text-arabian-night/40 border border-white">
+                    <Calendar className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                    <p className="text-lg">{t('team_tasks.empty_state')}</p>
+                </div>
+            ) : (() => {
                         const now = new Date();
                         const displayedTasks = tasks.filter(task => {
                             const isExpired = task.deadline?.toDate() < now;

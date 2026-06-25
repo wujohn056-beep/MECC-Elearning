@@ -532,6 +532,7 @@
         "desc": "Assign learning tasks and track team progress",
         "tab_in_progress": "In Progress",
         "tab_expired": "Expired",
+        "tab_campaigns": "Certificate Challenges",
         "tab_uncompleted": "Uncompleted",
         "tab_completed": "Completed",
         "tab_progress": "Progress Board",

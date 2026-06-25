@@ -55,9 +55,194 @@ interface SystemUser {
     tl?: string;
 }
 
+// Localized translation helper for Campaign Manager
+const localT = (key: string, defaultVal: string, i18n: any) => {
+    const lang = i18n?.language || 'zh';
+    const dict: Record<string, Record<string, string>> = {
+        zh: {
+            'campaign.manager_title': '专项挑战与荣誉证书管理',
+            'campaign.manager_subtitle': '为您的团队或特定员工发布针对性的学习任务，并定制颁发专属荣誉证书。',
+            'campaign.publish_btn': '发布专项挑战',
+            'campaign.tab_active': '进行中',
+            'campaign.tab_expired': '已截止',
+            'campaign.loading': '加载中...',
+            'campaign.empty_state': '🏜️ 暂无符合条件的专项挑战',
+            'campaign.audience': '受众',
+            'campaign.audience_individual': '个人',
+            'campaign.people': '人',
+            'campaign.deadline': '截止',
+            'campaign.publisher': '发布者',
+            'campaign.delete_btn': '删除挑战',
+            'campaign.tracking_title': '挑战达标追踪',
+            'campaign.tracking_placeholder_title': '👉 请从左侧列表选择一个专项挑战',
+            'campaign.tracking_placeholder_desc': '可追踪团队内所有成员的学时达标状态。',
+            'campaign.tracking_loading': '统计中...',
+            'campaign.tracking_audience': '受众',
+            'campaign.tracking_completed_count': '达标人数',
+            'campaign.minutes_unit': '分钟',
+            'campaign.courses_unit': '门课',
+            'campaign.modal_title': '创建与定制发布专项学习挑战',
+            'campaign.modal_subtitle': '配置挑战条件受众，并利用证书可视化看板预览定制的证书样式。',
+            'campaign.modal_step1': '1. 基础信息配置',
+            'campaign.form_title': '挑战标题 *',
+            'campaign.form_title_placeholder': '如：First Call 专项通关挑战',
+            'campaign.form_start_date': '开始日期',
+            'campaign.form_end_date': '截止日期',
+            'campaign.form_audience_label': '选择目标受众 (按团队与个人展示) *',
+            'campaign.form_audience_placeholder': '输入名字/CRM/部门搜索员工',
+            'campaign.modal_step2': '2. 达标通关规则',
+            'campaign.rule_by_duration': '按特定分类学习时长',
+            'campaign.rule_by_courses': '按指定课程通关',
+            'campaign.form_category': '指定课程分类',
+            'campaign.form_required_minutes': '要求累计学时 (分钟)',
+            'campaign.form_select_courses': '勾选指定必听录音/课时 (多选)',
+            'campaign.form_search_courses_placeholder': '搜索录音标题',
+            'campaign.modal_step3': '3. 荣誉证书定制化设计',
+            'campaign.form_cert_banner_title': '主横幅荣誉称号 (Banner Title)',
+            'campaign.form_cert_desc': '荣誉详情说明 (Description)',
+            'campaign.form_cert_training': '项目名 (Training)',
+            'campaign.form_cert_duration': '时长展示 (Duration)',
+            'campaign.form_cert_achievement': '成就名称 (Achievement)',
+            'campaign.form_cert_encouragement': '底部鼓励语 (Encouragement)',
+            'campaign.form_cert_issued_by': '授权签发人 (Issued By)',
+            'campaign.form_publishing': '发布中...',
+            'campaign.form_publish_confirm': '确认发布此专项学习挑战',
+            'campaign.preview_title': '证书实时效果预览 (PORTRAIT MOCKUP)',
+            'campaign.alert_enter_title': '请输入挑战标题',
+            'campaign.alert_select_audience': '请至少选择一个受众团队或个人',
+            'campaign.alert_publish_success': '专项证书挑战发布成功！已向相关学员发送通知。',
+            'campaign.alert_publish_failed': '发布失败，请重试',
+            'campaign.confirm_delete': '确认要删除这个专项挑战吗？删除后，已达标用户将无法再查看或保存对应的证书。',
+            'campaign.alert_delete_success': '删除成功',
+            'campaign.alert_delete_failed': '删除失败，请重试'
+        },
+        en: {
+            'campaign.manager_title': 'Exclusive Challenge & Certificate Management',
+            'campaign.manager_subtitle': 'Publish targeted learning challenges for your team or individuals and customize their certificates of honor.',
+            'campaign.publish_btn': 'Publish Challenge',
+            'campaign.tab_active': 'Active',
+            'campaign.tab_expired': 'Expired',
+            'campaign.loading': 'Loading...',
+            'campaign.empty_state': '🏜️ No challenges found',
+            'campaign.audience': 'Audience',
+            'campaign.audience_individual': 'Individual',
+            'campaign.people': 'people',
+            'campaign.deadline': 'Deadline',
+            'campaign.publisher': 'Publisher',
+            'campaign.delete_btn': 'Delete Challenge',
+            'campaign.tracking_title': 'Challenge Progress Tracking',
+            'campaign.tracking_placeholder_title': '👉 Select a challenge from the list',
+            'campaign.tracking_placeholder_desc': 'Track the learning progress of all members in your team.',
+            'campaign.tracking_loading': 'Calculating...',
+            'campaign.tracking_audience': 'Audience',
+            'campaign.tracking_completed_count': 'Completed',
+            'campaign.minutes_unit': 'mins',
+            'campaign.courses_unit': 'courses',
+            'campaign.modal_title': 'Create & Customize Learning Challenge',
+            'campaign.modal_subtitle': 'Configure target audience and rules, and preview customized certificates in real-time.',
+            'campaign.modal_step1': '1. Basic Configuration',
+            'campaign.form_title': 'Challenge Title *',
+            'campaign.form_title_placeholder': 'e.g., First Call Special Challenge',
+            'campaign.form_start_date': 'Start Date',
+            'campaign.form_end_date': 'End Date',
+            'campaign.form_audience_label': 'Target Audience (By Team or User) *',
+            'campaign.form_audience_placeholder': 'Search by Name, CRM ID, or Department',
+            'campaign.modal_step2': '2. Passing Rules',
+            'campaign.rule_by_duration': 'By Learning Duration in Category',
+            'campaign.rule_by_courses': 'By Specifying Course Completion',
+            'campaign.form_category': 'Specify Category',
+            'campaign.form_required_minutes': 'Required Learning Time (Minutes)',
+            'campaign.form_select_courses': 'Select Specifying Courses (Multiple)',
+            'campaign.form_search_courses_placeholder': 'Search course title',
+            'campaign.modal_step3': '3. Certificate Customization',
+            'campaign.form_cert_banner_title': 'Banner Title',
+            'campaign.form_cert_desc': 'Description',
+            'campaign.form_cert_training': 'Training Name',
+            'campaign.form_cert_duration': 'Duration',
+            'campaign.form_cert_achievement': 'Achievement',
+            'campaign.form_cert_encouragement': 'Encouragement Text',
+            'campaign.form_cert_issued_by': 'Issued By',
+            'campaign.form_publishing': 'Publishing...',
+            'campaign.form_publish_confirm': 'Confirm & Publish Challenge',
+            'campaign.preview_title': 'Live Certificate Preview (PORTRAIT MOCKUP)',
+            'campaign.alert_enter_title': 'Please enter the challenge title',
+            'campaign.alert_select_audience': 'Please select at least one team or individual',
+            'campaign.alert_publish_success': 'Exclusive challenge published successfully! Notifications sent to target users.',
+            'campaign.alert_publish_failed': 'Failed to publish, please try again',
+            'campaign.confirm_delete': 'Are you sure you want to delete this challenge? Once deleted, qualified users will no longer be able to view or save the certificate.',
+            'campaign.alert_delete_success': 'Deleted successfully',
+            'campaign.alert_delete_failed': 'Failed to delete, please try again'
+        },
+        ar: {
+            'campaign.manager_title': 'إدارة التحديات والشهادات الحصرية',
+            'campaign.manager_subtitle': 'انشر مهام تعليمية مخصصة لفريقك أو لموظفين محددين، وقم بتخصيص شهادات شرفية حصرية.',
+            'campaign.publish_btn': 'نشر التحدي',
+            'campaign.tab_active': 'نشط',
+            'campaign.tab_expired': 'منتهي',
+            'campaign.loading': 'جاري التحميل...',
+            'campaign.empty_state': '🏜️ لا توجد تحديات مخصصة مطابقة',
+            'campaign.audience': 'الجمهور',
+            'campaign.audience_individual': 'فردي',
+            'campaign.people': 'أشخاص',
+            'campaign.deadline': 'الموعد النهائي',
+            'campaign.publisher': 'الناشر',
+            'campaign.delete_btn': 'حذف التحدي',
+            'campaign.tracking_title': 'تتبع تحقيق التحدي',
+            'campaign.tracking_placeholder_title': '👉 يرجى تحديد تحدٍ من القائمة اليسرى',
+            'campaign.tracking_placeholder_desc': 'يمكنك تتبع حالة إنجاز الساعات التعليمية لجميع أعضاء الفريق.',
+            'campaign.tracking_loading': 'جاري الإحصاء...',
+            'campaign.tracking_audience': 'الجمهور',
+            'campaign.tracking_completed_count': 'عدد المؤهلين',
+            'campaign.minutes_unit': 'دقائق',
+            'campaign.courses_unit': 'دورات',
+            'campaign.modal_title': 'إنشاء وتخصيص تحدي تعليمي خاص',
+            'campaign.modal_subtitle': 'قم بتهيئة جمهور التحدي وشروطه، واستخدم لوحة معاينة الشهادات لمراجعة تصميم الشهادة.',
+            'campaign.modal_step1': '1. تهيئة المعلومات الأساسية',
+            'campaign.form_title': 'عنوان التحدي *',
+            'campaign.form_title_placeholder': 'مثال: تحدي اجتياز First Call الخاص',
+            'campaign.form_start_date': 'تاريخ البدء',
+            'campaign.form_end_date': 'تاريخ الانتهاء',
+            'campaign.form_audience_label': 'اختر الجمهور المستهدف (حسب الفريق أو الأفراد) *',
+            'campaign.form_audience_placeholder': 'ابحث بالاسم أو CRM أو القسم',
+            'campaign.modal_step2': '2. قواعد الاجتياز والتأهل',
+            'campaign.rule_by_duration': 'حسب مدة التعلم في تصنيف محدد',
+            'campaign.rule_by_courses': 'حسب اجتياز دورات محددة',
+            'campaign.form_category': 'تصنيف الدورات المحدد',
+            'campaign.form_required_minutes': 'الساعات المطلوبة (بالدقائق)',
+            'campaign.form_select_courses': 'اختر الدورات/التسجيلات المحددة (متعدد)',
+            'campaign.form_search_courses_placeholder': 'ابحث عن عنوان التسجيل',
+            'campaign.modal_step3': '3. تصميم مخصص للشهادة الشرفية',
+            'campaign.form_cert_banner_title': 'عنوان الشرف الرئيسي (Banner Title)',
+            'campaign.form_cert_desc': 'وصف تفاصيل الشرف (Description)',
+            'campaign.form_cert_training': 'اسم التدريب (Training)',
+            'campaign.form_cert_duration': 'المدة المعروضة (Duration)',
+            'campaign.form_cert_achievement': 'اسم الإنجاز (Achievement)',
+            'campaign.form_cert_encouragement': 'عبارة التشجيع في الأسفل (Encouragement)',
+            'campaign.form_cert_issued_by': 'الجهة المانحة المعتمدة (Issued By)',
+            'campaign.form_publishing': 'جاري النشر...',
+            'campaign.form_publish_confirm': 'تأكيد ونشر هذا التحدي التعليمي',
+            'campaign.preview_title': 'معاينة حية للشهادة (PORTRAIT MOCKUP)',
+            'campaign.alert_enter_title': 'يرجى إدخال عنوان التحدي',
+            'campaign.alert_select_audience': 'يرجى تحديد فريق أو مستخدم واحد على الأقل',
+            'campaign.alert_publish_success': 'تم نشر التحدي بنجاح! تم إرسال إشعارات للطلاب المعنيين.',
+            'campaign.alert_publish_failed': 'فشل النشر، يرجى المحاولة مرة أخرى',
+            'campaign.confirm_delete': 'هل أنت متأكد من رغبتك في حذف هذا التحدي؟ بعد الحذف، لن يتمكن المستخدمون المؤهلون من عرض الشهادة أو حفظها.',
+            'campaign.alert_delete_success': 'تم الحذف بنجاح',
+            'campaign.alert_delete_failed': 'فشل الحذف، يرجى المحاولة مرة أخرى'
+        }
+    };
+    const currentLang = dict[lang] ? lang : 'zh';
+    return dict[currentLang][key] || defaultVal || key;
+};
+
 export default function CampaignManager() {
     const { t, i18n } = useTranslation();
     const { profile, isLeader } = useAuth();
+
+    const todayStr = useMemo(() => {
+        const currentLocale = i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'en' ? 'en-US' : 'zh-CN';
+        return new Date().toLocaleDateString(currentLocale, { year: 'numeric', month: 'short', day: 'numeric' });
+    }, [i18n.language]);
     
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -213,11 +398,11 @@ export default function CampaignManager() {
     const handleCreateCampaign = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!campaignTitle.trim()) {
-            alert('请输入挑战标题');
+            alert(localT('campaign.alert_enter_title', '请输入挑战标题', i18n));
             return;
         }
         if (selectedTeams.length === 0 && selectedUsers.length === 0) {
-            alert('请至少选择一个受众团队或个人');
+            alert(localT('campaign.alert_select_audience', '请至少选择一个受众团队或个人', i18n));
             return;
         }
 
@@ -314,10 +499,10 @@ export default function CampaignManager() {
             
             // Re-fetch data
             await fetchData();
-            alert('专项证书挑战发布成功！已向相关学员发送通知。');
+            alert(localT('campaign.alert_publish_success', '专项证书挑战发布成功！已向相关学员发送通知。', i18n));
         } catch (error) {
             console.error("Error creating campaign:", error);
-            alert('发布失败，请重试');
+            alert(localT('campaign.alert_publish_failed', '发布失败，请重试', i18n));
         } finally {
             setActionLoading(false);
         }
@@ -325,17 +510,17 @@ export default function CampaignManager() {
 
     // Handle Campaign Deletion
     const handleDeleteCampaign = async (campaignId: string) => {
-        if (!window.confirm('确认要删除这个专项挑战吗？删除后，已达标用户将无法再查看或保存对应的证书。')) return;
+        if (!window.confirm(localT('campaign.confirm_delete', '确认要删除这个专项挑战吗？删除后，已达标用户将无法再查看或保存对应的证书。', i18n))) return;
         try {
             await deleteDoc(doc(db, 'campaigns', campaignId));
             setCampaigns(prev => prev.filter(c => c.id !== campaignId));
             if (selectedCampaignForTracking?.id === campaignId) {
                 setSelectedCampaignForTracking(null);
             }
-            alert('删除成功');
+            alert(localT('campaign.alert_delete_success', '删除成功', i18n));
         } catch (error) {
             console.error("Error deleting campaign:", error);
-            alert('删除失败，请重试');
+            alert(localT('campaign.alert_delete_failed', '删除失败，请重试', i18n));
         }
     };
 
@@ -382,7 +567,7 @@ export default function CampaignManager() {
                     const reqMins = campaign.conditions.requiredMinutes || 120;
                     progressPercent = Math.min(100, Math.round((progressMins / reqMins) * 100));
                     completed = progressPercent >= 100;
-                    progressText = `${progressMins} / ${reqMins} 分钟`;
+                    progressText = `${progressMins} / ${reqMins} ${localT('campaign.minutes_unit', '分钟', i18n)}`;
                 } else if (campaign.conditions.requiredTaskIds) {
                     // Specific checklist
                     const reqIds = campaign.conditions.requiredTaskIds;
@@ -393,7 +578,7 @@ export default function CampaignManager() {
                     ));
                     progressPercent = Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100));
                     completed = completedTasks.length === reqIds.length;
-                    progressText = `${completedTasks.length} / ${reqIds.length} 门课`;
+                    progressText = `${completedTasks.length} / ${reqIds.length} ${localT('campaign.courses_unit', '门课', i18n)}`;
                 }
 
                 return {
@@ -485,10 +670,10 @@ export default function CampaignManager() {
                 <div>
                     <h2 className="text-xl font-extrabold text-deep-teal flex items-center gap-2">
                         <Award className="w-6 h-6 text-desert-gold" />
-                        <span>专项挑战与荣誉证书管理</span>
+                        <span>{localT('campaign.manager_title', '专项挑战与荣誉证书管理', i18n)}</span>
                     </h2>
                     <p className="text-slate-500 text-xs mt-1">
-                        为您的团队或特定员工发布针对性的学习任务，并定制颁发专属荣誉证书。
+                        {localT('campaign.manager_subtitle', '为您的团队或特定员工发布针对性的学习任务，并定制颁发专属荣誉证书。', i18n)}
                     </p>
                 </div>
                 
@@ -496,7 +681,7 @@ export default function CampaignManager() {
                     onClick={() => setShowCreateModal(true)}
                     className="bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all shrink-0"
                 >
-                    <Plus className="w-4 h-4" /> 发布专项挑战
+                    <Plus className="w-4 h-4" /> {localT('campaign.publish_btn', '发布专项挑战', i18n)}
                 </button>
             </div>
 
@@ -514,7 +699,7 @@ export default function CampaignManager() {
                                     activeTab === 'active' ? 'border-deep-teal text-deep-teal' : 'border-transparent text-slate-400 hover:text-slate-600'
                                 }`}
                             >
-                                进行中 ({campaigns.filter(c => new Date() <= (c.endDate ? c.endDate.toDate() : new Date())).length})
+                                {localT('campaign.tab_active', '进行中', i18n)} ({campaigns.filter(c => new Date() <= (c.endDate ? c.endDate.toDate() : new Date())).length})
                             </button>
                             <button
                                 onClick={() => setActiveTab('expired')}
@@ -522,24 +707,25 @@ export default function CampaignManager() {
                                     activeTab === 'expired' ? 'border-deep-teal text-deep-teal' : 'border-transparent text-slate-400 hover:text-slate-600'
                                 }`}
                             >
-                                已截止 ({campaigns.filter(c => new Date() > (c.endDate ? c.endDate.toDate() : new Date())).length})
+                                {localT('campaign.tab_expired', '已截止', i18n)} ({campaigns.filter(c => new Date() > (c.endDate ? c.endDate.toDate() : new Date())).length})
                             </button>
                         </div>
 
                         {loading ? (
                             <div className="py-12 flex justify-center items-center text-slate-400 text-sm font-semibold gap-2">
-                                <RefreshCw className="w-5 h-5 animate-spin" /> 加载中...
+                                <RefreshCw className="w-5 h-5 animate-spin" /> {localT('campaign.loading', '加载中...', i18n)}
                             </div>
                         ) : filteredCampaigns.length === 0 ? (
                             <div className="py-16 text-center text-slate-400 text-sm font-semibold">
-                                🏜️ 暂无符合条件的专项挑战
+                                {localT('campaign.empty_state', '🏜️ 暂无符合条件的专项挑战', i18n)}
                             </div>
                         ) : (
                             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
                                 {filteredCampaigns.map(campaign => {
                                     const isSelected = selectedCampaignForTracking?.id === campaign.id;
                                     const end = campaign.endDate ? campaign.endDate.toDate() : new Date();
-                                    const formattedEndDate = end.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' });
+                                    const currentLocale = i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'en' ? 'en-US' : 'zh-CN';
+                                    const formattedEndDate = end.toLocaleDateString(currentLocale, { year: 'numeric', month: 'short', day: 'numeric' });
                                     
                                     return (
                                         <div
@@ -564,15 +750,15 @@ export default function CampaignManager() {
                                                 <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-400 font-semibold flex-wrap">
                                                     <span className="flex items-center gap-1">
                                                         <Users className="w-3.5 h-3.5" />
-                                                        受众: {campaign.teamIds.join(', ') || '个人'}
-                                                        {campaign.userIds && campaign.userIds.length > 0 && ` (+${campaign.userIds.length}人)`}
+                                                        {localT('campaign.audience', '受众', i18n)}: {campaign.teamIds.join(', ') || localT('campaign.audience_individual', '个人', i18n)}
+                                                        {campaign.userIds && campaign.userIds.length > 0 && ` (+${campaign.userIds.length} ${localT('campaign.people', '人', i18n)})`}
                                                     </span>
                                                     <span className="flex items-center gap-1">
                                                         <Calendar className="w-3.5 h-3.5" />
-                                                        截止: {formattedEndDate}
+                                                        {localT('campaign.deadline', '截止', i18n)}: {formattedEndDate}
                                                     </span>
                                                     <span className="flex items-center gap-1 text-slate-500">
-                                                        👤 发布者: {campaign.creatorName} ({campaign.creatorRole.toUpperCase()})
+                                                        👤 {localT('campaign.publisher', '发布者', i18n)}: {campaign.creatorName} ({campaign.creatorRole.toUpperCase()})
                                                     </span>
                                                 </div>
                                             </div>
@@ -584,7 +770,7 @@ export default function CampaignManager() {
                                                         handleDeleteCampaign(campaign.id);
                                                     }}
                                                     className="p-2 rounded-xl text-red-500 hover:bg-red-50 active:scale-95 transition-all cursor-pointer"
-                                                    title="删除挑战"
+                                                    title={localT('campaign.delete_btn', '删除挑战', i18n)}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -602,25 +788,25 @@ export default function CampaignManager() {
                     <div className="bg-white/80 backdrop-blur-md rounded-3xl p-6 border border-white/60 shadow-sm h-full flex flex-col">
                         <h3 className="font-extrabold text-sm text-deep-teal pb-3 border-b border-slate-100 flex items-center gap-2">
                             <Trophy className="w-4 h-4 text-desert-gold" />
-                            <span>挑战达标追踪</span>
+                            <span>{localT('campaign.tracking_title', '挑战达标追踪', i18n)}</span>
                         </h3>
 
                         {!selectedCampaignForTracking ? (
                             <div className="py-24 text-center text-slate-400 text-xs font-bold leading-normal flex-1 flex flex-col justify-center items-center">
-                                <span>👉 请从左侧列表选择一个专项挑战</span>
-                                <span className="mt-1 text-[10px] text-slate-400/80">可追踪团队内所有成员的学时达标状态。</span>
+                                <span>{localT('campaign.tracking_placeholder_title', '👉 请从左侧列表选择一个专项挑战', i18n)}</span>
+                                <span className="mt-1 text-[10px] text-slate-400/80">{localT('campaign.tracking_placeholder_desc', '可追踪团队内所有成员的学时达标状态。', i18n)}</span>
                             </div>
                         ) : loadingTracking ? (
                             <div className="py-12 flex justify-center items-center text-slate-400 text-xs font-semibold gap-2 flex-1">
-                                <RefreshCw className="w-4 h-4 animate-spin" /> 统计中...
+                                <RefreshCw className="w-4 h-4 animate-spin" /> {localT('campaign.tracking_loading', '统计中...', i18n)}
                             </div>
                         ) : (
                             <div className="flex-1 flex flex-col mt-4 min-h-0">
                                 <div className="mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-100/60">
                                     <h4 className="font-black text-xs text-slate-700 truncate">{selectedCampaignForTracking.title}</h4>
                                     <div className="flex justify-between text-[10px] text-slate-400 font-bold mt-1.5">
-                                        <span>受众: {selectedCampaignForTracking.teamIds.join(', ') || '个人'}</span>
-                                        <span className="text-deep-teal">达标人数: {trackingProgressList.filter(u => u.completed).length} / {trackingProgressList.length}</span>
+                                        <span>{localT('campaign.tracking_audience', '受众', i18n)}: {selectedCampaignForTracking.teamIds.join(', ') || localT('campaign.audience_individual', '个人', i18n)}</span>
+                                        <span className="text-deep-teal">{localT('campaign.tracking_completed_count', '达标人数', i18n)}: {trackingProgressList.filter(u => u.completed).length} / {trackingProgressList.length}</span>
                                     </div>
                                 </div>
 
@@ -674,9 +860,9 @@ export default function CampaignManager() {
                             <div>
                                 <h3 className="text-lg font-black text-deep-teal flex items-center gap-1.5">
                                     <LayoutTemplate className="w-5 h-5 text-desert-gold" />
-                                    <span>创建与定制发布专项学习挑战</span>
+                                    <span>{localT('campaign.modal_title', '创建与定制发布专项学习挑战', i18n)}</span>
                                 </h3>
-                                <p className="text-slate-400 text-[10px] font-semibold mt-0.5">配置挑战条件受众，并利用证书可视化看板预览定制的证书样式。</p>
+                                <p className="text-slate-400 text-[10px] font-semibold mt-0.5">{localT('campaign.modal_subtitle', '配置挑战条件受众，并利用证书可视化看板预览定制的证书样式。', i18n)}</p>
                             </div>
                             <button
                                 onClick={() => setShowCreateModal(false)}
@@ -695,15 +881,15 @@ export default function CampaignManager() {
                                 {/* Section 1: Basic Config */}
                                 <div className="space-y-3.5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                     <h4 className="text-xs font-black text-slate-600 uppercase tracking-wider border-b border-slate-200/50 pb-1.5 flex items-center gap-1">
-                                        <span>1. 基础信息配置</span>
+                                        <span>{localT('campaign.modal_step1', '1. 基础信息配置', i18n)}</span>
                                     </h4>
                                     
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-500 mb-1">挑战标题 *</label>
+                                        <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_title', '挑战标题 *', i18n)}</label>
                                         <input
                                             type="text"
                                             required
-                                            placeholder="如：First Call 专项通关挑战"
+                                            placeholder={localT('campaign.form_title_placeholder', '如：First Call 专项通关挑战', i18n)}
                                             value={campaignTitle}
                                             onChange={(e) => setCampaignTitle(e.target.value)}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
@@ -713,7 +899,7 @@ export default function CampaignManager() {
                                     {/* Dates */}
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-[11px] font-black text-slate-500 mb-1">开始日期</label>
+                                            <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_start_date', '开始日期', i18n)}</label>
                                             <input
                                                 type="date"
                                                 required
@@ -723,7 +909,7 @@ export default function CampaignManager() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-black text-slate-500 mb-1">截止日期</label>
+                                            <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_end_date', '截止日期', i18n)}</label>
                                             <input
                                                 type="date"
                                                 required
@@ -737,11 +923,11 @@ export default function CampaignManager() {
                                     {/* Unified Audience Selector (Grouped by Team) */}
                                     <div>
                                         <label className="block text-[11px] font-black text-slate-500 mb-1.5">
-                                            选择目标受众 (按团队与个人展示) *
+                                            {localT('campaign.form_audience_label', '选择目标受众 (按团队与个人展示) *', i18n)}
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder="输入名字/CRM/部门搜索员工"
+                                            placeholder={localT('campaign.form_audience_placeholder', '输入名字/CRM/部门搜索员工', i18n)}
                                             value={userSearchQuery}
                                             onChange={(e) => setUserSearchQuery(e.target.value)}
                                             className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white mb-2"
@@ -771,13 +957,13 @@ export default function CampaignManager() {
                                                         {/* Team Header */}
                                                         <div className="flex items-center gap-2 py-1 px-1.5 hover:bg-slate-50 rounded-lg transition-colors">
                                                             <input 
-                                                                type="checkbox"
-                                                                checked={isTeamSelected}
-                                                                ref={(el) => {
-                                                                    if (el) el.indeterminate = isPartiallySelected;
-                                                                }}
-                                                                onChange={() => handleToggleTeam(teamName)}
-                                                                className="rounded border-slate-300 text-deep-teal focus:ring-deep-teal w-3.5 h-3.5 cursor-pointer"
+                                                                 type="checkbox"
+                                                                 checked={isTeamSelected}
+                                                                 ref={(el) => {
+                                                                     if (el) el.indeterminate = isPartiallySelected;
+                                                                 }}
+                                                                 onChange={() => handleToggleTeam(teamName)}
+                                                                 className="rounded border-slate-300 text-deep-teal focus:ring-deep-teal w-3.5 h-3.5 cursor-pointer"
                                                             />
                                                             <span className="text-xs font-black text-slate-800 cursor-pointer flex-1" onClick={() => handleToggleTeam(teamName)}>
                                                                 {teamName} ({selectedMembersCount}/{filteredMembers.length})
@@ -811,7 +997,7 @@ export default function CampaignManager() {
                                 {/* Section 2: Condition Trigger Config */}
                                 <div className="space-y-3.5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                     <h4 className="text-xs font-black text-slate-600 uppercase tracking-wider border-b border-slate-200/50 pb-1.5 flex items-center gap-1">
-                                        <span>2. 达标通关规则</span>
+                                        <span>{localT('campaign.modal_step2', '2. 达标通关规则', i18n)}</span>
                                     </h4>
 
                                     <div className="flex gap-4">
@@ -822,7 +1008,7 @@ export default function CampaignManager() {
                                                 onChange={() => setConditionType('category')} 
                                                 className="text-deep-teal focus:ring-deep-teal w-3.5 h-3.5"
                                             />
-                                            按特定分类学习时长
+                                            {localT('campaign.rule_by_duration', '按特定分类学习时长', i18n)}
                                         </label>
                                         <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
                                             <input 
@@ -831,14 +1017,14 @@ export default function CampaignManager() {
                                                 onChange={() => setConditionType('specific_tasks')} 
                                                 className="text-deep-teal focus:ring-deep-teal w-3.5 h-3.5"
                                             />
-                                            按指定课程通关
+                                            {localT('campaign.rule_by_courses', '按指定课程通关', i18n)}
                                         </label>
                                     </div>
 
                                     {conditionType === 'category' ? (
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[11px] font-black text-slate-500 mb-1">指定课程分类</label>
+                                                <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_category', '指定课程分类', i18n)}</label>
                                                 <select
                                                     value={selectedCategory}
                                                     onChange={(e) => setSelectedCategory(e.target.value)}
@@ -850,7 +1036,7 @@ export default function CampaignManager() {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-[11px] font-black text-slate-500 mb-1">要求累计学时 (分钟)</label>
+                                                <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_required_minutes', '要求累计学时 (分钟)', i18n)}</label>
                                                 <input
                                                     type="number"
                                                     required
@@ -863,10 +1049,10 @@ export default function CampaignManager() {
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
-                                            <label className="block text-[11px] font-black text-slate-500 mb-1">勾选指定必听录音/课时 (多选)</label>
+                                            <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_select_courses', '勾选指定必听录音/课时 (多选)', i18n)}</label>
                                             <input
                                                 type="text"
-                                                placeholder="搜索录音标题"
+                                                placeholder={localT('campaign.form_search_courses_placeholder', '搜索录音标题', i18n)}
                                                 value={recordingSearchQuery}
                                                 onChange={(e) => setRecordingSearchQuery(e.target.value)}
                                                 className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white mb-2"
@@ -894,11 +1080,11 @@ export default function CampaignManager() {
                                 {/* Section 3: Certificate Template Customizer */}
                                 <div className="space-y-3.5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                     <h4 className="text-xs font-black text-slate-600 uppercase tracking-wider border-b border-slate-200/50 pb-1.5 flex items-center gap-1">
-                                        <span>3. 荣誉证书定制化设计</span>
+                                        <span>{localT('campaign.modal_step3', '3. 荣誉证书定制化设计', i18n)}</span>
                                     </h4>
 
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-500 mb-1">主横幅荣誉称号 (Banner Title)</label>
+                                        <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_cert_banner_title', '主横幅荣誉称号 (Banner Title)', i18n)}</label>
                                         <input
                                             type="text"
                                             required
@@ -909,7 +1095,7 @@ export default function CampaignManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-500 mb-1">荣誉详情说明 (Description)</label>
+                                        <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_cert_desc', '荣誉详情说明 (Description)', i18n)}</label>
                                         <textarea
                                             rows={3}
                                             required
@@ -922,7 +1108,7 @@ export default function CampaignManager() {
                                     {/* Stats fields customization */}
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 mb-1">项目名 (Training)</label>
+                                            <label className="block text-[10px] font-black text-slate-500 mb-1">{localT('campaign.form_cert_training', '项目名 (Training)', i18n)}</label>
                                             <input
                                                 type="text"
                                                 required
@@ -932,7 +1118,7 @@ export default function CampaignManager() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 mb-1">时长展示 (Duration)</label>
+                                            <label className="block text-[10px] font-black text-slate-500 mb-1">{localT('campaign.form_cert_duration', '时长展示 (Duration)', i18n)}</label>
                                             <input
                                                 type="text"
                                                 required
@@ -942,7 +1128,7 @@ export default function CampaignManager() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 mb-1">成就名称 (Achievement)</label>
+                                            <label className="block text-[10px] font-black text-slate-500 mb-1">{localT('campaign.form_cert_achievement', '成就名称 (Achievement)', i18n)}</label>
                                             <input
                                                 type="text"
                                                 required
@@ -954,7 +1140,7 @@ export default function CampaignManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-500 mb-1">底部鼓励语 (Encouragement)</label>
+                                        <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_cert_encouragement', '底部鼓励语 (Encouragement)', i18n)}</label>
                                         <input
                                             type="text"
                                             required
@@ -965,7 +1151,7 @@ export default function CampaignManager() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-500 mb-1">授权签发人 (Issued By)</label>
+                                        <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_cert_issued_by', '授权签发人 (Issued By)', i18n)}</label>
                                         <input
                                             type="text"
                                             required
@@ -982,7 +1168,7 @@ export default function CampaignManager() {
                                         disabled={actionLoading}
                                         className="w-full bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-extrabold text-sm py-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-98 transition-all disabled:opacity-50"
                                     >
-                                        {actionLoading ? '发布中...' : '确认发布此专项学习挑战'}
+                                        {actionLoading ? localT('campaign.form_publishing', '发布中...', i18n) : localT('campaign.form_publish_confirm', '确认发布此专项学习挑战', i18n)}
                                     </button>
                                 </div>
                             </div>
@@ -990,7 +1176,7 @@ export default function CampaignManager() {
                             {/* Right Column: Live Mockup Certificate Preview */}
                             <div className="hidden lg:flex flex-col items-center justify-center bg-slate-50/60 rounded-3xl border border-slate-100 p-6 relative overflow-hidden select-none">
                                 <div className="absolute top-4 left-4 text-slate-400 text-[10px] font-black bg-slate-200/50 px-2 py-0.5 rounded-full z-15">
-                                    证书实时效果预览 (PORTRAIT MOCKUP)
+                                    {localT('campaign.preview_title', '证书实时效果预览 (PORTRAIT MOCKUP)', i18n)}
                                 </div>
 
                                 {/* Mockup Printable Frame */}
@@ -1076,7 +1262,7 @@ export default function CampaignManager() {
                                             <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
                                                 <Calendar className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
                                                 <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Issue Date</span>
-                                                <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">2026-06-25</span>
+                                                <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{todayStr}</span>
                                             </div>
                                         </div>
 
