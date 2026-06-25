@@ -131,6 +131,9 @@ export default function AdminLayout() {
                     {hasPermission('manageBanners') && (
                         <Link to="/admin/banners" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/banners')}>{t('admin_menu.banners', 'Banner 管理')}</Link>
                     )}
+                    {isLeader && (
+                        <Link to="/admin/campaigns" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/campaigns')}>{t('admin_menu.campaigns', '专属证书挑战')}</Link>
+                    )}
                 </nav>
                 <div className="px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:pb-4 border-t border-white/10 space-y-2">
                     <Link to="/hub" onClick={() => setIsDrawerOpen(false)} className="flex items-center justify-center w-full py-2 bg-white/10 hover:bg-desert-gold hover:text-deep-teal rounded-lg transition-colors font-semibold text-sm">

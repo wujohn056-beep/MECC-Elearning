@@ -2879,6 +2879,13 @@ export default function LearningHub() {
     const certificateRef = React.useRef<HTMLDivElement>(null);
     const [certImageDataUrl, setCertImageDataUrl] = useState<string | null>(null);
     const [isDownloadingCert, setIsDownloadingCert] = useState(false);
+    
+    // Custom campaigns (special certificates) states
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [showCampaignCert, setShowCampaignCert] = useState<any>(null);
+    const campaignCertRef = React.useRef<HTMLDivElement>(null);
+    const [campaignCertImageDataUrl, setCampaignCertImageDataUrl] = useState<string | null>(null);
+    const [isDownloadingCampaignCert, setIsDownloadingCampaignCert] = useState(false);
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
@@ -2909,6 +2916,28 @@ export default function LearningHub() {
     const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const [showRulesModal, setShowRulesModal] = useState(false);
     const [showHonorModal, setShowHonorModal] = useState(false);
+    
+    const activeCampaignsForUser = React.useMemo(() => {
+        if (!user) return [];
+        const userTeam = profile?.team || '';
+        const userId = user.uid;
+        
+        return campaigns.filter(c => {
+            // Check if user is in target team
+            const inTeam = c.teamIds && c.teamIds.includes(userTeam);
+            // Check if user is targeted individually
+            const inUsers = c.userIds && c.userIds.includes(userId);
+            
+            // Check dates
+            const now = new Date();
+            const start = c.startDate ? (typeof c.startDate.toDate === 'function' ? c.startDate.toDate() : new Date(c.startDate)) : new Date(0);
+            const end = c.endDate ? (typeof c.endDate.toDate === 'function' ? c.endDate.toDate() : new Date(c.endDate)) : new Date(now.getTime() + 100000000);
+            const activeDate = now >= start && now <= end;
+            
+            return (inTeam || inUsers) && activeDate;
+        });
+    }, [campaigns, user, profile]);
+    
     const [plazaMode, setPlazaMode] = useState<'recordings' | 'policies' | 'brands'>('recordings');
     
     // Ensure Web client only displays recordings mode (hiding policies/brands tabs)
@@ -3145,6 +3174,14 @@ export default function LearningHub() {
                     } as Recording);
                 });
                 setRecordings(recData);
+
+                // Fetch Campaigns
+                const campaignsSnap = await getDocs(collection(db, 'campaigns'));
+                const campaignsData: any[] = [];
+                campaignsSnap.forEach(cDoc => {
+                    campaignsData.push({ id: cDoc.id, ...cDoc.data() });
+                });
+                setCampaigns(campaignsData);
 
                 // Fetch All Users
                 const usersSnapshot = await getDocs(collection(db, 'users'));
@@ -4297,6 +4334,352 @@ export default function LearningHub() {
         );
     };
 
+    const handleDownloadCampaignCertificate = async () => {
+        if (!campaignCertRef.current) return;
+        setIsDownloadingCampaignCert(true);
+        try {
+            const { toPng } = await import('html-to-image');
+            
+            // Wait a tiny bit to ensure DOM renders fully
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            
+            const dataUrl = await toPng(campaignCertRef.current, {
+                quality: 1.0,
+                pixelRatio: 3,
+                cacheBust: true,
+                backgroundColor: '#ffffff',
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left',
+                }
+            });
+            
+            if (Capacitor.isNativePlatform()) {
+                setCampaignCertImageDataUrl(dataUrl);
+            } else {
+                const link = document.createElement('a');
+                link.download = `51Talk_Special_Certificate_${profile?.name || 'Member'}.png`;
+                link.href = dataUrl;
+                link.click();
+                
+                // Show long-press modal on mobile browsers as well for better UX
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    setCampaignCertImageDataUrl(dataUrl);
+                }
+            }
+        } catch (error) {
+            console.error("Error generating campaign certificate image", error);
+            alert(localT('learning_hub.cert_download_fail', '证书生成失败，请重试。', i18n));
+        } finally {
+            setIsDownloadingCampaignCert(false);
+        }
+    };
+
+    const renderCampaignCard = (campaign: any) => {
+        // Calculate progress
+        let completed = false;
+        let progressText = '';
+        let progressPercent = 0;
+
+        if (campaign.conditions.category) {
+            const catRecs = recordings.filter(r => r.categoryId === campaign.conditions.category);
+            const catRecIds = catRecs.map(r => r.id);
+            const completedInCat = Array.from(new Set(
+                completedAudioIds.filter(id => catRecIds.includes(id))
+            ));
+            
+            const progressMins = completedInCat.length * 12;
+            const reqMins = campaign.conditions.requiredMinutes || 120;
+            progressPercent = Math.min(100, Math.round((progressMins / reqMins) * 100));
+            completed = progressPercent >= 100;
+            progressText = `${progressMins} / ${reqMins} ${localT('common.minutes', '分钟', i18n)}`;
+        } else if (campaign.conditions.requiredTaskIds) {
+            const reqIds = campaign.conditions.requiredTaskIds;
+            const completedTasks = Array.from(new Set(
+                completedAudioIds.filter(id => reqIds.includes(id))
+            ));
+            progressPercent = Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100));
+            completed = completedTasks.length === reqIds.length;
+            progressText = `${completedTasks.length} / ${reqIds.length} ${localT('learning_hub.courses', '门课', i18n)}`;
+        }
+
+        const handleCardAction = () => {
+            if (completed) {
+                setShowCampaignCert(campaign);
+            } else {
+                if (campaign.conditions.category) {
+                    setActiveTab(campaign.conditions.category);
+                } else {
+                    setActiveTab('all');
+                }
+            }
+        };
+
+        return (
+            <div 
+                key={campaign.id}
+                className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between gap-4 relative overflow-hidden"
+            >
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl shadow-sm shrink-0 border border-white/20">
+                        🏆
+                    </div>
+                    
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-black text-slate-800 dark:text-white leading-tight">{campaign.title}</span>
+                            <span className="text-[9px] font-bold text-blue-605 dark:text-blue-400 font-mono bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900">
+                                {campaign.certConfig.bannerTitle}
+                            </span>
+                        </div>
+                        
+                        {/* Progress bar */}
+                        <div className="flex items-center gap-2 mt-1.5 w-full">
+                            <div className="flex-1 bg-[#E6DFD3]/40 dark:bg-slate-800 rounded-full h-1.5 relative overflow-hidden">
+                                <div 
+                                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-500 ease-out" 
+                                    style={{ width: `${progressPercent}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono shrink-0">
+                                {progressText}
+                            </span>
+                        </div>
+
+                        <p className="text-[9px] text-slate-450 mt-1 font-semibold">
+                            👤 {localT('campaign.issued_by', '发起人', i18n)}: {campaign.creatorName} ({campaign.creatorRole?.toUpperCase()})
+                        </p>
+                    </div>
+                </div>
+
+                {/* Action button */}
+                <button
+                    type="button"
+                    onClick={handleCardAction}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0 active:scale-95 cursor-pointer shadow-sm ${
+                        completed 
+                            ? 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white' 
+                            : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                    }`}
+                >
+                    {completed ? '✨ 领取荣誉证书' : localT('learning_hub.go_learn', '去学习', i18n)}
+                </button>
+            </div>
+        );
+    };
+
+    const renderCampaignCertificateModal = () => {
+        if (!showCampaignCert) return null;
+        
+        const formattedDate = new Date().toLocaleDateString(
+            i18n.language?.startsWith('ar') 
+                ? 'ar-JO' 
+                : i18n.language?.startsWith('en') 
+                    ? 'en-US' 
+                    : 'zh-CN', 
+            {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }
+        );
+
+        const config = showCampaignCert.certConfig;
+
+        return (
+            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
+                <div className="relative w-full max-w-lg flex flex-col items-center">
+                    
+                    {/* Close Button */}
+                    <button 
+                        onClick={() => setShowCampaignCert(null)}
+                        className="absolute -top-12 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-50 shadow-md border border-white/10 active:scale-95"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+
+                    {/* Certificate Printable Wrapper Container */}
+                    <div 
+                        ref={campaignCertRef}
+                        className="relative w-[360px] aspect-[1/1.22] bg-white border border-blue-600/40 rounded-2xl shadow-2xl flex flex-col p-4 text-slate-800 overflow-hidden select-none"
+                    >
+                        {/* Wavy Corner Accents */}
+                        {/* Top-Left */}
+                        <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none z-0">
+                            <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                <path d="M0 0 C 70 0, 80 25, 55 65 C 35 90, 0 90, 0 90 Z" fill="#1e40af" opacity="0.95"/>
+                                <path d="M0 0 C 50 0, 60 20, 40 50 C 25 70, 0 70, 0 70 Z" fill="#eab308" opacity="0.9"/>
+                            </svg>
+                        </div>
+                        {/* Top-Right */}
+                        <div className="absolute top-0 right-0 w-20 h-20 pointer-events-none z-0">
+                            <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                <path d="M100 0 C 30 0, 20 25, 45 65 C 65 90, 100 90, 100 90 Z" fill="#1e40af" opacity="0.95"/>
+                                <path d="M100 0 C 50 0, 40 20, 60 50 C 75 70, 100 70, 100 70 Z" fill="#eab308" opacity="0.9"/>
+                            </svg>
+                        </div>
+                        {/* Bottom-Left */}
+                        <div className="absolute bottom-0 left-0 w-20 h-20 pointer-events-none z-0">
+                            <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                <path d="M0 100 C 70 100, 80 75, 55 35 C 35 10, 0 10, 0 10 Z" fill="#eab308" opacity="0.9"/>
+                                <path d="M0 100 C 50 100, 60 80, 40 50 C 25 30, 0 30, 0 30 Z" fill="#1e40af" opacity="0.95"/>
+                            </svg>
+                        </div>
+                        {/* Bottom-Right */}
+                        <div className="absolute bottom-0 right-0 w-20 h-20 pointer-events-none z-0">
+                            <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                <path d="M100 100 C 30 100, 20 75, 45 35 C 65 10, 100 10, 100 10 Z" fill="#eab308" opacity="0.9"/>
+                                <path d="M100 100 C 50 100, 40 80, 60 50 C 75 30, 100 30, 100 30 Z" fill="#1e40af" opacity="0.95"/>
+                            </svg>
+                        </div>
+
+                        {/* Outer gold border card box */}
+                        <div className="m-2 border border-yellow-400/40 rounded-xl p-3 flex flex-col items-center justify-between h-full relative z-10 bg-white/95 backdrop-blur-sm">
+                            
+                            {/* Logo & Mascot */}
+                            <div className="w-full flex justify-between items-center px-1">
+                                <img src="/images/51talk-logo.png" alt="51Talk Logo" className="h-6 object-contain" />
+                                <img src="/images/51talk-mascot-smiling.png" alt="Mascot" className="h-10 object-contain" />
+                            </div>
+
+                            {/* Header */}
+                            <div className="text-center mt-1">
+                                <h2 className="text-blue-900 font-extrabold text-base tracking-widest leading-none">CERTIFICATE</h2>
+                                <p className="text-blue-800 font-bold text-[7px] tracking-[0.25em] uppercase mt-0.5">OF ACHIEVEMENT</p>
+                            </div>
+
+                            {/* Certify text */}
+                            <p className="text-slate-400 text-[8px] font-semibold tracking-wider">This is to certify that</p>
+
+                            {/* Recipient Name */}
+                            <h3 className="text-sm font-extrabold text-blue-700 italic border-b border-yellow-400/40 pb-0.5 px-3 min-w-36 text-center truncate max-w-full">
+                                {profile?.name || user?.email?.split('@')[0] || 'Member'}
+                            </h3>
+
+                            <p className="text-slate-400 text-[7px] font-semibold">has successfully completed the</p>
+
+                            {/* Ribbon Banner */}
+                            <div className="relative w-full max-w-[280px] bg-gradient-to-r from-blue-700 to-blue-800 text-white font-extrabold text-[8px] sm:text-[9px] py-1 px-3 rounded shadow border-y border-yellow-400/40 text-center truncate uppercase tracking-wide">
+                                ★ {config.bannerTitle} ★
+                            </div>
+
+                            {/* Subtitle / desc */}
+                            <p className="text-[7.5px] text-slate-500 leading-snug italic text-center max-w-[260px] px-1 line-clamp-2">
+                                {config.bannerSubTitle}
+                            </p>
+
+                            {/* 4 Stats Grid */}
+                            <div className="grid grid-cols-4 gap-1 w-full text-center mt-1">
+                                <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                    <BookOpen className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                    <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Training</span>
+                                    <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{config.trainingName}</span>
+                                </div>
+                                <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                    <Clock className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                    <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Duration</span>
+                                    <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{config.durationText}</span>
+                                </div>
+                                <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                    <Award className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                    <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Achievement</span>
+                                    <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{config.achievementText}</span>
+                                </div>
+                                <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                    <Calendar className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                    <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Issue Date</span>
+                                    <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{formattedDate}</span>
+                                </div>
+                            </div>
+
+                            {/* Encouragement text */}
+                            <p className="text-[6.5px] text-slate-500 italic text-center max-w-[260px] px-1 scale-90 leading-tight">
+                                {config.encouragementText}
+                            </p>
+
+                            {/* Signatures */}
+                            <div className="w-full flex items-center justify-between border-t border-slate-100 pt-1 text-[7px] px-1 mt-1 shrink-0">
+                                <div className="flex flex-col items-center">
+                                    <span className="font-serif italic font-bold text-slate-700 text-[6px]">51Talk Management</span>
+                                    <div className="w-10 border-t border-slate-200 my-0.5"></div>
+                                    <span className="text-[5px] text-slate-400 font-extrabold scale-90 uppercase">Issued By</span>
+                                </div>
+
+                                {/* Seal badge mockup */}
+                                <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 border border-yellow-250 flex items-center justify-center text-[5px] font-black text-blue-950 shadow">
+                                    ★ ★
+                                </div>
+
+                                <div className="flex flex-col items-center">
+                                    <span className="font-bold text-blue-600 text-[6px] truncate max-w-[65px]">{config.issuedBy}</span>
+                                    <div className="w-10 border-t border-slate-200 my-0.5"></div>
+                                    <span className="text-[5px] text-slate-400 font-extrabold scale-90 uppercase">Authorized Signature</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex flex-col sm:flex-row gap-2.5 mt-4 justify-center w-full z-10 relative px-4">
+                        <button
+                            onClick={handleDownloadCampaignCertificate}
+                            disabled={isDownloadingCampaignCert}
+                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all w-full sm:w-auto disabled:opacity-50"
+                        >
+                            {isDownloadingCampaignCert ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Download className="w-4 h-4" />
+                            )}
+                            {isDownloadingCampaignCert ? '生成中...' : localT('learning_hub.cert_download', '保存证书至相册', i18n)}
+                        </button>
+                        
+                        <button
+                            onClick={() => {
+                                const shareUrl = window.location.href;
+                                const text = encodeURIComponent(`Hi! I just unlocked the custom honor certificate: ${config.bannerTitle} at 51Talk! 🏆🎓`);
+                                window.open(`https://api.whatsapp.com/send?text=${text}%20${shareUrl}`);
+                            }}
+                            className="bg-slate-150 hover:bg-slate-200 border border-slate-200 text-slate-700 font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all w-full sm:w-auto"
+                        >
+                            <Share2 className="w-4 h-4" /> {localT('learning_hub.cert_share_whatsapp', '分享至 WhatsApp', i18n)}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile/APP Long Press Save Helper Modal */}
+                {campaignCertImageDataUrl && (
+                    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
+                        <button 
+                            onClick={() => setCampaignCertImageDataUrl(null)}
+                            className="absolute top-6 end-6 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-[1010]"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <div className="text-center max-w-sm mb-4">
+                            <span className="text-yellow-400 text-2xl">✨</span>
+                            <h4 className="text-white font-extrabold text-base mt-1">证书生成成功！</h4>
+                            <p className="text-slate-300 text-xs mt-1 px-4 leading-normal">
+                                请**长按**下方证书图片，在弹出的菜单中选择 **保存图片** 或 **分享** 到相册。
+                            </p>
+                        </div>
+                        
+                        <div className="w-full max-w-xs overflow-hidden rounded-2xl border-4 border-yellow-400/50 shadow-2xl relative">
+                            <img 
+                                src={campaignCertImageDataUrl} 
+                                alt="51Talk Honor Certificate" 
+                                className="w-full h-auto object-contain select-text" 
+                                style={{ WebkitTouchCallout: 'default' }}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const handleDownloadCertificate = async () => {
         if (!certificateRef.current) return;
         setIsDownloadingCert(true);
@@ -4844,6 +5227,13 @@ export default function LearningHub() {
                         <div className="mt-6 z-30 relative">
                             {renderCompactOasisHonorWidget()}
                         </div>
+
+                        {/* Custom Team Campaigns */}
+                        {activeCampaignsForUser.length > 0 && (
+                            <div className="mt-4 z-30 relative space-y-3">
+                                {activeCampaignsForUser.map(campaign => renderCampaignCard(campaign))}
+                            </div>
+                        )}
 
                         {/* Primary Plaza Mode Tab Switcher */}
                         {isNative && (
@@ -5551,6 +5941,7 @@ export default function LearningHub() {
                 />
             )}
             {showCertificate && renderCertificateModal()}
+            {showCampaignCert && renderCampaignCertificateModal()}
             {renderRulesModal()}
             {showHonorModal && renderOasisHonorDetailModal()}
         </div>
