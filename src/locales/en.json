@@ -83,7 +83,17 @@
         "admin_dashboard": "Admin",
         "dashboard": "Dashboard",
         "personal_center": "Personal Center",
-        "team_tasks": "Team Tasks"
+        "team_tasks": "Team Tasks",
+        "toggle_theme": "Switch Theme"
+    },
+    "theme": {
+        "oasis": "Jordan Oasis",
+        "dusk": "Petra Dusk",
+        "dark": "Arabian Night",
+        "settings_desc": "Select the visual environment that suits you, and experience the colorful styles of Jordan and the Middle East.",
+        "oasis_desc": "Sunny desert oasis, vibrant daytime theme",
+        "dusk_desc": "Rose sandstone temple, warm sunset theme",
+        "dark_desc": "Starlit sky, quiet dark theme for eye comfort"
     },
     "admin_menu": {
         "title": "Admin Dashboard",

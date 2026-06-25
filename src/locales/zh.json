@@ -83,7 +83,17 @@
         "admin_dashboard": "管理后台",
         "dashboard": "数据看板",
         "personal_center": "个人学习中心",
-        "team_tasks": "团队任务"
+        "team_tasks": "团队任务",
+        "toggle_theme": "切换视觉主题"
+    },
+    "theme": {
+        "oasis": "约旦绿洲",
+        "dusk": "佩特拉暮色",
+        "dark": "阿拉伯星空",
+        "settings_desc": "选择适合您的视觉环境，体验中东约旦的多彩风格。",
+        "oasis_desc": "阳光沙漠，活力成长的白天风格",
+        "dusk_desc": "红褐色神殿，温暖祥和的日落风格",
+        "dark_desc": "璀璨月夜，静谧护眼的全黑夜间风格"
     },
     "admin_menu": {
         "title": "管理后台",

@@ -130,6 +130,7 @@ export default function AppLayout() {
         setAppTheme(prev => {
             const next = prev === 'oasis' ? 'dusk' : prev === 'dusk' ? 'dark' : 'oasis';
             localStorage.setItem('app-theme', next);
+            window.dispatchEvent(new Event('app-theme-changed'));
             return next;
         });
     };
@@ -142,6 +143,15 @@ export default function AppLayout() {
         }
         document.documentElement.setAttribute('data-theme', appTheme);
     }, [appTheme]);
+
+    useEffect(() => {
+        const syncTheme = () => {
+            const stored = (localStorage.getItem('app-theme') as 'oasis' | 'dusk' | 'dark') || 'oasis';
+            setAppTheme(stored);
+        };
+        window.addEventListener('app-theme-changed', syncTheme);
+        return () => window.removeEventListener('app-theme-changed', syncTheme);
+    }, []);
     const menuRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
     const navigate = useNavigate();

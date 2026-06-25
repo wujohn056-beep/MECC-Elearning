@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
-import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2, Bell, Camera } from 'lucide-react';
+import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2, Bell, Camera, Sparkles } from 'lucide-react';
 import { ref as sRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
@@ -57,6 +57,24 @@ export default function Account() {
     const isNative = Capacitor.isNativePlatform();
     const [openSection, setOpenSection] = useState<'tasks' | 'favorites' | 'milestones' | null>('tasks');
     const [uploading, setUploading] = useState(false);
+    const [currentTheme, setCurrentTheme] = useState<'oasis' | 'dusk' | 'dark'>(() => {
+        return (localStorage.getItem('app-theme') as 'oasis' | 'dusk' | 'dark') || 'oasis';
+    });
+
+    const handleThemeChange = (newTheme: 'oasis' | 'dusk' | 'dark') => {
+        setCurrentTheme(newTheme);
+        localStorage.setItem('app-theme', newTheme);
+        window.dispatchEvent(new Event('app-theme-changed'));
+    };
+
+    useEffect(() => {
+        const syncTheme = () => {
+            const stored = (localStorage.getItem('app-theme') as 'oasis' | 'dusk' | 'dark') || 'oasis';
+            setCurrentTheme(stored);
+        };
+        window.addEventListener('app-theme-changed', syncTheme);
+        return () => window.removeEventListener('app-theme-changed', syncTheme);
+    }, []);
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -383,9 +401,162 @@ export default function Account() {
                 </div>
             </div>
 
+            {/* Theme Settings Card (Web Desktop) */}
+            {!isNative && (
+                <div className="glass-panel rounded-3xl p-6 border border-white bg-white/60 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-in fade-in duration-300">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-desert-gold/15 flex items-center justify-center text-desert-gold shadow-sm shrink-0">
+                            <Sparkles className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-extrabold text-deep-teal">{t('navbar.toggle_theme', '主题视觉设置')}</h3>
+                            <p className="text-sm font-semibold text-arabian-night/60 mt-0.5">{t('theme.settings_desc', '选择适合您的视觉环境，体验中东约旦的多彩风格。')}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                        {/* Oasis Theme Option */}
+                        <button
+                            onClick={() => handleThemeChange('oasis')}
+                            className={`px-6 py-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 font-bold ${
+                                currentTheme === 'oasis'
+                                    ? 'border-deep-teal bg-deep-teal/5 text-deep-teal shadow-inner scale-[1.02]'
+                                    : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
+                            }`}
+                        >
+                            <span className="text-lg">🌴</span>
+                            <div className="text-left leading-tight">
+                                <span className="text-sm block">{t('theme.oasis', '约旦绿洲')}</span>
+                            </div>
+                        </button>
+
+                        {/* Dusk Theme Option */}
+                        <button
+                            onClick={() => handleThemeChange('dusk')}
+                            className={`px-6 py-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 font-bold ${
+                                currentTheme === 'dusk'
+                                    ? 'border-[#C05A46] bg-[#C05A46]/5 text-[#C05A46] shadow-inner scale-[1.02]'
+                                    : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
+                            }`}
+                        >
+                            <span className="text-lg">🌅</span>
+                            <div className="text-left leading-tight">
+                                <span className="text-sm block">{t('theme.dusk', '佩特拉暮色')}</span>
+                            </div>
+                        </button>
+
+                        {/* Dark Theme Option */}
+                        <button
+                            onClick={() => handleThemeChange('dark')}
+                            className={`px-6 py-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 font-bold ${
+                                currentTheme === 'dark'
+                                    ? 'border-desert-gold bg-desert-gold/5 text-desert-gold shadow-inner scale-[1.02]'
+                                    : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
+                            }`}
+                        >
+                            <span className="text-lg">🌌</span>
+                            <div className="text-left leading-tight">
+                                <span className="text-sm block">{t('theme.dark', '阿拉伯星空')}</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Bottom Content Area */}
             {isNative ? (
                 <div className="space-y-4">
+                    {/* Theme Settings Group */}
+                    <div className="glass-panel rounded-2xl border border-white bg-white/60 overflow-hidden shadow-sm">
+                        <button 
+                            onClick={() => setOpenSection(openSection === 'theme' ? null : 'theme')}
+                            className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 active:bg-white/80 transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-desert-gold/10 flex items-center justify-center text-desert-gold animate-pulse">
+                                    <Sparkles className="w-4 h-4" />
+                                </div>
+                                <span className="font-extrabold text-slate-800 text-sm">{t('navbar.toggle_theme', '主题视觉设置')}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs bg-desert-gold/15 text-desert-gold px-2 py-0.5 rounded-full font-bold">
+                                    {currentTheme === 'oasis' 
+                                        ? t('theme.oasis', '约旦绿洲') 
+                                        : currentTheme === 'dusk' 
+                                            ? t('theme.dusk', '佩特拉暮色') 
+                                            : t('theme.dark', '阿拉伯星空')}
+                                </span>
+                                {openSection === 'theme' ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                            </div>
+                        </button>
+                        
+                        {openSection === 'theme' && (
+                            <div className="p-4 border-t border-slate-100 bg-white/30 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                                <p className="text-xs font-semibold text-arabian-night/60 mb-2">
+                                    {t('theme.settings_desc', '选择适合您的视觉环境，体验中东约旦的多彩风格。')}
+                                </p>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {/* Oasis Theme Option */}
+                                    <button
+                                        onClick={() => handleThemeChange('oasis')}
+                                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
+                                            currentTheme === 'oasis'
+                                                ? 'border-deep-teal bg-deep-teal/5 font-black text-deep-teal shadow-inner'
+                                                : 'border-transparent bg-white/65 hover:bg-white hover:border-gray-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">🌴</span>
+                                            <div className="text-left">
+                                                <h4 className="text-sm font-bold">{t('theme.oasis', '约旦绿洲')}</h4>
+                                                <p className="text-[10px] text-arabian-night/50 font-semibold">{t('theme.oasis_desc', '阳光沙漠，活力成长的白天风格')}</p>
+                                            </div>
+                                        </div>
+                                        {currentTheme === 'oasis' && <span className="text-xs bg-deep-teal text-white px-2 py-0.5 rounded-full font-bold">✓</span>}
+                                    </button>
+
+                                    {/* Dusk Theme Option */}
+                                    <button
+                                        onClick={() => handleThemeChange('dusk')}
+                                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
+                                            currentTheme === 'dusk'
+                                                ? 'border-[#C05A46] bg-[#C05A46]/5 font-black text-[#C05A46] shadow-inner'
+                                                : 'border-transparent bg-white/65 hover:bg-white hover:border-gray-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">🌅</span>
+                                            <div className="text-left">
+                                                <h4 className="text-sm font-bold">{t('theme.dusk', '佩特拉暮色')}</h4>
+                                                <p className="text-[10px] text-arabian-night/50 font-semibold">{t('theme.dusk_desc', '红褐色神殿，温暖祥和的日落风格')}</p>
+                                            </div>
+                                        </div>
+                                        {currentTheme === 'dusk' && <span className="text-xs bg-[#C05A46] text-white px-2 py-0.5 rounded-full font-bold">✓</span>}
+                                    </button>
+
+                                    {/* Dark Theme Option */}
+                                    <button
+                                        onClick={() => handleThemeChange('dark')}
+                                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
+                                            currentTheme === 'dark'
+                                                ? 'border-desert-gold bg-desert-gold/5 font-black text-desert-gold shadow-inner'
+                                                : 'border-transparent bg-white/65 hover:bg-white hover:border-gray-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">🌌</span>
+                                            <div className="text-left">
+                                                <h4 className="text-sm font-bold">{t('theme.dark', '阿拉伯星空')}</h4>
+                                                <p className="text-[10px] text-arabian-night/50 font-semibold">{t('theme.dark_desc', '璀璨月夜，静谧护眼的全黑夜间风格')}</p>
+                                            </div>
+                                        </div>
+                                        {currentTheme === 'dark' && <span className="text-xs bg-desert-gold text-arabian-night px-2 py-0.5 rounded-full font-bold">✓</span>}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Tasks Group */}
                     <div className="glass-panel rounded-2xl border border-white bg-white/60 overflow-hidden shadow-sm">
                         <button 
