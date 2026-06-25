@@ -235,9 +235,21 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
     return dict[currentLang][key] || defaultVal || key;
 };
 
-export default function CampaignManager() {
+interface CampaignManagerProps {
+    triggerCreate?: boolean;
+    onTriggerCreateClose?: () => void;
+}
+
+export default function CampaignManager({ triggerCreate, onTriggerCreateClose }: CampaignManagerProps = {}) {
     const { t, i18n } = useTranslation();
     const { profile, isLeader } = useAuth();
+
+    useEffect(() => {
+        if (triggerCreate) {
+            setShowCreateModal(true);
+            onTriggerCreateClose?.();
+        }
+    }, [triggerCreate, onTriggerCreateClose]);
 
     const todayStr = useMemo(() => {
         const currentLocale = i18n.language === 'ar' ? 'ar-EG' : i18n.language === 'en' ? 'en-US' : 'zh-CN';
