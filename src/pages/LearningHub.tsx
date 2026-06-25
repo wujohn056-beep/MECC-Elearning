@@ -2772,10 +2772,10 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.tab_brands': 'Marketing Brands',
             'learning_hub.view_honor_detail': 'View Details',
             'learning_hub.view_rules_detail': 'View Detailed Rules',
-            'learning_hub.rules_title_modal': 'Oasis Learning Honor System',
+            'learning_hub.rules_title_modal': 'Treasure Hunters Honor System',
             'learning_hub.coffee_streak': 'Daily Coffee Streak',
-            'learning_hub.caravan_progress': 'Desert Caravan Progress',
-            'learning_hub.next_oasis': 'Next Oasis',
+            'learning_hub.caravan_progress': 'Treasure Hunt Progress',
+            'learning_hub.next_oasis': 'Next Target',
             'learning_hub.max_level': 'Max Honor',
             'learning_hub.view_honor_cert': 'View Badges & Honor Certificate',
             'learning_hub.cert_subtitle': 'HONOR CERTIFICATE AWARDED TO',
@@ -2790,13 +2790,13 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'common.minutes': 'mins',
             'learning_hub.streak_active_tooltip': 'Day {day} Completed',
             'learning_hub.streak_inactive_tooltip': 'Day {day} Incomplete',
-            'learning_hub.next_oasis_tooltip': 'Next Oasis: {title}',
+            'learning_hub.next_oasis_tooltip': 'Next Target: {title}',
             'learning_hub.view_rules': 'Rules',
-            'learning_hub.rules_title': 'Oasis Honor System Rules',
+            'learning_hub.rules_title': 'Treasure Hunters Honor Rules',
             'learning_hub.rules_streak_title': 'Daily Coffee Streak',
             'learning_hub.rules_streak_desc': 'Study any course daily to complete your check-in and accumulate coffee streak days.',
-            'learning_hub.rules_caravan_title': 'Desert Caravan Journey',
-            'learning_hub.rules_caravan_desc': 'Accumulate learning minutes to move your caravan towards the next oasis. Meeting thresholds for both study time and task completion rate unlocks higher honor tiers.',
+            'learning_hub.rules_caravan_title': 'Treasure Hunt Journey',
+            'learning_hub.rules_caravan_desc': 'Accumulate learning minutes to advance your path towards the next treasure level. Meeting thresholds for both study time and task completion rate unlocks higher honor tiers.',
             'learning_hub.rules_cert_title': 'Badges & Certificates',
             'learning_hub.rules_cert_desc': 'Unlock each tier to receive an official Najah Academy Arabesque-style certificate, ready to download and share.',
             'learning_hub.rules_levels_title': 'Honor Tiers & Thresholds:',
@@ -2821,10 +2821,10 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.tab_brands': 'ركن العلامة التجارية',
             'learning_hub.view_honor_detail': 'عرض التفاصيل',
             'learning_hub.view_rules_detail': 'عرض القواعد التفصيلية',
-            'learning_hub.rules_title_modal': 'نظام أوسمة التعلم للواحة',
+            'learning_hub.rules_title_modal': 'نظام أوسمة صائدي الكنز',
             'learning_hub.coffee_streak': 'تحدي القهوة اليومي',
-            'learning_hub.caravan_progress': 'مسار القافلة الصحراوية',
-            'learning_hub.next_oasis': 'الواحة التالية',
+            'learning_hub.caravan_progress': 'مسار البحث عن الكنز',
+            'learning_hub.next_oasis': 'الهدف التالي',
             'learning_hub.max_level': 'المرتبة القصوى',
             'learning_hub.view_honor_cert': 'عرض أوسمة وشهادة الشرف',
             'learning_hub.cert_subtitle': 'شهادة شرف وتقدير تمنح لـ',
@@ -2839,13 +2839,13 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'common.minutes': 'دقيقة',
             'learning_hub.streak_active_tooltip': 'تم التعلم في اليوم {day}',
             'learning_hub.streak_inactive_tooltip': 'لم يتم تسجيل التعلم في اليوم {day}',
-            'learning_hub.next_oasis_tooltip': 'الواحة التالية: {title}',
+            'learning_hub.next_oasis_tooltip': 'الهدف التالي: {title}',
             'learning_hub.view_rules': 'القواعد',
-            'learning_hub.rules_title': 'قواعد نظام أوسمة الواحة',
+            'learning_hub.rules_title': 'قواعد شرف صائدي الكنز',
             'learning_hub.rules_streak_title': 'تحدي القهوة اليومي',
             'learning_hub.rules_streak_desc': 'ادرس أي دورة يوميًا لإكمال تسجيل حضورك وتجميع أيام تحدي القهوة المتتالية.',
-            'learning_hub.rules_caravan_title': 'مسار القافلة الصحراوية',
-            'learning_hub.rules_caravan_desc': 'اجمع دقائق التعلم الفعلية لتحريك قافلتك نحو الواحة التالية. الحصول على ساعات تعلم كافية ومعدل إكمال المهام يفتح مراتب شرف أعلى.',
+            'learning_hub.rules_caravan_title': 'رحلة البحث عن الكنوز',
+            'learning_hub.rules_caravan_desc': 'اجمع دقائق التعلم الفعلية لتحريك فريقك نحو الكنز التالي. الحصول على ساعات تعلم كافية ومعدل إكمال المهام يفتح مراتب شرف أعلى.',
             'learning_hub.rules_cert_title': 'الأوسمة والشهادات',
             'learning_hub.rules_cert_desc': 'افتح كل مرتبة للحصول على شهادة شرف رسمية من Najah Academy بنقوش عربية، جاهزة للتحميل والمشاركة.',
             'learning_hub.rules_levels_title': 'مراتب الشرف ومتطلباتها:',
@@ -4126,7 +4126,7 @@ export default function LearningHub() {
                         </div>
                         {/* Incentive Explain Helper Caption */}
                         <p className="text-[10px] sm:text-[11px] mt-2.5 font-bold text-slate-500 dark:text-slate-400/90 leading-relaxed border-t border-gray-100/50 dark:border-white/5 pt-2 flex items-start gap-1">
-                            <span>{localT('learning_hub.incentive_explain_line', '🏆 学习激励：听录音累积学习时长以移动绿洲骑队。达到时间与任务门槛即可解锁 Najah 学院荣誉证书与精美勋章（点击查看详情）。', i18n)}</span>
+                            <span>{localT('learning_hub.incentive_explain_line', '🏆 宝藏猎人：听录音进行智慧寻宝。达到时间与任务门槛即可解锁 Najah 学院荣誉证书与宝藏勋章奖励（点击查看详情）。', i18n)}</span>
                         </p>
                     </div>
                 </div>
@@ -4221,7 +4221,7 @@ export default function LearningHub() {
                         {/* Spring of Wisdom / Caravan Journey Progress */}
                         <div>
                             <div className="flex justify-between items-center text-xs font-bold text-deep-teal mb-2">
-                                <span className="flex items-center gap-1">🐫 {localT('learning_hub.caravan_progress', '沙漠商队行进进度', i18n)}</span>
+                                <span className="flex items-center gap-1">🤠 {localT('learning_hub.caravan_progress', '沙漠商队行进进度', i18n)}</span>
                                 <span className="text-desert-gold font-extrabold font-mono">{stats.totalLearningMinutes} / {currentLevelInfo.nextThreshold === 9999 ? '∞' : `${currentLevelInfo.nextThreshold} ${localT('common.minutes', '分钟', i18n)}`}</span>
                             </div>
                             
@@ -4234,7 +4234,7 @@ export default function LearningHub() {
                                         className="absolute right-2 top-1/2 -translate-y-1/2 text-lg z-10 animate-pulse duration-1000" 
                                         title={localT('learning_hub.next_oasis_tooltip', '下一站绿洲：{title}', i18n).replace('{title}', currentLevelInfo.nextTitle)}
                                     >
-                                        🌴
+                                        💎
                                     </div>
                                 )}
                                 
@@ -4251,7 +4251,7 @@ export default function LearningHub() {
                                             transform: 'scaleX(-1)'
                                         }}
                                     >
-                                        🐫
+                                        🧭
                                     </div>
                                 </div>
                             </div>
@@ -4476,11 +4476,11 @@ export default function LearningHub() {
                                 {localT('learning_hub.rules_levels_title', '荣誉等级门槛：', i18n)}
                             </h4>
                             <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold text-arabian-night/80 dark:text-slate-400">
-                                <div className="flex items-center gap-1">🌱 {localT('level.apprentice.title', '绿洲学徒', i18n)}: <span className="font-mono text-desert-gold font-bold">0+ mins</span></div>
-                                <div className="flex items-center gap-1">🐫 {localT('level.voyager.title', '沙漠行者', i18n)}: <span className="font-mono text-desert-gold font-bold">600+ mins</span></div>
-                                <div className="flex items-center gap-1">🐎 {localT('level.knight.title', '智慧骑士', i18n)}: <span className="font-mono text-desert-gold font-bold">1800+ mins</span></div>
-                                <div className="flex items-center gap-1">🦅 {localT('level.falcon.title', '凌空猎鹰', i18n)}: <span className="font-mono text-desert-gold font-bold">3600+ mins</span></div>
-                                <div className="flex items-center gap-1 col-span-2">🌴 {localT('level.guardian.title', '绿洲守护者', i18n)}: <span className="font-mono text-desert-gold font-bold">7200+ mins</span></div>
+                                <div className="flex items-center gap-1">🌱 {localT('level.apprentice.title', '寻宝新手', i18n)}: <span className="font-mono text-desert-gold font-bold">0+ mins</span></div>
+                                <div className="flex items-center gap-1">🐫 {localT('level.voyager.title', '沙漠追踪者', i18n)}: <span className="font-mono text-desert-gold font-bold">600+ mins</span></div>
+                                <div className="flex items-center gap-1">🐎 {localT('level.knight.title', '佩特拉开拓者', i18n)}: <span className="font-mono text-desert-gold font-bold">1800+ mins</span></div>
+                                <div className="flex items-center gap-1">🦅 {localT('level.falcon.title', '精英猎人', i18n)}: <span className="font-mono text-desert-gold font-bold">3600+ mins</span></div>
+                                <div className="flex items-center gap-1 col-span-2">💎 {localT('level.guardian.title', '宝库传奇', i18n)}: <span className="font-mono text-desert-gold font-bold">7200+ mins</span></div>
                             </div>
                         </div>
                     </div>
