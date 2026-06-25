@@ -50,6 +50,9 @@ interface SystemUser {
     role: string;
     team: string;
     email?: string;
+    sd?: string;
+    sm?: string;
+    tl?: string;
 }
 
 export default function CampaignManager() {
@@ -147,10 +150,49 @@ export default function CampaignManager() {
                     name: data.name || '',
                     role: data.role || 'user',
                     team: data.team || '',
-                    email: data.email || ''
+                    email: data.email || '',
+                    sd: data.sd || '',
+                    sm: data.sm || '',
+                    tl: data.tl || ''
                 });
             });
-            setSystemUsers(usersData);
+
+            // Filter users based on leader's scope (exactly like TeamTasks.tsx)
+            const loggedInRole = String(profile?.role).trim().toLowerCase();
+            const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
+            const loggedInTeam = (profile?.team || '').trim().toLowerCase();
+
+            const filteredUsers = usersData.filter(u => {
+                const uTeam = (u.team || '').trim();
+                const uTeamLower = uTeam.toLowerCase();
+                const uCrmId = (u.crmId || '').trim().toLowerCase();
+
+                const uSd = (u.sd || '').trim().toLowerCase();
+                const uSm = (u.sm || '').trim().toLowerCase();
+                const uTl = (u.tl || '').trim().toLowerCase();
+
+                // 1. Super Admin / Admin: Show all users (excluding themselves)
+                if (loggedInRole === 'super_admin' || loggedInRole === 'admin') {
+                    return uCrmId !== loggedInCrmId;
+                }
+
+                // 2. SD (Sales Director): Show users under their hierarchy
+                if (loggedInRole === 'sd') {
+                    return uSd === loggedInCrmId && uCrmId !== loggedInCrmId;
+                }
+
+                // 3. For other roles (SM, TL, etc.), require an active team
+                if (!uTeam) return false;
+
+                if (loggedInRole === 'sm') {
+                    return uSm === loggedInCrmId && uCrmId !== loggedInCrmId;
+                } else if (loggedInRole === 'tl') {
+                    return (uTeamLower === loggedInTeam || uTl === loggedInCrmId) && uCrmId !== loggedInCrmId;
+                }
+                return false;
+            });
+
+            setSystemUsers(filteredUsers);
         } catch (error) {
             console.error("Error fetching admin data:", error);
         } finally {
@@ -383,16 +425,41 @@ export default function CampaignManager() {
     });
 
     // Checkbox togglers
-    const toggleTeamSelection = (teamName: string) => {
-        setSelectedTeams(prev => 
-            prev.includes(teamName) ? prev.filter(t => t !== teamName) : [...prev, teamName]
-        );
+    const handleToggleTeam = (teamName: string) => {
+        const teamMembers = systemUsers.filter(u => u.team === teamName).map(u => u.id);
+        const isTeamSelected = selectedTeams.includes(teamName);
+
+        if (isTeamSelected) {
+            // Unselect team
+            setSelectedTeams(prev => prev.filter(t => t !== teamName));
+            setSelectedUsers(prev => prev.filter(uid => !teamMembers.includes(uid)));
+        } else {
+            // Select team
+            setSelectedTeams(prev => [...prev, teamName]);
+            setSelectedUsers(prev => Array.from(new Set([...prev, ...teamMembers])));
+        }
     };
 
-    const toggleUserSelection = (userId: string) => {
-        setSelectedUsers(prev => 
-            prev.includes(userId) ? prev.filter(u => u !== userId) : [...prev, userId]
-        );
+    const handleToggleUser = (userId: string, teamName: string) => {
+        const isUserSelected = selectedUsers.includes(userId);
+        const teamMembers = systemUsers.filter(u => u.team === teamName).map(u => u.id);
+
+        if (isUserSelected) {
+            // Unselect user
+            setSelectedUsers(prev => prev.filter(uid => uid !== userId));
+            // Since one user is unselected, the team cannot be fully selected
+            setSelectedTeams(prev => prev.filter(t => t !== teamName));
+        } else {
+            // Select user
+            const nextUsers = [...selectedUsers, userId];
+            setSelectedUsers(nextUsers);
+            
+            // Check if all team members are now selected
+            const allMembersSelected = teamMembers.every(uid => nextUsers.includes(uid));
+            if (allMembersSelected) {
+                setSelectedTeams(prev => [...prev, teamName]);
+            }
+        }
     };
 
     const toggleRecordingSelection = (recId: string) => {
@@ -667,55 +734,74 @@ export default function CampaignManager() {
                                         </div>
                                     </div>
 
-                                    {/* Audience Selectors */}
+                                    {/* Unified Audience Selector (Grouped by Team) */}
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-500 mb-1">选择目标受众团队 (TL只能发本团队，多选)</label>
-                                        <div className="flex gap-2 flex-wrap max-h-24 overflow-y-auto border border-slate-200 p-2 rounded-xl bg-white scrollbar-thin">
-                                            {allUniqueTeams.map(team => {
-                                                const isSelected = selectedTeams.includes(team);
-                                                return (
-                                                    <button
-                                                        type="button"
-                                                        key={team}
-                                                        onClick={() => toggleTeamSelection(team)}
-                                                        className={`px-2.5 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer ${
-                                                            isSelected 
-                                                                ? 'bg-deep-teal text-white shadow-sm' 
-                                                                : 'bg-slate-50 border border-slate-200 text-slate-500 hover:bg-slate-100'
-                                                        }`}
-                                                    >
-                                                        {team} {isSelected && '✓'}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                                        <label className="block text-[11px] font-black text-slate-500 mb-1.5">
+                                            选择目标受众 (按团队与个人展示) *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="输入名字/CRM/部门搜索员工"
+                                            value={userSearchQuery}
+                                            onChange={(e) => setUserSearchQuery(e.target.value)}
+                                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white mb-2"
+                                        />
+                                        
+                                        <div className="max-h-64 overflow-y-auto border border-slate-200 p-3 rounded-2xl bg-white scrollbar-thin space-y-3">
+                                            {allUniqueTeams.map(teamName => {
+                                                const teamMembers = systemUsers.filter(u => u.team === teamName);
+                                                const matchesSearch = (user: SystemUser) => {
+                                                    if (!userSearchQuery.trim()) return true;
+                                                    const query = userSearchQuery.toLowerCase();
+                                                    return (
+                                                        user.name.toLowerCase().includes(query) ||
+                                                        user.crmId.toLowerCase().includes(query) ||
+                                                        user.team.toLowerCase().includes(query)
+                                                    );
+                                                };
+                                                const filteredMembers = teamMembers.filter(matchesSearch);
+                                                if (filteredMembers.length === 0) return null;
 
-                                    {/* User Specific selector */}
-                                    <div>
-                                        <label className="block text-[11px] font-black text-slate-500 mb-1">或指派特定个人 (可搜索勾选)</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="输入名字/CRM/部门搜索员工"
-                                                value={userSearchQuery}
-                                                onChange={(e) => setUserSearchQuery(e.target.value)}
-                                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white mb-2"
-                                            />
-                                        </div>
-                                        <div className="max-h-28 overflow-y-auto border border-slate-200 p-2 rounded-xl bg-white scrollbar-thin space-y-1">
-                                            {filteredSystemUsers.map(u => {
-                                                const isSelected = selectedUsers.includes(u.id);
+                                                const isTeamSelected = selectedTeams.includes(teamName);
+                                                const selectedMembersCount = filteredMembers.filter(u => selectedUsers.includes(u.id)).length;
+                                                const isPartiallySelected = selectedMembersCount > 0 && selectedMembersCount < filteredMembers.length;
+
                                                 return (
-                                                    <label key={u.id} className="flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-[10px] font-semibold text-slate-600">
-                                                        <input 
-                                                            type="checkbox" 
-                                                            checked={isSelected}
-                                                            onChange={() => toggleUserSelection(u.id)}
-                                                            className="rounded border-slate-350 text-deep-teal focus:ring-deep-teal shrink-0 w-3 h-3"
-                                                        />
-                                                        <span className="truncate flex-1">{u.name} (CRM: {u.crmId} - {u.team})</span>
-                                                    </label>
+                                                    <div key={teamName} className="space-y-1">
+                                                        {/* Team Header */}
+                                                        <div className="flex items-center gap-2 py-1 px-1.5 hover:bg-slate-50 rounded-lg transition-colors">
+                                                            <input 
+                                                                type="checkbox"
+                                                                checked={isTeamSelected}
+                                                                ref={(el) => {
+                                                                    if (el) el.indeterminate = isPartiallySelected;
+                                                                }}
+                                                                onChange={() => handleToggleTeam(teamName)}
+                                                                className="rounded border-slate-300 text-deep-teal focus:ring-deep-teal w-3.5 h-3.5 cursor-pointer"
+                                                            />
+                                                            <span className="text-xs font-black text-slate-800 cursor-pointer flex-1" onClick={() => handleToggleTeam(teamName)}>
+                                                                {teamName} ({selectedMembersCount}/{filteredMembers.length})
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Team Members List */}
+                                                        <div className="pl-6 border-l border-slate-100 space-y-1 ml-1.5">
+                                                            {filteredMembers.map(u => {
+                                                                const isSelected = selectedUsers.includes(u.id);
+                                                                return (
+                                                                    <label key={u.id} className="flex items-center gap-2 py-0.5 hover:bg-slate-50/50 px-1 rounded cursor-pointer text-[10px] font-semibold text-slate-600">
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            checked={isSelected}
+                                                                            onChange={() => handleToggleUser(u.id, teamName)}
+                                                                            className="rounded border-slate-300 text-deep-teal focus:ring-deep-teal w-3 h-3 shrink-0"
+                                                                        />
+                                                                        <span className="truncate flex-1">{u.name} (CRM: {u.crmId})</span>
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
                                                 );
                                             })}
                                         </div>
