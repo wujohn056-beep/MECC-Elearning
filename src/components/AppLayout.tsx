@@ -241,6 +241,17 @@ export default function AppLayout() {
             if (user && profile && profile.role !== 'super_admin') {
                 try {
                     const today = new Date().toISOString().split('T')[0];
+                    const currentPlatform = Capacitor.getPlatform();
+                    
+                    // Update user profile document with version telemetry
+                    const userRef = doc(db, 'users', user.uid);
+                    await setDoc(userRef, {
+                        lastActiveAt: serverTimestamp(),
+                        appVersion: '1.0.4',
+                        platform: currentPlatform
+                    }, { merge: true });
+
+                    // Daily login activity log
                     const logRef = doc(db, 'user_activity_logs', `${user.uid}_${today}`);
                     await setDoc(logRef, {
                         userId: user.uid,
@@ -252,7 +263,9 @@ export default function AppLayout() {
                         tl: profile.tl || '',
                         team: profile.team || '',
                         date: today,
-                        lastLoginAt: serverTimestamp()
+                        lastLoginAt: serverTimestamp(),
+                        appVersion: '1.0.4',
+                        platform: currentPlatform
                     }, { merge: true });
                 } catch (error) {
                     console.error("Failed to track login", error);

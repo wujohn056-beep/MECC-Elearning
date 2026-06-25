@@ -69,7 +69,7 @@ export default function AdminDashboard() {
     const [filterSm, setFilterSm] = useState<string>('all');
     const [filterTeam, setFilterTeam] = useState<string>('all');
     const [filterCc, setFilterCc] = useState<string>('all');
-    const [activityTab, setActivityTab] = useState<'logins' | 'never' | 'inactive'>('logins');
+    const [activityTab, setActivityTab] = useState<'logins' | 'never' | 'inactive' | 'app_download_not' | 'app_download_outdated' | 'app_download_latest'>('logins');
     
     const [users, setUsers] = useState<UserRecord[]>([]);
     const [logs, setLogs] = useState<LearningLog[]>([]);
@@ -318,6 +318,62 @@ export default function AdminDashboard() {
         };
     }, [displayedUsers, activityLogs]);
 
+    const appVersionAnalysis = useMemo(() => {
+        const neverInstalled: UserRecord[] = [];
+        const outdated: UserRecord[] = [];
+        const latest: UserRecord[] = [];
+
+        displayedUsers.forEach(u => {
+            const hasActiveStamp = !!(u as any).lastActiveAt || !!(u as any).lastLoginAt;
+            if (!hasActiveStamp) {
+                const uLogs = activityLogs.filter(log => log.userId === u.id);
+                if (uLogs.length === 0) {
+                    neverInstalled.push(u);
+                    return;
+                }
+            }
+            
+            const version = (u as any).appVersion;
+            const platform = (u as any).platform;
+
+            if (platform === 'web' || version === '1.0.4') {
+                latest.push(u);
+            } else {
+                outdated.push(u);
+            }
+        });
+
+        const groupByOrg = (list: any[]) => {
+            const groups: Record<string, Record<string, Record<string, any[]>>> = {};
+            list.forEach(item => {
+                const sdName = (item.sd || t('dashboard.unassigned_sd', '未分配 SD')).trim().toUpperCase();
+                const smName = (item.sm || t('dashboard.unassigned_sm', '未分配 SM')).trim().toUpperCase();
+                const tlName = (item.tl || t('dashboard.unassigned_tl', '未分配 TL')).trim().toUpperCase();
+                
+                if (!groups[sdName]) {
+                    groups[sdName] = {};
+                }
+                if (!groups[sdName][smName]) {
+                    groups[sdName][smName] = {};
+                }
+                if (!groups[sdName][smName][tlName]) {
+                    groups[sdName][smName][tlName] = [];
+                }
+                groups[sdName][smName][tlName].push(item);
+            });
+            return groups;
+        };
+
+        return {
+            neverInstalled: groupByOrg(neverInstalled),
+            neverInstalledCount: neverInstalled.length,
+            outdated: groupByOrg(outdated),
+            outdatedCount: outdated.length,
+            latest: groupByOrg(latest),
+            latestCount: latest.length
+        };
+    }, [displayedUsers, activityLogs, t]);
+
     const filteredRecordings = useMemo(() => {
         return recordings.filter(rec => {
             if (!rec.createdAt) return false;
@@ -508,7 +564,11 @@ export default function AdminDashboard() {
         }
     };
 
-    const renderOrgGroupedList = (groupedData: Record<string, Record<string, Record<string, any[]>>>, showLastLogin = false) => {
+    const renderOrgGroupedList = (
+        groupedData: Record<string, Record<string, Record<string, any[]>>>, 
+        showLastLogin = false,
+        showAppVersion = false
+    ) => {
         const sdNames = Object.keys(groupedData).sort();
         if (sdNames.length === 0) {
             return (
@@ -519,6 +579,56 @@ export default function AdminDashboard() {
         }
 
         const userRole = profile?.role;
+
+        const renderMemberCard = (member: any) => (
+            <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
+                <div className="flex justify-between items-start">
+                    <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
+                    <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
+                        {member.role?.toUpperCase()}
+                    </span>
+                </div>
+                <div className="text-[11px] text-slate-500">
+                    {member.name || '-'}
+                </div>
+                {showLastLogin && member.lastLogin && (
+                    <div className="text-[10px] text-amber-600 font-semibold mt-1">
+                        {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
+                    </div>
+                )}
+                {showAppVersion && (
+                    <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex flex-col gap-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-slate-400">{t('dashboard.platform', '端/平台')}:</span>
+                            <span className="font-bold text-slate-700">
+                                {member.platform === 'web' ? '🌐 Web' : member.platform === 'ios' ? '🍏 iOS' : member.platform === 'android' ? '🤖 Android' : '📱 Native'}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-slate-400">{t('dashboard.version', '版本')}:</span>
+                            <span className={`font-extrabold ${
+                                member.platform === 'web' || member.appVersion === '1.0.4' 
+                                    ? 'text-emerald-600' 
+                                    : member.appVersion 
+                                        ? 'text-amber-600' 
+                                        : 'text-red-500'
+                            }`}>
+                                {member.platform === 'web' ? 'Latest' : member.appVersion ? `v${member.appVersion}` : 'Never Installed'}
+                            </span>
+                        </div>
+                        {member.lastActiveAt && (
+                            <div className="text-[9px] text-slate-400 font-semibold">
+                                {t('dashboard.last_active', '最近活跃')}: {
+                                    member.lastActiveAt.toDate 
+                                        ? member.lastActiveAt.toDate().toLocaleDateString()
+                                        : new Date(member.lastActiveAt).toLocaleDateString()
+                                }
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
 
         // 1. TL Level Grouping: skip SD and SM cards, directly show TL and members
         if (userRole === 'tl') {
@@ -545,24 +655,7 @@ export default function AdminDashboard() {
                                     <span className="text-slate-400 font-normal ml-1">({members.length} {t('dashboard.members', '人')})</span>
                                 </h5>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
-                                    {members.map(member => (
-                                        <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
-                                            <div className="flex justify-between items-start">
-                                                <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
-                                                <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
-                                                    {member.role?.toUpperCase()}
-                                                </span>
-                                            </div>
-                                            <div className="text-[11px] text-slate-500">
-                                                {member.name || '-'}
-                                            </div>
-                                            {showLastLogin && member.lastLogin && (
-                                                <div className="text-[10px] text-amber-600 font-semibold mt-1">
-                                                    {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                    {members.map(member => renderMemberCard(member))}
                                 </div>
                             </div>
                         );
@@ -607,24 +700,7 @@ export default function AdminDashboard() {
                                                     <span className="text-slate-400 font-normal ml-1">({members.length} {t('dashboard.members', '人')})</span>
                                                 </h5>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                                    {members.map(member => (
-                                                        <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
-                                                            <div className="flex justify-between items-start">
-                                                                <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
-                                                                <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
-                                                                    {member.role?.toUpperCase()}
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-[11px] text-slate-500">
-                                                                {member.name || '-'}
-                                                            </div>
-                                                            {showLastLogin && member.lastLogin && (
-                                                                <div className="text-[10px] text-amber-600 font-semibold mt-1">
-                                                                    {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                    {members.map(member => renderMemberCard(member))}
                                                 </div>
                                             </div>
                                         );
@@ -678,24 +754,7 @@ export default function AdminDashboard() {
                                                             </h5>
                                                             
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                                                {members.map(member => (
-                                                                    <div key={member.id} className="bg-white p-3 rounded-xl border border-slate-100/60 shadow-sm flex flex-col justify-between gap-1">
-                                                                        <div className="flex justify-between items-start">
-                                                                            <span className="font-bold text-xs text-slate-800">{member.crmId}</span>
-                                                                            <span className="bg-slate-100 text-[10px] font-bold text-slate-500 px-1.5 py-0.5 rounded">
-                                                                                {member.role?.toUpperCase()}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="text-[11px] text-slate-500">
-                                                                            {member.name || '-'}
-                                                                        </div>
-                                                                        {showLastLogin && member.lastLogin && (
-                                                                            <div className="text-[10px] text-amber-600 font-semibold mt-1">
-                                                                                {t('dashboard.last_login', '最后登录')}: {member.lastLogin.toLocaleDateString()} {member.lastLogin.toLocaleTimeString()}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                ))}
+                                                                {members.map(member => renderMemberCard(member))}
                                                             </div>
                                                         </div>
                                                     );
@@ -1173,7 +1232,7 @@ export default function AdminDashboard() {
                         <Users className="w-5 h-5 text-desert-gold" />
                         {t('dashboard.login_activity_records', '团队活跃与登录分析 (Active Users & Logins)')}
                     </h2>
-                    <div className="flex bg-slate-100 p-1 rounded-xl gap-1 text-xs font-bold self-start sm:self-auto">
+                    <div className="flex flex-wrap bg-slate-100 p-1 rounded-xl gap-1 text-xs font-bold self-start sm:self-auto">
                         <button
                             onClick={() => setActivityTab('logins')}
                             className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'logins' ? 'bg-white shadow text-deep-teal font-black' : 'text-slate-500 hover:text-slate-700'}`}
@@ -1191,6 +1250,25 @@ export default function AdminDashboard() {
                             className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'inactive' ? 'bg-white shadow text-amber-600 font-black' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             {t('dashboard.activity_inactive_7d', '7天以上未登录')} ({loginAnalysis.inactiveSevenDaysCount})
+                        </button>
+                        <div className="w-[2px] bg-slate-200 my-1 self-stretch"></div>
+                        <button
+                            onClick={() => setActivityTab('app_download_not')}
+                            className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'app_download_not' ? 'bg-white shadow text-red-500 font-black' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {t('dashboard.activity_app_not', '未安装 App')} ({appVersionAnalysis.neverInstalledCount})
+                        </button>
+                        <button
+                            onClick={() => setActivityTab('app_download_outdated')}
+                            className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'app_download_outdated' ? 'bg-white shadow text-amber-500 font-black' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {t('dashboard.activity_app_outdated', 'App 待更新')} ({appVersionAnalysis.outdatedCount})
+                        </button>
+                        <button
+                            onClick={() => setActivityTab('app_download_latest')}
+                            className={`px-3 py-1.5 rounded-lg transition-all ${activityTab === 'app_download_latest' ? 'bg-white shadow text-emerald-600 font-black' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            {t('dashboard.activity_app_latest', 'App 最新版/Web')} ({appVersionAnalysis.latestCount})
                         </button>
                     </div>
                 </div>
@@ -1245,6 +1323,12 @@ export default function AdminDashboard() {
                 {activityTab === 'never' && renderOrgGroupedList(loginAnalysis.neverLogged, false)}
 
                 {activityTab === 'inactive' && renderOrgGroupedList(loginAnalysis.inactiveSevenDays, true)}
+
+                {activityTab === 'app_download_not' && renderOrgGroupedList(appVersionAnalysis.neverInstalled, false, true)}
+
+                {activityTab === 'app_download_outdated' && renderOrgGroupedList(appVersionAnalysis.outdated, false, true)}
+
+                {activityTab === 'app_download_latest' && renderOrgGroupedList(appVersionAnalysis.latest, false, true)}
             </div>
 
             {/* Render SD Level Rankings if user is Super Admin */}
