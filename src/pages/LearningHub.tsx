@@ -2750,7 +2750,7 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.rules_caravan_title': '沙漠商队进度',
             'learning_hub.rules_caravan_desc': '累积有效学习时长（分钟），商队将向下一个绿洲进发。学时与任务完成率达到门槛即可解锁更高荣誉等级。',
             'learning_hub.rules_cert_title': '荣誉勋章与证书',
-            'learning_hub.rules_cert_desc': '解锁每个荣誉等级均可获得 Najah Academy 官方认证的阿拉伯风情荣誉证书，可下载并分享至社交媒体。',
+            'learning_hub.rules_cert_desc': '解锁每个荣誉等级均可获得 51Talk 官方认证的荣誉证书，可下载并分享至社交媒体。',
             'learning_hub.rules_levels_title': '荣誉等级门槛：',
             'learning_hub.team_dashboard_title': '👥 团队学习激励与荣誉大盘',
             'learning_hub.member_name': '成员姓名',
@@ -2798,7 +2798,7 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.rules_caravan_title': 'Treasure Hunt Journey',
             'learning_hub.rules_caravan_desc': 'Accumulate learning minutes to advance your path towards the next treasure level. Meeting thresholds for both study time and task completion rate unlocks higher honor tiers.',
             'learning_hub.rules_cert_title': 'Badges & Certificates',
-            'learning_hub.rules_cert_desc': 'Unlock each tier to receive an official Najah Academy Arabesque-style certificate, ready to download and share.',
+            'learning_hub.rules_cert_desc': 'Unlock each tier to receive an official 51Talk certificate, ready to download and share.',
             'learning_hub.rules_levels_title': 'Honor Tiers & Thresholds:',
             'learning_hub.team_dashboard_title': '👥 Team Learning Incentives & Honor Dashboard',
             'learning_hub.member_name': 'Member',
@@ -2813,7 +2813,7 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'level.falcon.desc': 'Recovering legendary treasures, demonstrating masterful execution.',
             'level.guardian.title': 'Al-Khazneh Legend',
             'level.guardian.desc': 'Entering the inner chamber of Petra, crowned as the ultimate success champion.',
-            'learning_hub.incentive_explain_line': '🏆 Treasure Hunters: Listen to recordings to search for wisdom. Meet thresholds to unlock Najah Academy certificates & Al-Khazneh rewards (Click to view details).'
+            'learning_hub.incentive_explain_line': '🏆 Treasure Hunters: Listen to recordings to search for wisdom. Meet thresholds to unlock 51Talk certificates & Al-Khazneh rewards (Click to view details).'
         },
         ar: {
             'learning_hub.tab_recordings': 'ساحة التسجيلات',
@@ -2847,7 +2847,7 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.rules_caravan_title': 'رحلة البحث عن الكنوز',
             'learning_hub.rules_caravan_desc': 'اجمع دقائق التعلم الفعلية لتحريك فريقك نحو الكنز التالي. الحصول على ساعات تعلم كافية ومعدل إكمال المهام يفتح مراتب شرف أعلى.',
             'learning_hub.rules_cert_title': 'الأوسمة والشهادات',
-            'learning_hub.rules_cert_desc': 'افتح كل مرتبة للحصول على شهادة شرف رسمية من Najah Academy بنقوش عربية، جاهزة للتحميل والمشاركة.',
+            'learning_hub.rules_cert_desc': 'افتح كل مرتبة للحصول على شهادة شرف رسمية من 51Talk، جاهزة للتحميل والمشاركة.',
             'learning_hub.rules_levels_title': 'مراتب الشرف ومتطلباتها:',
             'learning_hub.team_dashboard_title': '👥 لوحة مكافآت الشرف والتعلم للفريق',
             'learning_hub.member_name': 'العضو',
@@ -4314,17 +4314,17 @@ export default function LearningHub() {
 
         return (
             <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
-                <div className="relative w-full max-w-2xl bg-gradient-to-br from-teal-950 to-deep-teal border-2 border-desert-gold/40 rounded-[2.5rem] p-6 sm:p-10 shadow-[0_20px_50px_rgba(203,161,53,0.3)] text-white overflow-hidden animate-in zoom-in-95 duration-300 select-none">
+                <div className="relative w-full max-w-2xl bg-gradient-to-br from-white via-blue-50/20 to-yellow-50/20 border-4 border-blue-600 rounded-[2.5rem] p-6 sm:p-10 shadow-[0_20px_50px_rgba(37,99,235,0.2)] text-slate-800 overflow-hidden animate-in zoom-in-95 duration-300 select-none">
                     
-                    {/* Arabesque geometric background element */}
-                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-desert-gold/30 via-transparent to-transparent pointer-events-none"></div>
-                    <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M54 48c-2 0-3 1.34-3 3 0 2 1 3 3 3s3-1 3-3c0-1.66-1-3-3-3zm-48 0c-2 0-3 1.34-3 3 0 2 1 3 3 3s3-1 3-3c0-1.66-1-3-3-3zM30 0C13.43 0 0 13.43 0 30s13.43 30 30 30 30-13.43 30-30S46.57 0 30 0zm0 54C16.75 54 6 43.25 6 30S16.75 6 30 6s24 10.75 24 24-10.75 24-24 24z\' fill=\'%23c5a059\' fill-opacity=\'0.15\' fill-rule=\'evenodd\'/%3E%3C/svg%3E')] pointer-events-none"></div>
+                    {/* Subtle watermarked background element using blue and yellow gradient */}
+                    <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-600 via-transparent to-transparent pointer-events-none"></div>
+                    <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M54 48c-2 0-3 1.34-3 3 0 2 1 3 3 3s3-1 3-3c0-1.66-1-3-3-3zm-48 0c-2 0-3 1.34-3 3 0 2 1 3 3 3s3-1 3-3c0-1.66-1-3-3-3zM30 0C13.43 0 0 13.43 0 30s13.43 30 30 30 30-13.43 30-30S46.57 0 30 0zm0 54C16.75 54 6 43.25 6 30S16.75 6 30 6s24 10.75 24 24-10.75 24-24 24z\' fill=\'%232563eb\' fill-opacity=\'0.06\' fill-rule=\'evenodd\'/%3E%3C/svg%3E')] pointer-events-none"></div>
                     
-                    {/* Corner Borders (Islamic Art pattern style) */}
-                    <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-desert-gold/60 rounded-tl-xl pointer-events-none"></div>
-                    <div className="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-desert-gold/60 rounded-tr-xl pointer-events-none"></div>
-                    <div className="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-desert-gold/60 rounded-bl-xl pointer-events-none"></div>
-                    <div className="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-desert-gold/60 rounded-br-xl pointer-events-none"></div>
+                    {/* Corner Borders in Blue and Yellow */}
+                    <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-blue-600 rounded-tl-xl pointer-events-none"></div>
+                    <div className="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-yellow-400 rounded-tr-xl pointer-events-none"></div>
+                    <div className="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-yellow-400 rounded-bl-xl pointer-events-none"></div>
+                    <div className="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-blue-600 rounded-br-xl pointer-events-none"></div>
 
                     {/* Close Button */}
                     <button 
@@ -4465,7 +4465,7 @@ export default function LearningHub() {
                                     {localT('learning_hub.rules_cert_title', '荣誉勋章与证书', i18n)}
                                 </h4>
                                 <p className="text-arabian-night/70 dark:text-slate-350 leading-relaxed text-xs">
-                                    {localT('learning_hub.rules_cert_desc', '解锁每个荣誉等级均可获得 Najah Academy 官方认证的阿拉伯风情荣誉证书，可下载并分享。', i18n)}
+                                    {localT('learning_hub.rules_cert_desc', '解锁每个荣誉等级均可获得 51Talk 官方认证的荣誉证书，可下载并分享。', i18n)}
                                 </p>
                             </div>
                         </div>
