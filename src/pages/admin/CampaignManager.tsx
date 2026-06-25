@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, orderBy } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
@@ -208,7 +208,60 @@ export default function CampaignManager() {
                 createdAt: new Date()
             };
 
-            await addDoc(collection(db, 'campaigns'), newCampaign);
+            const docRef = await addDoc(collection(db, 'campaigns'), newCampaign);
+            const campaignId = docRef.id;
+
+            // Target users for this campaign
+            const targetUids = systemUsers
+                .filter(u => selectedTeams.includes(u.team) || selectedUsers.includes(u.id))
+                .map(u => u.id);
+
+            // 1. Create in-app notifications in Firestore for each target user in parallel
+            if (targetUids.length > 0) {
+                try {
+                    await Promise.all(
+                        targetUids.map(recipientId =>
+                            addDoc(collection(db, 'user_notifications'), {
+                                recipientId,
+                                senderName: profile?.name || 'Manager',
+                                type: 'comment', // mapped as comment in NotificationBell to reuse layout/styling
+                                titleKey: 'notifications.new_campaign_title',
+                                content: campaignTitle.trim(),
+                                read: false,
+                                createdAt: new Date()
+                            })
+                        )
+                    );
+                } catch (notifErr) {
+                    console.error("Failed to create in-app notifications:", notifErr);
+                }
+            }
+
+            // 2. Trigger DingTalk & FCM push notification via Serverless function
+            if (targetUids.length > 0) {
+                try {
+                    const res = await fetch('/.netlify/functions/dingtalk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'notifyCampaign',
+                            title: campaignTitle.trim(),
+                            bannerTitle: bannerTitle,
+                            creatorName: profile?.name || 'Manager',
+                            endDate: endDate,
+                            assigneeIds: targetUids
+                        })
+                    });
+                    
+                    if (!res.ok) {
+                        throw new Error('Serverless function returned non-ok status');
+                    }
+                    const notifyData = await res.json();
+                    console.log("[CampaignManager] Notification trigger result:", notifyData);
+                } catch (pushErr) {
+                    console.error("DingTalk/FCM campaign notification failed:", pushErr);
+                }
+            }
             
             // Reset states
             setCampaignTitle('');
@@ -219,7 +272,7 @@ export default function CampaignManager() {
             
             // Re-fetch data
             await fetchData();
-            alert('专项证书挑战发布成功！');
+            alert('专项证书挑战发布成功！已向相关学员发送通知。');
         } catch (error) {
             console.error("Error creating campaign:", error);
             alert('发布失败，请重试');

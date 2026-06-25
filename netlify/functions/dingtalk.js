@@ -892,6 +892,269 @@ export const handler = async (event, context) => {
         }
 
         // ==========================================
+        // ACTION: NOTIFY CAMPAIGN (Custom Certificate Challenge Alerts)
+        // ==========================================
+        if (action === 'notifyCampaign') {
+            const { title, bannerTitle, creatorName, endDate, assigneeIds } = body;
+            if (!assigneeIds || !Array.isArray(assigneeIds)) {
+                return { statusCode: 400, body: JSON.stringify({ error: 'Missing assigneeIds' }) };
+            }
+
+            const recipientsZh = [];
+            const recipientsEn = [];
+            const fcmTokens = [];
+            let dbError = null;
+            const queryLogs = [];
+
+            // Fetch users to retrieve their dingtalkUserIds and deviceTokens
+            if (!isMockFirebase) {
+                try {
+                    const db = getFirestoreDb();
+                    for (const uid of assigneeIds) {
+                        const doc = await db.collection('users').doc(uid).get();
+                        if (doc.exists) {
+                            const data = doc.data();
+                            
+                            // Collect DingTalk User ID
+                            if (data.dingtalkUserId) {
+                                const isEnglishSpeaker = !isUserChineseSpeaker(data);
+                                if (isEnglishSpeaker) {
+                                    recipientsEn.push(data.dingtalkUserId);
+                                } else {
+                                    recipientsZh.push(data.dingtalkUserId);
+                                }
+                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId, lang: isEnglishSpeaker ? 'en' : 'zh' });
+                            } else {
+                                queryLogs.push({ uid, found: true, dingtalkUserId: null, crmId: data.crmId, msg: "dingtalkUserId is missing in database profile" });
+                            }
+
+                            // Collect device tokens for FCM push
+                            if (Array.isArray(data.deviceTokens) && data.deviceTokens.length > 0) {
+                                data.deviceTokens.forEach(t => {
+                                    if (t && typeof t === 'string') {
+                                        fcmTokens.push(t);
+                                    }
+                                });
+                            }
+                        } else {
+                            queryLogs.push({ uid, found: false, msg: "User document not found in Firestore users collection" });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to query campaign assignees dingtalkUserIds and tokens:", err);
+                    dbError = err.message;
+                }
+            } else {
+                // Mock Recipients
+                assigneeIds.forEach(id => {
+                    const mockId = `dd_mock_id_${id}`;
+                    if (id.toLowerCase().includes('wuchuan')) {
+                        recipientsZh.push(mockId);
+                    } else {
+                        recipientsEn.push(mockId);
+                    }
+                    queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, msg: "mocked" });
+                });
+                fcmTokens.push('mock_fcm_token_1', 'mock_fcm_token_2');
+            }
+
+            const getMsgMarkdown = (lang) => {
+                if (lang === 'en') {
+                    return `### 🏆 **ME Cloud Academy**\n**New Certificate Challenge Assigned**\n\n---\n\n**📋 Challenge Details:**\n* 🏷️ **Challenge Title:** ${title}\n* 🎖️ **Target Honor:** ${bannerTitle}\n* ⏰ **Deadline:** ${endDate || '-'}\n* 👤 **Manager:** ${creatorName}\n\n---\n\n> 💡 *After completing the required learning hours or tasks, you will unlock an official electronic certificate of achievement! Keep up the great work!*\n\n[👉 Click Here to Start Challenge](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub)`;
+                }
+                return `### 🏆 **ME 云学堂**\n**收到新的荣誉证书挑战**\n\n---\n\n**📋 挑战详情：**\n* 🏷️ **挑战名称**：${title}\n* 🎖️ **目标荣誉**：${bannerTitle}\n* ⏰ **截止时间**：${endDate || '-'}\n* 👤 **发布主管**：${creatorName}\n\n---\n\n> 💡 *达成挑战要求的学时或学习任务后，您将获得官方认证的专属电子荣誉证书，可下载并分享！加油！*\n\n[👉 点击立即开启挑战](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub)`;
+            };
+
+            const getMsgTitle = (lang) => {
+                return lang === 'en' ? "🏆 ME Cloud Academy - New Challenge" : "🏆 ME 云学堂 - 专属证书挑战指派";
+            };
+
+            let sentSuccess = false;
+            let mockPayload = null;
+            let dingtalkApiResponse = [];
+            let errorMessage = null;
+
+            if (!isMockDingTalk && agentId && (recipientsZh.length > 0 || recipientsEn.length > 0)) {
+                try {
+                    // Get Token
+                    const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
+                    const tokenData = await tokenRes.json();
+                    if (tokenData.errcode === 0) {
+                        const token = tokenData.access_token;
+                        
+                        const sendNotification = async (recipientsList, lang) => {
+                            if (recipientsList.length === 0) return { success: true };
+                            
+                            const notifyUrl = `https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2?access_token=${token}`;
+                            const notifyRes = await fetch(notifyUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    agent_id: parseInt(agentId),
+                                    userid_list: recipientsList.join(','),
+                                    msg: {
+                                        msgtype: "markdown",
+                                        markdown: {
+                                            title: getMsgTitle(lang),
+                                            text: getMsgMarkdown(lang)
+                                        }
+                                    }
+                                })
+                            });
+                            const notifyData = await notifyRes.json();
+                            dingtalkApiResponse.push({ lang, data: notifyData });
+                            
+                            if (notifyData.errcode === 0) {
+                                return { success: true };
+                            } else {
+                                return { success: false, error: `DingTalk API returned errcode ${notifyData.errcode}: ${notifyData.errmsg}` };
+                            }
+                        };
+
+                        const enResult = await sendNotification(recipientsEn, 'en');
+                        const zhResult = await sendNotification(recipientsZh, 'zh');
+                        
+                        sentSuccess = enResult.success && zhResult.success;
+                        if (!sentSuccess) {
+                            errorMessage = [
+                                !enResult.success ? `English Push: ${enResult.error}` : null,
+                                !zhResult.success ? `Chinese Push: ${zhResult.error}` : null
+                            ].filter(Boolean).join(" | ");
+                        }
+                    } else {
+                        errorMessage = `DingTalk Token exchange failed: [${tokenData.errcode}] ${tokenData.errmsg}`;
+                        dingtalkApiResponse.push({ error: "Token fail", detail: tokenData });
+                    }
+                } catch (notifyErr) {
+                    console.error("DingTalk Notification connection error:", notifyErr);
+                    errorMessage = `Connection to DingTalk failed: ${notifyErr.message}`;
+                    dingtalkApiResponse.push({ error: notifyErr.message });
+                }
+            } else {
+                if (isMockDingTalk) {
+                    sentSuccess = true;
+                    mockPayload = {
+                        recipientsZh,
+                        recipientsEn,
+                        markdownZh: getMsgMarkdown('zh'),
+                        markdownEn: getMsgMarkdown('en'),
+                        note: "System is running in Mock Mode. Message simulated successfully.",
+                        isMockDingTalk,
+                        hasAgentId: !!agentId
+                    };
+                    console.log("[Mock Notification sent]", mockPayload);
+                } else if (!agentId) {
+                    errorMessage = "DingTalk Agent ID (DINGTALK_AGENT_ID) is not configured in Netlify environment variables.";
+                } else if (recipientsZh.length === 0 && recipientsEn.length === 0) {
+                    errorMessage = "No matched assignees with bound DingTalk accounts found.";
+                }
+            }
+
+            // FCM App System Push
+            let fcmSentSuccess = false;
+            let fcmError = null;
+            let fcmSuccessCount = 0;
+            let fcmFailureCount = 0;
+            const uniqueFcmTokens = Array.from(new Set(fcmTokens));
+
+            if (uniqueFcmTokens.length > 0) {
+                if (!isMockFirebase) {
+                    try {
+                        const fcmPayload = {
+                            notification: {
+                                title: `🏆 收到新的专属证书挑战`,
+                                body: `${title} (指派人: ${creatorName || '主管'})`
+                            },
+                            data: {
+                                title: title,
+                                type: 'campaign',
+                                bannerTitle: bannerTitle || '',
+                                creatorName: creatorName || '',
+                                endDate: endDate || ''
+                            },
+                            apns: {
+                                payload: {
+                                    aps: {
+                                        sound: 'default',
+                                        badge: 1
+                                    }
+                                }
+                            }
+                        };
+
+                        const tokenChunks = [];
+                        for (let i = 0; i < uniqueFcmTokens.length; i += 500) {
+                            tokenChunks.push(uniqueFcmTokens.slice(i, i + 500));
+                        }
+
+                        const messaging = admin.messaging();
+                        const sendMethod = typeof messaging.sendEachForMulticast === 'function' 
+                            ? messaging.sendEachForMulticast.bind(messaging) 
+                            : messaging.sendMulticast.bind(messaging);
+
+                        const fcmErrors = [];
+                        for (const chunk of tokenChunks) {
+                            const response = await sendMethod({
+                                tokens: chunk,
+                                ...fcmPayload
+                            });
+                            fcmSuccessCount += response.successCount;
+                            fcmFailureCount += response.failureCount;
+                            if (response.responses) {
+                                response.responses.forEach((res, idx) => {
+                                    if (!res.success && res.error) {
+                                        console.error(`[FCM Campaign Push] Token index ${idx} failed:`, res.error);
+                                        fcmErrors.push(`${res.error.code || 'unknown'}: ${res.error.message}`);
+                                    }
+                                });
+                            }
+                        }
+                        
+                        fcmSentSuccess = fcmSuccessCount > 0 || fcmFailureCount === 0;
+                        console.log(`[FCM Campaign Push] Success: ${fcmSuccessCount}, Fail: ${fcmFailureCount}`);
+                        if (fcmFailureCount > 0) {
+                            fcmError = `FCM sent completed. Success: ${fcmSuccessCount}, Failures: ${fcmFailureCount}. Details: ${fcmErrors.slice(0, 3).join('; ')}`;
+                        }
+                    } catch (fcmErr) {
+                        console.error("FCM campaign push error:", fcmErr);
+                        fcmError = fcmErr.message;
+                    }
+                } else {
+                    fcmSentSuccess = true;
+                    console.log("[Mock FCM Campaign Push sent]", {
+                        tokens: uniqueFcmTokens,
+                        title: `🏆 收到新的专属证书挑战`,
+                        body: `${title} (指派人: ${creatorName || '主管'})`
+                    });
+                }
+            }
+
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    success: sentSuccess,
+                    error: errorMessage,
+                    recipientsZhCount: recipientsZh.length,
+                    recipientsEnCount: recipientsEn.length,
+                    mockPayload: mockPayload,
+                    dbError: dbError,
+                    queryLogs: queryLogs,
+                    isMockFirebase: isMockFirebase,
+                    isMockDingTalk: isMockDingTalk,
+                    dingtalkApiResponse: dingtalkApiResponse,
+                    fcmPush: {
+                        success: fcmSentSuccess,
+                        error: fcmError,
+                        successCount: fcmSuccessCount,
+                        failureCount: fcmFailureCount,
+                        tokensCount: uniqueFcmTokens.length
+                    }
+                })
+            };
+        }
+
+        // ==========================================
         // ACTION: NOTIFY COMMENT (Material Comment Alerts)
         // ==========================================
         if (action === 'notifyComment') {

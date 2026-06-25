@@ -523,7 +523,8 @@
         "modal_subdesc": "يرجى مراجعة أهداف مهمتك وإكمالها في الوقت المناسب. انقر فوق الزر أدناه للانتقال إلى قائمة المهام.",
         "view_later": "عرض لاحقاً",
         "view_now": "عرض الآن",
-        "new_comment_title": "علق {{commenter}} على تسجيلك"
+        "new_comment_title": "علق {{commenter}} على تسجيلك",
+        "new_campaign_title": "لقد تلقيت تحدي شهادة جديد من {{commenter}}"
     },
     "team_tasks": {
         "title": "مهام الفريق",

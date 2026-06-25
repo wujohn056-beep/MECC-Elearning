@@ -241,6 +241,8 @@ export default function NotificationBell() {
         }
         if (notif.recordingId) {
             navigate(`/hub?recordingId=${notif.recordingId}`);
+        } else {
+            navigate('/hub');
         }
     };
 
