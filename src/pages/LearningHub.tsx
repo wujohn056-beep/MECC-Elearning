@@ -2876,6 +2876,9 @@ export default function LearningHub() {
     const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
     const isNative = Capacitor.isNativePlatform();
     const [showCertificate, setShowCertificate] = useState(false);
+    const certificateRef = React.useRef<HTMLDivElement>(null);
+    const [certImageDataUrl, setCertImageDataUrl] = useState<string | null>(null);
+    const [isDownloadingCert, setIsDownloadingCert] = useState(false);
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
@@ -4294,6 +4297,47 @@ export default function LearningHub() {
         );
     };
 
+    const handleDownloadCertificate = async () => {
+        if (!certificateRef.current) return;
+        setIsDownloadingCert(true);
+        try {
+            const { toPng } = await import('html-to-image');
+            
+            // Wait a tiny bit to ensure DOM renders fully
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            
+            const dataUrl = await toPng(certificateRef.current, {
+                quality: 1.0,
+                pixelRatio: 3,
+                cacheBust: true,
+                backgroundColor: '#ffffff',
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left',
+                }
+            });
+            
+            if (Capacitor.isNativePlatform()) {
+                setCertImageDataUrl(dataUrl);
+            } else {
+                const link = document.createElement('a');
+                link.download = `51Talk_Honor_Certificate_${profile?.name || 'Member'}.png`;
+                link.href = dataUrl;
+                link.click();
+                
+                // Show long-press modal on mobile browsers as well for better UX
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    setCertImageDataUrl(dataUrl);
+                }
+            }
+        } catch (error) {
+            console.error("Error generating certificate image", error);
+            alert(localT('learning_hub.cert_download_fail', '证书生成失败，请重试。', i18n));
+        } finally {
+            setIsDownloadingCert(false);
+        }
+    };
+
     const renderCertificateModal = () => {
         if (!showCertificate) return null;
         
@@ -4313,161 +4357,170 @@ export default function LearningHub() {
         );
 
         return (
-            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
-                {/* Certificate Modal Container */}
-                <div className="relative w-full max-w-4xl bg-white border border-blue-600 rounded-[2rem] shadow-[0_20px_50px_rgba(37,99,235,0.25)] text-slate-800 overflow-hidden animate-in zoom-in-95 duration-300 select-none flex flex-col">
+            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
+                <div className="relative w-full max-w-4xl flex flex-col items-center">
                     
-                    {/* Wavy Corner Accents */}
-                    {/* Top-Left */}
-                    <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
-                        <svg className="absolute -top-6 -left-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
-                            <path d="M0 0 C 140 0, 160 50, 110 130 C 70 180, 0 180, 0 180 Z" fill="#1e40af" opacity="0.95"/>
-                            <path d="M0 0 C 100 0, 120 40, 80 100 C 50 140, 0 140, 0 140 Z" fill="#eab308" opacity="0.9"/>
-                            <circle cx="150" cy="40" r="8" fill="#eab308" />
-                        </svg>
-                    </div>
-
-                    {/* Top-Right */}
-                    <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
-                        <svg className="absolute -top-6 -right-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
-                            <path d="M200 0 C 60 0, 40 50, 90 130 C 130 180, 200 180, 200 180 Z" fill="#1e40af" opacity="0.95"/>
-                            <path d="M200 0 C 100 0, 80 40, 120 100 C 150 140, 200 140, 200 140 Z" fill="#eab308" opacity="0.9"/>
-                            <circle cx="50" cy="30" r="6" fill="#1e40af" opacity="0.6" />
-                        </svg>
-                    </div>
-
-                    {/* Bottom-Left */}
-                    <div className="absolute bottom-0 left-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
-                        <svg className="absolute -bottom-6 -left-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
-                            <path d="M0 200 C 140 200, 160 150, 110 70 C 70 20, 0 20, 0 20 Z" fill="#eab308" opacity="0.9"/>
-                            <path d="M0 200 C 100 200, 120 160, 80 100 C 50 60, 0 60, 0 60 Z" fill="#1e40af" opacity="0.95"/>
-                        </svg>
-                    </div>
-
-                    {/* Bottom-Right */}
-                    <div className="absolute bottom-0 right-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
-                        <svg className="absolute -bottom-6 -right-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
-                            <path d="M200 200 C 60 200, 40 150, 90 70 C 130 20, 200 20, 200 20 Z" fill="#eab308" opacity="0.9"/>
-                            <path d="M200 200 C 100 200, 80 160, 120 100 C 150 60, 200 60, 200 60 Z" fill="#1e40af" opacity="0.95"/>
-                        </svg>
-                    </div>
-
                     {/* Close Button */}
                     <button 
                         onClick={() => setShowCertificate(false)}
-                        className="absolute top-6 end-6 p-2 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-600 hover:text-slate-800 transition-all cursor-pointer z-50 shadow-sm border border-slate-200 active:scale-95"
+                        className="absolute -top-12 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-50 shadow-md border border-white/10 active:scale-95"
                     >
                         <X className="w-5 h-5" />
                     </button>
 
-                    {/* Outer margin border box */}
-                    <div className="m-3 sm:m-4 border border-yellow-400/50 rounded-[1.5rem] p-4 sm:p-6 flex flex-col sm:flex-row items-center relative z-10 bg-white/90 backdrop-blur-sm shadow-inner">
-                        
-                        {/* Left Side: Mascot column */}
-                        <div className="hidden sm:flex w-1/4 h-full items-center justify-center pr-3 relative">
-                            <img 
-                                src="/images/51talk-mascot-headphones.png" 
-                                alt="51Talk Mascot" 
-                                className="w-full max-h-[85%] object-contain drop-shadow-md animate-bounce duration-[4000ms] ease-in-out" 
-                            />
+                    {/* Certificate Printable Wrapper Container */}
+                    <div 
+                        ref={certificateRef}
+                        className="relative w-full bg-white border border-blue-600 rounded-[2rem] shadow-[0_20px_50px_rgba(37,99,235,0.25)] text-slate-800 overflow-hidden select-none flex flex-col p-4"
+                    >
+                        {/* Wavy Corner Accents */}
+                        {/* Top-Left */}
+                        <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
+                            <svg className="absolute -top-6 -left-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
+                                <path d="M0 0 C 140 0, 160 50, 110 130 C 70 180, 0 180, 0 180 Z" fill="#1e40af" opacity="0.95"/>
+                                <path d="M0 0 C 100 0, 120 40, 80 100 C 50 140, 0 140, 0 140 Z" fill="#eab308" opacity="0.9"/>
+                                <circle cx="150" cy="40" r="8" fill="#eab308" />
+                            </svg>
                         </div>
 
-                        {/* Right Side: Certificate details */}
-                        <div className="flex-1 flex flex-col items-center text-center">
+                        {/* Top-Right */}
+                        <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
+                            <svg className="absolute -top-6 -right-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
+                                <path d="M200 0 C 60 0, 40 50, 90 130 C 130 180, 200 180, 200 180 Z" fill="#1e40af" opacity="0.95"/>
+                                <path d="M200 0 C 100 0, 80 40, 120 100 C 150 140, 200 140, 200 140 Z" fill="#eab308" opacity="0.9"/>
+                                <circle cx="50" cy="30" r="6" fill="#1e40af" opacity="0.6" />
+                            </svg>
+                        </div>
+
+                        {/* Bottom-Left */}
+                        <div className="absolute bottom-0 left-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
+                            <svg className="absolute -bottom-6 -left-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
+                                <path d="M0 200 C 140 200, 160 150, 110 70 C 70 20, 0 20, 0 20 Z" fill="#eab308" opacity="0.9"/>
+                                <path d="M0 200 C 100 200, 120 160, 80 100 C 50 60, 0 60, 0 60 Z" fill="#1e40af" opacity="0.95"/>
+                            </svg>
+                        </div>
+
+                        {/* Bottom-Right */}
+                        <div className="absolute bottom-0 right-0 w-32 h-32 pointer-events-none z-0 overflow-hidden">
+                            <svg className="absolute -bottom-6 -right-6 w-36 h-36" viewBox="0 0 200 200" fill="none">
+                                <path d="M200 200 C 60 200, 40 150, 90 70 C 130 20, 200 20, 200 20 Z" fill="#eab308" opacity="0.9"/>
+                                <path d="M200 200 C 100 200, 80 160, 120 100 C 150 60, 200 60, 200 60 Z" fill="#1e40af" opacity="0.95"/>
+                            </svg>
+                        </div>
+
+                        {/* Outer margin border box */}
+                        <div className="m-3 sm:m-4 border border-yellow-400/50 rounded-[1.5rem] p-4 sm:p-6 flex flex-col sm:flex-row items-center relative z-10 bg-white/90 backdrop-blur-sm shadow-inner">
                             
-                            {/* Logo */}
-                            <img src="/images/51talk-logo.png" alt="51Talk Logo" className="h-10 sm:h-12 object-contain mb-1.5" />
-                            
-                            {/* Header */}
-                            <h2 className="text-blue-900 font-extrabold text-2xl sm:text-3xl tracking-widest leading-none">CERTIFICATE</h2>
-                            <p className="text-blue-800 font-bold text-[9px] sm:text-xs tracking-[0.3em] uppercase mt-0.5 mb-3">OF ACHIEVEMENT</p>
-                            
-                            {/* Subtitle */}
-                            <p className="text-slate-500 text-[10px] sm:text-xs tracking-wider font-semibold mb-1">This is to certify that</p>
-                            
-                            {/* Name */}
-                            <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 tracking-wide italic font-serif px-4 mb-2 truncate max-w-full border-b border-yellow-400/30 pb-0.5 w-full max-w-xs mx-auto">
-                                {profile?.name || user?.email?.split('@')[0] || 'Member'}
-                            </h3>
-                            
-                            <p className="text-slate-500 text-[9px] sm:text-[10px] tracking-wider font-semibold mb-3">has successfully completed and is recognized as</p>
-                            
-                            {/* Ribbon Banner */}
-                            <div className="relative w-full max-w-md bg-gradient-to-r from-blue-700 via-blue-800 to-blue-700 text-white font-extrabold text-xs sm:text-sm py-2 px-6 rounded-md shadow-md border-y border-yellow-400/50 mb-3 flex items-center justify-center gap-1.5">
-                                <span className="text-yellow-400">★</span>
-                                <span className="uppercase tracking-wider">{currentLevelInfo.title}</span>
-                                <span className="text-yellow-350">({currentLevelInfo.titleAr})</span>
-                                <span className="text-yellow-400">★</span>
-                                {/* Mini Ribbon Fold Effects */}
-                                <div className="absolute -left-1.5 top-1.5 w-1.5 h-5 bg-blue-900 rounded-l transform -skew-y-12"></div>
-                                <div className="absolute -right-1.5 top-1.5 w-1.5 h-5 bg-blue-900 rounded-r transform skew-y-12"></div>
+                            {/* Left Side: Mascot column */}
+                            <div className="hidden sm:flex w-1/4 h-full items-center justify-center pr-3 relative">
+                                <img 
+                                    src="/images/51talk-mascot-headphones.png" 
+                                    alt="51Talk Mascot" 
+                                    className="w-full max-h-[85%] object-contain drop-shadow-md animate-bounce duration-[4000ms] ease-in-out" 
+                                />
                             </div>
 
-                            {/* Main Body */}
-                            <p className="text-[10px] sm:text-xs text-slate-500 leading-normal italic font-semibold max-w-md mb-4 px-2">
-                                {localT('learning_hub.cert_main_body', '鉴于该学员在学习中心表现卓越，累计学时充沛，任务执行精准，特授予中东卓越销售激励荣誉头衔 ——', i18n)}
-                            </p>
-                            
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-4 gap-1.5 w-full max-w-lg mb-4 text-center">
-                                <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
-                                    <BookOpen className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
-                                    <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Training</span>
-                                    <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5 truncate max-w-full">Learning Hub</span>
-                                </div>
-                                <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
-                                    <Clock className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
-                                    <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Duration</span>
-                                    <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5">{stats.totalLearningMinutes} Mins</span>
-                                </div>
-                                <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
-                                    <Trophy className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
-                                    <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Achievement</span>
-                                    <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5 truncate max-w-full">{currentLevelInfo.title}</span>
-                                </div>
-                                <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
-                                    <Calendar className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
-                                    <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Issue Date</span>
-                                    <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5">{formattedDate}</span>
-                                </div>
-                            </div>
-
-                            {/* Footer Signatures */}
-                            <div className="w-full flex items-center justify-between border-t border-slate-200/60 pt-3 text-[9px]">
-                                <div className="flex flex-col items-center">
-                                    <span className="font-serif italic font-bold text-slate-700 h-4">51Talk Management</span>
-                                    <div className="w-16 border-t border-slate-300 my-0.5"></div>
-                                    <span className="text-[7px] text-slate-400 font-extrabold uppercase">Issued By</span>
+                            {/* Right Side: Certificate details */}
+                            <div className="flex-1 flex flex-col items-center text-center">
+                                
+                                {/* Logo */}
+                                <img src="/images/51talk-logo.png" alt="51Talk Logo" className="h-10 sm:h-12 object-contain mb-1.5" />
+                                
+                                {/* Header */}
+                                <h2 className="text-blue-900 font-extrabold text-2xl sm:text-3xl tracking-widest leading-none">CERTIFICATE</h2>
+                                <p className="text-blue-800 font-bold text-[9px] sm:text-xs tracking-[0.3em] uppercase mt-0.5 mb-3">OF ACHIEVEMENT</p>
+                                
+                                {/* Subtitle */}
+                                <p className="text-slate-500 text-[10px] sm:text-xs tracking-wider font-semibold mb-1">This is to certify that</p>
+                                
+                                {/* Name */}
+                                <h3 className="text-2xl sm:text-3xl font-extrabold text-blue-700 tracking-wide italic font-serif px-4 mb-2 truncate max-w-full border-b border-yellow-400/30 pb-0.5 w-full max-w-xs mx-auto">
+                                    {profile?.name || user?.email?.split('@')[0] || 'Member'}
+                                </h3>
+                                
+                                <p className="text-slate-500 text-[9px] sm:text-[10px] tracking-wider font-semibold mb-3">has successfully completed and is recognized as</p>
+                                
+                                {/* Ribbon Banner */}
+                                <div className="relative w-full max-w-md bg-gradient-to-r from-blue-700 via-blue-800 to-blue-700 text-white font-extrabold text-xs sm:text-sm py-2 px-6 rounded-md shadow-md border-y border-yellow-400/50 mb-3 flex items-center justify-center gap-1.5">
+                                    <span className="text-yellow-400">★</span>
+                                    <span className="uppercase tracking-wider">{currentLevelInfo.title}</span>
+                                    <span className="text-yellow-350">({currentLevelInfo.titleAr})</span>
+                                    <span className="text-yellow-400">★</span>
+                                    {/* Mini Ribbon Fold Effects */}
+                                    <div className="absolute -left-1.5 top-1.5 w-1.5 h-5 bg-blue-900 rounded-l transform -skew-y-12"></div>
+                                    <div className="absolute -right-1.5 top-1.5 w-1.5 h-5 bg-blue-900 rounded-r transform skew-y-12"></div>
                                 </div>
 
-                                {/* Seal logo badge */}
-                                <div className="relative flex items-center justify-center -top-1">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 border border-yellow-250 flex flex-col items-center justify-center text-[6px] font-black text-blue-950 shadow-md">
-                                        <span className="font-extrabold uppercase">51Talk</span>
-                                        <span className="font-bold">★ ★ ★</span>
+                                {/* Main Body */}
+                                <p className="text-[10px] sm:text-xs text-slate-500 leading-normal italic font-semibold max-w-md mb-4 px-2">
+                                    {localT('learning_hub.cert_main_body', '鉴于该学员在学习中心表现卓越，累计学时充沛，任务执行精准，特授予中东卓越销售激励荣誉头衔 ——', i18n)}
+                                </p>
+                                
+                                {/* Stats Grid */}
+                                <div className="grid grid-cols-4 gap-1.5 w-full max-w-lg mb-4 text-center">
+                                    <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                                        <BookOpen className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
+                                        <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Training</span>
+                                        <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5 truncate max-w-full">Learning Hub</span>
                                     </div>
-                                    <div className="absolute -bottom-1 -left-0.5 w-1 h-2.5 bg-yellow-500 transform rotate-12 origin-top rounded-b"></div>
-                                    <div className="absolute -bottom-1 -right-0.5 w-1 h-2.5 bg-yellow-500 transform -rotate-12 origin-top rounded-b"></div>
+                                    <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                                        <Clock className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
+                                        <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Duration</span>
+                                        <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5">{stats.totalLearningMinutes} Mins</span>
+                                    </div>
+                                    <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                                        <Trophy className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
+                                        <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Achievement</span>
+                                        <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5 truncate max-w-full">{currentLevelInfo.title}</span>
+                                    </div>
+                                    <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg border border-slate-100">
+                                        <Calendar className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
+                                        <span className="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Issue Date</span>
+                                        <span className="font-extrabold text-[9px] sm:text-xs text-blue-950 mt-0.5">{formattedDate}</span>
+                                    </div>
                                 </div>
 
-                                <div className="flex flex-col items-center">
-                                    <span className="font-extrabold text-blue-600 h-4 flex items-center">51Talk Management</span>
-                                    <div className="w-16 border-t border-slate-350 my-0.5"></div>
-                                    <span className="text-[7px] text-slate-400 font-extrabold uppercase">Learn • Teach • Grow</span>
+                                {/* Footer Signatures */}
+                                <div className="w-full flex items-center justify-between border-t border-slate-200/60 pt-3 text-[9px]">
+                                    <div className="flex flex-col items-center">
+                                        <span className="font-serif italic font-bold text-slate-700 h-4">51Talk Management</span>
+                                        <div className="w-16 border-t border-slate-300 my-0.5"></div>
+                                        <span className="text-[7px] text-slate-400 font-extrabold uppercase">Issued By</span>
+                                    </div>
+
+                                    {/* Seal logo badge */}
+                                    <div className="relative flex items-center justify-center -top-1">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 border border-yellow-250 flex flex-col items-center justify-center text-[6px] font-black text-blue-950 shadow-md">
+                                            <span className="font-extrabold uppercase">51Talk</span>
+                                            <span className="font-bold">★ ★ ★</span>
+                                        </div>
+                                        <div className="absolute -bottom-1 -left-0.5 w-1 h-2.5 bg-yellow-500 transform rotate-12 origin-top rounded-b"></div>
+                                        <div className="absolute -bottom-1 -right-0.5 w-1 h-2.5 bg-yellow-500 transform -rotate-12 origin-top rounded-b"></div>
+                                    </div>
+
+                                    <div className="flex flex-col items-center">
+                                        <span className="font-extrabold text-blue-600 h-4 flex items-center">51Talk Management</span>
+                                        <div className="w-16 border-t border-slate-350 my-0.5"></div>
+                                        <span className="text-[7px] text-slate-400 font-extrabold uppercase">Learn • Teach • Grow</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex flex-col sm:flex-row gap-2.5 pb-5 px-6 justify-center w-full z-10 relative">
+                    <div className="flex flex-col sm:flex-row gap-2.5 mt-4 justify-center w-full z-10 relative">
                         <button
-                            onClick={() => {
-                                alert(localT('learning_hub.cert_downloading', '荣誉证书下载中... 已自动存入您的相册。', i18n));
-                            }}
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all w-full sm:w-auto"
+                            onClick={handleDownloadCertificate}
+                            disabled={isDownloadingCert}
+                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all w-full sm:w-auto disabled:opacity-50"
                         >
-                            <Download className="w-4 h-4" /> {localT('learning_hub.cert_download', '保存证书至相册', i18n)}
+                            {isDownloadingCert ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Download className="w-4 h-4" />
+                            )}
+                            {isDownloadingCert ? '生成中...' : localT('learning_hub.cert_download', '保存证书至相册', i18n)}
                         </button>
                         
                         <button
@@ -4482,6 +4535,35 @@ export default function LearningHub() {
                         </button>
                     </div>
                 </div>
+
+                {/* Mobile/APP Long Press Save Helper Modal */}
+                {certImageDataUrl && (
+                    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
+                        <button 
+                            onClick={() => setCertImageDataUrl(null)}
+                            className="absolute top-6 end-6 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-[1010]"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <div className="text-center max-w-sm mb-4">
+                            <span className="text-yellow-400 text-2xl">✨</span>
+                            <h4 className="text-white font-extrabold text-base mt-1">证书生成成功！</h4>
+                            <p className="text-slate-300 text-xs mt-1 px-4 leading-normal">
+                                请**长按**下方证书图片，在弹出的菜单中选择 **保存图片** 或 **分享** 到相册。
+                            </p>
+                        </div>
+                        
+                        <div className="w-full max-w-3xl overflow-hidden rounded-2xl border-4 border-yellow-400/50 shadow-2xl relative">
+                            <img 
+                                src={certImageDataUrl} 
+                                alt="51Talk Honor Certificate" 
+                                className="w-full h-auto object-contain select-text" 
+                                style={{ WebkitTouchCallout: 'default' }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };
