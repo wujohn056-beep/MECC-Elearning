@@ -4405,7 +4405,12 @@ export default function LearningHub() {
         let progressPercent = 0;
 
         if (campaign.conditions.category) {
-            const catRecs = recordings.filter(r => r.categoryId === campaign.conditions.category);
+            const catRecs = recordings.filter(r => 
+                r.categoryId === campaign.conditions.category &&
+                (!campaign.conditions.requiredTaskIds || 
+                 campaign.conditions.requiredTaskIds.length === 0 || 
+                 campaign.conditions.requiredTaskIds.includes(r.id))
+            );
             const catRecIds = catRecs.map(r => r.id);
             const completedInCat = Array.from(new Set(
                 completedAudioIds.filter(id => catRecIds.includes(id))

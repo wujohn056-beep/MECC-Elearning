@@ -114,7 +114,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.alert_publish_failed': '发布失败，请重试',
             'campaign.confirm_delete': '确认要删除这个专项挑战吗？删除后，已达标用户将无法再查看或保存对应的证书。',
             'campaign.alert_delete_success': '删除成功',
-            'campaign.alert_delete_failed': '删除失败，请重试'
+            'campaign.alert_delete_failed': '删除失败，请重试',
+            'campaign.form_select_category_courses': '选择该分类下的素材 (可选，默认全部)',
+            'campaign.no_recordings_in_category': '该分类下暂无素材'
         },
         en: {
             'campaign.manager_title': 'Exclusive Challenge & Certificate Management',
@@ -171,7 +173,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.alert_publish_failed': 'Failed to publish, please try again',
             'campaign.confirm_delete': 'Are you sure you want to delete this challenge? Once deleted, qualified users will no longer be able to view or save the certificate.',
             'campaign.alert_delete_success': 'Deleted successfully',
-            'campaign.alert_delete_failed': 'Failed to delete, please try again'
+            'campaign.alert_delete_failed': 'Failed to delete, please try again',
+            'campaign.form_select_category_courses': 'Select Materials in Category (Optional, default all)',
+            'campaign.no_recordings_in_category': 'No materials in this category'
         },
         ar: {
             'campaign.manager_title': 'إدارة التحديات والشهادات الحصرية',
@@ -228,7 +232,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.alert_publish_failed': 'فشل النشر، يرجى المحاولة مرة أخرى',
             'campaign.confirm_delete': 'هل أنت متأكد من رغبتك في حذف هذا التحدي؟ بعد الحذف، لن يتمكن المستخدمون المؤهلون من عرض الشهادة أو حفظها.',
             'campaign.alert_delete_success': 'تم الحذف بنجاح',
-            'campaign.alert_delete_failed': 'فشل الحذف، يرجى المحاولة مرة أخرى'
+            'campaign.alert_delete_failed': 'فشل الحذف، يرجى المحاولة مرة أخرى',
+            'campaign.form_select_category_courses': 'اختر المواد من هذا التصنيف (اختياري، الكل افتراضياً)',
+            'campaign.no_recordings_in_category': 'لا توجد مواد في هذا التصنيف'
         }
     };
     const currentLang = dict[lang] ? lang : 'zh';
@@ -295,6 +301,71 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
     const [achievementText, setAchievementText] = useState('Master of the First Call');
     const [encouragementText, setEncouragementText] = useState('Your dedication to learning and commitment to excellence reflect the true spirit of 51Talk. Keep up the great work!');
     const [issuedBy, setIssuedBy] = useState('51Talk Management');
+
+    // Tracking manual edits of certificate template
+    const [isBannerTitleEdited, setIsBannerTitleEdited] = useState(false);
+    const [isBannerSubTitleEdited, setIsBannerSubTitleEdited] = useState(false);
+    const [isTrainingNameEdited, setIsTrainingNameEdited] = useState(false);
+    const [isAchievementTextEdited, setIsAchievementTextEdited] = useState(false);
+
+    // Dynamic Title Sync
+    const handleCampaignTitleChange = (newTitle: string) => {
+        setCampaignTitle(newTitle);
+        
+        // Clean title suffixes
+        const subject = newTitle
+            .replace(/[-_]?(ref|challenge|task|training|campaign|专项|挑战|任务|项目|通关|学习|课程|计划)/gi, '')
+            .trim() || 'First Call';
+
+        if (!isBannerTitleEdited) {
+            setBannerTitle(`MASTER OF THE ${subject.toUpperCase()}`);
+        }
+        if (!isBannerSubTitleEdited) {
+            setBannerSubTitle(`for successfully completing the ${subject} Program and demonstrating excellence in the ${subject} process.`);
+        }
+        if (!isTrainingNameEdited) {
+            setTrainingName(`${subject} Training`);
+        }
+        if (!isAchievementTextEdited) {
+            setAchievementText(`Master of the ${subject}`);
+        }
+    };
+
+    // Mutual minutes/hours conversion
+    const handleMinutesChange = (mins: number) => {
+        setRequiredMinutes(mins);
+        const hours = Math.round((mins / 60) * 10) / 10;
+        setDurationText(`${hours} ${hours === 1 ? 'Hour' : 'Hours'}`);
+    };
+
+    const handleDurationTextChange = (text: string) => {
+        setDurationText(text);
+        const match = text.match(/(\d+(\.\d+)?)/);
+        if (match) {
+            const hours = parseFloat(match[1]);
+            if (!isNaN(hours) && hours > 0) {
+                setRequiredMinutes(Math.round(hours * 60));
+            }
+        }
+    };
+
+    // Reset when modal opens/closes
+    useEffect(() => {
+        if (!showCreateModal) {
+            setIsBannerTitleEdited(false);
+            setIsBannerSubTitleEdited(false);
+            setIsTrainingNameEdited(false);
+            setIsAchievementTextEdited(false);
+            
+            setBannerTitle('MASTER OF THE FIRST CALL');
+            setBannerSubTitle('for successfully completing the First Call Training Program and demonstrating excellence in the First Call process.');
+            setTrainingName('First Call Training');
+            setDurationText('2 Hours');
+            setAchievementText('Master of the First Call');
+            setEncouragementText('Your dedication to learning and commitment to excellence reflect the true spirit of 51Talk. Keep up the great work!');
+            setIssuedBy('51Talk Management');
+        }
+    }, [showCreateModal]);
 
     // Tracking View States
     const [selectedCampaignForTracking, setSelectedCampaignForTracking] = useState<Campaign | null>(null);
@@ -431,7 +502,11 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                 endDate: new Date(endDate),
                 conditions: {
                     ...(conditionType === 'category' 
-                        ? { category: selectedCategory, requiredMinutes }
+                        ? { 
+                            category: selectedCategory, 
+                            requiredMinutes,
+                            ...(selectedRecordingIds.length > 0 ? { requiredTaskIds: selectedRecordingIds } : {})
+                          }
                         : { requiredTaskIds: selectedRecordingIds }
                     )
                 },
@@ -564,8 +639,13 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                 let progressPercent = 0;
 
                 if (campaign.conditions.category) {
-                    // Category-based
-                    const catRecs = recordings.filter(r => r.categoryId === campaign.conditions.category);
+                    // Category-based (possibly with specific recording checklist inside that category)
+                    const catRecs = recordings.filter(r => 
+                        r.categoryId === campaign.conditions.category &&
+                        (!campaign.conditions.requiredTaskIds || 
+                         campaign.conditions.requiredTaskIds.length === 0 || 
+                         campaign.conditions.requiredTaskIds.includes(r.id))
+                    );
                     const catRecIds = catRecs.map(r => r.id);
                     // Find completed recordings in this category
                     // We check unique completed recording IDs from user's history
@@ -903,7 +983,7 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                                             required
                                             placeholder={localT('campaign.form_title_placeholder', '如：First Call 专项通关挑战', i18n)}
                                             value={campaignTitle}
-                                            onChange={(e) => setCampaignTitle(e.target.value)}
+                                            onChange={(e) => handleCampaignTitleChange(e.target.value)}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
                                         />
                                     </div>
@@ -1034,29 +1114,65 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                                     </div>
 
                                     {conditionType === 'category' ? (
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_category', '指定课程分类', i18n)}</label>
-                                                <select
-                                                    value={selectedCategory}
-                                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
-                                                >
-                                                    {categories.map(c => (
-                                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                                    ))}
-                                                </select>
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_category', '指定课程分类', i18n)}</label>
+                                                    <select
+                                                        value={selectedCategory}
+                                                        onChange={(e) => {
+                                                            const newCat = e.target.value;
+                                                            setSelectedCategory(newCat);
+                                                            // Clear selected recordings when changing category to avoid cross-category bugs
+                                                            setSelectedRecordingIds([]);
+                                                        }}
+                                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
+                                                    >
+                                                        {categories.map(c => (
+                                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_required_minutes', '要求累计学时 (分钟)', i18n)}</label>
+                                                    <input
+                                                        type="number"
+                                                        required
+                                                        min={10}
+                                                        value={requiredMinutes}
+                                                        onChange={(e) => handleMinutesChange(Number(e.target.value))}
+                                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
+                                                    />
+                                                </div>
                                             </div>
+
+                                            {/* Category Materials Selector */}
                                             <div>
-                                                <label className="block text-[11px] font-black text-slate-500 mb-1">{localT('campaign.form_required_minutes', '要求累计学时 (分钟)', i18n)}</label>
-                                                <input
-                                                    type="number"
-                                                    required
-                                                    min={10}
-                                                    value={requiredMinutes}
-                                                    onChange={(e) => setRequiredMinutes(Number(e.target.value))}
-                                                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
-                                                />
+                                                <label className="block text-[11px] font-black text-slate-500 mb-1">
+                                                    {localT('campaign.form_select_category_courses', '选择该分类下的素材 (可选，默认全部)', i18n)}
+                                                </label>
+                                                <div className="max-h-36 overflow-y-auto border border-slate-200 p-2 rounded-xl bg-white scrollbar-thin space-y-1">
+                                                    {recordings.filter(r => r.categoryId === selectedCategory).length === 0 ? (
+                                                        <div className="text-[10px] text-slate-400 p-2 text-center">
+                                                            {localT('campaign.no_recordings_in_category', '该分类下暂无素材', i18n)}
+                                                        </div>
+                                                    ) : (
+                                                        recordings.filter(r => r.categoryId === selectedCategory).map(rec => {
+                                                            const isSelected = selectedRecordingIds.includes(rec.id);
+                                                            return (
+                                                                <label key={rec.id} className="flex items-center gap-2 px-1 py-0.5 hover:bg-slate-50 rounded cursor-pointer text-[10px] font-semibold text-slate-600">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                        checked={isSelected}
+                                                                        onChange={() => toggleRecordingSelection(rec.id)}
+                                                                        className="rounded border-slate-350 text-deep-teal focus:ring-deep-teal shrink-0 w-3 h-3"
+                                                                    />
+                                                                    <span className="truncate flex-1">{rec.title}</span>
+                                                                </label>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ) : (
@@ -1101,7 +1217,10 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                                             type="text"
                                             required
                                             value={bannerTitle}
-                                            onChange={(e) => setBannerTitle(e.target.value.toUpperCase())}
+                                            onChange={(e) => {
+                                                setBannerTitle(e.target.value.toUpperCase());
+                                                setIsBannerTitleEdited(true);
+                                            }}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white uppercase font-mono"
                                         />
                                     </div>
@@ -1112,7 +1231,10 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                                             rows={3}
                                             required
                                             value={bannerSubTitle}
-                                            onChange={(e) => setBannerSubTitle(e.target.value)}
+                                            onChange={(e) => {
+                                                setBannerSubTitle(e.target.value);
+                                                setIsBannerSubTitleEdited(true);
+                                            }}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white leading-normal"
                                         />
                                     </div>
@@ -1125,7 +1247,10 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                                                 type="text"
                                                 required
                                                 value={trainingName}
-                                                onChange={(e) => setTrainingName(e.target.value)}
+                                                onChange={(e) => {
+                                                    setTrainingName(e.target.value);
+                                                    setIsTrainingNameEdited(true);
+                                                }}
                                                 className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
                                             />
                                         </div>
@@ -1135,7 +1260,7 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                                                 type="text"
                                                 required
                                                 value={durationText}
-                                                onChange={(e) => setDurationText(e.target.value)}
+                                                onChange={(e) => handleDurationTextChange(e.target.value)}
                                                 className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
                                             />
                                         </div>
@@ -1145,7 +1270,10 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                                                 type="text"
                                                 required
                                                 value={achievementText}
-                                                onChange={(e) => setAchievementText(e.target.value)}
+                                                onChange={(e) => {
+                                                    setAchievementText(e.target.value);
+                                                    setIsAchievementTextEdited(true);
+                                                }}
                                                 className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-deep-teal/20 focus:border-deep-teal bg-white"
                                             />
                                         </div>
