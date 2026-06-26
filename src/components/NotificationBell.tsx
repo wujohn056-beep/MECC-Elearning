@@ -23,17 +23,18 @@ interface CommentNotification {
     id: string;
     recipientId: string;
     senderName: string;
-    type: 'comment';
+    type: 'comment' | 'campaign';
     titleKey: string;
     content: string;
-    recordingId: string;
+    recordingId?: string;
+    campaignId?: string;
     read: boolean;
     createdAt: any;
 }
 
 interface UnifiedNotification {
     id: string;
-    type: 'task' | 'comment';
+    type: 'task' | 'comment' | 'campaign';
     title: string;
     description?: string;
     senderName: string;
@@ -41,6 +42,7 @@ interface UnifiedNotification {
     createdAt: Date;
     recordingId?: string; // for comment
     taskId?: string; // for task
+    campaignId?: string; // for campaign
     isCritical?: boolean;
     isUrgent?: boolean;
     status?: string;
@@ -135,6 +137,7 @@ export default function NotificationBell() {
                     titleKey: data.titleKey,
                     content: data.content,
                     recordingId: data.recordingId,
+                    campaignId: data.campaignId,
                     read: data.read,
                     createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
                 });
@@ -182,13 +185,16 @@ export default function NotificationBell() {
         comments.forEach(c => {
             unified.push({
                 id: c.id,
-                type: 'comment',
-                title: t(c.titleKey || 'notifications.new_comment_title', { commenter: c.senderName }),
+                type: c.type || 'comment',
+                title: c.type === 'campaign'
+                    ? t(c.titleKey || 'notifications.new_campaign_title', { commenter: c.senderName })
+                    : t(c.titleKey || 'notifications.new_comment_title', { commenter: c.senderName }),
                 description: c.content,
                 senderName: c.senderName,
                 read: c.read,
                 createdAt: c.createdAt || new Date(),
-                recordingId: c.recordingId
+                recordingId: c.recordingId,
+                campaignId: c.campaignId
             });
         });
 
@@ -239,7 +245,9 @@ export default function NotificationBell() {
                 console.error("Error marking comment notification as read", error);
             }
         }
-        if (notif.recordingId) {
+        if (notif.type === 'campaign' && notif.campaignId) {
+            navigate(`/hub?campaignId=${notif.campaignId}`);
+        } else if (notif.recordingId) {
             navigate(`/hub?recordingId=${notif.recordingId}`);
         } else {
             navigate('/hub');

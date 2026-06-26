@@ -538,9 +538,10 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                             addDoc(collection(db, 'user_notifications'), {
                                 recipientId,
                                 senderName: profile?.name || 'Manager',
-                                type: 'comment', // mapped as comment in NotificationBell to reuse layout/styling
+                                type: 'campaign',
                                 titleKey: 'notifications.new_campaign_title',
                                 content: campaignTitle.trim(),
+                                campaignId: campaignId,
                                 read: false,
                                 createdAt: new Date()
                             })

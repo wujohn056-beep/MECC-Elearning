@@ -2719,6 +2719,16 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
     const lang = i18n?.language || 'zh';
     const dict: Record<string, Record<string, string>> = {
         zh: {
+            'campaign.details_title': '专属学习挑战详情',
+            'campaign.details_subtitle': '完成指定任务，赢取您的专属认证荣誉证书',
+            'campaign.details_desc': '挑战详情介绍',
+            'campaign.details_rules': '达标通关条件',
+            'campaign.details_deadline': '截止时间',
+            'campaign.details_req_mins': '要求累计学时: {mins} 分钟 (当前已学: {current} 分钟)',
+            'campaign.details_req_courses': '要求学习以下指定课时',
+            'campaign.details_cert_preview': '证书效果图预览',
+            'campaign.details_status': '当前挑战进度',
+            'campaign.details_close': '关闭',
             'learning_hub.tab_recordings': '录音广场',
             'learning_hub.tab_policies': '政策激励',
             'learning_hub.tab_brands': '品牌专栏',
@@ -2774,6 +2784,16 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.incentive_explain_line': '🏆 宝藏猎人：听录音进行智慧寻宝。达到时间与任务门槛即可解锁 Najah 学院荣誉证书与宝藏勋章奖励（点击查看详情）。'
         },
         en: {
+            'campaign.details_title': 'Exclusive Challenge Details',
+            'campaign.details_subtitle': 'Complete targets to earn your exclusive honor certificate',
+            'campaign.details_desc': 'Challenge Description',
+            'campaign.details_rules': 'Requirements to Clear',
+            'campaign.details_deadline': 'Deadline',
+            'campaign.details_req_mins': 'Required study time: {mins} mins (Completed: {current} mins)',
+            'campaign.details_req_courses': 'Required to study these target courses',
+            'campaign.details_cert_preview': 'Certificate Draft Preview',
+            'campaign.details_status': 'Current Progress',
+            'campaign.details_close': 'Close',
             'learning_hub.tab_recordings': 'Recordings',
             'learning_hub.tab_policies': 'Policies & Incentives',
             'learning_hub.tab_brands': 'Marketing Brands',
@@ -2829,6 +2849,16 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.generating': 'Generating...'
         },
         ar: {
+            'campaign.details_title': 'تفاصيل التحدي الحصري',
+            'campaign.details_subtitle': 'أكمل الأهداف للفوز بشهادة الشرف المخصصة لك',
+            'campaign.details_desc': 'وصف التحدي',
+            'campaign.details_rules': 'شروط اجتياز التحدي',
+            'campaign.details_deadline': 'الموعد النهائي',
+            'campaign.details_req_mins': 'وقت الدراسة المطلوب: {mins} دقيقة (المكتمل: {current} دقيقة)',
+            'campaign.details_req_courses': 'مطلوب دراسة هذه الدروس المحددة',
+            'campaign.details_cert_preview': 'معاينة مسودة الشهادة',
+            'campaign.details_status': 'التقدم الحالي',
+            'campaign.details_close': 'إغلاق',
             'learning_hub.tab_recordings': 'ساحة التسجيلات',
             'learning_hub.tab_policies': 'السياسات والحوافز',
             'learning_hub.tab_brands': 'ركن العلامة التجارية',
@@ -2902,6 +2932,7 @@ export default function LearningHub() {
     // Custom campaigns (special certificates) states
     const [campaigns, setCampaigns] = useState<any[]>([]);
     const [showCampaignCert, setShowCampaignCert] = useState<any>(null);
+    const [showCampaignDetails, setShowCampaignDetails] = useState<any>(null);
     const campaignCertRef = React.useRef<HTMLDivElement>(null);
     const [campaignCertImageDataUrl, setCampaignCertImageDataUrl] = useState<string | null>(null);
     const [isDownloadingCampaignCert, setIsDownloadingCampaignCert] = useState(false);
@@ -2918,6 +2949,7 @@ export default function LearningHub() {
     const navigate = useNavigate();
     const taskId = searchParams.get('taskId');
     const targetRecordingId = searchParams.get('recordingId');
+    const targetCampaignId = searchParams.get('campaignId');
     const [taskRecordingIds, setTaskRecordingIds] = useState<string[]>([]);
     const [taskTitle, setTaskTitle] = useState<string>('');
     const [completedAudioIds, setCompletedAudioIds] = useState<string[]>([]);
@@ -3137,6 +3169,15 @@ export default function LearningHub() {
             setIsTaskCompleted(false);
         }
     }, [taskId, user, profile]);
+
+    useEffect(() => {
+        if (targetCampaignId && campaigns.length > 0) {
+            const foundCampaign = campaigns.find(c => c.id === targetCampaignId);
+            if (foundCampaign) {
+                setShowCampaignDetails(foundCampaign);
+            }
+        }
+    }, [targetCampaignId, campaigns]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -4446,7 +4487,8 @@ export default function LearningHub() {
         return (
             <div 
                 key={campaign.id}
-                className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between gap-4 relative overflow-hidden"
+                onClick={() => setShowCampaignDetails(campaign)}
+                className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-4 shadow-sm hover:shadow-md hover:scale-[1.01] hover:border-blue-600/30 dark:hover:border-blue-500/30 transition-all duration-300 flex items-center justify-between gap-4 relative overflow-hidden cursor-pointer"
             >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-xl shadow-sm shrink-0 border border-white/20">
@@ -4483,7 +4525,10 @@ export default function LearningHub() {
                 {/* Action button */}
                 <button
                     type="button"
-                    onClick={handleCardAction}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleCardAction();
+                    }}
                     className={`px-4 py-2 rounded-xl text-xs font-black transition-all shrink-0 active:scale-95 cursor-pointer shadow-sm ${
                         completed 
                             ? 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white' 
@@ -4704,6 +4749,351 @@ export default function LearningHub() {
                         </div>
                     </div>
                 )}
+            </div>
+        );
+    };
+
+    const renderCampaignDetailsModal = () => {
+        if (!showCampaignDetails) return null;
+        const campaign = showCampaignDetails;
+        const config = campaign.certConfig;
+        const isRtl = i18n.language?.startsWith('ar');
+
+        // Calculate progress just like renderCampaignCard
+        let completed = false;
+        let progressText = '';
+        let progressPercent = 0;
+        let reqRecs: Recording[] = [];
+
+        if (campaign.conditions.category) {
+            reqRecs = recordings.filter(r => 
+                r.categoryId === campaign.conditions.category &&
+                (!campaign.conditions.requiredTaskIds || 
+                 campaign.conditions.requiredTaskIds.length === 0 || 
+                 campaign.conditions.requiredTaskIds.includes(r.id))
+            );
+            const catRecIds = reqRecs.map(r => r.id);
+            const completedInCat = Array.from(new Set(
+                completedAudioIds.filter(id => catRecIds.includes(id))
+            ));
+            
+            const progressMins = completedInCat.length * 12;
+            const reqMins = campaign.conditions.requiredMinutes || 120;
+            progressPercent = Math.min(100, Math.round((progressMins / reqMins) * 100));
+            completed = progressPercent >= 100;
+            progressText = `${progressMins} / ${reqMins} ${localT('common.minutes', '分钟', i18n)}`;
+        } else if (campaign.conditions.requiredTaskIds) {
+            const reqIds = campaign.conditions.requiredTaskIds;
+            reqRecs = recordings.filter(r => reqIds.includes(r.id));
+            const completedTasks = Array.from(new Set(
+                completedAudioIds.filter(id => reqIds.includes(id))
+            ));
+            progressPercent = Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100));
+            completed = completedTasks.length === reqIds.length;
+            progressText = `${completedTasks.length} / ${reqIds.length} ${localT('learning_hub.courses', '门课', i18n)}`;
+        }
+
+        const categoryName = campaign.conditions.category 
+            ? (categories.find(c => c.id === campaign.conditions.category)?.name || '')
+            : '';
+
+        const deadlineDate = campaign.endDate ? new Date(campaign.endDate.seconds ? campaign.endDate.seconds * 1000 : campaign.endDate).toLocaleDateString(
+            i18n.language?.startsWith('ar') ? 'ar-JO' : i18n.language?.startsWith('en') ? 'en-US' : 'zh-CN',
+            { year: 'numeric', month: 'long', day: 'numeric' }
+        ) : null;
+
+        const handleCardAction = () => {
+            if (completed) {
+                setShowCampaignCert(campaign);
+            } else {
+                if (campaign.conditions.category) {
+                    setActiveTab(campaign.conditions.category);
+                } else {
+                    setActiveTab('all');
+                }
+            }
+            setShowCampaignDetails(null);
+        };
+
+        const formattedDate = new Date().toLocaleDateString(
+            i18n.language?.startsWith('ar') 
+                ? 'ar-JO' 
+                : i18n.language?.startsWith('en') 
+                    ? 'en-US' 
+                    : 'zh-CN', 
+            {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }
+        );
+
+        return (
+            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
+                <div 
+                    dir={isRtl ? 'rtl' : 'ltr'}
+                    className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800/80 flex flex-col md:flex-row max-h-[90vh]"
+                >
+                    
+                    {/* Close Button */}
+                    <button 
+                        onClick={() => setShowCampaignDetails(null)}
+                        className="absolute top-4 end-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all cursor-pointer z-50 shadow-sm border border-gray-205 dark:border-slate-700/50 active:scale-95"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+
+                    {/* Left Panel: Content (60% width on desktop) */}
+                    <div className="flex-1 p-6 md:p-8 overflow-y-auto flex flex-col gap-6">
+                        
+                        {/* Header */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[10px] font-black text-blue-605 dark:text-blue-405 uppercase tracking-widest bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/50">
+                                    ★ {localT('campaign.details_title', '专属学习挑战详情', i18n)}
+                                </span>
+                                {deadlineDate && (
+                                    <span className="text-[10px] font-extrabold text-red-500 bg-red-50 dark:bg-red-950/20 px-2 py-0.5 rounded-md border border-red-100 dark:border-red-950/30">
+                                        ⏱️ {localT('campaign.details_deadline', '截止时间', i18n)}: {deadlineDate}
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                                {campaign.title}
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">
+                                👤 {localT('campaign.issued_by', '发起人', i18n)}: {campaign.creatorName} ({campaign.creatorRole?.toUpperCase()})
+                            </p>
+                        </div>
+
+                        {/* Description */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-105 dark:border-slate-800 rounded-2xl p-4">
+                            <h3 className="text-xs font-black text-slate-750 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                                📝 {localT('campaign.details_desc', '挑战详情介绍', i18n)}
+                            </h3>
+                            <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed font-medium">
+                                {config.bannerSubTitle}
+                            </p>
+                        </div>
+
+                        {/* Rules / Requirements */}
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-black text-slate-755 dark:text-slate-200 flex items-center gap-1.5">
+                                🎯 {localT('campaign.details_rules', '达标通关条件', i18n)}
+                            </h3>
+                            <div className="grid grid-cols-1 gap-2.5">
+                                {campaign.conditions.category && (
+                                    <div className="bg-blue-50/30 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/30 rounded-xl p-3 flex items-center justify-between text-xs">
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                                            📁 {localT('campaign.details_req_courses', '要求学习以下指定课时', i18n).replace('以下指定课时', `${categoryName}`)}
+                                        </span>
+                                        <span className="font-extrabold text-blue-600 dark:text-blue-400 font-mono">
+                                            {campaign.conditions.requiredMinutes || 120} {localT('common.minutes', '分钟', i18n)}
+                                        </span>
+                                    </div>
+                                )}
+                                
+                                {/* Target Courses/Recordings List */}
+                                <div className="border border-slate-100 dark:border-slate-800/80 rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/65 max-h-48 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/30">
+                                    {reqRecs.map((rec) => {
+                                        const isRecCompleted = completedAudioIds.includes(rec.id);
+                                        return (
+                                            <div 
+                                                key={rec.id}
+                                                onClick={() => {
+                                                    setShowCampaignDetails(null);
+                                                    setActiveVideoRecording(rec);
+                                                }}
+                                                className="p-3 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 flex items-center justify-between gap-3 cursor-pointer transition-all active:scale-[0.99]"
+                                            >
+                                                <div className="min-w-0 flex-1 flex items-center gap-2">
+                                                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                                                        <Play className="w-3 h-3 fill-current" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                                            {rec.title}
+                                                        </div>
+                                                        {rec.lecturerName && (
+                                                            <div className="text-[10px] text-slate-400 dark:text-slate-555 font-semibold mt-0.5">
+                                                                {rec.lecturerName}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="shrink-0">
+                                                    {isRecCompleted ? (
+                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-100/50 dark:border-green-900/40 px-1.5 py-0.5 rounded-md">
+                                                            <Check className="w-2.5 h-2.5" /> Done
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] font-bold text-slate-450 dark:text-slate-500 bg-slate-50 dark:bg-slate-805 border border-slate-100/80 dark:border-slate-800 px-1.5 py-0.5 rounded-md">
+                                                            Pending
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Progress */}
+                        <div className="space-y-2 mt-auto">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="font-black text-slate-750 dark:text-slate-350 flex items-center gap-1.5">
+                                    📈 {localT('campaign.details_status', '当前挑战进度', i18n)}
+                                </span>
+                                <span className="font-extrabold text-blue-600 dark:text-blue-400 font-mono">
+                                    {progressText} ({progressPercent}%)
+                                </span>
+                            </div>
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 relative overflow-hidden">
+                                <div 
+                                    className="bg-gradient-to-r from-blue-600 to-indigo-650 h-full rounded-full transition-all duration-500 ease-out" 
+                                    style={{ width: `${progressPercent}%` }}
+                                ></div>
+                            </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowCampaignDetails(null)}
+                                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-705 dark:text-slate-300 rounded-2xl font-bold text-xs transition-all active:scale-95 cursor-pointer text-center"
+                            >
+                                {localT('campaign.details_close', '关闭', i18n)}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCardAction}
+                                className={`flex-[2] py-3 rounded-2xl text-xs font-black text-white transition-all active:scale-95 cursor-pointer text-center shadow-md ${
+                                    completed 
+                                        ? 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700' 
+                                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                                }`}
+                            >
+                                {completed ? localT('learning_hub.claim_cert', '✨ 领取荣誉证书', i18n) : localT('learning_hub.go_learn', '去学习', i18n)}
+                            </button>
+                        </div>
+
+                    </div>
+
+                    {/* Right Panel: Certificate Draft Preview (40% width on desktop, hidden on mobile) */}
+                    <div className="hidden md:flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-900/40 border-l border-slate-100 dark:border-slate-800/80 w-[380px] shrink-0 overflow-hidden relative">
+                        <span className="absolute top-4 start-4 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                            👁️ {localT('campaign.details_cert_preview', '证书效果图预览', i18n)}
+                        </span>
+                        
+                        <div className="origin-center scale-[0.72] shrink-0 pointer-events-none select-none">
+                            <div 
+                                className="relative w-[360px] aspect-[1/1.22] bg-white border border-blue-600/40 rounded-2xl shadow-xl flex flex-col p-4 text-slate-800 overflow-hidden"
+                            >
+                                {/* Wavy Corner Accents */}
+                                <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none z-0">
+                                    <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                        <path d="M0 0 C 70 0, 80 25, 55 65 C 35 90, 0 90, 0 90 Z" fill="#1e40af" opacity="0.95"/>
+                                        <path d="M0 0 C 50 0, 60 20, 40 50 C 25 70, 0 70, 0 70 Z" fill="#eab308" opacity="0.9"/>
+                                    </svg>
+                                </div>
+                                <div className="absolute top-0 right-0 w-20 h-20 pointer-events-none z-0">
+                                    <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                        <path d="M100 0 C 30 0, 20 25, 45 65 C 65 90, 100 90, 100 90 Z" fill="#1e40af" opacity="0.95"/>
+                                        <path d="M100 0 C 50 0, 40 20, 60 50 C 75 70, 100 70, 100 70 Z" fill="#eab308" opacity="0.9"/>
+                                    </svg>
+                                </div>
+                                <div className="absolute bottom-0 left-0 w-20 h-20 pointer-events-none z-0">
+                                    <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                        <path d="M0 100 C 70 100, 80 75, 55 35 C 35 10, 0 10, 0 10 Z" fill="#eab308" opacity="0.9"/>
+                                        <path d="M0 100 C 50 100, 60 80, 40 50 C 25 30, 0 30, 0 30 Z" fill="#1e40af" opacity="0.95"/>
+                                    </svg>
+                                </div>
+                                <div className="absolute bottom-0 right-0 w-20 h-20 pointer-events-none z-0">
+                                    <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                                        <path d="M100 100 C 30 100, 20 75, 45 35 C 65 10, 100 10, 100 10 Z" fill="#eab308" opacity="0.9"/>
+                                        <path d="M100 100 C 50 100, 40 80, 60 50 C 75 30, 100 30, 100 30 Z" fill="#1e40af" opacity="0.95"/>
+                                    </svg>
+                                </div>
+
+                                <div className="m-2 border border-yellow-400/40 rounded-xl p-3 flex flex-col items-center justify-between h-full relative z-10 bg-white/95">
+                                    <div className="w-full flex justify-between items-center px-1">
+                                        <img src="/images/51talk-logo.png" alt="51Talk Logo" className="h-6 object-contain" />
+                                        <img src="/images/51talk-mascot-smiling.png" alt="Mascot" className="h-10 object-contain" />
+                                    </div>
+
+                                    <div className="text-center mt-1">
+                                        <h2 className="text-blue-900 font-extrabold text-base tracking-widest leading-none">CERTIFICATE</h2>
+                                        <p className="text-blue-800 font-bold text-[7px] tracking-[0.25em] uppercase mt-0.5">OF ACHIEVEMENT</p>
+                                    </div>
+
+                                    <p className="text-slate-400 text-[8px] font-semibold tracking-wider">This is to certify that</p>
+
+                                    <h3 className="text-sm font-extrabold text-blue-700 italic border-b border-yellow-400/40 pb-0.5 px-3 min-w-36 text-center truncate max-w-full">
+                                        {profile?.name || user?.email?.split('@')[0] || 'Member'}
+                                    </h3>
+
+                                    <p className="text-slate-400 text-[7px] font-semibold">has successfully completed the</p>
+
+                                    <div className="relative w-full max-w-[280px] bg-gradient-to-r from-blue-700 to-blue-800 text-white font-extrabold text-[8px] sm:text-[9px] py-1 px-3 rounded shadow border-y border-yellow-400/40 text-center truncate uppercase tracking-wide">
+                                        ★ {config.bannerTitle} ★
+                                    </div>
+
+                                    <p className="text-[7.5px] text-slate-500 leading-snug italic text-center max-w-[260px] px-1 line-clamp-2">
+                                        {config.bannerSubTitle}
+                                    </p>
+
+                                    <div className="grid grid-cols-4 gap-1 w-full text-center mt-1">
+                                        <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                            <BookOpen className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                            <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Training</span>
+                                            <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{config.trainingName}</span>
+                                        </div>
+                                        <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                            <Clock className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                            <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Duration</span>
+                                            <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{config.durationText}</span>
+                                        </div>
+                                        <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                            <Award className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                            <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Achievement</span>
+                                            <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{config.achievementText}</span>
+                                        </div>
+                                        <div className="flex flex-col items-center p-1 bg-slate-50 border border-slate-100 rounded">
+                                            <Calendar className="w-2.5 h-2.5 text-blue-600 mb-0.5" />
+                                            <span className="text-[5px] text-slate-400 font-extrabold uppercase scale-90">Issue Date</span>
+                                            <span className="font-extrabold text-[6px] text-blue-950 mt-0.5 truncate w-full">{formattedDate}</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-[6.5px] text-slate-500 italic text-center max-w-[260px] px-1 scale-90 leading-tight">
+                                        {config.encouragementText}
+                                    </p>
+
+                                    <div className="w-full flex items-center justify-between border-t border-slate-100 pt-1 text-[7px] px-1 mt-1 shrink-0">
+                                        <div className="flex flex-col items-center">
+                                            <span className="font-serif italic font-bold text-slate-700 text-[6px]">51Talk Management</span>
+                                            <div className="w-10 border-t border-slate-200 my-0.5"></div>
+                                            <span className="text-[5px] text-slate-400 font-extrabold scale-90 uppercase">Issued By</span>
+                                        </div>
+
+                                        <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 border border-yellow-250 flex items-center justify-center text-[5px] font-black text-blue-950 shadow">
+                                            ★ ★
+                                        </div>
+
+                                        <div className="flex flex-col items-center">
+                                            <span className="font-bold text-blue-600 text-[6px] truncate max-w-[65px]">{config.issuedBy}</span>
+                                            <div className="w-10 border-t border-slate-200 my-0.5"></div>
+                                            <span className="text-[5px] text-slate-400 font-extrabold scale-90 uppercase">Authorized Signature</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         );
     };
@@ -5972,6 +6362,7 @@ export default function LearningHub() {
             )}
             {showCertificate && renderCertificateModal()}
             {showCampaignCert && renderCampaignCertificateModal()}
+            {showCampaignDetails && renderCampaignDetailsModal()}
             {renderRulesModal()}
             {showHonorModal && renderOasisHonorDetailModal()}
         </div>
