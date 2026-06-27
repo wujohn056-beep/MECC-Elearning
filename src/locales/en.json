@@ -300,7 +300,21 @@
         "view_all_brands": "View All",
         "no_brands_showcase": "No brand materials for this business line at the moment.",
         "pinned": "Pinned",
-        "team_task_badge": "🎯 Team Task: "
+        "team_task_badge": "🎯 Team Task: ",
+        "view_team_progress": "Team Progress",
+        "team_progress_title": "Team Learning Progress",
+        "completed_label": "Completed",
+        "uncompleted_label": "Not Completed",
+        "completion_rate": "Completion Rate",
+        "no_team_members": "No team members found",
+        "team_progress_label": "Team Learning Progress",
+        "search_member_placeholder": "Search by name/CRM ID/email...",
+        "view_by_org": "By Organization",
+        "view_all_members": "All Members",
+        "overall_completion": "Overall Completion Rate",
+        "target_progress": "Progress",
+        "learned": "Completed",
+        "not_learned": "Not Completed"
     },
     "category_manager": {
         "title": "Category Management",

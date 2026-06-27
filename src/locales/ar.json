@@ -299,7 +299,21 @@
         "view_all_brands": "عرض الكل",
         "no_brands_showcase": "لا توجد مواد للعلامة التجارية لخط العمل هذا حالياً.",
         "pinned": "مثبت",
-        "team_task_badge": "🎯 مهمة الفريق: "
+        "team_task_badge": "🎯 مهمة الفريق: ",
+        "view_team_progress": "تقدم الفريق",
+        "team_progress_title": "تقدم تعلم الفريق",
+        "completed_label": "اكتمل",
+        "uncompleted_label": "لم يكتمل",
+        "completion_rate": "معدل الإنجاز",
+        "no_team_members": "لم يتم العثور على أعضاء في الفريق",
+        "team_progress_label": "تقدم تعلم الفريق",
+        "search_member_placeholder": "البحث بالاسم/CRM ID/البريد الإلكتروني...",
+        "view_by_org": "حسب الهيكل التنظيمي",
+        "view_all_members": "قائمة الأعضاء الكاملة",
+        "overall_completion": "معدل الإنجاز العام للفريق",
+        "target_progress": "مستوى التقدم",
+        "learned": "تمت الدراسة",
+        "not_learned": "لم تتم الدراسة"
     },
     "category_manager": {
         "title": "إدارة التصنيفات",

@@ -299,7 +299,21 @@
         "view_all_brands": "查看全部",
         "no_brands_showcase": "暂无本业务线相关的品牌物料",
         "pinned": "置顶",
-        "team_task_badge": "🎯 团队学习任务: "
+        "team_task_badge": "🎯 团队学习任务: ",
+        "view_team_progress": "查看团队进度",
+        "team_progress_title": "团队学习进度",
+        "completed_label": "已学习",
+        "uncompleted_label": "未学习",
+        "completion_rate": "学习达标率",
+        "no_team_members": "暂无关联团队成员",
+        "team_progress_label": "团队学习进度",
+        "search_member_placeholder": "搜索姓名/CRM ID/邮箱...",
+        "view_by_org": "按组织架构",
+        "view_all_members": "全部名单",
+        "overall_completion": "团队整体完课率",
+        "target_progress": "完课进度",
+        "learned": "已学习",
+        "not_learned": "未学习"
     },
     "category_manager": {
         "title": "目录分类管理",
