@@ -336,7 +336,7 @@ export default function AdminDashboard() {
             const version = (u as any).appVersion;
             const platform = (u as any).platform;
 
-            if (platform === 'web' || version === '1.0.4') {
+            if (platform === 'web' || version === '1.0.5') {
                 latest.push(u);
             } else {
                 outdated.push(u);
@@ -607,7 +607,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-between text-[10px]">
                             <span className="text-slate-400">{localT('dashboard.version', '版本', i18n)}:</span>
                             <span className={`font-extrabold ${
-                                member.platform === 'web' || member.appVersion === '1.0.4' 
+                                member.platform === 'web' || member.appVersion === '1.0.5' 
                                     ? 'text-emerald-600' 
                                     : member.appVersion 
                                         ? 'text-amber-600' 

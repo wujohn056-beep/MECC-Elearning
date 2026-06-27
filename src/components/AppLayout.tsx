@@ -144,7 +144,7 @@ export default function AppLayout() {
     }, [isTrainingUser]);
 
     // 2. App-Side Version Checker Effect
-    const CURRENT_APP_VERSION = '1.0.4'; // Hardcoded baseline version code for current client packaging
+    const CURRENT_APP_VERSION = '1.0.5'; // Hardcoded baseline version code for current client packaging
 
     useEffect(() => {
         if (!Capacitor.isNativePlatform() || isTrainingUser) return;
@@ -312,7 +312,7 @@ export default function AppLayout() {
                     const userRef = doc(db, 'users', user.uid);
                     await setDoc(userRef, {
                         lastActiveAt: serverTimestamp(),
-                        appVersion: '1.0.4',
+                        appVersion: '1.0.5',
                         platform: currentPlatform
                     }, { merge: true });
 
@@ -329,7 +329,7 @@ export default function AppLayout() {
                         team: profile.team || '',
                         date: today,
                         lastLoginAt: serverTimestamp(),
-                        appVersion: '1.0.4',
+                        appVersion: '1.0.5',
                         platform: currentPlatform
                     }, { merge: true });
                 } catch (error) {
