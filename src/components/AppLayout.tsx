@@ -432,6 +432,9 @@ export default function AppLayout() {
                                     <Link to="/dashboard" className={getNavLinkClass('/dashboard')}>{t('navbar.dashboard', '数据看板')}</Link>
                                 )}
                                 <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
+                                {!isTrainingUser && (
+                                    <Link to="/download" className={getNavLinkClass('/download')}>{t('navbar.download_app', '下载APP')}</Link>
+                                )}
                                 {(isSuperAdmin || hasAnyAdminPermission) && (
                                     <Link to={isSuperAdmin ? "/admin" : "/admin/users"} className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '管理后台')}</Link>
                                 )}
@@ -542,6 +545,16 @@ export default function AppLayout() {
                                         <User className="w-4 h-4 text-desert-gold" />
                                         {t('navbar.personal_center', '个人学习中心')}
                                     </Link>
+                                    {!isTrainingUser && (
+                                        <Link 
+                                            to="/download"
+                                            onClick={() => setShowUserMenu(false)}
+                                            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold text-arabian-night/80 hover:bg-gray-50 hover:text-deep-teal transition-colors"
+                                        >
+                                            <Download className="w-4 h-4 text-desert-gold" />
+                                            {t('navbar.download_app', '下载APP')}
+                                        </Link>
+                                    )}
                                     <button 
                                         onClick={() => {
                                             setShowUserMenu(false);

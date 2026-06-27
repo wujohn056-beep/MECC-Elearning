@@ -84,6 +84,7 @@
         "dashboard": "Dashboard",
         "personal_center": "Personal Center",
         "team_tasks": "Team Tasks",
+        "download_app": "Download App",
         "toggle_theme": "Switch Theme"
     },
     "theme": {
