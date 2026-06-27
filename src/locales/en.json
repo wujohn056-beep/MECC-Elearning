@@ -102,15 +102,15 @@
         "back_to_hub": "Back to Learning Hub"
     },
     "update_modal": {
-        "title": "New Version Available!",
-        "subtitle": "Please update to the latest version to ensure all functions work correctly.",
+        "title": "New APP Version Available!",
+        "subtitle": "Please update to the latest version to ensure mobile functions work correctly.",
         "notes_title": "What's New:",
-        "btn_update": "Update Now",
+        "btn_update": "Update APP Now",
         "btn_later": "Remind Me Later",
-        "status_pending": "New Update Pending",
-        "status_latest": "Client Up to Date",
+        "status_pending": "New APP Update Pending",
+        "status_latest": "APP Client Up to Date",
         "version": "Version: 1.0.5",
-        "outdated_tip": "A smoother new version is available. It is recommended to upgrade now to keep features working properly.",
+        "outdated_tip": "A smoother new APP version is available. It is recommended to upgrade now to keep mobile features working properly.",
         "latest_tip": "You are currently using the latest MECC mobile version. Enjoy a smooth and efficient learning experience!"
     },
     "theme": {

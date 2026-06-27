@@ -102,15 +102,15 @@
         "back_to_hub": "返回学习中心 (Learning Hub)"
     },
     "update_modal": {
-        "title": "发现新版本 !",
-        "subtitle": "为了保证功能正常使用，请及时更新到最新版。",
+        "title": "发现 APP 新版本 !",
+        "subtitle": "为了保证移动端功能正常使用，请及时更新到最新版。",
         "notes_title": "更新内容：",
-        "btn_update": "立即更新",
+        "btn_update": "立即更新 APP",
         "btn_later": "稍后提醒",
-        "status_pending": "有新版本待更新",
-        "status_latest": "客户端已是最新",
+        "status_pending": "APP 有新版本待更新",
+        "status_latest": "APP 客户端已是最新",
         "version": "版本: 1.0.5",
-        "outdated_tip": "系统发现更流畅的全新版本，建议您立即升级以保证功能正常。",
+        "outdated_tip": "系统发现更流畅的全新 APP 版本，建议您立即升级以保证移动端功能正常。",
         "latest_tip": "您当前正在使用最新版 MECC 移动端，体验流畅高效的移动学习！"
     },
     "theme": {
