@@ -381,7 +381,7 @@ export default function AppLayout() {
             
             <div className="relative z-10 flex flex-col min-h-screen">
                 {/* Mobile Web Smart Banner */}
-                {showWebBanner && (
+                {!isTrainingUser && showWebBanner && (
                     <div className="bg-gradient-to-r from-deep-teal to-blue-900 text-white px-4 py-3 flex items-center justify-between shadow-lg relative animate-in slide-in-from-top duration-300 z-[99] border-b border-white/10 shrink-0">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                             <span className="text-lg">📱</span>
@@ -649,7 +649,7 @@ export default function AppLayout() {
                 />
 
                 {/* In-App Version Update Dialog */}
-                {showUpdateModal && updateConfig && (
+                {!isTrainingUser && showUpdateModal && updateConfig && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[2000] flex justify-center items-center p-6">
                         <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center space-y-6 animate-in zoom-in-95 duration-200">
                             <div className="inline-flex p-4 rounded-full bg-desert-gold/10 text-desert-gold animate-bounce">
