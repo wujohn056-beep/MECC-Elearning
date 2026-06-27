@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -2968,6 +2968,9 @@ export default function LearningHub() {
     const [showRulesModal, setShowRulesModal] = useState(false);
     const [showHonorModal, setShowHonorModal] = useState(false);
     
+    const isTrainingUser = profile?.identity === 'Training Dep' || 
+        (profile?.team || '').toLowerCase().includes('training');
+
     const activeCampaignsForUser = React.useMemo(() => {
         if (!user) return [];
         const userTeam = profile?.team || '';
@@ -2990,6 +2993,49 @@ export default function LearningHub() {
     }, [campaigns, user, profile]);
     
     const [plazaMode, setPlazaMode] = useState<'recordings' | 'policies' | 'brands'>('recordings');
+
+    const [appUpdateConfig, setAppUpdateConfig] = useState<any>(null);
+    const [isAppOutdated, setIsAppOutdated] = useState(false);
+
+    useEffect(() => {
+        if (isTrainingUser) return;
+        const checkVersions = async () => {
+            try {
+                const { doc, getDoc } = await import('firebase/firestore');
+                const docSnap = await getDoc(doc(db, 'system_config', 'app_versions'));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setAppUpdateConfig(data);
+                    
+                    if (Capacitor.isNativePlatform()) {
+                        const CURRENT_APP_VERSION = '1.0.0';
+                        const platform = Capacitor.getPlatform();
+                        const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
+                        
+                        const parseVersion = (v: string) => v.split('.').map(Number);
+                        const isOutdated = (current: string, latest: string) => {
+                            const cur = parseVersion(current);
+                            const lat = parseVersion(latest);
+                            for (let i = 0; i < Math.max(cur.length, lat.length); i++) {
+                                const c = cur[i] || 0;
+                                const l = lat[i] || 0;
+                                if (c < l) return true;
+                                if (c > l) return false;
+                            }
+                            return false;
+                        };
+                        
+                        if (latestVersion && isOutdated(CURRENT_APP_VERSION, latestVersion)) {
+                            setIsAppOutdated(true);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading app versions on Hub sidebar:", err);
+            }
+        };
+        checkVersions();
+    }, [profile, isTrainingUser]);
     
     // Ensure Web client only displays recordings mode (hiding policies/brands tabs)
     useEffect(() => {
@@ -3872,6 +3918,111 @@ export default function LearningHub() {
                         {item.title}
                     </h4>
                 </div>
+            </div>
+        );
+    };
+
+    const renderMobileAppWidget = () => {
+        if (isTrainingUser) return null;
+        const isNative = Capacitor.isNativePlatform();
+        
+        return (
+            <div className={`glass-panel rounded-2xl border border-white p-5 relative overflow-hidden group shadow-lg transition-all duration-300 hover:shadow-xl ${
+                businessType === 'leader' 
+                    ? 'bg-gradient-to-br from-teal-950/60 to-slate-900/50 border-desert-gold/20' 
+                    : 'bg-gradient-to-br from-white/70 via-white/50 to-amber-50/20 border-white/60'
+            }`}>
+                {/* Decorative background glow */}
+                <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-desert-gold/10 rounded-full blur-xl group-hover:bg-desert-gold/15 transition-all"></div>
+
+                {isNative ? (
+                    isAppOutdated ? (
+                        // Case A: Inside native App, and an update is available (有新版本待更新)
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-red-500/10 text-red-500 animate-pulse">
+                                    <ArrowDownToLine className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-red-500 block">
+                                        {t('update_modal.status_pending', '有新版本待更新')}
+                                    </span>
+                                    <h3 className={`text-sm sm:text-base font-extrabold ${
+                                        businessType === 'leader' ? 'text-white' : 'text-slate-900'
+                                    }`}>
+                                        {t('update_modal.btn_update', '立即更新')}
+                                    </h3>
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 dark:text-slate-400/80 leading-relaxed">
+                                {t('update_modal.outdated_tip', '系统发现更流畅的全新版本，建议您立即升级以保证功能正常。')}
+                            </p>
+                            <a
+                                href={Capacitor.getPlatform() === 'ios' 
+                                    ? (appUpdateConfig?.ios_testflight_url || 'https://testflight.apple.com/join/s2t21vU5') 
+                                    : (appUpdateConfig?.android_apk_url || `${window.location.origin}/downloads/mecc-latest.apk`)
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/10 hover:brightness-110 active:scale-95 transition-all cursor-pointer border-0 outline-none"
+                            >
+                                <ArrowDownToLine className="w-3.5 h-3.5" />
+                                {t('update_modal.btn_update', '立即更新')}
+                            </a>
+                        </div>
+                    ) : (
+                        // Case B: Inside native App, and it's up-to-date (已是最新)
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
+                                    <Check className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500 block">
+                                        {t('update_modal.status_latest', '客户端已是最新')}
+                                    </span>
+                                    <h3 className={`text-sm sm:text-base font-extrabold ${
+                                        businessType === 'leader' ? 'text-white' : 'text-slate-900'
+                                    }`}>
+                                        {t('update_modal.version', '版本: 1.0.0')}
+                                    </h3>
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 dark:text-slate-400/80 leading-relaxed">
+                                {t('update_modal.latest_tip', '您当前正在使用最新版 MECC 移动端，体验流畅高效的移动学习！')}
+                            </p>
+                        </div>
+                    )
+                ) : (
+                    // Case C: On Web browser (desktop/mobile), prompt to download (未下载 / 提示下载)
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-xl bg-desert-gold/10 text-desert-gold animate-bounce">
+                                <Smartphone className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-desert-gold block">
+                                    {t('navbar.download_app', '下载APP')}
+                                </span>
+                                <h3 className={`text-sm sm:text-base font-extrabold ${
+                                    businessType === 'leader' ? 'text-white' : 'text-slate-900'
+                                }`}>
+                                    {t('download_page.title', '下载 MECC 移动客户端')}
+                                </h3>
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-400 dark:text-slate-400/80 leading-relaxed">
+                            {t('download_page.subtitle', '在移动设备上畅享流畅学习，即时获取学习提醒与勋章通知。')}
+                        </p>
+                        <button
+                            onClick={() => navigate('/download')}
+                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-deep-teal to-blue-900 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-deep-teal/10 hover:brightness-110 active:scale-95 transition-all cursor-pointer border-0 outline-none"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            {t('navbar.download_app', '下载 APP')}
+                        </button>
+                    </div>
+                )}
             </div>
         );
     };
@@ -6147,9 +6298,11 @@ export default function LearningHub() {
                                 {plazaMode === 'brands' && renderFullBrandsPlaza()}
                             </div>
 
-                            {/* Right Column / Sidebar (25%) */}
                             {plazaMode === 'recordings' && (
                                 <div className="w-full xl:w-[320px] 2xl:w-[360px] shrink-0 flex flex-col gap-6">
+                                    {/* Mobile App Promo Widget */}
+                                    {renderMobileAppWidget()}
+
                                     {/* Compact Policies Widget */}
                                     {renderCompactPoliciesWidget()}
 

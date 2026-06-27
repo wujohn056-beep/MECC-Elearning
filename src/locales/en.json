@@ -101,6 +101,13 @@
         "android_btn": "Download Android APK",
         "back_to_hub": "Back to Learning Hub"
     },
+    "update_modal": {
+        "title": "New Version Available!",
+        "subtitle": "Please update to the latest version to ensure all functions work correctly.",
+        "notes_title": "What's New:",
+        "btn_update": "Update Now",
+        "btn_later": "Remind Me Later"
+    },
     "theme": {
         "oasis": "Jordan Oasis",
         "dusk": "Petra Dusk",

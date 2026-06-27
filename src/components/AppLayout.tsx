@@ -432,9 +432,6 @@ export default function AppLayout() {
                                     <Link to="/dashboard" className={getNavLinkClass('/dashboard')}>{t('navbar.dashboard', '数据看板')}</Link>
                                 )}
                                 <Link to="/account" className={getNavLinkClass('/account')}>{t('navbar.personal_center')}</Link>
-                                {!isTrainingUser && (
-                                    <Link to="/download" className={getNavLinkClass('/download')}>{t('navbar.download_app', '下载APP')}</Link>
-                                )}
                                 {(isSuperAdmin || hasAnyAdminPermission) && (
                                     <Link to={isSuperAdmin ? "/admin" : "/admin/users"} className={getNavLinkClass('/admin')}>{t('navbar.admin_dashboard', '管理后台')}</Link>
                                 )}
@@ -683,15 +680,15 @@ export default function AppLayout() {
                             </div>
                             
                             <div className="space-y-2">
-                                <h3 className="text-lg font-black text-white">发现新版本 !</h3>
+                                <h3 className="text-lg font-black text-white">{t('update_modal.title', '发现新版本 !')}</h3>
                                 <p className="text-slate-400 text-xs leading-relaxed">
-                                    为了保证功能正常使用，请及时更新到最新版。
+                                    {t('update_modal.subtitle', '为了保证功能正常使用，请及时更新到最新版。')}
                                 </p>
                             </div>
 
                             {/* Localized Update Notes */}
                             <div className="text-left bg-white/5 rounded-2xl p-4 border border-white/5 space-y-2 max-h-32 overflow-y-auto">
-                                <h4 className="text-xs font-extrabold text-slate-300">更新内容：</h4>
+                                <h4 className="text-xs font-extrabold text-slate-300">{t('update_modal.notes_title', '更新内容：')}</h4>
                                 <p className="text-slate-400 text-[11px] leading-relaxed whitespace-pre-line">
                                     {i18n.language === 'en' 
                                         ? (updateConfig.update_notes_en || 'Bug fixes and performance improvements.')
@@ -712,14 +709,14 @@ export default function AppLayout() {
                                     rel="noopener noreferrer"
                                     className="w-full py-3 bg-desert-gold text-slate-900 font-extrabold rounded-xl text-sm hover:bg-desert-gold/90 transition-colors shadow-lg shadow-desert-gold/10 flex justify-center items-center gap-1.5 cursor-pointer"
                                 >
-                                    <Download className="w-4 h-4" /> 立即更新
+                                    <Download className="w-4 h-4" /> {t('update_modal.btn_update', '立即更新')}
                                 </a>
                                 {!isForceUpdate && (
                                     <button
                                         onClick={() => setShowUpdateModal(false)}
                                         className="w-full py-2.5 bg-white/5 text-slate-400 font-semibold rounded-xl text-xs hover:bg-white/10 transition-colors cursor-pointer"
                                     >
-                                        稍后提醒
+                                        {t('update_modal.btn_later', '稍后提醒')}
                                     </button>
                                 )}
                             </div>
