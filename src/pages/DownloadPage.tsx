@@ -27,7 +27,13 @@ export default function DownloadPage() {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     if (data.ios_testflight_url) setTestflightUrl(data.ios_testflight_url);
-                    if (data.android_apk_url) setApkUrl(data.android_apk_url);
+                    if (data.android_apk_url) {
+                        setApkUrl(data.android_apk_url);
+                    } else {
+                        setApkUrl(`${window.location.origin}/downloads/mecc-latest.apk`);
+                    }
+                } else {
+                    setApkUrl(`${window.location.origin}/downloads/mecc-latest.apk`);
                 }
             } catch (err) {
                 console.error("Error loading download URLs:", err);
