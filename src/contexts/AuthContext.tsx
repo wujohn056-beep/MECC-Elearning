@@ -135,38 +135,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(currentUser);
 
                 if (currentUser) {
+                    let resolvedProfile: any = null;
+
                     // Hardcoded super admin or Mock SSO test account
                     if (currentUser.email === 'wuchuan@51talk.com') {
-                        setProfile({
+                        resolvedProfile = {
                             crmId: 'wuchuan',
                             role: 'super_admin'
-                        });
+                        };
                     } else if (currentUser.email === 'test-sso@mecc.com') {
                         const mockCrmId = localStorage.getItem('mock_sso_crm_id') || 'wuchuan';
                         if (mockCrmId.toLowerCase() === 'serdah') {
-                            setProfile({
+                            resolvedProfile = {
                                 crmId: 'Serdah',
                                 role: 'sm',
                                 dep: 'CC',
                                 sd: 'JOHN',
                                 team: '',
                                 realUid: 'hBhX4w7gqOQZEEiytqKe3FTDhAT2'
-                            });
+                            };
                         } else {
-                            setProfile({
+                            resolvedProfile = {
                                 crmId: 'wuchuan',
                                 role: 'super_admin'
-                            });
+                            };
                         }
                     } else if (currentUser.email === 'mohserdah@51talk.com') {
-                        setProfile({
+                        resolvedProfile = {
                             crmId: 'Serdah',
                             role: 'sm',
                             dep: 'CC',
                             sd: 'JOHN',
                             team: '',
                             realUid: 'hBhX4w7gqOQZEEiytqKe3FTDhAT2'
-                        });
+                        };
+                    }
+
+                    if (resolvedProfile) {
+                        // Merge active Firestore profile data for mock/SSO users to load appVersion/platform telemetry
+                        try {
+                            const targetUid = resolvedProfile.realUid || currentUser.uid;
+                            const userDoc = await getDoc(doc(db, 'users', targetUid));
+                            if (userDoc.exists()) {
+                                resolvedProfile = {
+                                    ...resolvedProfile,
+                                    ...userDoc.data()
+                                };
+                            } else {
+                                const { collection, query, where, getDocs } = await import('firebase/firestore');
+                                const q = query(collection(db, 'users'), where('crmId', '==', resolvedProfile.crmId));
+                                const querySnapshot = await getDocs(q);
+                                if (!querySnapshot.empty) {
+                                    resolvedProfile = {
+                                        ...resolvedProfile,
+                                        ...querySnapshot.docs[0].data(),
+                                        realUid: querySnapshot.docs[0].id
+                                    };
+                                }
+                            }
+                        } catch (e) {
+                            console.warn("[AuthContext] Failed to load mock user db telemetry:", e);
+                        }
+                        setProfile(resolvedProfile);
                     } else {
                         // Fetch user profile from Firestore
                         try {
