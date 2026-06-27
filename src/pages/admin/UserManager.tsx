@@ -150,18 +150,18 @@ export default function UserManager() {
         if (!searchQuery) return true;
 
         const q = searchQuery.toLowerCase();
-        return u.crmId.toLowerCase().includes(q) ||
+        return (u.crmId || '').toLowerCase().includes(q) ||
             (u.team && u.team.toLowerCase().includes(q)) ||
             (u.sd && u.sd.toLowerCase().includes(q)) ||
             (u.sm && u.sm.toLowerCase().includes(q)) ||
             (u.tl && u.tl.toLowerCase().includes(q));
     }).sort((a, b) => {
         if (!searchQuery) {
-            return a.crmId.localeCompare(b.crmId);
+            return (a.crmId || '').localeCompare(b.crmId || '');
         }
         const q = searchQuery.toLowerCase();
         const getScore = (u: UserRecord) => {
-            const crmIdLower = u.crmId.toLowerCase();
+            const crmIdLower = (u.crmId || '').toLowerCase();
             if (crmIdLower === q) return 4;
             if (crmIdLower.startsWith(q)) return 3;
             if (crmIdLower.includes(q)) return 2;
@@ -172,7 +172,7 @@ export default function UserManager() {
         if (scoreA !== scoreB) {
             return scoreB - scoreA;
         }
-        return a.crmId.localeCompare(b.crmId);
+        return (a.crmId || '').localeCompare(b.crmId || '');
     });
 
     // Extract unique values for batch selection dropdowns (cascading lists)
@@ -628,15 +628,15 @@ export default function UserManager() {
             // Apply hierarchy filters for non-super-admins
             if (loggedInRole === 'sd') {
                 const matchesSd = (u.sd || '').trim().toLowerCase() === loggedInCrmId;
-                const isSelf = u.crmId.trim().toLowerCase() === loggedInCrmId;
+                const isSelf = (u.crmId || '').trim().toLowerCase() === loggedInCrmId;
                 return matchesSd || isSelf;
             } else if (loggedInRole === 'sm') {
                 const matchesSm = (u.sm || '').trim().toLowerCase() === loggedInCrmId;
-                const isSelf = u.crmId.trim().toLowerCase() === loggedInCrmId;
+                const isSelf = (u.crmId || '').trim().toLowerCase() === loggedInCrmId;
                 return matchesSm || isSelf;
             } else if (loggedInRole === 'tl') {
                 const matchesTl = (u.tl || '').trim().toLowerCase() === loggedInCrmId;
-                const isSelf = u.crmId.trim().toLowerCase() === loggedInCrmId;
+                const isSelf = (u.crmId || '').trim().toLowerCase() === loggedInCrmId;
                 return matchesTl || isSelf;
             }
             return true; // super_admin
@@ -663,7 +663,7 @@ export default function UserManager() {
                 
                 let localLinkedCount = 0;
                 for (const u of unlinkedUsers) {
-                    const crmIdClean = u.crmId.replace(/[^a-zA-Z0-9]/g, '');
+                    const crmIdClean = (u.crmId || '').replace(/[^a-zA-Z0-9]/g, '');
                     const mockDdId = `dd_mock_${crmIdClean}`;
                     const syncTime = new Date().toISOString();
                     
@@ -674,7 +674,7 @@ export default function UserManager() {
                         });
                         localLinkedCount++;
                     } catch (writeErr) {
-                        console.error(`Failed to write client-side DingTalk sync for user ${u.crmId}:`, writeErr);
+                        console.error(`Failed to write client-side DingTalk sync for user ${u.crmId || ''}:`, writeErr);
                     }
                 }
                 setStatusLog(prev => [{ msg: `🎉 [本地自愈成功] 客户端成功为 ${localLinkedCount} 个销售账户在 Firestore 中匹配并写入了钉钉关联状态！`, type: 'success' }, ...prev]);
@@ -1460,7 +1460,7 @@ export default function UserManager() {
                                     <button onClick={() => handleResetPassword(u.id)} title={t('user_manager.reset_password', '重置密码')} className="p-1.5 text-orange-500 hover:bg-orange-50 rounded">
                                         <Key className="w-4 h-4" />
                                     </button>
-                                    {u.crmId.toLowerCase() !== profile?.crmId?.toLowerCase() && (
+                                    {(u.crmId || '').toLowerCase() !== profile?.crmId?.toLowerCase() && (
                                         <button onClick={() => handleDeleteUser(u.id)} title={t('user_manager.delete_account', '删除')} className="p-1.5 text-red-500 hover:bg-red-50 rounded cursor-pointer">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
