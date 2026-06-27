@@ -3925,6 +3925,11 @@ export default function LearningHub() {
     const renderMobileAppWidget = () => {
         if (isTrainingUser) return null;
         const isNative = Capacitor.isNativePlatform();
+        const hasDownloaded = profile?.platform === 'ios' || profile?.platform === 'android' || !!profile?.appVersion;
+        
+        const isAppUser = isNative || hasDownloaded;
+        const currentVersionToCheck = isNative ? '1.0.4' : (profile?.appVersion || '1.0.4');
+        const userPlatform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
         
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 relative overflow-hidden group shadow-lg transition-all duration-300 hover:shadow-xl ${
@@ -3935,9 +3940,9 @@ export default function LearningHub() {
                 {/* Decorative background glow */}
                 <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-desert-gold/10 rounded-full blur-xl group-hover:bg-desert-gold/15 transition-all"></div>
 
-                {isNative ? (
+                {isAppUser ? (
                     isAppOutdated ? (
-                        // Case A: Inside native App, and an update is available (有新版本待更新)
+                        // Case A: App outdated (有新版本待更新)
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-xl bg-red-500/10 text-red-500 animate-pulse">
@@ -3958,7 +3963,7 @@ export default function LearningHub() {
                                 {t('update_modal.outdated_tip', '系统发现更流畅的全新版本，建议您立即升级以保证功能正常。')}
                             </p>
                             <a
-                                href={Capacitor.getPlatform() === 'ios' 
+                                href={userPlatform === 'ios' 
                                     ? (appUpdateConfig?.ios_testflight_url || 'https://testflight.apple.com/join/s2t21vU5') 
                                     : (appUpdateConfig?.android_apk_url || `${window.location.origin}/downloads/mecc-latest.apk`)
                                 }
@@ -3971,7 +3976,7 @@ export default function LearningHub() {
                             </a>
                         </div>
                     ) : (
-                        // Case B: Inside native App, and it's up-to-date (已是最新)
+                        // Case B: App up-to-date (已是最新)
                         <div className="space-y-3">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
@@ -3984,7 +3989,7 @@ export default function LearningHub() {
                                     <h3 className={`text-sm sm:text-base font-extrabold ${
                                         businessType === 'leader' ? 'text-white' : 'text-slate-900'
                                     }`}>
-                                        {t('update_modal.version', '版本: 1.0.0')}
+                                        {t('update_modal.version', '版本: 1.0.4').replace('1.0.0', currentVersionToCheck).replace('1.0.4', currentVersionToCheck)}
                                     </h3>
                                 </div>
                             </div>
