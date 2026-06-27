@@ -22,6 +22,8 @@ import PolicyManager from './pages/admin/PolicyManager';
 import ReferralManager from './pages/admin/ReferralManager';
 import BannerManager from './pages/admin/BannerManager';
 
+import DownloadPage from './pages/DownloadPage';
+
 const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
 
 function App() {
@@ -30,6 +32,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/portal" element={<Login />} />
+          <Route path="/download" element={<DownloadPage />} />
 
           {/* User Routes */}
           <Route element={

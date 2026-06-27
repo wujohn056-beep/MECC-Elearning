@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, Key, AlertCircle, CheckCircle, ChevronDown, X, Compass, CheckSquare, BarChart2, Settings, BookOpen } from 'lucide-react';
+import { LogOut, User, Key, AlertCircle, CheckCircle, ChevronDown, X, Compass, CheckSquare, BarChart2, Settings, BookOpen, ArrowDownToLine, Download } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import { updatePassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -122,6 +122,71 @@ export default function AppLayout() {
     const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission, canAccessTasks, canAccessDashboard } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+    const isTrainingUser = profile?.identity === 'Training Dep' || 
+        (profile?.team || '').toLowerCase().includes('training');
+
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [updateConfig, setUpdateConfig] = useState<any>(null);
+    const [isForceUpdate, setIsForceUpdate] = useState(false);
+    const [showWebBanner, setShowWebBanner] = useState(false);
+
+    // 1. Mobile Web Smart Banner Effect
+    useEffect(() => {
+        if (Capacitor.isNativePlatform() || isTrainingUser) return;
+        const ua = navigator.userAgent.toLowerCase();
+        const isMobile = /iphone|ipad|ipod|android/i.test(ua);
+        const isBannerDismissed = localStorage.getItem('hide-web-download-banner') === 'true';
+        
+        if (isMobile && !isBannerDismissed) {
+            setShowWebBanner(true);
+        }
+    }, [isTrainingUser]);
+
+    // 2. App-Side Version Checker Effect
+    const CURRENT_APP_VERSION = '1.0.0'; // Hardcoded baseline version code for current client packaging
+
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform() || isTrainingUser) return;
+
+        const checkAppVersion = async () => {
+            try {
+                const { doc, getDoc } = await import('firebase/firestore');
+                const docSnap = await getDoc(doc(db, 'system_config', 'app_versions'));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const platform = Capacitor.getPlatform(); // 'ios' or 'android'
+                    const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
+                    
+                    const parseVersion = (v: string) => v.split('.').map(Number);
+                    const isOutdated = (current: string, latest: string) => {
+                        const cur = parseVersion(current);
+                        const lat = parseVersion(latest);
+                        for (let i = 0; i < Math.max(cur.length, lat.length); i++) {
+                            const c = cur[i] || 0;
+                            const l = lat[i] || 0;
+                            if (c < l) return true;
+                            if (c > l) return false;
+                        }
+                        return false;
+                    };
+
+                    if (latestVersion && isOutdated(CURRENT_APP_VERSION, latestVersion)) {
+                        const forceUpdate = data.min_required_version && isOutdated(CURRENT_APP_VERSION, data.min_required_version);
+                        setUpdateConfig(data);
+                        setIsForceUpdate(!!forceUpdate);
+                        setShowUpdateModal(true);
+                    }
+                }
+            } catch (err) {
+                console.error("Error checking app version:", err);
+            }
+        };
+
+        const timer = setTimeout(checkAppVersion, 3000);
+        return () => clearTimeout(timer);
+    }, [isTrainingUser]);
+
     const [appTheme, setAppTheme] = useState<'oasis' | 'dusk' | 'dark'>(() => {
         return (localStorage.getItem('app-theme') as 'oasis' | 'dusk' | 'dark') || 'oasis';
     });
@@ -315,6 +380,37 @@ export default function AppLayout() {
             }`}></div>
             
             <div className="relative z-10 flex flex-col min-h-screen">
+                {/* Mobile Web Smart Banner */}
+                {showWebBanner && (
+                    <div className="bg-gradient-to-r from-deep-teal to-blue-900 text-white px-4 py-3 flex items-center justify-between shadow-lg relative animate-in slide-in-from-top duration-300 z-[99] border-b border-white/10 shrink-0">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-lg">📱</span>
+                            <p className="text-xs font-semibold truncate">
+                                下载 MECC 移动客户端，享受更流畅的学习体验与消息提醒！
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={() => {
+                                    navigate('/download');
+                                }}
+                                className="bg-desert-gold hover:bg-desert-gold/90 text-slate-900 text-[11px] font-black px-3 py-1.5 rounded-lg shadow transition-all cursor-pointer"
+                            >
+                                立即去下载
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    localStorage.setItem('hide-web-download-banner', 'true');
+                                    setShowWebBanner(false);
+                                }}
+                                className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Navigation Bar */}
                 <nav className="glass-panel sticky top-0 z-50 p-4 pt-safe flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-3">
@@ -551,6 +647,56 @@ export default function AppLayout() {
                     isOpen={showPasswordModal} 
                     onClose={() => setShowPasswordModal(false)} 
                 />
+
+                {/* In-App Version Update Dialog */}
+                {showUpdateModal && updateConfig && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[2000] flex justify-center items-center p-6">
+                        <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center space-y-6 animate-in zoom-in-95 duration-200">
+                            <div className="inline-flex p-4 rounded-full bg-desert-gold/10 text-desert-gold animate-bounce">
+                                <ArrowDownToLine className="w-8 h-8" />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-black text-white">发现新版本 !</h3>
+                                <p className="text-slate-400 text-xs leading-relaxed">
+                                    为了保证功能正常使用，请及时更新到最新版。
+                                </p>
+                            </div>
+
+                            {/* Localized Update Notes */}
+                            <div className="text-left bg-white/5 rounded-2xl p-4 border border-white/5 space-y-2 max-h-32 overflow-y-auto">
+                                <h4 className="text-xs font-extrabold text-slate-300">更新内容：</h4>
+                                <p className="text-slate-400 text-[11px] leading-relaxed whitespace-pre-line">
+                                    {i18n.language === 'en' 
+                                        ? (updateConfig.update_notes_en || 'Bug fixes and performance improvements.')
+                                        : i18n.language === 'ar'
+                                            ? (updateConfig.update_notes_ar || 'إصلاح الأخطاء وتحسين الأداء.')
+                                            : (updateConfig.update_notes_zh || '修复已知问题，提升使用体验。')
+                                    }
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col gap-2 pt-2">
+                                <a
+                                    href={Capacitor.getPlatform() === 'ios' ? updateConfig.ios_testflight_url : updateConfig.android_apk_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full py-3 bg-desert-gold text-slate-900 font-extrabold rounded-xl text-sm hover:bg-desert-gold/90 transition-colors shadow-lg shadow-desert-gold/10 flex justify-center items-center gap-1.5 cursor-pointer"
+                                >
+                                    <Download className="w-4 h-4" /> 立即更新
+                                </a>
+                                {!isForceUpdate && (
+                                    <button
+                                        onClick={() => setShowUpdateModal(false)}
+                                        className="w-full py-2.5 bg-white/5 text-slate-400 font-semibold rounded-xl text-xs hover:bg-white/10 transition-colors cursor-pointer"
+                                    >
+                                        稍后提醒
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
