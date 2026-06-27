@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove, setDoc } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 import { useTranslation } from 'react-i18next';
 import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircle, Trash2, Bell, Camera, Sparkles } from 'lucide-react';
@@ -93,9 +93,9 @@ export default function Account() {
             const downloadUrl = await getDownloadURL(uploadTask.ref);
 
             const userProfileRef = doc(db, 'users', profile.realUid || user.uid);
-            await updateDoc(userProfileRef, {
+            await setDoc(userProfileRef, {
                 avatarUrl: downloadUrl
-            });
+            }, { merge: true });
 
             updateProfile({ avatarUrl: downloadUrl });
             alert(t('account.avatar_success', 'Avatar updated successfully'));
