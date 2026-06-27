@@ -500,13 +500,18 @@ export default function AppLayout() {
                                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                                     <div className="p-4 border-b border-gray-50 bg-gradient-to-br from-gray-50 to-white">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-desert-gold to-yellow-600 text-white shadow-sm shrink-0 border-2 border-white">
+                                            <Link 
+                                                to="/account"
+                                                onClick={() => setShowUserMenu(false)}
+                                                className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-desert-gold to-yellow-600 text-white shadow-sm shrink-0 border-2 border-white hover:opacity-85 transition-opacity"
+                                                title={t('navbar.personal_center', '个人学习中心')}
+                                            >
                                                 {profile?.avatarUrl ? (
                                                     <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <User className="w-6 h-6" />
                                                 )}
-                                            </div>
+                                            </Link>
                                             <div className="min-w-0">
                                                 <p className="font-extrabold text-arabian-night truncate text-base">{profile?.crmId}</p>
                                                 <span className="text-[10px] font-bold text-desert-gold uppercase bg-desert-gold/10 px-2 py-0.5 rounded-full border border-desert-gold/20 inline-block mt-0.5">
@@ -529,6 +534,14 @@ export default function AppLayout() {
                                             </div>
                                         </div>
                                     </div>
+                                    <Link 
+                                        to="/account"
+                                        onClick={() => setShowUserMenu(false)}
+                                        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold text-arabian-night/80 hover:bg-gray-50 hover:text-deep-teal transition-colors"
+                                    >
+                                        <User className="w-4 h-4 text-desert-gold" />
+                                        {t('navbar.personal_center', '个人学习中心')}
+                                    </Link>
                                     <button 
                                         onClick={() => {
                                             setShowUserMenu(false);

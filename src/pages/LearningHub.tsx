@@ -3353,6 +3353,7 @@ export default function LearningHub() {
     // Filter active banners based on user profile and role
     // Filter active banners based on user profile and role
     const displayBanners = React.useMemo(() => {
+        if (plazaMode !== 'recordings') return [];
         let activeBanners = banners.filter(b => b.active !== false);
         if (hubScope === 'team') {
             if (activeSmId === 'all') {
@@ -3362,7 +3363,7 @@ export default function LearningHub() {
         } else {
             return []; // Banners should only appear in Team Hub based on SM permissions
         }
-    }, [banners, hubScope, activeSmId]);
+    }, [banners, hubScope, activeSmId, plazaMode]);
 
     // Handle SM ID defaults for roles
     useEffect(() => {
