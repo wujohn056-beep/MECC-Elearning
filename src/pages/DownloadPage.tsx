@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Smartphone, Download, AlertTriangle, ArrowLeft, ArrowDownToLine, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 
 export default function DownloadPage() {
@@ -51,29 +51,9 @@ export default function DownloadPage() {
         }
     }, [testflightUrl, apkUrl, loading]);
 
-    // Handle access block for Training Department
+    // Handle access block for Training Department - redirect immediately to hub
     if (isTrainingUser) {
-        return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-white font-sans">
-                <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl space-y-6">
-                    <div className="inline-flex p-4 rounded-full bg-red-500/10 text-red-400">
-                        <AlertTriangle className="w-12 h-12" />
-                    </div>
-                    <div className="space-y-2">
-                        <h2 className="text-xl font-black tracking-tight">暂无访问权限</h2>
-                        <p className="text-slate-400 text-sm leading-relaxed">
-                            非常抱歉，当前页面和下载规划暂时不对培训部门 (Training Department) 的用户开放。
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => navigate('/hub')}
-                        className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 transition-all font-semibold text-sm flex items-center justify-center gap-2"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> 返回学习中心
-                    </button>
-                </div>
-            </div>
-        );
+        return <Navigate to="/hub" replace />;
     }
 
     if (loading) {
