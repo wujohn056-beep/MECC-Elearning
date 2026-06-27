@@ -87,6 +87,20 @@
         "download_app": "下载APP",
         "toggle_theme": "切换视觉主题"
     },
+    "download_page": {
+        "loading": "加载中...",
+        "title": "下载 MECC 移动客户端",
+        "subtitle": "在移动设备上畅享流畅学习，即时获取学习提醒与勋章通知。",
+        "ios_badge": "iOS 测试版",
+        "ios_title": "Apple TestFlight",
+        "ios_desc": "使用苹果官方测试平台加入内测。如未安装 TestFlight App，系统会自动提示引导下载。",
+        "ios_btn": "开启 iOS 测试",
+        "android_badge": "ANDROID 直下",
+        "android_title": "安卓 APK 下载",
+        "android_desc": "直接扫码下载安装最新版 APK。如在微信/钉钉中扫码，请根据提示在系统浏览器中打开。",
+        "android_btn": "下载 Android APK",
+        "back_to_hub": "返回学习中心 (Learning Hub)"
+    },
     "theme": {
         "oasis": "约旦绿洲",
         "dusk": "佩特拉暮色",

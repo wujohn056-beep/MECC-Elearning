@@ -5,10 +5,12 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Smartphone, Download, AlertTriangle, ArrowLeft, ArrowDownToLine, Loader2 } from 'lucide-react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import QRCode from 'qrcode';
+import { useTranslation } from 'react-i18next';
 
 export default function DownloadPage() {
     const { user, profile } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     
     const [testflightUrl, setTestflightUrl] = useState('https://testflight.apple.com/join/xxxxxx');
     const [apkUrl, setApkUrl] = useState('https://learning.mecloudhub.com/downloads/mecc-latest.apk');
@@ -66,7 +68,7 @@ export default function DownloadPage() {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
                 <Loader2 className="w-8 h-8 text-desert-gold animate-spin" />
-                <p className="text-slate-400 text-sm mt-3">加载中...</p>
+                <p className="text-slate-400 text-sm mt-3">{t('download_page.loading', '加载中...')}</p>
             </div>
         );
     }
@@ -84,10 +86,10 @@ export default function DownloadPage() {
                         <Smartphone className="w-8 h-8" />
                     </div>
                     <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-                        下载 MECC 移动客户端
+                        {t('download_page.title', '下载 MECC 移动客户端')}
                     </h1>
                     <p className="text-slate-400 text-sm max-w-lg mx-auto leading-relaxed">
-                        在移动设备上畅享流畅学习，即时获取学习提醒与勋章通知。
+                        {t('download_page.subtitle', '在移动设备上畅享流畅学习，即时获取学习提醒与勋章通知。')}
                     </p>
                 </div>
 
@@ -96,12 +98,12 @@ export default function DownloadPage() {
                     {/* iOS App */}
                     <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 flex flex-col items-center justify-between text-center space-y-6 shadow-xl relative group hover:border-blue-500/30 transition-all duration-300">
                         <div className="absolute top-4 right-4 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-blue-500/20">
-                            iOS 测试版
+                            {t('download_page.ios_badge', 'iOS 测试版')}
                         </div>
                         <div className="space-y-2 pt-4">
-                            <h3 className="text-lg font-extrabold text-white">Apple TestFlight</h3>
+                            <h3 className="text-lg font-extrabold text-white">{t('download_page.ios_title', 'Apple TestFlight')}</h3>
                             <p className="text-slate-400 text-xs px-4">
-                                使用苹果官方测试平台加入内测。如未安装 TestFlight App，系统会自动提示引导下载。
+                                {t('download_page.ios_desc', '使用苹果官方测试平台加入内测。如未安装 TestFlight App，系统会自动提示引导下载。')}
                             </p>
                         </div>
                         {iosQrCode ? (
@@ -119,19 +121,19 @@ export default function DownloadPage() {
                             rel="noopener noreferrer"
                             className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 transition-all font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 cursor-pointer"
                         >
-                            <Download className="w-4 h-4" /> 开启 iOS 测试
+                            <Download className="w-4 h-4" /> {t('download_page.ios_btn', '开启 iOS 测试')}
                         </a>
                     </div>
 
                     {/* Android App */}
                     <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 flex flex-col items-center justify-between text-center space-y-6 shadow-xl relative group hover:border-emerald-500/30 transition-all duration-300">
                         <div className="absolute top-4 right-4 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-emerald-500/20">
-                            Android 直下
+                            {t('download_page.android_badge', 'ANDROID 直下')}
                         </div>
                         <div className="space-y-2 pt-4">
-                            <h3 className="text-lg font-extrabold text-white">安卓 APK 下载</h3>
+                            <h3 className="text-lg font-extrabold text-white">{t('download_page.android_title', '安卓 APK 下载')}</h3>
                             <p className="text-slate-400 text-xs px-4">
-                                直接扫码下载安装最新版 APK。如在微信/钉钉中扫码，请根据提示在系统浏览器中打开。
+                                {t('download_page.android_desc', '直接扫码下载安装最新版 APK。如在微信/钉钉中扫码，请根据提示在系统浏览器中打开。')}
                             </p>
                         </div>
                         {androidQrCode ? (
@@ -148,7 +150,7 @@ export default function DownloadPage() {
                             download="mecc-latest.apk"
                             className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-all font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
                         >
-                            <ArrowDownToLine className="w-4 h-4" /> 下载 Android APK
+                            <ArrowDownToLine className="w-4 h-4" /> {t('download_page.android_btn', '下载 Android APK')}
                         </a>
                     </div>
                 </div>
@@ -160,7 +162,7 @@ export default function DownloadPage() {
                             onClick={() => navigate('/hub')}
                             className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
                         >
-                            <ArrowLeft className="w-3.5 h-3.5" /> 返回学习中心 (Learning Hub)
+                            <ArrowLeft className="w-3.5 h-3.5" /> {t('download_page.back_to_hub', '返回学习中心 (Learning Hub)')}
                         </button>
                     </div>
                 )}

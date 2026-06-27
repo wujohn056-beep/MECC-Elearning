@@ -87,6 +87,20 @@
         "download_app": "Download App",
         "toggle_theme": "Switch Theme"
     },
+    "download_page": {
+        "loading": "Loading...",
+        "title": "Download MECC Mobile App",
+        "subtitle": "Enjoy seamless learning on mobile. Get instant notifications for tasks and medals.",
+        "ios_badge": "iOS Beta",
+        "ios_title": "Apple TestFlight",
+        "ios_desc": "Join the beta via Apple's official testing platform. If TestFlight is not installed, follow the prompts to install it first.",
+        "ios_btn": "Start iOS Testing",
+        "android_badge": "ANDROID Direct",
+        "android_title": "Android APK Download",
+        "android_desc": "Scan to download and install the latest APK. If scanning via WeChat/DingTalk, open the link in your system browser.",
+        "android_btn": "Download Android APK",
+        "back_to_hub": "Back to Learning Hub"
+    },
     "theme": {
         "oasis": "Jordan Oasis",
         "dusk": "Petra Dusk",
