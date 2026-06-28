@@ -1684,27 +1684,27 @@ export default function UserManager() {
                             {formData.role !== 'super_admin' && formData.role !== 'sd' && (
                                 <div>
                                     <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_sd', 'SD')}</label>
-                                    <input 
-                                        type="text" 
-                                        list="sd-options"
+                                    <select 
                                         value={formData.sd} 
                                         onChange={e => setFormData({...formData, sd: e.target.value})}
                                         disabled={isSdDisabled}
-                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSdDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
-                                        placeholder={t('user_manager.placeholder_sd_select_input', '选择或输入 SD')}
-                                    />
-                                    <datalist id="sd-options">
-                                        {filteredSDs.map(sd => <option key={sd} value={sd} />)}
-                                    </datalist>
+                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSdDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'} font-semibold text-slate-700 text-sm`}
+                                    >
+                                        <option value="">{t('user_manager.placeholder_sd_select_input', '选择 SD')}</option>
+                                        {filteredSDs.map(sd => (
+                                            <option key={sd} value={sd}>{sd}</option>
+                                        ))}
+                                        {formData.sd && !filteredSDs.includes(formData.sd) && (
+                                            <option value={formData.sd}>{formData.sd}</option>
+                                        )}
+                                    </select>
                                 </div>
                             )}
 
                             {(formData.role === 'user' || formData.role === 'tl') && (
                                 <div>
                                     <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_sm', 'SM')}</label>
-                                    <input 
-                                        type="text" 
-                                        list="sm-options"
+                                    <select 
                                         value={formData.sm} 
                                         onChange={e => {
                                             const newSm = e.target.value;
@@ -1726,21 +1726,23 @@ export default function UserManager() {
                                             });
                                         }}
                                         disabled={isSmDisabled}
-                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSmDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
-                                        placeholder={t('user_manager.placeholder_sm_select_input', '选择或输入 SM')}
-                                    />
-                                    <datalist id="sm-options">
-                                        {filteredSMs.map(sm => <option key={sm} value={sm} />)}
-                                    </datalist>
+                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isSmDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'} font-semibold text-slate-700 text-sm`}
+                                    >
+                                        <option value="">{t('user_manager.placeholder_sm_select_input', '选择 SM')}</option>
+                                        {filteredSMs.map(sm => (
+                                            <option key={sm} value={sm}>{sm}</option>
+                                        ))}
+                                        {formData.sm && !filteredSMs.includes(formData.sm) && (
+                                            <option value={formData.sm}>{formData.sm}</option>
+                                        )}
+                                    </select>
                                 </div>
                             )}
 
                             {formData.role === 'user' && (
                                 <div>
                                     <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_tl', 'TL')}</label>
-                                    <input 
-                                        type="text" 
-                                        list="tl-options"
+                                    <select 
                                         value={formData.tl} 
                                         onChange={e => {
                                             const newTl = e.target.value;
@@ -1787,12 +1789,16 @@ export default function UserManager() {
                                             });
                                         }}
                                         disabled={isTlDisabled}
-                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isTlDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'}`}
-                                        placeholder={t('user_manager.placeholder_tl_select_input', '选择或输入 TL')}
-                                    />
-                                    <datalist id="tl-options">
-                                        {filteredTLs.map(tl => <option key={tl} value={tl} />)}
-                                    </datalist>
+                                        className={`w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold ${isTlDisabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed select-none' : 'bg-white'} font-semibold text-slate-700 text-sm`}
+                                    >
+                                        <option value="">{t('user_manager.placeholder_tl_select_input', '选择 TL')}</option>
+                                        {filteredTLs.map(tl => (
+                                            <option key={tl} value={tl}>{tl}</option>
+                                        ))}
+                                        {formData.tl && !filteredTLs.includes(formData.tl) && (
+                                            <option value={formData.tl}>{formData.tl}</option>
+                                        )}
+                                    </select>
                                 </div>
                             )}
 
