@@ -110,11 +110,11 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <Users className="w-5 h-5 text-desert-gold" />,
-                title: "4. 团队学习大盘 (Team Hub)",
-                desc: "在您的个人中心下方，集成有同伴学习大盘 (Team Hub)：",
+                title: "4. 团队专属平台 (Team Hub)",
+                desc: "在广场中，点击“团队专属 (👥)”选项卡，即可进入您所属部门的专属学习空间：",
                 bullets: [
-                    "组内竞争排行：实时展示您所在小组内部所有组员的咖啡连击天数、当前荣誉等级和累计学时排行。",
-                    "激发学习热情：通过同伴榜样作用，激发大家追赶超越的自发学习热情。"
+                    "SM 专属定制空间：每个 SM (销售经理) 都可以拥有自己独立的空间来上传课程分类、定向推送专有材料及运营专属的轮播 Banner，打造团队独立的微型学习平台。",
+                    "定向资料隔离：在该空间内，只能查阅和学习您所在的 SM 团队定向推送的课程、录音案例以及团队层级的激励政策，不受公共库干扰。"
                 ]
             },
             {
@@ -233,10 +233,10 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             {
                 icon: <Users className="w-5 h-5 text-desert-gold" />,
                 title: "4. Team Learning Hub (Team Hub)",
-                desc: "Review mutual study statuses under Team Hub section in your Account page:",
+                desc: "Switch to 'Team Scope (👥)' in Learning Hub to enter your department's dedicated space:",
                 bullets: [
-                    "Intra-group Leaderboard: Displays coffee streaks, hunter levels, and cumulative study minutes of members in your group.",
-                    "Social Competition: Motivates self-learning through peer comparison and visibility."
+                    "SM-Owned Custom Space: Every SM (Sales Manager) has their own space to upload custom categories, distribute target materials, and run exclusive banner promotions, creating a micro learning platform for their team.",
+                    "Targeted Material Isolation: Within this scope, you only view and study courses, call recordings, and incentive policies targeted specifically for your SM team."
                 ]
             },
             {
@@ -354,11 +354,11 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <Users className="w-5 h-5 text-desert-gold" />,
-                title: "4. لوحة مكافآت الفريق (Team Hub)",
-                desc: "راجع حالة التعلم لأعضاء فريقك عبر قسم Team Hub في صفحتك الشخصية:",
+                title: "4. المنصة الخاصة بالفريق (Team Hub)",
+                desc: "انقر على علامة التبويب 'خاص بالفريق (👥)' في ساحة التعلم للدخول إلى المساحة المخصصة لقسمك:",
                 bullets: [
-                    "لوحة صدارة المجموعة: تعرض الاستمرار اليومي، ومستويات الصيد، ودقائق الدراسة التراكمية لأعضاء مجموعتك.",
-                    "المنافسة الاجتماعية: تحفيز التعلم الذاتي من خلال مقارنة النشاط مع الزملاء بوضوح."
+                    "مساحة مخصصة لكل SM: يمكن لكل مدير مبيعات (SM) الحصول على مساحته الخاصة لرفع فئات الكورسات، وتوزيع المواد المخصصة لفريقه، وإدارة بنرات الترويج الحصرية، مما يوفر منصة تعلم مصغرة ومستقلة للفريق.",
+                    "عزل المواد المستهدفة: داخل هذا النطاق، يمكنك فقط الاطلاع ودراسة الكورسات، وتسجيلات المكالمات، وسياسات العمولات المخصصة حصرياً لفريق الـ SM الخاص بك دون تداخل مع المكتبة العامة."
                 ]
             },
             {
