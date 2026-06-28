@@ -1762,21 +1762,19 @@ export default function UserManager() {
                                                         (u.sm && u.sm.trim().toLowerCase() === newTl.trim().toLowerCase()) ||
                                                         (u.role === 'sm' && u.crmId && u.crmId.trim().toLowerCase() === newTl.trim().toLowerCase())
                                                     );
-                                                    if (match && match.sd) {
-                                                        derivedSd = match.sd;
-                                                    }
-                                                    if (match && match.team && !derivedTeam) {
-                                                        derivedTeam = match.team;
+                                                    if (match) {
+                                                        if (match.sd) derivedSd = match.sd;
+                                                        if (match.team) derivedTeam = match.team;
                                                     }
                                                 } else {
-                                                    const match = users.find(u => 
-                                                        (u.tl && u.tl.trim().toLowerCase() === newTl.trim().toLowerCase()) ||
-                                                        (u.role === 'tl' && u.crmId && u.crmId.trim().toLowerCase() === newTl.trim().toLowerCase())
-                                                    );
+                                                    let match = users.find(u => u.tl && u.tl.trim().toLowerCase() === newTl.trim().toLowerCase() && u.team);
+                                                    if (!match) {
+                                                        match = users.find(u => u.crmId && u.crmId.trim().toLowerCase() === newTl.trim().toLowerCase() && u.role === 'tl');
+                                                    }
                                                     if (match) {
                                                         if (match.sm) derivedSm = match.sm;
                                                         if (match.sd) derivedSd = match.sd;
-                                                        if (match.team && !derivedTeam) derivedTeam = match.team;
+                                                        if (match.team) derivedTeam = match.team;
                                                     }
                                                 }
                                             }
@@ -1805,9 +1803,7 @@ export default function UserManager() {
                             {formData.role !== 'super_admin' && formData.role !== 'sd' && (
                                 <div>
                                     <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_team', 'Team')}</label>
-                                    <input 
-                                        type="text" 
-                                        list="team-options"
+                                    <select 
                                         value={formData.team} 
                                         onChange={e => {
                                             const newTeam = e.target.value;
@@ -1816,11 +1812,14 @@ export default function UserManager() {
                                             let derivedSd = formData.sd;
                                             
                                             if (newTeam.trim()) {
-                                                const match = users.find(u => u.team && u.team.trim().toLowerCase() === newTeam.trim().toLowerCase());
-                                                if (match) {
-                                                    if (!derivedTl && match.tl) derivedTl = match.tl;
-                                                    if (!derivedSm && match.sm) derivedSm = match.sm;
-                                                    if (!derivedSd && match.sd) derivedSd = match.sd;
+                                                let tlMatch = users.find(u => u.team && u.team.trim().toLowerCase() === newTeam.trim().toLowerCase() && u.tl);
+                                                if (!tlMatch) {
+                                                    tlMatch = users.find(u => u.team && u.team.trim().toLowerCase() === newTeam.trim().toLowerCase() && u.role === 'tl');
+                                                }
+                                                if (tlMatch) {
+                                                    derivedTl = tlMatch.tl || tlMatch.crmId || '';
+                                                    if (tlMatch.sm) derivedSm = tlMatch.sm;
+                                                    if (tlMatch.sd) derivedSd = tlMatch.sd;
                                                 }
                                             }
                                             setFormData({
@@ -1831,12 +1830,16 @@ export default function UserManager() {
                                                 sd: derivedSd
                                             });
                                         }}
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white"
-                                        placeholder={t('user_manager.placeholder_team_select_input', '选择或输入 Team')}
-                                    />
-                                    <datalist id="team-options">
-                                        {filteredTeams.map(team => <option key={team} value={team} />)}
-                                    </datalist>
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold bg-white font-semibold text-slate-700 text-sm"
+                                    >
+                                        <option value="">{t('user_manager.placeholder_team_select_input', '选择 Team')}</option>
+                                        {filteredTeams.map(team => (
+                                            <option key={team} value={team}>{team}</option>
+                                        ))}
+                                        {formData.team && !filteredTeams.includes(formData.team) && (
+                                            <option value={formData.team}>{formData.team}</option>
+                                        )}
+                                    </select>
                                 </div>
                             )}
 
