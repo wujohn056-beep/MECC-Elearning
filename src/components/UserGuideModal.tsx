@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, BookOpen, ShieldAlert, Award, FileText, CheckSquare, Play, HelpCircle } from 'lucide-react';
+import { X, BookOpen, ShieldAlert, Award, FileText, CheckSquare, Play, HelpCircle, Users, Sparkles, Share2 } from 'lucide-react';
 
 interface UserGuideModalProps {
     isOpen: boolean;
@@ -18,97 +18,121 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
 
     // Chinese content
     const zhContent = {
-        title: "MECC 平台使用说明书",
-        subtitle: isLeader ? "主管与管理员专属版本" : "普通销售/顾问 (CC) 版本",
+        title: "MECC 平台完整使用说明书",
+        subtitle: isLeader ? "主管与领航学员专属版" : "普通销售顾问 (CC) 版",
         badge: isLeader ? "主管版 (Leader)" : "员工版 (User)",
         sections: isLeader ? [
             {
-                icon: <Award className="w-5 h-5 text-desert-gold" />,
-                title: "1. 实时查看团队学习进度",
-                desc: "您可以在“学习广场”的录音卡片上点击“查看团队进度” (用户图标) 按钮，实时追踪团队情况：",
+                icon: <Users className="w-5 h-5 text-desert-gold" />,
+                title: "1. 团队进度穿透追踪与一键催办",
+                desc: "您可以在“学习广场”的任意录音卡片上，点击“查看团队进度” (Users 图标) 按钮：",
                 bullets: [
-                    "组织架构穿透：系统会自动根据您的级别（总监/经理/组长）折叠/展开对应的下属团队进度。",
-                    "已学与未学追踪：可以清晰查看已完成打卡的人员名单，以及未学习组员当前的听课百分比。",
-                    "一键加急催办：对于未学完的组员，可点击“一键催办”发送实时的 App 手机系统推送通知。"
+                    "组织架构下钻：系统会根据您的行政级别（总监/经理/组长）自动展开对应的下属树状结构，支持多层折叠与展开。",
+                    "已学与未学分类：清晰显示已打卡组员名单、心得字数，以及未学组员的当前收听百分比（如已听 85%）。",
+                    "一键加急催办：点击未学组员旁的“一键催办”，可瞬间触发 FCM 云消息推送通知至组员的手机 App，实现精准督促。"
                 ]
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "2. 新建并指派团队学习任务",
-                desc: "前往“团队任务”页面，点击“新建任务”，即可对团队指派强制限时任务：",
+                title: "2. 新建、编辑与指派限时学习任务",
+                desc: "前往“团队任务”页面，点击“新建任务”，即可对管辖团队分发强制限时学习：",
                 bullets: [
-                    "指派录音：从录音库选择一门或多门录音文件。",
-                    "指派范围：一键全选或单独勾选您管辖范围内的普通组员或下级组长。",
-                    "设定截止日期 (Deadline)：设置任务结束的年月日与具体时间点。",
-                    "App 提醒：发布后，系统会自动通过 FCM 推送通知，提醒组员在截止时间前按时打卡。"
+                    "自由打包录音：支持从录音库选择一门或多门录音文件作为任务内容。",
+                    "选定指派对象：在您的管辖范围内，一键全选或多选普通组员及下级主管。",
+                    "设定精准截止时间 (Deadline)：指派后系统将开启倒计时，并在临近截止前通过 App 消息对组员发送补课提醒。"
                 ]
             },
             {
-                icon: <FileText className="w-5 h-5 text-desert-gold" />,
-                title: "3. 发布与追踪专项通关挑战",
-                desc: "在任务管理界面切换到“专属挑战”，可以发布进阶通关计划并自动颁发荣誉证书：",
+                icon: <Award className="w-5 h-5 text-desert-gold" />,
+                title: "3. 专属挑战包发布与证书模板在线定制",
+                desc: "在任务页面切换至“专属挑战”，可以针对特定受众发布系列课程挑战包：",
                 bullets: [
-                    "关联多音频：打包多门经典录音（如：First Call 5大经典音频）作为通关条件。",
-                    "设定受众：按部门或身份限定挑战受众（如仅限 CC Sales 参与）。",
-                    "证书定制预览：在发布弹窗中，可自定义证书文字、印章和背景，右侧会实时使用 Canvas 渲染出最终证书图片以供预览。",
-                    "挑战达标追踪：达标看板可实时监控通关人数、生成证书，并通过进度条（如 2/5）监控进行中员工的完成缺口。"
+                    "多音频打包：打包多门核心案例录音（如 First Call 五大经典音频）作为通关门槛。",
+                    "证书 Canvas 实时预览：独家集成了在线证书定制面板。在发布弹窗中，您可以编辑证书标题、寄语，并自由选择印章和挂件，右侧会实时通过 Canvas 渲染出最终证书图片供您预览。",
+                    "通关大盘监控：达标看板可实时展示已通关名单，以及未通关组员的动态学习进度条（如已学 2/5），便于主管开展补课跟进。"
+                ]
+            },
+            {
+                icon: <Sparkles className="w-5 h-5 text-desert-gold" />,
+                title: "4. 领航学员双重身份（主管模范学习）",
+                desc: "主管也是学员！在平台中，您作为“领航学员”也深度参与学习：",
+                bullets: [
+                    "主管模范学习：支持组长、经理与总监在线学习金牌案例并提交打卡，积累个人的学时与连击。",
+                    "领航大盘排行榜：在管理后台提供主管专属排行榜，展示不同小组主管之间的学习热度，供高层评估带头学习效果。"
                 ]
             },
             {
                 icon: <Play className="w-5 h-5 text-desert-gold" />,
-                title: "4. 录音上传与 AI 音频字幕编辑器",
-                desc: "如果您拥有 `manageRecordings` 权限，即可在管理后台上传音频文件，系统会通过 AI 自动处理：",
+                title: "5. 录音上传与 AI 字幕编辑器",
+                desc: "如果您拥有录音管理权限，可以在后台管理平台音频资产：",
                 bullets: [
-                    "AI 语音转写：自动转写为阿拉伯语原始对话，并自动生成平行对照的中文及英文翻译。",
-                    "在线字幕编辑器：若 AI 转写或翻译有个别偏差，可以在录音管理后台点击“编辑字幕”进行实时修改对齐，客户端即时生效。"
+                    "AI 语音转写翻译：支持上传 MP3/WAV 格式，AI 会自动识别阿语语音并生成中文、英文平行字幕。",
+                    "字幕微调编辑器：若 AI 翻译有个别语境偏差，可点击“编辑字幕”打开时间轴编辑器直接修改，全网学员端即刻同步生效。"
                 ]
             },
             {
                 icon: <ShieldAlert className="w-5 h-5 text-desert-gold" />,
-                title: "5. 人力架构同步与自动关联机制",
-                desc: "为了保证团队穿透数据的准确性，系统集成了批量与联动保护：",
+                title: "6. 人力架构同步与级联锁定机制",
+                desc: "保障组织架构数据准确，杜绝输入失误：",
                 bullets: [
-                    "Excel 批量导入：支持上传 GCC HC 或 KSAKID HC 表格，系统自动将 CC 绑定给 TL，TL 绑定给 SM，SM 绑定给 SD。",
-                    "后台手动录入（双向联动）：在“用户管理”后台，当修改用户的 TL 时，系统会自动刷新并同步修改其所属的 Team Name、SM 和 SD；修改 Team Name 时也会自动联动回填对应的 TL，杜绝手动输入错误。"
+                    "Excel 批量同步：支持管理员批量导入 GCC HC 或 KSAKID HC 人员表，系统自动解析并重组汇报线。",
+                    "级联联动互锁：在手动添加/修改用户时，选择 TL 会自动更新并锁定其所属的 Team、SM 和 SD；选择 Team Name 也会自动联动回填对应的 TL 及经理，杜绝脏数据。"
                 ]
             }
         ] : [
             {
                 icon: <Play className="w-5 h-5 text-desert-gold" />,
                 title: "1. 学习广场与 AI 交互播放器",
-                desc: "在“学习广场”，您可以查阅公司精选的金牌通话案例录音：",
+                desc: "查阅公司金牌销售案例，体验三语对照播放：",
                 bullets: [
-                    "分类过滤器：通过“今日推荐”、“未学习”、“进行中”等过滤标签，快速找到适合的学习内容。",
-                    "三语字幕对照：收听录音时，系统会展示由 AI 自动切分的阿拉伯语（原音）、中文及英文平行字幕。",
-                    "点击字幕跳转播放：您可以直接点击字幕文本中的任意一行，播放器会自动精准跳跃到那句话的原音时刻播放。非常适合跟读与模仿。"
-                ]
-            },
-            {
-                icon: <Award className="w-5 h-5 text-desert-gold" />,
-                title: "2. 学习心得打卡与保存荣誉证书",
-                desc: "在您认真听完录音后，需要进行打卡并领取结业证书：",
-                bullets: [
-                    "听满打卡：进度条走满 100% 后，必须在输入框中填写学习心得或笔记反馈。",
-                    "提交打卡：点击“提交心得并打卡”完成学习记录。",
-                    "保存证书：打卡完成后系统自动颁发带有您名字、日期 and 专属印章的结业证书。支持一键渲染为高清图片保存至手机相册。"
-                ]
-            },
-            {
-                icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "3. 团队指派任务与通关挑战",
-                desc: "您需要按时完成上级指派的内容：",
-                bullets: [
-                    "限时任务：查看主管向您指派的必修录音学习，包含任务标题和截止倒计时，请在截止前完成心得打卡。",
-                    "专项挑战：查看发布的通关挑战（如：破冰挑战），完成挑战包里的全部指定录音后，将解锁更为高级的专项荣誉证书。"
+                    "多语字幕对照：提供 AI 智能切分的阿拉伯语（原音）、中文及英文对照字幕，支持高亮和行内字幕内检索。",
+                    "字幕点击跳转 (Interactive Subtitles)：点击任意一行字幕文本，音频播放器会**自动跳转到该句原音时刻**进行播放。非常适合跟读和模仿黄金话术。"
                 ]
             },
             {
                 icon: <FileText className="w-5 h-5 text-desert-gold" />,
-                title: "4. 政策基本法与离线下载",
-                desc: "轻松掌握公司最新政策：",
+                title: "2. 配套讲义课件推送与双栏对照预览",
+                desc: "除听音外，您还可以无缝学习配套素材：",
                 bullets: [
-                    "基本法在线看：在“政策与激励”板块，支持在线高清阅读最新的基本法和提成方案 PDF，支持手势缩放。",
-                    "App 安装：在下载页面扫码下载 Android APK 或 iOS 配置文件，安装后支持更好的后台音频播放和 FCM 推送通知。"
+                    "含课件标志：带有“含课件”的录音文件，包含由培训部门上传的配套讲义课件（支持 PDF, PPT, Doc, ZIP，上限 50MB）。",
+                    "分栏对照阅读：进入播放详情页时，右侧会自动嵌入配套课件渲染器。您可以在线滑动、手势缩放阅读 PDF/PPT 讲义，实现“听录音、看课件”双栏对照学习。"
+                ]
+            },
+            {
+                icon: <Award className="w-5 h-5 text-desert-gold" />,
+                title: "3. 宝藏猎人荣誉机制（每日连击与沙海寻宝）",
+                desc: "深度游戏化寻宝机制，获取 51Talk 官方结业认证：",
+                bullets: [
+                    "每日咖啡连击：每天收听任一音频打卡即可连击今日打卡，最高积累 7 天咖啡连击。",
+                    "沙海寻宝路线：自动计算您的累计学习时长（分钟），推进您的沙漠寻宝进度。打卡率和学时达标即可解锁更高称号（寻宝新手 $\rightarrow$ 沙漠追踪者 $\rightarrow$ 佩特拉开拓者 $\rightarrow$ 精英猎人 $\rightarrow$ 宝库传奇）。",
+                    "官方结业证书：达成等级即可点击领取证书，支持一键渲染为带有您 CRM 名字和 Najah 学院印章的高清图片保存至相册。"
+                ]
+            },
+            {
+                icon: <Users className="w-5 h-5 text-desert-gold" />,
+                title: "4. 团队学习大盘 (Team Hub)",
+                desc: "在您的个人中心下方，集成有同伴学习大盘 (Team Hub)：",
+                bullets: [
+                    "组内竞争排行：实时展示您所在小组内部所有组员的咖啡连击天数、当前荣誉等级和累计学时排行。",
+                    "激发学习热情：通过同伴榜样作用，激发大家追赶超越的自发学习热情。"
+                ]
+            },
+            {
+                icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
+                title: "5. 指派任务、专项挑战与基本法查阅",
+                desc: "跟进必学内容，查阅最新政策：",
+                bullets: [
+                    "必修任务与倒计时：在列表查阅主管下发的限时必修任务，请在截止倒计时结束前听完并提交打卡心得。",
+                    "政策基本法：在“政策与激励”以及“品牌专栏”中，支持在线阅读提成制度和运营基本法 PDF 文档。"
+                ]
+            },
+            {
+                icon: <Share2 className="w-5 h-5 text-desert-gold" />,
+                title: "6. 内推推广与共享素材中心 (Referrals)",
+                desc: "专为推荐人（CC 推荐新员工）开发的话术与海报中心：",
+                bullets: [
+                    "物料多级分类：提供多级目录，涵盖“高额奖励佣金”、“公司介绍”、“福利合集”等主题。",
+                    "一键复制与预览：支持在线收听宣导音频、播放宣导视频、下载海报图片，并可一键复制文案话术，方便您分享至微信或 WhatsApp 发送给受众。"
                 ]
             }
         ]
@@ -116,97 +140,121 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
 
     // English content
     const enContent = {
-        title: "MECC User Guide",
-        subtitle: isLeader ? "Exclusive Version for Leaders & Admins" : "Version for Sales / Advisors (CC)",
+        title: "MECC Complete Product User Guide",
+        subtitle: isLeader ? "Exclusive Version for Leaders & Navigators" : "Version for Sales Advisors (CC)",
         badge: isLeader ? "Leader Edition" : "User Edition",
         sections: isLeader ? [
             {
-                icon: <Award className="w-5 h-5 text-desert-gold" />,
-                title: "1. Monitor Real-Time Team Progress",
-                desc: "Click the 'View Team Progress' (Users icon) on any recording card to track learning records:",
+                icon: <Users className="w-5 h-5 text-desert-gold" />,
+                title: "1. Cascading Team Progress & One-Click FCM Reminders",
+                desc: "Click 'View Team Progress' (Users icon) on any recording card in the Plaza:",
                 bullets: [
-                    "Hierarchical Scoping: The progress tree dynamically expands (SD -> SM -> TL -> User) according to your level.",
-                    "Completion Status: View completed users with check-in details, and listen progress bars for uncompleted users.",
-                    "FCM Reminders: Click 'Send Reminder' next to any uncompleted user to push an urgent notification to their mobile App instantly."
+                    "Organizational Deep-Dive: Automatically expands the member list (SD -> SM -> TL -> CC) according to your authority tier.",
+                    "Status Classification: View completed users with check-in details and uncompleted users with real-time listening progress (e.g. 85%).",
+                    "FCM Pushes: Click 'Send Reminder' to instantly trigger an push alert to the user's mobile app."
                 ]
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "2. Create & Assign Team Tasks",
-                desc: "Go to the 'Team Tasks' tab and click 'New Task' to assign deadline-driven learning requirements:",
+                title: "2. Create, Edit & Assign Team Tasks",
+                desc: "Go to the 'Team Tasks' tab and click 'New Task' to assign learning requirements:",
                 bullets: [
-                    "Recordings Selection: Select one or more recordings from the database.",
-                    "Assignees: Select specific sub-leaders or direct sales agents in your organization.",
-                    "Deadline Setting: Configure exact deadline date and time in the future.",
-                    "FCM Pushes: Upon creation, system automatically triggers app push notifications to all assignees."
+                    "Recordings Selection: Select one or multiple recordings as task contents.",
+                    "Assignees: Bulk check or single check members within your organizational jurisdiction.",
+                    "Deadline Tracking: Set deadline date/time. The system initiates a countdown and pushes warning alerts before expiry."
                 ]
             },
             {
-                icon: <FileText className="w-5 h-5 text-desert-gold" />,
-                title: "3. Publish & Track Challenge Campaigns",
-                desc: "Switch to 'Exclusive Challenges' in task page to deploy structured curriculums with medals and certificates:",
+                icon: <Award className="w-5 h-5 text-desert-gold" />,
+                title: "3. Publish Campaigns & Customize Canvas Certificates",
+                desc: "Switch to 'Exclusive Challenges' to deploy advanced campaigns for target users:",
                 bullets: [
-                    "Recordings Bundling: Set multiple recordings (e.g. First Call Essentials) as prerequisite criteria.",
-                    "Targeting Scope: Restrict audience to specific departments (e.g. CC Sales) or positions.",
-                    "Certificate Customization: Customize certificates with live canvas previewing of text, badges, and seals.",
-                    "Campaign Dashboard: Track completion status, generate certificates for qualifiers, and monitor progress bars of in-progress agents."
+                    "Bundled Prerequisite: Combine multiple target recordings (e.g., First Call Essentials) as clearance criteria.",
+                    "Live Certificate Previewer: Features a built-in Canvas editor. Modify titles, slogans, badges, and seals with a real-time layout preview on the right.",
+                    "Progress Monitor: Track qualifiers and review pending users with progressive completion bars (e.g. 2/5)."
+                ]
+            },
+            {
+                icon: <Sparkles className="w-5 h-5 text-desert-gold" />,
+                title: "4. Leader Academy & Leadership Learning Leaderboard",
+                desc: "Leaders are students too! Leaders actively participate in studies to set examples:",
+                bullets: [
+                    "Model Learning: Leaders listen to recordings, write feedback logs, and maintain daily coffee streaks.",
+                    "Leadership Board: Provides a dedicated board in the admin dashboard showing studies among managers to evaluate the academic index."
                 ]
             },
             {
                 icon: <Play className="w-5 h-5 text-desert-gold" />,
-                title: "4. Audio Upload & AI Subtitle Micro-Editing",
-                desc: "Users with `manageRecordings` permission can manage learning assets in the admin dashboard:",
+                title: "5. Audio Upload & AI Subtitle Micro-Editing",
+                desc: "Upload and optimize learning audio files in the admin dashboard:",
                 bullets: [
-                    "AI Transcription & Translation: Automatically converts Arabic speech to time-coded scripts and generates Chinese/English translations.",
-                    "Subtitle Editor: Micro-edit AI transcription errors or translation lines inside admin console, synchronized to clients instantly."
+                    "AI Transcription & Translation: Automatically transcribes Arabic voice clips and generates matching EN/ZH translations.",
+                    "Micro-Editor: Edit time-coded transcript lines directly inside the admin panel. Updates are synchronized globally instantly."
                 ]
             },
             {
                 icon: <ShieldAlert className="w-5 h-5 text-desert-gold" />,
-                title: "5. Directory Sync & Cascading Auto-Linkage",
-                desc: "Designed to keep organizational tree data clean and prevent manual input mistakes:",
+                title: "6. Directory Sync & Cascading Auto-Linkage",
+                desc: "Designed to keep organizational tree data clean and prevent database mistakes:",
                 bullets: [
-                    "Excel Import: Upload GCC HC or KSAKID HC spreadsheets to auto-map hierarchy links.",
-                    "Cascading Selectors: When manually adding or editing a user, selecting a TL automatically updates their Team, SM, and SD. Selecting a Team Name automatically maps its TL and upper managers."
+                    "Excel Sync: Upload GCC HC or KSAKID HC spreadsheets to auto-map reporting relations.",
+                    "Mutual Constraint: Selecting a TL updates and locks their Team, SM, and SD. Selecting a Team Name auto-fills its TL and upper managers."
                 ]
             }
         ] : [
             {
                 icon: <Play className="w-5 h-5 text-desert-gold" />,
                 title: "1. Learning Hub & Interactive AI Player",
-                desc: "Browse excellent sales call records inside the Learning Hub:",
+                desc: "Listen to gold standard calls with time-synced scripts:",
                 bullets: [
-                    "Category Filtering: Filter by tags like 'Today Recommend', 'Uncompleted', 'In Progress' to find proper contents.",
-                    "Three-language Transcripts: Shows parallel time-coded subtitles in Arabic (source audio), Chinese, and English.",
-                    "Interactive Subtitles: Click any subtitle line to jump the audio player directly to that timestamp. Extremely useful for mimicry and training."
-                ]
-            },
-            {
-                icon: <Award className="w-5 h-5 text-desert-gold" />,
-                title: "2. Study Check-in & Graduation Certificates",
-                desc: "Obtain digital certifications upon completing recording studies:",
-                bullets: [
-                    "Study Requirement: Reach 100% audio progress and enter your notes / feedback.",
-                    "Submit Check-in: Click 'Submit & Check-in' to record your learning log.",
-                    "Download Certificate: System generates a personalized certificate with your name, date, and seal. Save it as a high-definition image to your photo gallery."
-                ]
-            },
-            {
-                icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "3. Assigned Tasks & Challenge Campaigns",
-                desc: "Participate in learning assignments assigned by your managers:",
-                bullets: [
-                    "Team Tasks: Review deadline-driven tasks with countdowns. Complete studies and submit notes before deadlines.",
-                    "Challenge Campaigns: Enter special challenge packs. Complete all specified recordings to unlock senior challenge certifications."
+                    "Multi-language Scripts: Shows time-synced transcripts in Arabic (audio), Chinese, and English.",
+                    "Interactive Jump: Click any subtitle line to jump the audio player directly to that timestamp. Great for verbal mimicking and training."
                 ]
             },
             {
                 icon: <FileText className="w-5 h-5 text-desert-gold" />,
-                title: "4. Operation Policies & App Downloads",
-                desc: "Review company rules and download mobile clients:",
+                title: "2. Supplementary Material Push & Side-by-Side Slides",
+                desc: "Review accompanying slides without leaving the player:",
                 bullets: [
-                    "Policies Showcase: Review the latest basic compensation rules (基本法) and commission PDFs with pinch-to-zoom.",
-                    "App Download: Scan the QR code to install the APK (Android) or TestFlight configuration (iOS) for background playing and notification pushes."
+                    "Attachments Badge: Cards with the 'Slides Included' label contain slides (PPT, PDF, ZIP up to 50MB).",
+                    "Dual-Screen Layout: The player embeds an inline document renderer on the right. Slide through pages or zoom in on PPT/PDF sheets directly."
+                ]
+            },
+            {
+                icon: <Award className="w-5 h-5 text-desert-gold" />,
+                title: "3. Treasure Hunter Incentive Scheme (Streaks & Levels)",
+                desc: "Gamified learning journey with 51Talk Najah certifications:",
+                bullets: [
+                    "Daily Coffee Streak: Complete daily studies to build streak numbers (up to 7 days).",
+                    "Caravan Journey Progress: Accumulate study minutes to advance along a desert map. Unlock titles: Apprentice -> Voyager -> Knight -> Falcon -> Guardian.",
+                    "Personal Certificates: Lock in titles to claim certificates. Renders as a PNG photo with your name and the Najah Academy seal."
+                ]
+            },
+            {
+                icon: <Users className="w-5 h-5 text-desert-gold" />,
+                title: "4. Team Learning Hub (Team Hub)",
+                desc: "Review mutual study statuses under Team Hub section in your Account page:",
+                bullets: [
+                    "Intra-group Leaderboard: Displays coffee streaks, hunter levels, and cumulative study minutes of members in your group.",
+                    "Social Competition: Motivates self-learning through peer comparison and visibility."
+                ]
+            },
+            {
+                icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
+                title: "5. Task Check-ins, Campaigns & Policy basic rules",
+                desc: "Follow mandatory learning requirements and review policy documents:",
+                bullets: [
+                    "Assigned Tasks: Track tasks with deadline count-downs. Complete studies and submit check-ins before expiry.",
+                    "Policies & Brands: Access and review commission rules or compensation basic PDFs with pinch-to-zoom."
+                ]
+            },
+            {
+                icon: <Share2 className="w-5 h-5 text-desert-gold" />,
+                title: "6. Referrals Promotion & Sharing Materials Library",
+                desc: "A sharing asset center designed to support CCs in recruiting new team members:",
+                bullets: [
+                    "Categorized Resources: Browse categorized folders like 'Bonus Schemes', '福利介绍', '员工故事'.",
+                    "Copy-paste & Preview: Listen to audios, play videos, preview images, and copy preset text templates to share to WeChat/WhatsApp."
                 ]
             }
         ]
@@ -214,46 +262,53 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
 
     // Arabic content
     const arContent = {
-        title: "دليل مستخدم المنصة",
+        title: "دليل مستخدم منصة MECC الشامل",
         subtitle: isLeader ? "النسخة الخاصة بالمشرفين والمديرين" : "النسخة الخاصة بالموظفين ومستشاري المبيعات (CC)",
         badge: isLeader ? "نسخة المشرف (Leader)" : "نسخة الموظف (User)",
         sections: isLeader ? [
             {
-                icon: <Award className="w-5 h-5 text-desert-gold" />,
-                title: "1. متابعة تقدم الفريق في الوقت الفعلي",
+                icon: <Users className="w-5 h-5 text-desert-gold" />,
+                title: "1. متابعة تقدم الفريق وإرسال إشعارات التذكير الفورية",
                 desc: "انقر على زر 'متابعة تقدم الفريق' (أيقونة المستخدمين) في أي بطاقة تسجيل لمتابعة التعلم:",
                 bullets: [
-                    "التدرج الهيكلي: يتم توسيع شجرة المتابعة تلقائياً (SD -> SM -> TL -> User) بناءً على مستواك الإداري.",
-                    "حالة الاكتمال: عرض قائمة الأعضاء المكتملين وتفاصيل حضورهم، ونسبة الاستماع للأعضاء غير المكتملين.",
+                    "التدرج الهيكلي: يتم توسيع شجرة المتابعة تلقائياً (SD -> SM -> TL -> CC) بناءً على مستواك الإداري.",
+                    "حالة الاكتمال: عرض قائمة الأعضاء المكتملين وتفاصيل حضورهم، ونسبة الاستماع للأعضاء غير المكتملين (مثال: 85%).",
                     "تذكيرات FCM: انقر على زر 'إرسال تذكير' لإرسال إشعار فوري وعاجل إلى تطبيق الهاتف الخاص بالموظف."
                 ]
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "2. إنشاء وتعيين مهام الفريق",
+                title: "2. إنشاء وتعيين مهام الفريق وتعديلها",
                 desc: "انتقل إلى علامة التبويب 'مهام الفريق' وانقر على 'مهمة جديدة' لتعيين متطلبات تعلم محددة بوقت:",
                 bullets: [
-                    "اختيار التسجيلات: اختر تسجيلاً واحداً أو أكثر من قاعدة البيانات.",
+                    "اختيار التسجيلات: اختر تسجيلاً واحداً أو أكثر كشروط مسبقة للتعلم.",
                     "المستهدفون: حدد قادة المجموعات الفرعيين أو وكلاء المبيعات المباشرين الخاضعين لإدارتك.",
-                    "تحديد الموعد النهائي: حدد تاريخ ووقت الموعد النهائي في المستقبل بدقة.",
-                    "إشعارات التطبيق: بمجرد الإنشاء، يرسل النظام إشعارات فورية للتطبيق لجميع المعينين."
+                    "تحديد الموعد النهائي: حدد تاريخ ووقت الموعد النهائي. سيبدأ النظام بالعد التنازلي وإرسال تذكيرات قبل انتهاء الوقت."
                 ]
             },
             {
-                icon: <FileText className="w-5 h-5 text-desert-gold" />,
-                title: "3. نشر ومتابعة حملات التحدي",
+                icon: <Award className="w-5 h-5 text-desert-gold" />,
+                title: "3. نشر حملات التحدي وتخصيص الشهادات التفاعلية",
                 desc: "انتقل إلى 'التحديات الحصرية' في صفحة المهام لنشر برامج تدريبية متكاملة بشهادات مخصصة:",
                 bullets: [
                     "حزمة التسجيلات: حدد عدة تسجيلات كشروط مسبقة لاجتياز التحدي.",
-                    "نطاق الاستهداف: قيد الجمهور المستهدف بأقسام معينة (مثل CC Sales) أو مناصب محددة.",
-                    "تخصيص الشهادة: صمم الشهادة مع معاينة فورية للنصوص والأوسمة والأختام عبر شاشة المعاينة.",
-                    "لوحة تحكم التحدي: تابع حالة الاجتياز، وصدر الشهادات للناجحين، وراقب أشرطة تقدم الموظفين قيد الإنجاز."
+                    "معاينة الشهادة فورياً: مصمم بمحرر ذكي مدمج عبر Canvas. عدل العناوين والشعارات والأختام مع عرض فوري للشهادة على اليمين.",
+                    "لوحة تحكم التحدي: تابع حالة الاجتياز، وصدر الشهادات للناجحين، وراقب أشرطة تقدم الموظفين قيد الإنجاز (مثل: 2/5)."
+                ]
+            },
+            {
+                icon: <Sparkles className="w-5 h-5 text-desert-gold" />,
+                title: "4. أكاديمية المشرفين ولوحة صدارة المدراء",
+                desc: "المشرفون هم طلاب أيضاً! يشاركون بفعالية في عمليات التعلم لتقديم نموذج يحتذى به:",
+                bullets: [
+                    "التعلم النموذجي: يستمع المشرفون للتسجيلات، ويكتبون ملاحظاتهم الدراسية، ويحافظون على连击 القهوة اليومية.",
+                    "لوحة الصدارة للمدراء: توفر لوحة خاصة في لوحة التحكم الإدارية لمتابعة دراسات المدراء وتقييم النشاط التدريبي."
                 ]
             },
             {
                 icon: <Play className="w-5 h-5 text-desert-gold" />,
-                title: "4. رفع الصوت وتعديل الترجمة بالذكاء الاصطناعي",
-                desc: "يمكن للمستخدمين الحاصلين على صلاحية `manageRecordings` إدارة أصول التعلم في لوحة التحكم الإدارية:",
+                title: "5. رفع الصوت وتعديل الترجمة بالذكاء الاصطناعي",
+                desc: "يمكن للمستخدمين الحاصلين على صلاحية إدارة التسجيلات إدارة أصول التعلم في لوحة التحكم الإدارية:",
                 bullets: [
                     "النسخ والترجمة الآلية: يحول كلام التسجيل باللغة العربية إلى نصوص مكتوبة ويولد ترجمة متوازية بالصينية والإنجليزية.",
                     "محرر النصوص: عدل أخطاء النسخ أو الترجمة مباشرة داخل لوحة الإدارة لتنعكس على المستخدمين فوراً."
@@ -261,7 +316,7 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <ShieldAlert className="w-5 h-5 text-desert-gold" />,
-                title: "5. مزامنة الدليل والربط التلقائي المتتالي",
+                title: "6. مزامنة الدليل والربط التلقائي المتتالي",
                 desc: "مصمم للحفاظ على نظافة شجرة البيانات الإدارية ومنع أخطاء الإدخال اليدوي:",
                 bullets: [
                     "استيراد إكسل: ارفع جداول GCC HC أو KSAKID HC لربط الهيكل الإداري تلقائياً.",
@@ -274,37 +329,54 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
                 title: "1. ساحة التعلم ومشغل الذكاء الاصطناعي التفاعلي",
                 desc: "تصفح تسجيلات المكالمات المتميزة داخل ساحة التعلم:",
                 bullets: [
-                    "تصفية الفئات: فرز المحتوى حسب تصنيفات مثل 'موصى به اليوم'، 'غير مكتمل'، 'قيد الدراسة' للعثور على المحتوى المناسب.",
                     "ترجمة النصوص بثلاث لغات: يعرض نصوصاً متزامنة مع الصوت باللغة العربية والإنجليزية والصينية.",
                     "الترجمة التفاعلية: انقر على أي سطر نصي للانتقال بالصوت مباشرة إلى ذلك التوقيت. ممتاز لمحاكاة المكالمات والتدريب."
                 ]
             },
             {
-                icon: <Award className="w-5 h-5 text-desert-gold" />,
-                title: "2. تسجيل حضور التعلم وحفظ شهادة التخرج",
-                desc: "احصل على شهادات رقمية عند إتمام دراسة التسجيلات:",
+                icon: <FileText className="w-5 h-5 text-desert-gold" />,
+                title: "2. المرفقات الدراسية وعرض الشرائح المتوازي",
+                desc: "راجع الشرائح والملاحظات المصاحبة للصوت دون مغادرة المشغل:",
                 bullets: [
-                    "شروط التعلم: استمع للصوت بنسبة 100% ثم ادخل ملاحظاتك وملاحظاتك الدراسية.",
-                    "تسجيل الحضور: انقر على زر 'إرسال وتسجيل الحضور' لحفظ سجل التعلم الخاص بك.",
-                    "تحميل الشهادة: يولد النظام شهادة تخرج تحمل اسمك وتاريخ اليوم والختم. احفظها كصورة عالية الدقة في جهازك."
+                    "شارة المرفقات: البطاقات التي تحمل شارة 'تتضمن كورس' تحتوي على ملفات تكميلية (PDF, PPT, ZIP حتى 50 ميجابايت).",
+                    "تصميم شاشة مزدوجة: يتضمن المشغل قارئ مستندات مدمج على اليمين لتصفح مستندات الـ PDF أو شرائح الـ PPT مباشرة."
+                ]
+            },
+            {
+                icon: <Award className="w-5 h-5 text-desert-gold" />,
+                title: "3. نظام مكافآت صائدي الكنز (الاستمرار والمستويات)",
+                desc: "رحلة تعلم ممتعة بشهادات معتمدة من أكاديمية Najah التابعة لـ 51Talk:",
+                bullets: [
+                    "الاستمرار اليومي بالقهوة: استمع يومياً لبناء سلسلة استمرار (حتى 7 أيام).",
+                    "رحلة صيد الكنز: يحسب دقائق دراستك لتقدمك على خارطة الصحراء. افتح ألقاباً: مبتدئ -> مستكشف -> فارس -> قناص النخبة -> أسطورة الخزنة.",
+                    "شهادات شخصية: احصل على شهادة التخرج وقم بتحميلها كصورة عالية الدقة PNG تحمل اسمك وختم الأكاديمية."
+                ]
+            },
+            {
+                icon: <Users className="w-5 h-5 text-desert-gold" />,
+                title: "4. لوحة مكافآت الفريق (Team Hub)",
+                desc: "راجع حالة التعلم لأعضاء فريقك عبر قسم Team Hub في صفحتك الشخصية:",
+                bullets: [
+                    "لوحة صدارة المجموعة: تعرض الاستمرار اليومي، ومستويات الصيد، ودقائق الدراسة التراكمية لأعضاء مجموعتك.",
+                    "المنافسة الاجتماعية: تحفيز التعلم الذاتي من خلال مقارنة النشاط مع الزملاء بوضوح."
                 ]
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "3. المهام المعينة وحملات التحدي",
-                desc: "شارك في التعيينات التدريبية المرسلة من قبل مدرائك:",
+                title: "5. المهام التدريبية وحملات التحدي ولوائح السياسات",
+                desc: "تابع متطلبات التعلم الإلزامية وراجع وثائق السياسات واللوائح:",
                 bullets: [
-                    "مهام الفريق: راجع المهام المحددة بمواعيد نهائية مع العد التنازلي. أكمل الدراسة وقدم الملاحظات قبل انتهاء الموعد.",
-                    "حملات التحدي: ادخل حزم التحديات الخاصة. أكمل جميع التسجيلات المطلوبة لفتح شهادات التحدي المتقدمة."
+                    "المهام المعينة: راجع المهام المحددة بمواعيد نهائية مع العد التنازلي. أكمل الدراسة وقدم الملاحظات قبل انتهاء الموعد.",
+                    "اللوائح والسياسات: راجع أحدث لوائح الرواتب والعمولات بصيغة PDF مع إمكانية التكبير والتصغير."
                 ]
             },
             {
-                icon: <FileText className="w-5 h-5 text-desert-gold" />,
-                title: "4. السياسات واللوائح وتحميل التطبيق",
-                desc: "راجع قواعد الشركة وحمل تطبيق الهاتف المحمول:",
+                icon: <Share2 className="w-5 h-5 text-desert-gold" />,
+                title: "6. الترويج الداخلي ومركز مواد المشاركة (Referrals)",
+                desc: "مركز لمواد المشاركة تم تصميمه لدعم موظفي المبيعات في ترشيح موظفين جدد:",
                 bullets: [
-                    "اللوائح والسياسات: راجع أحدث لوائح الرواتب والعمولات بصيغة PDF مع إمكانية التكبير والتصغير.",
-                    "تحميل التطبيق: امسح رمز الاستجابة السريعة (QR) لتحميل التطبيق لنظام Android أو iOS للاستماع في الخلفية وتلقي إشعارات المهام."
+                    "المواد المصنفة: تصفح مجلدات مثل 'لوائح العمولات'، 'مزايا الشركة'، 'قصص النجاح'.",
+                    "نسخ وعرض المواد: استمع للصوت، شغل الفيديو، اعاين الصور، وانسخ قوالب النصوص للمشاركة عبر الـ WhatsApp."
                 ]
             }
         ]
