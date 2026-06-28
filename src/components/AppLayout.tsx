@@ -8,6 +8,7 @@ import { updatePassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Capacitor } from '@capacitor/core';
+import UserGuideModal from './UserGuideModal';
 
 const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { t } = useTranslation();
@@ -122,6 +123,7 @@ export default function AppLayout() {
     const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission, canAccessTasks, canAccessDashboard } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showUserGuideModal, setShowUserGuideModal] = useState(false);
 
     const isTrainingUser = profile?.identity === 'Training Dep' || 
         (profile?.team || '').toLowerCase().includes('training');
@@ -555,6 +557,16 @@ export default function AppLayout() {
                                     <button 
                                         onClick={() => {
                                             setShowUserMenu(false);
+                                            setShowUserGuideModal(true);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold text-arabian-night/80 hover:bg-gray-50 hover:text-deep-teal transition-colors"
+                                    >
+                                        <BookOpen className="w-4 h-4 text-desert-gold" />
+                                        {t('navbar.user_guide', '使用说明书')}
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            setShowUserMenu(false);
                                             setShowPasswordModal(true);
                                         }}
                                         className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold text-arabian-night/80 hover:bg-gray-50 hover:text-deep-teal transition-colors"
@@ -669,6 +681,12 @@ export default function AppLayout() {
                 <ChangePasswordModal 
                     isOpen={showPasswordModal} 
                     onClose={() => setShowPasswordModal(false)} 
+                />
+
+                <UserGuideModal 
+                    isOpen={showUserGuideModal} 
+                    onClose={() => setShowUserGuideModal(false)} 
+                    role={profile?.role || 'user'} 
                 />
 
                 {/* In-App Version Update Dialog */}
