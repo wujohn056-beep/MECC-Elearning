@@ -401,67 +401,7 @@ export default function Account() {
                 </div>
             </div>
 
-            {/* Theme Settings Card (Web Desktop) */}
-            {!isNative && (
-                <div className="glass-panel rounded-3xl p-6 border border-white bg-white/60 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-in fade-in duration-300">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-desert-gold/15 flex items-center justify-center text-desert-gold shadow-sm shrink-0">
-                            <Sparkles className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-extrabold text-deep-teal">{t('navbar.toggle_theme', '主题视觉设置')}</h3>
-                            <p className="text-sm font-semibold text-arabian-night/60 mt-0.5">{t('theme.settings_desc', '选择适合您的视觉环境，体验中东约旦的多彩风格。')}</p>
-                        </div>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-                        {/* Oasis Theme Option */}
-                        <button
-                            onClick={() => handleThemeChange('oasis')}
-                            className={`px-6 py-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 font-bold ${
-                                currentTheme === 'oasis'
-                                    ? 'border-deep-teal bg-deep-teal/5 text-deep-teal shadow-inner scale-[1.02]'
-                                    : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
-                            }`}
-                        >
-                            <span className="text-lg">🌴</span>
-                            <div className="text-left leading-tight">
-                                <span className="text-sm block">{t('theme.oasis', '约旦绿洲')}</span>
-                            </div>
-                        </button>
-
-                        {/* Dusk Theme Option */}
-                        <button
-                            onClick={() => handleThemeChange('dusk')}
-                            className={`px-6 py-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 font-bold ${
-                                currentTheme === 'dusk'
-                                    ? 'border-[#C05A46] bg-[#C05A46]/5 text-[#C05A46] shadow-inner scale-[1.02]'
-                                    : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
-                            }`}
-                        >
-                            <span className="text-lg">🌅</span>
-                            <div className="text-left leading-tight">
-                                <span className="text-sm block">{t('theme.dusk', '佩特拉暮色')}</span>
-                            </div>
-                        </button>
-
-                        {/* Dark Theme Option */}
-                        <button
-                            onClick={() => handleThemeChange('dark')}
-                            className={`px-6 py-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 font-bold ${
-                                currentTheme === 'dark'
-                                    ? 'border-desert-gold bg-desert-gold/5 text-desert-gold shadow-inner scale-[1.02]'
-                                    : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
-                            }`}
-                        >
-                            <span className="text-lg">🌌</span>
-                            <div className="text-left leading-tight">
-                                <span className="text-sm block">{t('theme.dark', '阿拉伯星空')}</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            )}
 
             {/* Bottom Content Area */}
             {isNative ? (
