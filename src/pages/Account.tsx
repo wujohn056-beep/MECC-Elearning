@@ -281,7 +281,7 @@ export default function Account() {
             <div className="glass-panel rounded-3xl p-6 border border-white bg-white/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-sm animate-in fade-in duration-300">
                 <div className="flex items-center gap-5">
                     {/* Avatar Container with interactive upload overlay */}
-                    <div className="relative group shrink-0 select-none">
+                    <div className="relative w-20 h-20 group shrink-0 select-none">
                         <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-desert-gold to-amber-600 flex items-center justify-center text-white text-3xl font-black shadow-md border-2 border-white">
                             {profile?.avatarUrl ? (
                                 <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
