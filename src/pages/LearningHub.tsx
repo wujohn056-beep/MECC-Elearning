@@ -3514,6 +3514,7 @@ export default function LearningHub() {
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
+    const [publicHubTab, setPublicHubTab] = useState<'public' | 'new_cc'>(() => (searchParams.get('publicTab') === 'new_cc' ? 'new_cc' : 'public'));
 
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [loading, setLoading] = useState(true);
@@ -4310,6 +4311,17 @@ export default function LearningHub() {
             // Public scope: do not show team-specific items
             if ((rec as any).hubScope === 'team') {
                 return false;
+            }
+            // Check targetHubs distribution
+            const hubs = (rec as any).targetHubs || ['public'];
+            if (publicHubTab === 'new_cc') {
+                if (!hubs.includes('new_cc')) {
+                    return false;
+                }
+            } else {
+                if (!hubs.includes('public')) {
+                    return false;
+                }
             }
         }
 
@@ -6693,7 +6705,14 @@ export default function LearningHub() {
                                 >
                                     {t('learning_hub.all_content')}
                                 </button>
-                                {categories.filter(cat => (cat.businessType || 'kid') === businessType).map(cat => (
+                                {categories.filter(cat => {
+                                    if ((cat.businessType || 'kid') !== businessType) return false;
+                                    if (hubScope === 'public' && publicHubTab === 'new_cc') {
+                                        return cat.scope === 'new_cc';
+                                    } else {
+                                        return cat.scope !== 'new_cc';
+                                    }
+                                }).map(cat => (
                                     <button
                                         key={cat.id}
                                         onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); if (sortType === 'leaderboard') setSortType('latest'); }}

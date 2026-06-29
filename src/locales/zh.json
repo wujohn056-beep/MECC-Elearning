@@ -146,6 +146,10 @@
     "learning_hub": {
         "public_hub": "公共学习中心",
         "team_hub": "团队学习中心",
+        "new_cc_zone": "新CC专区",
+        "grad_progress": "新CC毕业进度",
+        "claim_grad_cert": "领取毕业证书",
+        "graduated_cert": "恭喜您通过新CC特训毕业！",
         "select_sm_team": "选择SM团队",
         "explore": "探索课程",
         "explore_desc": "按分类浏览优秀的销售录音与实战案例",
@@ -328,7 +332,11 @@
         "no_category": "暂无分类目录，请在左侧新建",
         "delete_confirm": "确定要删除此目录吗？删除后，该目录下的所有资料将被标记为【未分类】。",
         "add_fail": "添加失败:",
-        "update_fail": "更新失败:"
+        "update_fail": "更新失败:",
+        "scope_label": "所属专区",
+        "scope_public": "公共广场",
+        "scope_new_cc": "新CC专区专属",
+        "drag_sort_tip": "您可以通过按住左侧手柄拖动分类进行排序，排序将实时同步到广场呈现。"
     },
     "comment_manager": {
         "title": "互动内容审核",
@@ -351,6 +359,9 @@
         "scope_label": "发布范围",
         "scope_public": "公共公共库",
         "scope_team": "团队专属库",
+        "scope_new_cc": "新CC专区",
+        "distribution_channels": "分发渠道",
+        "scope_all_channels": "全部渠道 (公共与新CC)",
         "promote_btn": "一键转为公共库",
         "promote_success": "成功同步晋升至公共库！",
         "promote_modal_title": "同步晋升至公共库",

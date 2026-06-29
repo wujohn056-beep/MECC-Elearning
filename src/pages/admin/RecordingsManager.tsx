@@ -131,6 +131,7 @@ export default function RecordingsManager() {
     const [hasSetDefaultBusiness, setHasSetDefaultBusiness] = useState(false);
     const [hubScope, setHubScope] = useState<'public' | 'team'>('public');
     const [targetSmId, setTargetSmId] = useState<string>('');
+    const [targetHubs, setTargetHubs] = useState<string[]>(['public']);
     const [adminSmFilter, setAdminSmFilter] = useState<string>('all');
     const [promotingRecording, setPromotingRecording] = useState<Recording | null>(null);
     const [promoteCategoryId, setPromoteCategoryId] = useState<string>('');
@@ -530,6 +531,7 @@ export default function RecordingsManager() {
         setBusinessType(profile?.dep === 'SS' ? 'ss' : 'kid');
         setHubScope(profile?.role === 'sm' ? 'team' : 'public');
         setTargetSmId(profile?.role === 'sm' ? (profile?.crmId || '') : '');
+        setTargetHubs(['public']);
         setAttachments([]);
         setUploadingAttachments({});
         setProgress(0);
@@ -767,6 +769,8 @@ export default function RecordingsManager() {
         setBusinessType(rec.businessType || (profile?.dep === 'SS' ? 'ss' : 'kid'));
         setHubScope((rec as any).hubScope || 'public');
         setTargetSmId((rec as any).targetSmId || '');
+        const currentTargetHubs = (rec as any).targetHubs || [];
+        setTargetHubs(currentTargetHubs.length > 0 ? currentTargetHubs : ['public']);
         setFile(null);
         setAvatarFile(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -957,7 +961,8 @@ export default function RecordingsManager() {
                 attachments: attachments || [],
                 hubScope,
                 targetSmId,
-                targetSmName: hubScope === 'team' && targetSmId ? (systemUsers.find(u => u.crmId === targetSmId)?.name || targetSmId) : ''
+                targetSmName: hubScope === 'team' && targetSmId ? (systemUsers.find(u => u.crmId === targetSmId)?.name || targetSmId) : '',
+                targetHubs: targetHubs.length > 0 ? targetHubs : ['public']
             };
 
             if (editingId) {
@@ -1414,6 +1419,57 @@ export default function RecordingsManager() {
                                     )}
                                 </div>
                             )}
+
+                            {/* Distribution Channels Selector */}
+                            <div>
+                                <label className="block text-sm font-semibold text-deep-teal mb-1">
+                                    {t('recordings_manager.distribution_channels', '分发渠道')}
+                                </label>
+                                <div className="flex gap-6 mt-2 bg-white/40 p-3 rounded-xl border border-gray-200/50">
+                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={targetHubs.includes('public')}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setTargetHubs(prev => {
+                                                    if (checked) {
+                                                        return prev.includes('public') ? prev : [...prev, 'public'];
+                                                    } else {
+                                                        if (prev.length === 1 && prev.includes('public')) return prev;
+                                                        return prev.filter(h => h !== 'public');
+                                                    }
+                                                });
+                                            }}
+                                            className="w-4 h-4 text-desert-gold focus:ring-desert-gold rounded"
+                                        />
+                                        <span className="text-sm font-bold text-arabian-night">
+                                            {t('recordings_manager.scope_public', '公共公共库')}
+                                        </span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={targetHubs.includes('new_cc')}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setTargetHubs(prev => {
+                                                    if (checked) {
+                                                        return prev.includes('new_cc') ? prev : [...prev, 'new_cc'];
+                                                    } else {
+                                                        if (prev.length === 1 && prev.includes('new_cc')) return prev;
+                                                        return prev.filter(h => h !== 'new_cc');
+                                                    }
+                                                });
+                                            }}
+                                            className="w-4 h-4 text-desert-gold focus:ring-desert-gold rounded"
+                                        />
+                                        <span className="text-sm font-bold text-arabian-night">
+                                            {t('recordings_manager.scope_new_cc', '新CC专区')}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
 
                             <div>
                                 <label className="block text-sm font-semibold text-deep-teal mb-1">{t('common.business_type', '业务线')}</label>
@@ -2043,7 +2099,19 @@ export default function RecordingsManager() {
                                                                 : `🌍 ${t('recordings_manager.scope_public', '公共')}`
                                                             }
                                                         </span>
-                                                                                        {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && (
+                                                        {(() => {
+                                                            const hubs = (rec as any).targetHubs || ['public'];
+                                                            return hubs.map((h: string) => (
+                                                                <span key={h} className={`text-[9px] px-2 py-0.5 rounded-full font-bold border select-none ${
+                                                                    h === 'new_cc' 
+                                                                        ? 'bg-rose-50 text-rose-700 border-rose-200' 
+                                                                        : 'bg-teal-50 text-teal-700 border-teal-200'
+                                                                }`}>
+                                                                    {h === 'new_cc' ? 'New CC' : 'Public'}
+                                                                </span>
+                                                            ));
+                                                        })()}
+                                                        {(rec as any).transcript && (rec as any).transcriptStatus !== 'transcribing' && (
                                                              <span 
                                                                  onClick={() => setViewingTranscriptRecording(rec)}
                                                                  className="text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold cursor-pointer hover:bg-green-600 hover:text-white hover:border-transparent transition-all active:scale-95 flex items-center shrink-0"

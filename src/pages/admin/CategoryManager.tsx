@@ -13,6 +13,7 @@ interface Category {
     businessType?: 'kid' | 'adult' | 'ss' | 'leader';
     hubScope?: 'public' | 'team';
     targetSmId?: string;
+    scope?: 'public' | 'new_cc';
 }
 
 export default function CategoryManager() {
@@ -20,6 +21,8 @@ export default function CategoryManager() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [newCategoryScope, setNewCategoryScope] = useState<'public' | 'new_cc'>('public');
+    const [activeScopeFilter, setActiveScopeFilter] = useState<'public' | 'new_cc'>('public');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [pageError, setPageError] = useState<string | null>(null);
@@ -48,7 +51,8 @@ export default function CategoryManager() {
                     name: docData.name, 
                     businessType: docData.businessType || 'kid',
                     hubScope: docData.hubScope || 'public',
-                    targetSmId: docData.targetSmId || ''
+                    targetSmId: docData.targetSmId || '',
+                    scope: docData.scope || 'public'
                 });
             });
             setCategories(data);
@@ -75,12 +79,16 @@ export default function CategoryManager() {
     const filteredCategories = categories.filter(cat => {
         if ((cat.businessType || 'kid') !== businessType) return false;
 
+        // Match active scope tab (standard/public vs new_cc)
+        const catScope = cat.scope || 'public';
+        if (catScope !== activeScopeFilter) return false;
+
         // Super Admin sees all categories
         if (profile?.role === 'super_admin') return true;
         // Non-super-admins see public categories + their own team's categories
-        const catScope = cat.hubScope || 'public';
-        if (catScope === 'public') return true;
-        return catScope === 'team' && cat.targetSmId === profile?.crmId;
+        const hubScope = cat.hubScope || 'public';
+        if (hubScope === 'public') return true;
+        return hubScope === 'team' && cat.targetSmId === profile?.crmId;
     });
 
     const handleCreate = async () => {
@@ -98,6 +106,7 @@ export default function CategoryManager() {
                 businessType: businessType,
                 hubScope: catScope,
                 targetSmId: catSmId,
+                scope: newCategoryScope,
                 createdAt: serverTimestamp()
             });
             await Promise.race([addPromise, timeoutPromise]);
@@ -376,6 +385,34 @@ export default function CategoryManager() {
                                     </div>
                                 )}
                             </div>
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('category_manager.scope_label', '所属专区')}</label>
+                                <div className="flex flex-wrap gap-2.5 mt-1">
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="categoryScope"
+                                            value="public"
+                                            checked={newCategoryScope === 'public'}
+                                            onChange={() => setNewCategoryScope('public')}
+                                            className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                        />
+                                        <span className="text-xs font-semibold text-arabian-night">{t('category_manager.scope_public', '公共广场')}</span>
+                                    </label>
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="categoryScope"
+                                            value="new_cc"
+                                            checked={newCategoryScope === 'new_cc'}
+                                            onChange={() => setNewCategoryScope('new_cc')}
+                                            className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                        />
+                                        <span className="text-xs font-semibold text-arabian-night">{t('category_manager.scope_new_cc', '新CC专区')}</span>
+                                    </label>
+                                </div>
+                            </div>
 
                             <button
                                 onClick={handleCreate}
@@ -399,6 +436,29 @@ export default function CategoryManager() {
                             {t('category_manager.list_title')} ({filteredCategories.length})
                         </h2>
 
+                        <div className="flex border-b border-gray-200/50 mb-6 gap-6">
+                            <button
+                                onClick={() => setActiveScopeFilter('public')}
+                                className={`pb-3 font-bold text-sm transition-all duration-300 relative ${
+                                    activeScopeFilter === 'public'
+                                        ? 'text-deep-teal border-b-2 border-desert-gold font-extrabold'
+                                        : 'text-gray-400 hover:text-deep-teal/80'
+                                }`}
+                            >
+                                {t('category_manager.scope_public', '公共广场')}
+                            </button>
+                            <button
+                                onClick={() => setActiveScopeFilter('new_cc')}
+                                className={`pb-3 font-bold text-sm transition-all duration-300 relative ${
+                                    activeScopeFilter === 'new_cc'
+                                        ? 'text-deep-teal border-b-2 border-desert-gold font-extrabold'
+                                        : 'text-gray-400 hover:text-deep-teal/80'
+                                }`}
+                            >
+                                {t('category_manager.scope_new_cc', '新CC专区')}
+                            </button>
+                        </div>
+
                         {loading ? (
                             <div className="flex justify-center py-12">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-desert-gold"></div>
@@ -418,14 +478,19 @@ export default function CategoryManager() {
                                                     type="text" 
                                                     autoFocus
                                                     className="w-full px-2 py-1 text-sm border-b-2 border-desert-gold focus:outline-none bg-transparent font-bold text-deep-teal"
-                                                    value={editName}
+                                                 value={editName}
                                                     onChange={(e) => setEditName(e.target.value)}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id, cat.name)}
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="flex-1 font-bold text-arabian-night truncate pr-4">
-                                                {cat.name}
+                                            <div className="flex-1 font-bold text-arabian-night truncate pr-4 flex items-center gap-2">
+                                                <span>{cat.name}</span>
+                                                {cat.scope === 'new_cc' && (
+                                                    <span className="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded-full select-none transform scale-90 origin-left">
+                                                        New CC
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
                                         
