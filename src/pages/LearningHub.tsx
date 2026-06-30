@@ -2801,6 +2801,12 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.cert_download_fail': '证书生成失败，请重试。',
             'learning_hub.claim_cert': '✨ 领取荣誉证书',
             'learning_hub.generating': '生成中...',
+            'learning_hub.new_cc_bootcamp': '🎓 新CC通关必修特训营',
+            'learning_hub.new_cc_bootcamp_subtitle': '新入职CC必学课程，100%学完即可毕业并领取特训结业证书',
+            'learning_hub.claim_new_cc_cert': '领取新CC特训毕业证书',
+            'learning_hub.new_cc_cert_title': '新CC特训毕业证书',
+            'learning_hub.new_cc_cert_main_body': '鉴于该学员在 MECC Elearning 学习中心新CC特训专区内表现卓越，圆满学完所有新CC特训必修课程，特颁发此特训结业证书，以兹鼓励。',
+            'learning_hub.new_cc_cert_body_2': '愿您在中东销售团队勇往直前，以扎实的功底赢取客户，共创销售奇迹！',
             'learning_hub.incentive_explain_line': '🏆 宝藏猎人：听录音进行智慧寻宝。达到时间与任务门槛即可解锁 Najah 学院荣誉证书与宝藏勋章奖励（点击查看详情）。'
         },
         en: {
@@ -2866,7 +2872,13 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.go_learn': 'Go Learn',
             'learning_hub.cert_download_fail': 'Failed to generate certificate, please try again.',
             'learning_hub.claim_cert': '✨ Claim Certificate',
-            'learning_hub.generating': 'Generating...'
+            'learning_hub.generating': 'Generating...',
+            'learning_hub.new_cc_bootcamp': '🎓 New CC Bootcamp',
+            'learning_hub.new_cc_bootcamp_subtitle': 'Required training for new CCs. Complete 100% to graduate and claim your certificate.',
+            'learning_hub.claim_new_cc_cert': 'Claim New CC Graduation Certificate',
+            'learning_hub.new_cc_cert_title': 'New CC Bootcamp Certificate',
+            'learning_hub.new_cc_cert_main_body': 'This certificate is proudly awarded for successfully completing all required training modules in the New CC Special Training Program with outstanding diligence.',
+            'learning_hub.new_cc_cert_body_2': 'May you forge ahead in the Middle Eastern sales team, win customers with solid skills, and co-create sales miracles!'
         },
         ar: {
             'campaign.details_title': 'تفاصيل التحدي الحصري',
@@ -2931,7 +2943,13 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'learning_hub.go_learn': 'اذهب للتعلم',
             'learning_hub.cert_download_fail': 'فشل إنشاء الشهادة، يرجى المحاولة مرة أخرى.',
             'learning_hub.claim_cert': '✨ الحصول على الشهادة',
-            'learning_hub.generating': 'جاري الإنشاء...'
+            'learning_hub.generating': 'جاري الإنشاء...',
+            'learning_hub.new_cc_bootcamp': '🎓 معسكر تدريب الموظفين الجدد (CC)',
+            'learning_hub.new_cc_bootcamp_subtitle': 'التدريب المطلوب للموظفين الجدد. أكمل 100% للتخرج والحصول على شهادتك.',
+            'learning_hub.claim_new_cc_cert': 'الحصول على شهادة تخرج الموظف الجديد',
+            'learning_hub.new_cc_cert_title': 'شهادة معسكر تدريب الموظفين الجدد (CC)',
+            'learning_hub.new_cc_cert_main_body': 'تُمنح هذه الشهادة بكل فخر لإكمال جميع الوحدات التدريبية المطلوبة بنجاح في برنامج التدريب الخاص بالموظفين الجدد (CC) بجد واجتهاد متميزين.',
+            'learning_hub.new_cc_cert_body_2': 'نتمنى لك المضي قدمًا في فريق مبيعات الشرق الأوسط، وكسب العملاء بمهارات راسخة، والمشاركة في صنع معجزات المبيعات!'
         }
     };
 
@@ -3502,6 +3520,16 @@ export default function LearningHub() {
     const certificateRef = React.useRef<HTMLDivElement>(null);
     const [certImageDataUrl, setCertImageDataUrl] = useState<string | null>(null);
     const [isDownloadingCert, setIsDownloadingCert] = useState(false);
+    
+    // New CC Graduation Certificate states
+    const [showNewCcCertModal, setShowNewCcCertModal] = useState(false);
+    const newCcCertRefEn = React.useRef<HTMLDivElement>(null);
+    const newCcCertRefAr = React.useRef<HTMLDivElement>(null);
+    const [newCcCertTab, setNewCcCertTab] = useState<'en' | 'ar'>('en');
+    const [newCcCertImageDataUrlEn, setNewCcCertImageDataUrlEn] = useState<string | null>(null);
+    const [newCcCertImageDataUrlAr, setNewCcCertImageDataUrlAr] = useState<string | null>(null);
+    const [isDownloadingNewCcCertEn, setIsDownloadingNewCcCertEn] = useState(false);
+    const [isDownloadingNewCcCertAr, setIsDownloadingNewCcCertAr] = useState(false);
     
     // Custom campaigns (special certificates) states
     const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -4856,6 +4884,26 @@ export default function LearningHub() {
         );
     };
 
+    // New CC recordings filtering and progress calculation
+    const newCcRecordings = React.useMemo(() => {
+        return recordings.filter(rec => {
+            if ((rec as any).hubScope === 'team') return false;
+            const hubs = (rec as any).targetHubs || ['public'];
+            const matchesNewCc = hubs.includes('new_cc');
+            const matchesBusinessType = (rec.businessType || 'kid') === businessType;
+            return matchesNewCc && matchesBusinessType;
+        });
+    }, [recordings, businessType]);
+
+    const newCcCompletedCount = React.useMemo(() => {
+        return newCcRecordings.filter(rec => completedAudioIds.includes(rec.id)).length;
+    }, [newCcRecordings, completedAudioIds]);
+
+    const newCcCompletionPercent = React.useMemo(() => {
+        if (newCcRecordings.length === 0) return 0;
+        return Math.round((newCcCompletedCount / newCcRecordings.length) * 100);
+    }, [newCcRecordings, newCcCompletedCount]);
+
     // Level & Honor System Config & Helpers
     const userStats = React.useMemo(() => {
         // Calculate dynamic study time (average 12 minutes per completed audio + some base minutes)
@@ -5887,6 +5935,266 @@ export default function LearningHub() {
         } finally {
             setIsDownloadingCert(false);
         }
+    };
+
+    const handleDownloadNewCcCert = async (lang: 'en' | 'ar') => {
+        const ref = lang === 'en' ? newCcCertRefEn : newCcCertRefAr;
+        const setDownloading = lang === 'en' ? setIsDownloadingNewCcCertEn : setIsDownloadingNewCcCertAr;
+        const setImageData = lang === 'en' ? setNewCcCertImageDataUrlEn : setNewCcCertImageDataUrlAr;
+        
+        if (!ref.current) return;
+        setDownloading(true);
+        try {
+            const { toPng } = await import('html-to-image');
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            
+            const dataUrl = await toPng(ref.current, {
+                quality: 1.0,
+                pixelRatio: 3,
+                cacheBust: true,
+                backgroundColor: '#ffffff',
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left',
+                }
+            });
+            
+            if (Capacitor.isNativePlatform()) {
+                setImageData(dataUrl);
+            } else {
+                const link = document.createElement('a');
+                link.download = `MECC_New_CC_Bootcamp_Certificate_${lang === 'en' ? 'EN' : 'AR'}_${profile?.name || 'Graduate'}.png`;
+                link.href = dataUrl;
+                link.click();
+                
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    setImageData(dataUrl);
+                }
+            }
+        } catch (error) {
+            console.error("Error generating new CC certificate image", error);
+            alert(t('learning_hub.cert_download_fail', 'Failed to generate certificate, please try again.'));
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const renderNewCcCertificateModal = () => {
+        if (!showNewCcCertModal) return null;
+
+        const formattedDateEn = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const formattedDateAr = new Date().toLocaleDateString('ar-JO', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        return (
+            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300">
+                <div className="relative w-full max-w-4xl flex flex-col items-center">
+                    {/* Close Button */}
+                    <button 
+                        onClick={() => {
+                            setShowNewCcCertModal(false);
+                            setNewCcCertImageDataUrlEn(null);
+                            setNewCcCertImageDataUrlAr(null);
+                        }}
+                        className="absolute -top-12 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-50 shadow-md border border-white/10 active:scale-95"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+
+                    {/* Tab Switcher */}
+                    <div className="flex bg-white/15 backdrop-blur-md p-1 rounded-2xl border border-white/10 mb-4 shadow-lg">
+                        <button
+                            onClick={() => setNewCcCertTab('en')}
+                            className={`px-6 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${
+                                newCcCertTab === 'en' ? 'bg-white text-deep-teal shadow-md font-black scale-105' : 'text-white/80 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                            🇬🇧 English Version
+                        </button>
+                        <button
+                            onClick={() => setNewCcCertTab('ar')}
+                            className={`px-6 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${
+                                newCcCertTab === 'ar' ? 'bg-white text-deep-teal shadow-md font-black scale-105' : 'text-white/80 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                            🇸🇦 العربية (Arabic)
+                        </button>
+                    </div>
+
+                    {/* Native App Image Preview or Printable Container */}
+                    <div className="w-full bg-white rounded-3xl overflow-hidden shadow-2xl p-3 border border-gray-150 flex items-center justify-center">
+                        {newCcCertTab === 'en' ? (
+                            newCcCertImageDataUrlEn && (Capacitor.isNativePlatform() || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) ? (
+                                <div className="flex flex-col items-center gap-2 p-4">
+                                    <img src={newCcCertImageDataUrlEn} alt="Bootcamp Certificate EN" className="w-full max-w-[800px] h-auto rounded-xl border border-gray-200 shadow-md" />
+                                    <p className="text-[11px] text-gray-500 font-bold mt-2 animate-pulse">
+                                        💡 {t('learning_hub.long_press_save', '长按图片保存至相册')}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="p-4 w-full flex justify-center">
+                                    <div 
+                                        ref={newCcCertRefEn}
+                                        className="relative w-full max-w-[800px] aspect-[1.414/1] bg-stone-50 border-[10px] border-double border-amber-600 rounded-[2rem] text-slate-800 p-8 sm:p-12 overflow-hidden flex flex-col justify-between"
+                                    >
+                                        <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-amber-500/5 blur-xl"></div>
+                                        <div className="absolute -bottom-12 -right-12 w-64 h-64 rounded-full bg-deep-teal/5 blur-2xl"></div>
+                                        
+                                        <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-amber-600/60 rounded-tl-lg"></div>
+                                        <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-amber-600/60 rounded-tr-lg"></div>
+                                        <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-amber-600/60 rounded-bl-lg"></div>
+                                        <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-amber-600/60 rounded-br-lg"></div>
+
+                                        <div className="text-center flex-1 flex flex-col justify-between py-1">
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-3xl mb-1">🎓</span>
+                                                <h2 className="font-serif text-2xl font-bold tracking-widest text-amber-800 uppercase">
+                                                    Certificate of Graduation
+                                                </h2>
+                                                <div className="w-24 border-t-2 border-amber-600/40 my-1"></div>
+                                                <p className="text-[9px] text-slate-400 font-extrabold tracking-widest uppercase">
+                                                    Middle East Sales Training Academy
+                                                </p>
+                                            </div>
+
+                                            <div className="my-2">
+                                                <p className="text-xs text-slate-500 font-semibold italic">This certificate is proudly awarded to</p>
+                                                <h3 className="font-serif text-3xl font-extrabold text-deep-teal my-2 tracking-wide">
+                                                    {profile?.name || profile?.crmId || 'Honored CC'}
+                                                </h3>
+                                                <p className="text-xs text-slate-500 font-medium max-w-xl mx-auto mt-2 leading-relaxed">
+                                                    for outstanding diligence and successful completion of all required courses in the
+                                                </p>
+                                                <p className="text-sm text-amber-850 font-extrabold tracking-wider mt-1.5 uppercase">
+                                                    New CC Bootcamp Special Training Program
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t border-slate-200/60 pt-3 px-4 mt-1 shrink-0">
+                                                <div className="flex flex-col items-center w-1/3 text-left">
+                                                    <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider">Date of Issue</span>
+                                                    <div className="w-12 border-t border-slate-200 my-0.5"></div>
+                                                    <span className="font-bold text-[10px] text-slate-700">{formattedDateEn}</span>
+                                                </div>
+
+                                                <div className="relative flex items-center justify-center w-1/3">
+                                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border border-yellow-250 flex flex-col items-center justify-center text-[5px] font-black text-blue-950 shadow-md">
+                                                        <span className="font-extrabold uppercase scale-90">ME SALES</span>
+                                                        <span className="font-bold tracking-wider text-[6px]">SEAL</span>
+                                                        <span className="font-bold scale-75">★ ★ ★</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-center w-1/3 text-right">
+                                                    <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider">Authorized By</span>
+                                                    <div className="w-12 border-t border-slate-200 my-0.5"></div>
+                                                    <span className="font-serif italic font-bold text-[10px] text-slate-700">MECC Management</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        ) : (
+                            newCcCertImageDataUrlAr && (Capacitor.isNativePlatform() || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) ? (
+                                <div className="flex flex-col items-center gap-2 p-4" dir="rtl">
+                                    <img src={newCcCertImageDataUrlAr} alt="Bootcamp Certificate AR" className="w-full max-w-[800px] h-auto rounded-xl border border-gray-200 shadow-md" />
+                                    <p className="text-[11px] text-gray-500 font-bold mt-2 animate-pulse">
+                                        💡 {t('learning_hub.long_press_save', 'اضغط مطولاً على الصورة لحفظها في الاستوديو')}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="p-4 w-full flex justify-center" dir="rtl">
+                                    <div 
+                                        ref={newCcCertRefAr}
+                                        className="relative w-full max-w-[800px] aspect-[1.414/1] bg-stone-50 border-[10px] border-double border-amber-600 rounded-[2rem] text-slate-800 p-8 sm:p-12 overflow-hidden flex flex-col justify-between"
+                                    >
+                                        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-amber-500/5 blur-xl"></div>
+                                        <div className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full bg-deep-teal/5 blur-2xl"></div>
+                                        
+                                        <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-amber-600/60 rounded-tr-lg"></div>
+                                        <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-amber-600/60 rounded-tl-lg"></div>
+                                        <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-amber-600/60 rounded-br-lg"></div>
+                                        <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-amber-600/60 rounded-bl-lg"></div>
+
+                                        <div className="text-center flex-1 flex flex-col justify-between py-1">
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-3xl mb-1">🎓</span>
+                                                <h2 className="font-serif text-2xl font-bold tracking-widest text-amber-800">
+                                                    شهادة تخرّج وإتمام التدريب
+                                                </h2>
+                                                <div className="w-24 border-t-2 border-amber-600/40 my-1"></div>
+                                                <p className="text-[9px] text-slate-400 font-extrabold tracking-widest uppercase">
+                                                    أكاديمية تدريب المبيعات للشرق الأوسط
+                                                </p>
+                                            </div>
+
+                                            <div className="my-2">
+                                                <p className="text-xs text-slate-500 font-semibold italic">تُمنح هذه الشهادة بكل فخر واعتزاز إلى</p>
+                                                <h3 className="font-serif text-3xl font-extrabold text-deep-teal my-2 tracking-wide">
+                                                    {profile?.name || profile?.crmId || 'خريج جديد'}
+                                                </h3>
+                                                <p className="text-xs text-slate-500 font-medium max-w-xl mx-auto mt-2 leading-relaxed">
+                                                    تقديرًا لجهوده المتميزة واجتيازه بنجاح جميع المساقات والوحدات التدريبية المطلوبة في
+                                                </p>
+                                                <p className="text-sm text-amber-850 font-extrabold tracking-wider mt-1.5">
+                                                    معسكر تدريب الموظفين الجدد (CC) للشرق الأوسط
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t border-slate-200/60 pt-3 px-4 mt-1 shrink-0">
+                                                <div className="flex flex-col items-center w-1/3">
+                                                    <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider">تاريخ الإصدار</span>
+                                                    <div className="w-12 border-t border-slate-200 my-0.5"></div>
+                                                    <span className="font-bold text-[10px] text-slate-700">{formattedDateAr}</span>
+                                                </div>
+
+                                                <div className="relative flex items-center justify-center w-1/3">
+                                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border border-yellow-250 flex flex-col items-center justify-center text-[5px] font-black text-blue-950 shadow-md">
+                                                        <span className="font-extrabold uppercase scale-90">مبيعات ME</span>
+                                                        <span className="font-bold tracking-wider text-[6px]">خِتم</span>
+                                                        <span className="font-bold scale-75">★ ★ ★</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-center w-1/3">
+                                                    <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider">الجهة المعتمدة</span>
+                                                    <div className="w-12 border-t border-slate-200 my-0.5"></div>
+                                                    <span className="font-serif italic font-bold text-[10px] text-slate-700">إدارة MECC</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        )}
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 mt-6 justify-center w-full z-10 relative">
+                        <button
+                            onClick={() => handleDownloadNewCcCert(newCcCertTab)}
+                            disabled={newCcCertTab === 'en' ? isDownloadingNewCcCertEn : isDownloadingNewCcCertAr}
+                            className="bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-extrabold text-xs py-3 px-8 rounded-2xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all w-full sm:w-auto disabled:opacity-50"
+                        >
+                            {(newCcCertTab === 'en' ? isDownloadingNewCcCertEn : isDownloadingNewCcCertAr) ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Download className="w-4 h-4" />
+                            )}
+                            {newCcCertTab === 'en' ? 'Download English Certificate' : 'تحميل الشهادة العربية'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     const renderCertificateModal = () => {
@@ -7172,6 +7480,7 @@ export default function LearningHub() {
             )}
             {showCertificate && renderCertificateModal()}
             {showCampaignCert && renderCampaignCertificateModal()}
+            {showNewCcCertModal && renderNewCcCertificateModal()}
             {showCampaignDetails && renderCampaignDetailsModal()}
             {renderRulesModal()}
             {showHonorModal && renderOasisHonorDetailModal()}
