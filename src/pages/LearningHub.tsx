@@ -31,6 +31,7 @@ interface Category {
     id: string;
     name: string;
     businessType?: string;
+    scope?: string;
 }
 
 interface Banner {
@@ -3846,7 +3847,8 @@ export default function LearningHub() {
                     catData.push({ 
                         id: doc.id, 
                         name: docData.name,
-                        businessType: docData.businessType || 'kid'
+                        businessType: docData.businessType || 'kid',
+                        scope: docData.scope || 'public'
                     });
                 });
                 setCategories(catData);
@@ -4358,7 +4360,19 @@ export default function LearningHub() {
             return false;
         }
 
-        const matchesTab = activeTab === 'all' || rec.categoryId === activeTab;
+        let matchesTab = activeTab === 'all';
+        if (!matchesTab) {
+            const selectedCat = categories.find(c => c.id === activeTab);
+            if (selectedCat) {
+                if (publicHubTab === 'new_cc' && hubScope === 'public') {
+                    matchesTab = rec.categoryId === activeTab || (rec.categoryName === selectedCat.name);
+                } else {
+                    matchesTab = rec.categoryId === activeTab;
+                }
+            } else {
+                matchesTab = rec.categoryId === activeTab;
+            }
+        }
         const matchesSearch = searchQuery === '' || 
             (rec.lecturerName && rec.lecturerName.toLowerCase().includes(searchQuery.toLowerCase())) ||
             rec.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

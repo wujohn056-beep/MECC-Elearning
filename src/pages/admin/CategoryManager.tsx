@@ -210,6 +210,64 @@ export default function CategoryManager() {
         }
     };
 
+    const handleClonePublicCategories = async () => {
+        const publicCats = categories.filter(cat => 
+            (cat.businessType || 'kid') === businessType && 
+            (cat.scope || 'public') === 'public'
+        );
+
+        if (publicCats.length === 0) {
+            alert(t('category_manager.no_public_cats', '当前业务线下没有可复制的公共目录'));
+            return;
+        }
+
+        const existingNewCcNames = new Set(
+            categories
+                .filter(cat => (cat.businessType || 'kid') === businessType && cat.scope === 'new_cc')
+                .map(cat => cat.name.trim())
+        );
+
+        const catsToClone = publicCats.filter(cat => !existingNewCcNames.has(cat.name.trim()));
+
+        if (catsToClone.length === 0) {
+            alert(t('category_manager.all_cats_exist', '公共目录均已存在于新CC专区中，无需重复复制'));
+            return;
+        }
+
+        if (!window.confirm(t('category_manager.clone_confirm', `确认要将当前业务线下的 ${catsToClone.length} 个公共目录复制到新CC专区吗？`))) {
+            return;
+        }
+
+        setActionLoading(true);
+        setPageError(null);
+        try {
+            const batch = writeBatch(db);
+            const isSuper = profile?.role === 'super_admin';
+            const catScope = isSuper ? 'public' : 'team';
+            const catSmId = isSuper ? '' : (profile?.crmId || '');
+
+            catsToClone.forEach((cat) => {
+                const newCatRef = doc(collection(db, 'categories'));
+                batch.set(newCatRef, {
+                    name: cat.name,
+                    businessType: businessType,
+                    hubScope: catScope,
+                    targetSmId: catSmId,
+                    scope: 'new_cc',
+                    createdAt: serverTimestamp()
+                });
+            });
+
+            await batch.commit();
+            await fetchCategories();
+            alert(t('category_manager.clone_success', '成功复制公共目录到新CC专区！现在您可以自由修改它们了。'));
+        } catch (error: any) {
+            setPageError(`${t('category_manager.clone_fail', '复制失败')}: ${error.message}`);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     return (
         <div className="animate-in fade-in duration-500 space-y-8">
             <div>
@@ -458,6 +516,27 @@ export default function CategoryManager() {
                                 {t('category_manager.scope_new_cc', '新CC专区')}
                             </button>
                         </div>
+
+                        {activeScopeFilter === 'new_cc' && (
+                            <div className="mb-6 bg-[#0D5C75]/5 dark:bg-slate-900/30 p-4 rounded-xl border border-[#0D5C75]/15 dark:border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div className="text-xs text-[#0D5C75]/70 dark:text-slate-400">
+                                    <p className="font-bold text-[#0D5C75] dark:text-desert-gold flex items-center gap-1">
+                                        💡 <span>快速初始化新CC专区目录</span>
+                                    </p>
+                                    <p className="mt-0.5">
+                                        您可以一键复制公共广场的目录结构到新CC专区。复制后，新CC专区的目录是完全独立的，您可以自由修改（重命名、删除、排序）而不影响公共广场。
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleClonePublicCategories}
+                                    disabled={actionLoading}
+                                    className="px-4 py-2.5 bg-gradient-to-r from-[#0D5C75] to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                >
+                                    <span>📋</span>
+                                    一键复制公共目录
+                                </button>
+                            </div>
+                        )}
 
                         {loading ? (
                             <div className="flex justify-center py-12">
