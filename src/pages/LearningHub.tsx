@@ -6753,30 +6753,55 @@ export default function LearningHub() {
                         {plazaMode === 'recordings' && (
                             <div className="mt-8 border-t border-deep-teal/5 dark:border-white/5 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 z-40 relative">
                             {/* Scope Toggle buttons */}
-                            <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[380px] self-start shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
+                            <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[480px] self-start shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
                                 {/* Sliding Background Indicator */}
                                 <div
-                                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl bg-gradient-to-r from-[#0D5C75] to-teal-600 dark:from-desert-gold dark:to-amber-500 shadow-md shadow-teal-900/20 dark:shadow-desert-gold/20 transition-all duration-300 ease-out z-0 ${
+                                    className={`absolute top-1 bottom-1 w-[calc(33.333%-4px)] rounded-xl bg-gradient-to-r from-[#0D5C75] to-teal-600 dark:from-desert-gold dark:to-amber-500 shadow-md shadow-teal-900/20 dark:shadow-desert-gold/20 transition-all duration-300 ease-out z-0 ${
                                         i18n.language?.startsWith('ar') ? 'right-1' : 'left-1'
                                     }`}
                                     style={{
                                         transform: i18n.language?.startsWith('ar')
-                                            ? (hubScope === 'public' ? 'translateX(0)' : 'translateX(-100%)')
-                                            : (hubScope === 'public' ? 'translateX(0)' : 'translateX(100%)'),
+                                            ? `translateX(-${(hubScope === 'team' ? 2 : (publicHubTab === 'new_cc' && hubScope === 'public' ? 1 : 0)) * 100}%)`
+                                            : `translateX(${(hubScope === 'team' ? 2 : (publicHubTab === 'new_cc' && hubScope === 'public' ? 1 : 0)) * 100}%)`,
                                     }}
                                 />
                                 <button
                                     onClick={() => {
                                         setHubScope('public');
+                                        setPublicHubTab('public');
+                                        setActiveTab('all');
+                                        setSearchParams(prev => {
+                                            prev.set('publicTab', 'public');
+                                            return prev;
+                                        });
                                     }}
-                                    className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                                        hubScope === 'public'
+                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        (hubScope === 'public' && publicHubTab === 'public')
                                             ? 'text-white dark:text-arabian-night'
                                             : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
                                     }`}
                                 >
-                                    <span className={`transition-transform duration-300 ${hubScope === 'public' ? 'scale-110 rotate-12' : ''}`}>🌍</span>
+                                    <span className={`transition-transform duration-300 ${(hubScope === 'public' && publicHubTab === 'public') ? 'scale-110 rotate-12' : ''}`}>🌍</span>
                                     {t('learning_hub.public_hub', '公共学习中心')}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setHubScope('public');
+                                        setPublicHubTab('new_cc');
+                                        setActiveTab('all');
+                                        setSearchParams(prev => {
+                                            prev.set('publicTab', 'new_cc');
+                                            return prev;
+                                        });
+                                    }}
+                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        (hubScope === 'public' && publicHubTab === 'new_cc')
+                                            ? 'text-white dark:text-arabian-night'
+                                            : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <span className={`transition-transform duration-300 ${(hubScope === 'public' && publicHubTab === 'new_cc') ? 'scale-110 animate-pulse' : ''}`}>✨</span>
+                                    {t('category_manager.scope_new_cc', '新CC专区')}
                                 </button>
                                 <button
                                     onClick={() => {
@@ -6785,7 +6810,7 @@ export default function LearningHub() {
                                             setActiveSmId(profile.crmId || '');
                                         }
                                     }}
-                                    className={`relative z-10 w-1/2 py-2.5 rounded-xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
                                         hubScope === 'team'
                                             ? 'text-white dark:text-arabian-night'
                                             : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
@@ -6817,48 +6842,6 @@ export default function LearningHub() {
                                             ))
                                         }
                                     </select>
-                                </div>
-                            )}
-
-                            {/* Public Hub / New CC Zone Switcher (Visible to anyone in Public Scope) */}
-                            {hubScope === 'public' && (
-                                <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[320px] self-start md:self-end shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
-                                    <button
-                                        onClick={() => {
-                                            setPublicHubTab('public');
-                                            setActiveTab('all');
-                                            setSearchParams(prev => {
-                                                prev.set('publicTab', 'public');
-                                                return prev;
-                                            });
-                                        }}
-                                        className={`relative z-10 w-1/2 py-2 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
-                                            publicHubTab === 'public'
-                                                ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md font-black scale-105'
-                                                : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
-                                        }`}
-                                    >
-                                        <span>🌍</span>
-                                        {t('category_manager.scope_public', '公共广场')}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setPublicHubTab('new_cc');
-                                            setActiveTab('all');
-                                            setSearchParams(prev => {
-                                                prev.set('publicTab', 'new_cc');
-                                                return prev;
-                                            });
-                                        }}
-                                        className={`relative z-10 w-1/2 py-2 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
-                                            publicHubTab === 'new_cc'
-                                                ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md font-black scale-105'
-                                                : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
-                                        }`}
-                                    >
-                                        <span>✨</span>
-                                        {t('category_manager.scope_new_cc', '新CC专区')}
-                                    </button>
                                 </div>
                             )}
                         </div>
