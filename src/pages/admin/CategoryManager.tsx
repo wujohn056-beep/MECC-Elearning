@@ -128,6 +128,14 @@ export default function CategoryManager() {
         e.preventDefault();
         if (draggedIndex === null || draggedIndex === targetIndex) return;
 
+        const isSuper = profile?.role === 'super_admin';
+        
+        // Prevent non-super-admins from sorting new_cc categories
+        if (!isSuper && activeScopeFilter === 'new_cc') {
+            alert(t('category_manager.no_permission', '您没有修改此目录的权限'));
+            return;
+        }
+
         const updatedList = [...filteredCategories];
         const [draggedItem] = updatedList.splice(draggedIndex, 1);
         updatedList.splice(targetIndex, 0, draggedItem);
@@ -156,8 +164,12 @@ export default function CategoryManager() {
         try {
             const batch = writeBatch(db);
             updatedList.forEach((cat, index) => {
-                const catRef = doc(db, 'categories', cat.id);
-                batch.update(catRef, { sortOrder: index });
+                const isOwner = cat.hubScope === 'team' && cat.targetSmId === profile?.crmId;
+                // Only update Firestore if super admin, or if it is a team category owned by the user
+                if (isSuper || isOwner) {
+                    const catRef = doc(db, 'categories', cat.id);
+                    batch.update(catRef, { sortOrder: index });
+                }
             });
             await batch.commit();
         } catch (error: any) {
@@ -203,12 +215,11 @@ export default function CategoryManager() {
             return;
         }
         
-        // Safeguard check: only super_admin, the category owner, or anyone with access to new_cc categories can modify
+        // Safeguard check: only super_admin or the category owner can modify
         const cat = categories.find(c => c.id === id);
         const isSuper = profile?.role === 'super_admin';
-        const isNewCc = cat && cat.scope === 'new_cc';
         const isOwner = cat && cat.hubScope === 'team' && cat.targetSmId === profile?.crmId;
-        if (!isSuper && !isOwner && !isNewCc) {
+        if (!isSuper && !isOwner) {
             alert(t('category_manager.no_permission', '您没有修改此目录的权限'));
             setEditingId(null);
             return;
@@ -245,12 +256,11 @@ export default function CategoryManager() {
     };
 
     const handleDelete = async (id: string) => {
-        // Safeguard check: only super_admin, the category owner, or anyone with access to new_cc categories can modify
+        // Safeguard check: only super_admin or the category owner can modify
         const cat = categories.find(c => c.id === id);
         const isSuper = profile?.role === 'super_admin';
-        const isNewCc = cat && cat.scope === 'new_cc';
         const isOwner = cat && cat.hubScope === 'team' && cat.targetSmId === profile?.crmId;
-        if (!isSuper && !isOwner && !isNewCc) {
+        if (!isSuper && !isOwner) {
             alert(t('category_manager.no_permission', '您没有删除此目录的权限'));
             return;
         }
@@ -523,33 +533,35 @@ export default function CategoryManager() {
                                 )}
                             </div>
                             
-                            <div>
-                                <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('category_manager.scope_label', '所属专区')}</label>
-                                <div className="flex flex-wrap gap-2.5 mt-1">
-                                    <label className="flex items-center gap-1.5 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            name="categoryScope"
-                                            value="public"
-                                            checked={newCategoryScope === 'public'}
-                                            onChange={() => setNewCategoryScope('public')}
-                                            className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
-                                        />
-                                        <span className="text-xs font-semibold text-arabian-night">{t('category_manager.scope_public', '公共广场')}</span>
-                                    </label>
-                                    <label className="flex items-center gap-1.5 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            name="categoryScope"
-                                            value="new_cc"
-                                            checked={newCategoryScope === 'new_cc'}
-                                            onChange={() => setNewCategoryScope('new_cc')}
-                                            className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
-                                        />
-                                        <span className="text-xs font-semibold text-arabian-night">{t('category_manager.scope_new_cc', '新CC专区')}</span>
-                                    </label>
+                            {profile?.role === 'super_admin' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('category_manager.scope_label', '所属专区')}</label>
+                                    <div className="flex flex-wrap gap-2.5 mt-1">
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryScope"
+                                                value="public"
+                                                checked={newCategoryScope === 'public'}
+                                                onChange={() => setNewCategoryScope('public')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('category_manager.scope_public', '公共广场')}</span>
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryScope"
+                                                value="new_cc"
+                                                checked={newCategoryScope === 'new_cc'}
+                                                onChange={() => setNewCategoryScope('new_cc')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('category_manager.scope_new_cc', '新CC专区')}</span>
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             <button
                                 onClick={handleCreate}
@@ -596,7 +608,7 @@ export default function CategoryManager() {
                             </button>
                         </div>
 
-                        {activeScopeFilter === 'new_cc' && (
+                        {activeScopeFilter === 'new_cc' && profile?.role === 'super_admin' && (
                             <div className="mb-6 bg-[#0D5C75]/5 dark:bg-slate-900/30 p-4 rounded-xl border border-[#0D5C75]/15 dark:border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div className="text-xs text-[#0D5C75]/70 dark:text-slate-400">
                                     <p className="font-bold text-[#0D5C75] dark:text-desert-gold flex items-center gap-1">
@@ -628,78 +640,85 @@ export default function CategoryManager() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {filteredCategories.map((cat, index) => (
-                                    <div 
-                                        key={cat.id} 
-                                        draggable={editingId !== cat.id && !actionLoading}
-                                        onDragStart={(e) => handleDragStart(e, index)}
-                                        onDragOver={(e) => handleDragOver(e, index)}
-                                        onDragEnd={handleDragEnd}
-                                        onDrop={(e) => handleDrop(e, index)}
-                                        className={`bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group transition-colors shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing ${
-                                            draggedIndex === index ? 'opacity-40 border-dashed border-desert-gold' : ''
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
-                                            <GripVertical className="h-4 w-4 text-arabian-night/30 group-hover:text-arabian-night/60 cursor-grab flex-shrink-0" />
-                                            {editingId === cat.id ? (
-                                                <div className="flex-1 flex items-center gap-2">
-                                                    <input 
-                                                        type="text" 
-                                                        autoFocus
-                                                        className="w-full px-2 py-1 text-sm border-b-2 border-desert-gold focus:outline-none bg-transparent font-bold text-deep-teal"
-                                                        value={editName}
-                                                        onChange={(e) => setEditName(e.target.value)}
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id, cat.name)}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="flex-1 font-bold text-arabian-night truncate flex items-center gap-2">
-                                                    <span>{cat.name}</span>
-                                                    {cat.scope === 'new_cc' && (
-                                                        <span className="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded-full select-none transform scale-90 origin-left">
-                                                            New CC
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
+                                {filteredCategories.map((cat, index) => {
+                                    const canDrag = profile?.role === 'super_admin' || (cat.hubScope === 'team' && cat.targetSmId === profile?.crmId);
+                                    return (
+                                        <div 
+                                            key={cat.id} 
+                                            draggable={editingId !== cat.id && !actionLoading && canDrag}
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            className={`bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group transition-colors shadow-sm hover:shadow-md ${
+                                                canDrag ? 'cursor-grab active:cursor-grabbing' : ''
+                                            } ${
+                                                draggedIndex === index ? 'opacity-40 border-dashed border-desert-gold' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                                                {canDrag && (
+                                                    <GripVertical className="h-4 w-4 text-arabian-night/30 group-hover:text-arabian-night/60 cursor-grab flex-shrink-0" />
+                                                )}
+                                                {editingId === cat.id ? (
+                                                    <div className="flex-1 flex items-center gap-2">
+                                                        <input 
+                                                            type="text" 
+                                                            autoFocus
+                                                            className="w-full px-2 py-1 text-sm border-b-2 border-desert-gold focus:outline-none bg-transparent font-bold text-deep-teal"
+                                                            value={editName}
+                                                            onChange={(e) => setEditName(e.target.value)}
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id, cat.name)}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex-1 font-bold text-arabian-night truncate flex items-center gap-2">
+                                                        <span>{cat.name}</span>
+                                                        {cat.scope === 'new_cc' && (
+                                                            <span className="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded-full select-none transform scale-90 origin-left">
+                                                                New CC
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-1 opacity-100 md:opacity-50 md:group-hover:opacity-100 transition-opacity">
+                                                {editingId === cat.id ? (
+                                                    <>
+                                                        <button onClick={() => handleUpdate(cat.id, cat.name)} disabled={actionLoading} className="p-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200">
+                                                            <Save className="h-4 w-4" />
+                                                        </button>
+                                                        <button onClick={() => setEditingId(null)} disabled={actionLoading} className="p-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {(profile?.role === 'super_admin' || cat.targetSmId === profile?.crmId) && (
+                                                            <>
+                                                                <button 
+                                                                    onClick={() => { setEditingId(cat.id); setEditName(cat.name); }} 
+                                                                    disabled={actionLoading}
+                                                                    className="p-1.5 bg-desert-gold/10 text-yellow-700 rounded-lg hover:bg-desert-gold/20"
+                                                                >
+                                                                    <Edit2 className="h-4 w-4" />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleDelete(cat.id)} 
+                                                                    disabled={actionLoading}
+                                                                    className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
-                                        
-                                        <div className="flex items-center gap-1 opacity-100 md:opacity-50 md:group-hover:opacity-100 transition-opacity">
-                                            {editingId === cat.id ? (
-                                                <>
-                                                    <button onClick={() => handleUpdate(cat.id, cat.name)} disabled={actionLoading} className="p-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200">
-                                                        <Save className="h-4 w-4" />
-                                                    </button>
-                                                    <button onClick={() => setEditingId(null)} disabled={actionLoading} className="p-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    {(profile?.role === 'super_admin' || cat.targetSmId === profile?.crmId || cat.scope === 'new_cc') && (
-                                                        <>
-                                                            <button 
-                                                                onClick={() => { setEditingId(cat.id); setEditName(cat.name); }} 
-                                                                disabled={actionLoading}
-                                                                className="p-1.5 bg-desert-gold/10 text-yellow-700 rounded-lg hover:bg-desert-gold/20"
-                                                            >
-                                                                <Edit2 className="h-4 w-4" />
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => handleDelete(cat.id)} 
-                                                                disabled={actionLoading}
-                                                                className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
