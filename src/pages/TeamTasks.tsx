@@ -125,6 +125,31 @@ export default function TeamTasks() {
         }
     }, [editDeadlineDate, editDeadlineTime]);
 
+    const getFcmFailureMessage = (fcmPush: any) => {
+        const details = Array.isArray(fcmPush?.failedTokenDetails) ? fcmPush.failedTokenDetails : [];
+        const errors = Array.isArray(fcmPush?.errors) ? fcmPush.errors : [];
+        const combined = [
+            fcmPush?.error || '',
+            ...errors,
+            ...details.map((item: any) => `${item.code || ''} ${item.message || ''}`)
+        ].join(' ').toLowerCase();
+
+        const cleanupCount = Number(fcmPush?.invalidTokensRemoved || 0);
+        const cleanupText = cleanupCount > 0
+            ? ` ${t('team_tasks.fcm_invalid_tokens_removed', '{{count}} invalid device token(s) were removed automatically.', { count: cleanupCount })}`
+            : '';
+
+        if (combined.includes('third-party-auth-error')) {
+            return `${t('team_tasks.fcm_apns_auth_error', 'The task was created successfully, but App push failed because the iOS/APNs channel authentication is missing or invalid for the target device. Please update the Firebase iOS APNs key/certificate, then ask the learner to reopen the App to refresh the token. Learners can still complete the task from in-system notifications and their task list.')}${cleanupText}`;
+        }
+
+        if (cleanupCount > 0) {
+            return `${t('team_tasks.fcm_push_with_cleanup', 'The task was created successfully. Some expired App device tokens were removed automatically; learners can still view and complete the task from in-system notifications and their task list.')}${cleanupText}`;
+        }
+
+        return `${t('team_tasks.fcm_push_error', 'The task was created successfully. Learners can still view and complete it from in-system notifications and their task list. App push delivery failed temporarily and has been logged for admin FCM configuration review.')}${details.length > 0 ? ` (${details[0].code || 'FCM'})` : ''}`;
+    };
+
     useEffect(() => {
         fetchTasks();
         fetchFormData();
@@ -366,7 +391,7 @@ export default function TeamTasks() {
                     setPublishNotice({
                         tone: 'warning',
                         title: t('team_tasks.publish_warning_title', '任务已发布，App 推送暂未送达'),
-                        message: t('team_tasks.fcm_push_error', '任务已成功创建，学员可以在系统内通知和个人任务列表中正常查看并完成。App 推送暂时发送失败，已记录给管理员检查 FCM 配置。')
+                        message: getFcmFailureMessage(data.fcmPush)
                     });
                 } else if (data.success === false) {
                     setPublishNotice({
