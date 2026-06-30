@@ -6511,6 +6511,48 @@ export default function LearningHub() {
                                     </select>
                                 </div>
                             )}
+
+                            {/* Public Hub / New CC Zone Switcher (Visible to anyone in Public Scope) */}
+                            {hubScope === 'public' && (
+                                <div className="relative flex bg-[#0D5C75]/5 dark:bg-slate-950/40 p-1 rounded-2xl border border-[#0D5C75]/15 dark:border-white/10 w-full md:w-[320px] self-start md:self-end shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] backdrop-blur-md">
+                                    <button
+                                        onClick={() => {
+                                            setPublicHubTab('public');
+                                            setActiveTab('all');
+                                            setSearchParams(prev => {
+                                                prev.set('publicTab', 'public');
+                                                return prev;
+                                            });
+                                        }}
+                                        className={`relative z-10 w-1/2 py-2 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                            publicHubTab === 'public'
+                                                ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md font-black scale-105'
+                                                : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <span>🌍</span>
+                                        {t('category_manager.scope_public', '公共广场')}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setPublicHubTab('new_cc');
+                                            setActiveTab('all');
+                                            setSearchParams(prev => {
+                                                prev.set('publicTab', 'new_cc');
+                                                return prev;
+                                            });
+                                        }}
+                                        className={`relative z-10 w-1/2 py-2 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                            publicHubTab === 'new_cc'
+                                                ? 'bg-gradient-to-r from-deep-teal to-teal-700 text-white shadow-md font-black scale-105'
+                                                : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <span>✨</span>
+                                        {t('category_manager.scope_new_cc', '新CC专区')}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                     </div>
