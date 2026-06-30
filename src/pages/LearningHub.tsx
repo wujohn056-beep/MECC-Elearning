@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -2802,6 +2802,8 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.issued_by': '发起人',
             'learning_hub.courses': '门课',
             'learning_hub.go_learn': '去学习',
+            'common.done': '已完成',
+            'common.pending': '待完成',
             'learning_hub.cert_download_fail': '证书生成失败，请重试。',
             'learning_hub.claim_cert': '✨ 领取荣誉证书',
             'learning_hub.generating': '生成中...',
@@ -2874,6 +2876,8 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.issued_by': 'Issued By',
             'learning_hub.courses': 'courses',
             'learning_hub.go_learn': 'Go Learn',
+            'common.done': 'Done',
+            'common.pending': 'Pending',
             'learning_hub.cert_download_fail': 'Failed to generate certificate, please try again.',
             'learning_hub.claim_cert': '✨ Claim Certificate',
             'learning_hub.generating': 'Generating...',
@@ -2945,6 +2949,8 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.issued_by': 'الجهة المصدرة',
             'learning_hub.courses': 'دروس',
             'learning_hub.go_learn': 'اذهب للتعلم',
+            'common.done': 'مكتمل',
+            'common.pending': 'قيد الانتظار',
             'learning_hub.cert_download_fail': 'فشل إنشاء الشهادة، يرجى المحاولة مرة أخرى.',
             'learning_hub.claim_cert': '✨ الحصول على الشهادة',
             'learning_hub.generating': 'جاري الإنشاء...',
@@ -5325,6 +5331,41 @@ export default function LearningHub() {
         }
     };
 
+    const openCampaignLearningTarget = (campaign: any) => {
+        const requiredIds = campaign.conditions?.requiredTaskIds || [];
+        const firstRequiredRec = requiredIds.length > 0
+            ? recordings.find(r => requiredIds.includes(r.id))
+            : null;
+        const targetCategoryId = campaign.conditions?.category || firstRequiredRec?.categoryId || 'all';
+        const targetCategory = targetCategoryId !== 'all'
+            ? categories.find(c => c.id === targetCategoryId)
+            : null;
+        const targetRec = firstRequiredRec || recordings.find(r => r.categoryId === targetCategoryId);
+        const shouldOpenNewCc = targetCategory?.scope === 'new_cc' || (Array.isArray((targetRec as any)?.targetHubs) && (targetRec as any).targetHubs.includes('new_cc'));
+
+        setPlazaMode('recordings');
+        setHubScope('public');
+        setPublicHubTab(shouldOpenNewCc ? 'new_cc' : 'public');
+        setActiveTab(targetCategoryId);
+        setSelectedLecturer('');
+        setSearchQuery('');
+        setDisplayCount(12);
+        if (targetCategory?.businessType) {
+            setBusinessType(targetCategory.businessType as any);
+        } else if ((targetRec as any)?.businessType) {
+            setBusinessType((targetRec as any).businessType);
+        }
+
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('publicTab', shouldOpenNewCc ? 'new_cc' : 'public');
+        newParams.delete('scope');
+        newParams.delete('smId');
+        newParams.delete('taskId');
+        newParams.delete('recordingId');
+        newParams.delete('campaignId');
+        setSearchParams(newParams);
+    };
+
     const renderCampaignCard = (campaign: any) => {
         // Calculate progress
         let completed = false;
@@ -5362,11 +5403,7 @@ export default function LearningHub() {
             if (completed) {
                 setShowCampaignCert(campaign);
             } else {
-                if (campaign.conditions.category) {
-                    setActiveTab(campaign.conditions.category);
-                } else {
-                    setActiveTab('all');
-                }
+                openCampaignLearningTarget(campaign);
             }
         };
 
@@ -5692,11 +5729,7 @@ export default function LearningHub() {
             if (completed) {
                 setShowCampaignCert(campaign);
             } else {
-                if (campaign.conditions.category) {
-                    setActiveTab(campaign.conditions.category);
-                } else {
-                    setActiveTab('all');
-                }
+                openCampaignLearningTarget(campaign);
             }
             setShowCampaignDetails(null);
         };
@@ -5810,11 +5843,11 @@ export default function LearningHub() {
                                                 <div className="shrink-0">
                                                     {isRecCompleted ? (
                                                         <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-100/50 dark:border-green-900/40 px-1.5 py-0.5 rounded-md">
-                                                            <Check className="w-2.5 h-2.5" /> Done
+                                                            <Check className="w-2.5 h-2.5" /> {localT('common.done', '已完成', i18n)}
                                                         </span>
                                                     ) : (
                                                         <span className="text-[10px] font-bold text-slate-450 dark:text-slate-500 bg-slate-50 dark:bg-slate-805 border border-slate-100/80 dark:border-slate-800 px-1.5 py-0.5 rounded-md">
-                                                            Pending
+                                                            {localT('common.pending', '待完成', i18n)}
                                                         </span>
                                                     )}
                                                 </div>
