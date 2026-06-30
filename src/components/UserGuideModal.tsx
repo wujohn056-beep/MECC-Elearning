@@ -37,12 +37,13 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "2. 任务中心：新建、编辑与指派限时学习任务",
-                desc: "主管拥有发布常规必修任务的权限，用于分发强制限时学习任务：",
+                title: "2. 任务中心与新CC专区指派（含智能全选与极速通知）",
+                desc: "主管拥有指派限时任务的权限，支持普通任务与新CC专区任务：",
                 bullets: [
-                    "自由打包录音：支持从录音库选择一门或多门音频文件作为任务内容。",
-                    "选定指派对象：在您的管辖范围内，支持跨组挑选组员、多选指定顾问，或一键全选整个小组。",
-                    "截止期限倒计时：设定任务 Deadline（截止时间），学员端将同步开启红色倒计时卡片，并在临期前 2 小时自动通过 FCM 推送补课警告。"
+                    "任务类型双轨制：支持发布“普通学习任务”及“新人专区学习任务” (New CC Zone)。",
+                    "智能一键全选：指派新人专区任务时，系统支持按分类或全部一键自动勾选对应的所有新人专区录音，免去逐个勾选的繁琐操作。",
+                    "推送与消息联动：设定截止日期后，系统会自动向组员发送通知，并在截止前 2 小时通过 FCM 推送补课提醒；发布新人任务时还会自动提醒新人学员。",
+                    "毕业证书联动：学员在完成新人专区指派的任务后，系统会自动为该学员解锁专属的新CC毕业证书，学员可直接下载和分享。"
                 ]
             },
             {
@@ -150,11 +151,13 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "6. 限时必修任务与专属通关挑战",
-                desc: "紧跟学习进度，挑战自我上限：",
+                title: "6. 限时必修任务、新CC专区训练营与毕业证书联动",
+                desc: "紧跟学习进度，挑战自我上限并获得毕业资格：",
                 bullets: [
-                    "必修任务红色倒计时：列表展示主管下发的高急迫必修课，带有截止日期限时倒计时（精确到小时分钟），临期自动警报。打卡需收听 100% 音频并撰写不少于 10 字心得。",
-                    "专属通关挑战 (Campaigns)：展示打包的主题通关包。学员能直观查看当前进度（如已通关 3/5 门课），全部完成后颁发挑战包结业证书。"
+                    "必修任务红色倒计时：列表展示主管下发的高急迫必修课，带有截止日期倒计时，临期前 2 小时自动报警。常规任务要求收听 100% 音频并撰写不少于 100 字心得，通过后方可打卡。",
+                    "新CC专区任务（50字低门槛）：新人学员被指派的“新人专区学习任务” (New CC Zone) 仅需撰写不少于 50 字的心得，降低新人起步门槛。",
+                    "新CC毕业证书解锁：当您完成新人专区学习任务的所有录音并提交心得后，系统会亮起金色的“查看毕业证书”按钮，点击即可查看、定制并下载官方颁发的 New CC 毕业证书。",
+                    "专属通关挑战 (Campaigns)：展示打包的主题通关包（如首单冲刺三部曲），学员能直观查看当前进度，全部完成后颁发专属挑战包结业证书。"
                 ]
             },
             {
@@ -196,12 +199,13 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "2. Task Center: Create, Edit & Assign Team Tasks",
-                desc: "Managers can distribute mandatory study tasks with clear deadlines:",
+                title: "2. Task Center & New CC Zone Assignment (with Smart Select-All)",
+                desc: "Managers can distribute mandatory study tasks and assign New CC Bootcamp courses:",
                 bullets: [
-                    "Flexible Recording Bundles: Choose one or multiple recording items from the central database.",
-                    "Targeted Assignees: Multi-select individual advisors or bulk-check whole groups within your organizational jurisdiction.",
-                    "Countdown Deadlines: Set target deadlines. The user side initiates a countdown card and pushes notification warnings 2 hours before expiration."
+                    "Dual Task Types: Easily switch between 'General Study Task' and 'New CC Zone Task' depending on onboarding requirements.",
+                    "Smart Select-All Recordings: In New CC Zone tasks, selecting a category or using default-all will automatically check and assign all matching newcomer recordings in one tap.",
+                    "Push Notifications & Deadline Alerts: Tasks show active count-downs on user layouts and auto-trigger FCM notifications, including warning alerts 2 hours prior to expiration.",
+                    "Graduation Linkage: Once an advisor completes all recordings in a New CC task, they instantly unlock their official New CC Graduation Certificate."
                 ]
             },
             {
@@ -309,11 +313,13 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "6. Assigned Tasks & Theme Campaigns",
-                desc: "Follow mandatory learning requirements and review policy documents:",
+                title: "6. Assigned Tasks, New CC Bootcamp & Graduation Certificate",
+                desc: "Follow mandatory study requirements, complete assignments, and graduate:",
                 bullets: [
-                    "Assigned Tasks: Track tasks with deadline count-downs. Complete studies and submit check-ins before expiry.",
-                    "Themed Challenges: Progress through themed campaign packages (e.g. 'New CC Ice-breaking Trilogy') and claim custom theme certificates."
+                    "General Task Requirements: Listen to 100% of the assigned audio and write a reflection log of at least 100 words to submit.",
+                    "New CC Zone Tasks (50-word Limit): Newcomer bootcamp tasks have a lower entry barrier, requiring only 50 words minimum per recording reflection.",
+                    "Claim Graduation Certificate: Completing all recordings in an assigned New CC Task unlocks a gold 'View Graduation Certificate' button. Click to view, customize, and save your official New CC Bootcamp diploma.",
+                    "Themed Campaigns: Progress through themed campaign bundles (e.g., Ice-breaking Trilogy) and claim dedicated campaign-specific theme certificates."
                 ]
             },
             {
@@ -355,12 +361,13 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "2. مركز المهام: إنشاء وتعيين مهام الفريق وتعديلها",
-                desc: "يمكن للمدراء توزيع مهام تعلم إلزامية ومحددة بجدول زمني:",
+                title: "2. مركز المهام وتعيين منطقة CC الجديدة (مع ميزة التحديد الذكي الكل)",
+                desc: "يمكن للمشرفين والمديرين تعيين مهام دراسية إلزامية بالإضافة إلى مهام منطقة الموظفين الجدد (New CC Zone):",
                 bullets: [
-                    "اختيار حر للتسجيلات: اختر تسجيلاً واحداً أو أكثر كمتطلبات دراسية للمهمة المعنية.",
-                    "تحديد المستهدفين بمرونة: اختر أفراداً معينين أو حدد مجموعات إدارية كاملة بنقرة واحدة داخل الهيكل الإداري.",
-                    "المواعيد النهائية والعد التنازلي: حدد الموعد النهائي لتفعيل العد التنازلي لدى الموظفين، وإرسال إشعار FCM تلقائي قبل ساعتين من النهاية."
+                    "ثنائية المهام: سهولة الاختيار بين 'مهمة تعلم عامة' و'مهمة منطقة CC الجديدة' لتلبية متطلبات تهيئة الموظفين الجدد.",
+                    "التحديد الذكي لجميع التسجيلات: في مهام منطقة CC الجديدة، يؤدي اختيار فئة أو استخدام 'الكل الافتراضي' إلى تحديد جميع تسجيلات الموظفين الجدد تلقائيًا وتعيينها بنقرة واحدة.",
+                    "التذكيرات الفورية والإنذارات: يتم تفعيل العد التنازلي لدى الموظفين وإرسال إشعارات FCM تلقائياً، مع إنذار قبل ساعتين من الموعد النهائي.",
+                    "ربط شهادة التخرج: بمجرد إتمام الموظف لجميع متطلبات مهمة منطقة CC الجديدة، يتم فتح شهادة تخرج الموظفين الجدد الرسمية له فوراً."
                 ]
             },
             {
@@ -468,11 +475,13 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
             },
             {
                 icon: <CheckSquare className="w-5 h-5 text-desert-gold" />,
-                title: "6. المهام التدريبية وحملات التحدي التدريبية",
-                desc: "تابع متطلبات التعلم الإلزامية وراجع وثائق السياسات واللوائح:",
+                title: "6. المهام المعينة، معسكر تدريب CC الجديد، وربط شهادة التخرج",
+                desc: "تابع متطلبات التعلم الإلزامية، وأكمل الواجبات، وتخرج بنجاح:",
                 bullets: [
-                    "المهام المعينة: راجع المهام المحددة بمواعيد نهائية مع العد التنازلي. أكمل الدراسة وقدم الملاحظات قبل انتهاء الموعد.",
-                    "حملات التحدي المجمعة: تتبع تحديات مجمعة (مثل 'ثلاثية كسر الجليد') واكسب شهادة التحدي المخصصة."
+                    "شروط المهام العامة: استمع إلى 100% من الصوت المخصص واكتب تأملاً لا يقل عن 100 كلمة لتتمكن من التقديم.",
+                    "مهام منطقة CC الجديدة (حد أدنى 50 كلمة): لتبسيط البداية للموظفين الجدد، تتطلب تسجيلات معسكر تدريب منطقة CC الجديدة كتابة تأمل لا يقل عن 50 كلمة فقط.",
+                    "الحصول على شهادة التخرج: يفتح إكمال جميع تسجيلات مهمة منطقة CC الجديدة زراً ذهبياً باسم 'عرض شهادة التخرج'، انقر فوقه لعرض وتخصيص وتنزيل شهادة تخرج معسكر تدريب New CC الرسمية.",
+                    "حملات التحدي المجمعة: تتبع تحديات مجمعة (مثل ثلاثية كسر الجليد) واكسب شهادة التحدي المخصصة."
                 ]
             },
             {

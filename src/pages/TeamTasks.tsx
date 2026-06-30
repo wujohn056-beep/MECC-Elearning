@@ -22,6 +22,19 @@ interface RecordingInfo {
     title: string;
     displayId?: string;
     createdAt?: any;
+    categoryId?: string;
+    targetHubs?: string[];
+    hubScope?: string;
+    businessType?: string;
+}
+
+interface CategoryRecord {
+    id: string;
+    name: string;
+    scope: string;
+    businessType?: string;
+    hubScope?: string;
+    targetSmId?: string;
 }
 
 interface TaskAssignee {
@@ -74,6 +87,10 @@ export default function TeamTasks() {
     
     // Form state
     const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [newTaskType, setNewTaskType] = useState<'general' | 'new_cc'>('general');
+    const [categories, setCategories] = useState<CategoryRecord[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [recordingSelectionMode, setRecordingSelectionMode] = useState<'all' | 'custom'>('all');
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
     const [selectedRecordingIds, setSelectedRecordingIds] = useState<string[]>([]);
     const [deadlineDate, setDeadlineDate] = useState('');
@@ -105,6 +122,32 @@ export default function TeamTasks() {
         fetchTasks();
         fetchFormData();
     }, [user, profile]);
+
+    useEffect(() => {
+        if (newTaskType === 'new_cc') {
+            const businessType = profile?.businessType || 'kid';
+            const newCcCatIds = categories
+                .filter(c => c.scope === 'new_cc' && (c.businessType || 'kid') === businessType)
+                .map(c => c.id);
+
+            const matchingRecordings = allRecordings.filter(r => {
+                const isTaggedNewCc = Array.isArray(r.targetHubs) && r.targetHubs.includes('new_cc');
+                const isUnderNewCcCat = r.categoryId && newCcCatIds.includes(r.categoryId);
+                if (!isTaggedNewCc && !isUnderNewCcCat) return false;
+
+                if (selectedCategory === 'all') return true;
+                return r.categoryId === selectedCategory;
+            });
+
+            if (recordingSelectionMode === 'all') {
+                setSelectedRecordingIds(matchingRecordings.map(r => r.id));
+            }
+        } else {
+            // When switching to general task, reset the category selection and selection mode
+            setSelectedCategory('all');
+            setRecordingSelectionMode('all');
+        }
+    }, [newTaskType, selectedCategory, recordingSelectionMode, allRecordings, categories, profile]);
 
     const fetchTasks = async () => {
         if (!user) return;
@@ -196,6 +239,14 @@ export default function TeamTasks() {
             });
             setAllUsers(filteredUsers);
 
+            // Fetch categories
+            const catsSnap = await getDocs(collection(db, 'categories'));
+            const catsData: CategoryRecord[] = [];
+            catsSnap.forEach(doc => {
+                catsData.push({ id: doc.id, ...doc.data() } as CategoryRecord);
+            });
+            setCategories(catsData);
+
             // Fetch recordings
             const recsSnap = await getDocs(collection(db, 'recordings'));
             const recsData: RecordingInfo[] = [];
@@ -205,7 +256,11 @@ export default function TeamTasks() {
                     id: doc.id, 
                     title: data.title, 
                     displayId: data.displayId,
-                    createdAt: data.createdAt 
+                    createdAt: data.createdAt,
+                    categoryId: data.categoryId,
+                    targetHubs: data.targetHubs || [],
+                    hubScope: data.hubScope || 'public',
+                    businessType: data.businessType || 'kid'
                 });
             });
             
@@ -255,15 +310,19 @@ export default function TeamTasks() {
                 }
             });
 
+            const finalTitle = newTaskTitle || (newTaskType === 'new_cc' ? '新人专区学习任务' : '学习任务');
+
             const docRef = await addDoc(collection(db, 'learning_tasks'), {
-                title: newTaskTitle || '学习任务',
+                title: finalTitle,
+                taskType: newTaskType,
                 assignerId: user.uid,
                 assignerName: profile?.crmId || 'Leader',
                 assigneeIds: selectedUserIds,
                 assignees: assigneesMap,
                 recordingIds: selectedRecordingIds,
                 deadline: Timestamp.fromDate(deadlineObj),
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
+                categoryIds: newTaskType === 'new_cc' ? [selectedCategory] : []
             });
 
             // Trigger DingTalk Task Assignment Notifications via Serverless endpoint
@@ -273,7 +332,7 @@ export default function TeamTasks() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'notifyTask',
-                        title: newTaskTitle || '学习任务',
+                        title: finalTitle,
                         assignerName: profile?.crmId || 'Leader',
                         assigneeIds: selectedUserIds,
                         recordingIds: selectedRecordingIds,
@@ -301,6 +360,9 @@ export default function TeamTasks() {
 
             setShowCreateModal(false);
             setNewTaskTitle('');
+            setNewTaskType('general');
+            setSelectedCategory('all');
+            setRecordingSelectionMode('all');
             setSelectedUserIds([]);
             setSelectedRecordingIds([]);
             setDeadlineDate('');
@@ -324,7 +386,7 @@ export default function TeamTasks() {
             if (prev.includes(recId)) {
                 return prev.filter(id => id !== recId);
             } else {
-                if (prev.length >= 2) {
+                if (newTaskType !== 'new_cc' && prev.length >= 2) {
                     alert(t('team_tasks.max_recordings_limit', '一次最多只能同时指派2个录音！'));
                     return prev;
                 }
@@ -442,10 +504,26 @@ export default function TeamTasks() {
         }
     };
 
-    const filteredRecordings = allRecordings.filter(r => 
-        r.title.toLowerCase().includes(recordingSearchQuery.toLowerCase()) || 
-        (r.displayId && r.displayId.toLowerCase().includes(recordingSearchQuery.toLowerCase()))
-    );
+    const filteredRecordings = allRecordings.filter(r => {
+        const matchesSearch = r.title.toLowerCase().includes(recordingSearchQuery.toLowerCase()) || 
+            (r.displayId && r.displayId.toLowerCase().includes(recordingSearchQuery.toLowerCase()));
+        if (!matchesSearch) return false;
+
+        if (newTaskType === 'new_cc') {
+            const businessType = profile?.businessType || 'kid';
+            const newCcCatIds = categories
+                .filter(c => c.scope === 'new_cc' && (c.businessType || 'kid') === businessType)
+                .map(c => c.id);
+
+            const isTaggedNewCc = Array.isArray(r.targetHubs) && r.targetHubs.includes('new_cc');
+            const isUnderNewCcCat = r.categoryId && newCcCatIds.includes(r.categoryId);
+            if (!isTaggedNewCc && !isUnderNewCcCat) return false;
+
+            if (selectedCategory !== 'all' && r.categoryId !== selectedCategory) return false;
+        }
+
+        return true;
+    });
 
     const getPublishCampaignText = () => {
         const lang = i18n?.language || 'zh';
@@ -825,6 +903,72 @@ export default function TeamTasks() {
                                 />
                             </div>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.task_type_label', '任务类型')}</label>
+                                    <select
+                                        value={newTaskType}
+                                        onChange={e => {
+                                            const val = e.target.value as 'general' | 'new_cc';
+                                            setNewTaskType(val);
+                                        }}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none bg-white text-sm"
+                                    >
+                                        <option value="general">{t('team_tasks.task_type_general', '普通学习任务')}</option>
+                                        <option value="new_cc">{t('team_tasks.task_type_new_cc', '新人专区学习任务')}</option>
+                                    </select>
+                                </div>
+
+                                {newTaskType === 'new_cc' && (
+                                    <div>
+                                        <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.category_label', '选择分类')}</label>
+                                        <select
+                                            value={selectedCategory}
+                                            onChange={e => setSelectedCategory(e.target.value)}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none bg-white text-sm"
+                                        >
+                                            <option value="all">{t('team_tasks.all_categories', '全选分类')}</option>
+                                            {categories
+                                                .filter(c => c.scope === 'new_cc' && (c.businessType || 'kid') === (profile?.businessType || 'kid'))
+                                                .map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))
+                                            }
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
+                            {newTaskType === 'new_cc' && (
+                                <div>
+                                    <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.recording_mode_label', '素材选择模式')}</label>
+                                    <div className="flex gap-6 mt-1.5 p-2 bg-gray-50/50 rounded-lg border border-gray-100">
+                                        <label className="flex items-center gap-2 text-xs font-bold text-arabian-night/80 cursor-pointer select-none">
+                                            <input 
+                                                type="radio" 
+                                                name="recordingSelectionMode"
+                                                value="all"
+                                                checked={recordingSelectionMode === 'all'}
+                                                onChange={() => setRecordingSelectionMode('all')}
+                                                className="text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span>{t('team_tasks.recording_mode_all', '全选素材 (默认)')}</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 text-xs font-bold text-arabian-night/80 cursor-pointer select-none">
+                                            <input 
+                                                type="radio" 
+                                                name="recordingSelectionMode"
+                                                value="custom"
+                                                checked={recordingSelectionMode === 'custom'}
+                                                onChange={() => setRecordingSelectionMode('custom')}
+                                                className="text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span>{t('team_tasks.recording_mode_custom', '手动选择素材')}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
                             <div>
                                 <div className="flex justify-between items-end mb-2">
                                     <label className="block text-sm font-bold text-arabian-night/80">{t('team_tasks.assign_to_label')}</label>
@@ -950,8 +1094,12 @@ export default function TeamTasks() {
                                             <input 
                                                 type="checkbox" 
                                                 checked={selectedRecordingIds.includes(r.id)}
-                                                onChange={() => toggleRecordingSelection(r.id)}
-                                                className="rounded text-desert-gold focus:ring-desert-gold mt-0.5"
+                                                disabled={newTaskType === 'new_cc' && recordingSelectionMode === 'all'}
+                                                onChange={() => {
+                                                    if (newTaskType === 'new_cc' && recordingSelectionMode === 'all') return;
+                                                    toggleRecordingSelection(r.id);
+                                                }}
+                                                className="rounded text-desert-gold focus:ring-desert-gold mt-0.5 disabled:opacity-60"
                                             />
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-semibold text-arabian-night truncate">{r.title}</p>
@@ -960,6 +1108,11 @@ export default function TeamTasks() {
                                         </label>
                                     ))}
                                 </div>
+                                {newTaskType === 'new_cc' && recordingSelectionMode === 'all' && (
+                                    <p className="text-[11px] text-desert-gold font-semibold mt-1.5 flex items-center gap-1">
+                                        💡 {t('team_tasks.recording_mode_all_tip', '当前处于“全选素材”模式，所选分类下的所有素材已自动全部勾选指派。')}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

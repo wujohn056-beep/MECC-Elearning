@@ -562,7 +562,9 @@
         "hide_reflection": "收起心得",
         "avatar_size_error": "图片大小必须小于 5MB",
         "avatar_success": "头像更新成功",
-        "avatar_error": "更新头像失败："
+        "avatar_error": "更新头像失败：",
+        "bootcamp_graduated": "新CC毕业证书已解锁",
+        "view_cert": "查看证书"
     },
     "notifications": {
         "title": "任务与通知",

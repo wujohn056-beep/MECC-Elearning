@@ -563,7 +563,9 @@
         "hide_reflection": "Hide reflection",
         "avatar_size_error": "Image size must be less than 5MB",
         "avatar_success": "Avatar updated successfully",
-        "avatar_error": "Failed to update avatar: "
+        "avatar_error": "Failed to update avatar: ",
+        "bootcamp_graduated": "New CC Graduation Certificate Unlocked",
+        "view_cert": "View Certificate"
     },
     "notifications": {
         "title": "Tasks & Notifications",

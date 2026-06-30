@@ -3557,6 +3557,7 @@ export default function LearningHub() {
     const targetCampaignId = searchParams.get('campaignId');
     const [taskRecordingIds, setTaskRecordingIds] = useState<string[]>([]);
     const [taskTitle, setTaskTitle] = useState<string>('');
+    const [taskType, setTaskType] = useState<string>('general');
     const [completedAudioIds, setCompletedAudioIds] = useState<string[]>([]);
     const [reflections, setReflections] = useState<Record<string, string>>({});
     const [isSubmittingTask, setIsSubmittingTask] = useState(false);
@@ -3797,6 +3798,7 @@ export default function LearningHub() {
                         const data = taskDoc.data();
                         setTaskRecordingIds(data.recordingIds || []);
                         setTaskTitle(data.title || '学习任务');
+                        setTaskType(data.taskType || 'general');
                         
                         const myUid = profile?.realUid || user.uid;
                         const myAssigneeData = data.assignees?.[myUid];
@@ -3822,6 +3824,7 @@ export default function LearningHub() {
         } else {
             setTaskRecordingIds([]);
             setTaskTitle('');
+            setTaskType('general');
             setReflections({});
             setIsTaskCompleted(false);
         }
@@ -4307,9 +4310,11 @@ export default function LearningHub() {
 
     const validTaskRecordingIds = taskRecordingIds.filter(id => recordings.some(r => r.id === id));
 
+    const reflectionWordLimit = taskType === 'new_cc' ? 50 : 100;
+
     const canSubmit = taskId && 
         validTaskRecordingIds.length > 0 &&
-        validTaskRecordingIds.every(id => completedAudioIds.includes(id) && (reflections[id]?.length || 0) >= 100);
+        validTaskRecordingIds.every(id => completedAudioIds.includes(id) && (reflections[id]?.length || 0) >= reflectionWordLimit);
 
     const handleSubmitTask = async () => {
         if (!user || !taskId || !canSubmit) return;
@@ -7297,18 +7302,36 @@ export default function LearningHub() {
                     {taskId && (
                         <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 shadow-sm">
                             {isTaskCompleted ? (
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                        <Trophy className="w-6 h-6 text-green-600" />
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-4 text-left">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                            <Trophy className="w-6 h-6 text-green-600" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                                <span className="bg-green-100 text-green-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">{t('learning_hub.task_label', '学习任务')}</span>
+                                                <span className="text-xs font-bold text-arabian-night/70">{taskTitle}</span>
+                                            </div>
+                                            <h3 className="text-lg font-extrabold text-green-700 mb-1">{t('learning_hub.task_completed_title', '任务已完成')}</h3>
+                                            <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_completed_desc', '您已经完成了该任务的所有学习内容并提交了心得。')}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-lg font-extrabold text-green-700 mb-1">{t('learning_hub.task_completed_title', '任务已完成')}</h3>
-                                        <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_completed_desc', '您已经完成了该任务的所有学习内容并提交了心得。')}</p>
-                                    </div>
+                                    {taskType === 'new_cc' && (
+                                        <button
+                                            onClick={() => setShowNewCcCertModal(true)}
+                                            className="bg-gradient-to-r from-amber-500 to-desert-gold text-arabian-night px-6 py-3 rounded-xl font-black hover:shadow-lg transition-all flex items-center gap-2 border-2 border-white shadow-md active:scale-95 animate-bounce hover:animate-none shrink-0"
+                                        >
+                                            🎓 {t('account.view_cert', '查看毕业证书')}
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <>
                                     <div>
+                                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                            <span className="bg-deep-teal/10 text-deep-teal text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">{t('learning_hub.task_label', '学习任务')}</span>
+                                            <span className="text-xs font-bold text-arabian-night/70">{taskTitle}</span>
+                                        </div>
                                         <h3 className="text-lg font-extrabold text-deep-teal mb-1">{t('learning_hub.task_submission', '提交学习任务')}</h3>
                                         <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_submission_desc', '请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。')}</p>
                                     </div>
@@ -7389,9 +7412,9 @@ export default function LearningHub() {
                                                         {!isTaskCompleted && (
                                                             <div className="flex justify-end items-center mt-4 relative z-10">
                                                                 <span className={`text-sm font-bold bg-white px-3 py-1 rounded-lg shadow-sm border ${
-                                                                    (reflections[recId]?.length || 0) < 100 ? 'text-red-500 border-red-100' : 'text-green-500 border-green-100'
+                                                                    (reflections[recId]?.length || 0) < reflectionWordLimit ? 'text-red-500 border-red-100' : 'text-green-500 border-green-100'
                                                                 }`}>
-                                                                    {t('learning_hub.current_words')} <span className="text-lg mx-1">{reflections[recId]?.length || 0}</span> {(reflections[recId]?.length || 0) < 100 ? t('learning_hub.words_needed', { count: 100 - (reflections[recId]?.length || 0) }) : ''}
+                                                                    {t('learning_hub.current_words')} <span className="text-lg mx-1">{reflections[recId]?.length || 0}</span> {(reflections[recId]?.length || 0) < reflectionWordLimit ? t('learning_hub.words_needed', { count: reflectionWordLimit - (reflections[recId]?.length || 0) }) : ''}
                                                                 </span>
                                                             </div>
                                                         )}
