@@ -759,7 +759,7 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/70 backdrop-blur-md rounded-3xl p-6 border border-white/60 shadow-sm">
+            <div className="flex justify-between items-center bg-white/70 backdrop-blur-md rounded-3xl p-6 border border-white/60 shadow-sm">
                 <div>
                     <h2 className="text-xl font-extrabold text-deep-teal flex items-center gap-2">
                         <Award className="w-6 h-6 text-desert-gold" />
@@ -769,13 +769,6 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                         {localT('campaign.manager_subtitle', '为您的团队或特定员工发布针对性的学习任务，并定制颁发专属荣誉证书。', i18n)}
                     </p>
                 </div>
-                
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="bg-gradient-to-r from-deep-teal to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all shrink-0"
-                >
-                    <Plus className="w-4 h-4" /> {localT('campaign.publish_btn', '发布专项挑战', i18n)}
-                </button>
             </div>
 
             {/* Main Content Grid: Left List / Right Tracker */}
