@@ -2753,6 +2753,12 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.details_cert_preview': '证书效果图预览',
             'campaign.details_status': '当前挑战进度',
             'campaign.details_close': '关闭',
+            'campaign.learn_title': '挑战任务学习页',
+            'campaign.learn_desc': '请完成该挑战要求的学习内容：',
+            'campaign.back_to_challenge': '返回挑战详情',
+            'campaign.challenge_label': '挑战任务',
+            'campaign.learn_progress_desc': '完成下方指定课程后，挑战进度会自动更新。',
+            'campaign.no_required_recordings': '该挑战暂无关联课程，或课程已被删除',
             'learning_hub.tab_recordings': '录音广场',
             'learning_hub.tab_policies': '政策激励',
             'learning_hub.tab_brands': '品牌专栏',
@@ -2826,6 +2832,12 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.details_cert_preview': 'Certificate Draft Preview',
             'campaign.details_status': 'Current Progress',
             'campaign.details_close': 'Close',
+            'campaign.learn_title': 'Challenge Learning Page',
+            'campaign.learn_desc': 'Complete the learning content required for this challenge:',
+            'campaign.back_to_challenge': 'Back to challenge details',
+            'campaign.challenge_label': 'Challenge',
+            'campaign.learn_progress_desc': 'Complete the required courses below and your challenge progress will update automatically.',
+            'campaign.no_required_recordings': 'No required courses are linked to this challenge, or they were deleted',
             'learning_hub.tab_recordings': 'Recordings',
             'learning_hub.tab_policies': 'Policies & Incentives',
             'learning_hub.tab_brands': 'Marketing Brands',
@@ -2899,6 +2911,12 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.details_cert_preview': 'معاينة مسودة الشهادة',
             'campaign.details_status': 'التقدم الحالي',
             'campaign.details_close': 'إغلاق',
+            'campaign.learn_title': 'صفحة تعلم التحدي',
+            'campaign.learn_desc': 'أكمل محتوى التعلم المطلوب لهذا التحدي:',
+            'campaign.back_to_challenge': 'العودة إلى تفاصيل التحدي',
+            'campaign.challenge_label': 'تحدي',
+            'campaign.learn_progress_desc': 'أكمل الدورات المطلوبة أدناه وسيتم تحديث تقدم التحدي تلقائيًا.',
+            'campaign.no_required_recordings': 'لا توجد دورات مطلوبة مرتبطة بهذا التحدي، أو تم حذفها',
             'learning_hub.tab_recordings': 'ساحة التسجيلات',
             'learning_hub.tab_policies': 'السياسات والحوافز',
             'learning_hub.tab_brands': 'ركن العلامة التجارية',
@@ -3564,6 +3582,8 @@ export default function LearningHub() {
     const taskId = searchParams.get('taskId');
     const targetRecordingId = searchParams.get('recordingId');
     const targetCampaignId = searchParams.get('campaignId');
+    const campaignLearnId = searchParams.get('campaignLearnId');
+    const isFocusedMode = !!taskId || !!targetRecordingId || !!campaignLearnId;
     const [taskRecordingIds, setTaskRecordingIds] = useState<string[]>([]);
     const [taskTitle, setTaskTitle] = useState<string>('');
     const [taskType, setTaskType] = useState<string>('general');
@@ -3606,6 +3626,61 @@ export default function LearningHub() {
             return (inTeam || inUsers) && activeDate;
         });
     }, [campaigns, user, profile]);
+
+    const getCampaignRequiredRecordings = React.useCallback((campaign: any) => {
+        if (!campaign?.conditions) return [];
+
+        if (campaign.conditions.category) {
+            return recordings.filter(r =>
+                r.categoryId === campaign.conditions.category &&
+                (!campaign.conditions.requiredTaskIds ||
+                    campaign.conditions.requiredTaskIds.length === 0 ||
+                    campaign.conditions.requiredTaskIds.includes(r.id))
+            );
+        }
+
+        if (campaign.conditions.requiredTaskIds) {
+            return recordings.filter(r => campaign.conditions.requiredTaskIds.includes(r.id));
+        }
+
+        return [];
+    }, [recordings]);
+
+    const activeCampaignLearning = React.useMemo(() => {
+        if (!campaignLearnId) return null;
+        return campaigns.find(c => c.id === campaignLearnId) || null;
+    }, [campaignLearnId, campaigns]);
+
+    const campaignLearningRecordings = React.useMemo(() => {
+        return getCampaignRequiredRecordings(activeCampaignLearning);
+    }, [activeCampaignLearning, getCampaignRequiredRecordings]);
+
+    const campaignLearningProgress = React.useMemo(() => {
+        if (!activeCampaignLearning) {
+            return { completed: false, text: '', percent: 0 };
+        }
+
+        if (activeCampaignLearning.conditions?.category) {
+            const completedInCampaign = Array.from(new Set(
+                completedAudioIds.filter(id => campaignLearningRecordings.some(r => r.id === id))
+            ));
+            const progressMins = completedInCampaign.length * 12;
+            const reqMins = activeCampaignLearning.conditions.requiredMinutes || 120;
+            return {
+                completed: progressMins >= reqMins,
+                text: `${progressMins} / ${reqMins} ${localT('common.minutes', '分钟', i18n)}`,
+                percent: Math.min(100, Math.round((progressMins / reqMins) * 100))
+            };
+        }
+
+        const reqIds = activeCampaignLearning.conditions?.requiredTaskIds || [];
+        const completedTasks = Array.from(new Set(completedAudioIds.filter(id => reqIds.includes(id))));
+        return {
+            completed: reqIds.length > 0 && completedTasks.length === reqIds.length,
+            text: `${completedTasks.length} / ${reqIds.length} ${localT('learning_hub.courses', '门课', i18n)}`,
+            percent: reqIds.length > 0 ? Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100)) : 0
+        };
+    }, [activeCampaignLearning, campaignLearningRecordings, completedAudioIds, i18n]);
     
     const [plazaMode, setPlazaMode] = useState<'recordings' | 'policies' | 'brands'>('recordings');
 
@@ -3840,13 +3915,13 @@ export default function LearningHub() {
     }, [taskId, user, profile]);
 
     useEffect(() => {
-        if (targetCampaignId && campaigns.length > 0) {
+        if (targetCampaignId && !campaignLearnId && campaigns.length > 0) {
             const foundCampaign = campaigns.find(c => c.id === targetCampaignId);
             if (foundCampaign) {
                 setShowCampaignDetails(foundCampaign);
             }
         }
-    }, [targetCampaignId, campaigns]);
+    }, [targetCampaignId, campaignLearnId, campaigns]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -4397,6 +4472,9 @@ export default function LearningHub() {
 
     // Filter recordings based on active tab and search query (excluding lecturer filter for top list calculation)
     const categoryFilteredRecordings = recordings.filter(rec => {
+        if (campaignLearnId && activeCampaignLearning) {
+            return campaignLearningRecordings.some(r => r.id === rec.id);
+        }
         if (taskId && taskRecordingIds.length > 0) {
             return taskRecordingIds.includes(rec.id);
         }
@@ -5332,34 +5410,13 @@ export default function LearningHub() {
     };
 
     const openCampaignLearningTarget = (campaign: any) => {
-        const requiredIds = campaign.conditions?.requiredTaskIds || [];
-        const firstRequiredRec = requiredIds.length > 0
-            ? recordings.find(r => requiredIds.includes(r.id))
-            : null;
-        const targetCategoryId = campaign.conditions?.category || firstRequiredRec?.categoryId || 'all';
-        const targetCategory = targetCategoryId !== 'all'
-            ? categories.find(c => c.id === targetCategoryId)
-            : null;
-        const targetRec = firstRequiredRec || recordings.find(r => r.categoryId === targetCategoryId);
-        const shouldOpenNewCc = targetCategory?.scope === 'new_cc' || (Array.isArray((targetRec as any)?.targetHubs) && (targetRec as any).targetHubs.includes('new_cc'));
-
         setPlazaMode('recordings');
-        setHubScope('public');
-        setPublicHubTab(shouldOpenNewCc ? 'new_cc' : 'public');
-        setActiveTab(targetCategoryId);
         setSelectedLecturer('');
         setSearchQuery('');
         setDisplayCount(12);
-        if (targetCategory?.businessType) {
-            setBusinessType(targetCategory.businessType as any);
-        } else if ((targetRec as any)?.businessType) {
-            setBusinessType((targetRec as any).businessType);
-        }
 
         const newParams = new URLSearchParams(searchParams);
-        newParams.set('publicTab', shouldOpenNewCc ? 'new_cc' : 'public');
-        newParams.delete('scope');
-        newParams.delete('smId');
+        newParams.set('campaignLearnId', campaign.id);
         newParams.delete('taskId');
         newParams.delete('recordingId');
         newParams.delete('campaignId');
@@ -6639,11 +6696,11 @@ export default function LearningHub() {
 
 
     // Leaderboard should only show on the main tab without active searches
-    const showLeaderboard = activeTab === 'all' && sortType !== 'leaderboard' && !searchQuery && !taskId && !targetRecordingId;
+    const showLeaderboard = activeTab === 'all' && sortType !== 'leaderboard' && !searchQuery && !isFocusedMode;
 
     return (
         <div className={`space-y-8 animate-in fade-in duration-500 pb-12 overflow-x-hidden ${isNative ? 'pt-2' : ''}`}>
-            {!taskId && !targetRecordingId ? (
+            {!isFocusedMode ? (
                 <div className="flex flex-col lg:flex-row gap-6 items-stretch w-full relative z-30">
                     <div className={`flex-1 relative transition-all duration-700 ${
                         isNative 
@@ -6979,7 +7036,7 @@ export default function LearningHub() {
                     </div>
                 </div>
             ) : (
-                /* Focused view: taskId or targetRecordingId is present */
+                /* Focused view: taskId, campaignLearnId, or targetRecordingId is present */
                 <div className={`relative transition-all duration-700 ${
                     isNative 
                         ? 'p-0 border-0 bg-transparent shadow-none'
@@ -7006,7 +7063,23 @@ export default function LearningHub() {
                     
                     <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 relative z-30">
                         <div>
-                            {taskId ? (
+                            {campaignLearnId && activeCampaignLearning ? (
+                                <>
+                                    <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700">{localT('campaign.learn_title', '挑战任务学习页', i18n)}</h2>
+                                    <p className="text-arabian-night/60 mt-2 font-medium">{localT('campaign.learn_desc', '请完成该挑战要求的学习内容：', i18n)} <span className="font-bold text-arabian-night">{activeCampaignLearning.title}</span></p>
+                                    <button
+                                        onClick={() => {
+                                            const newParams = new URLSearchParams(searchParams);
+                                            newParams.set('campaignId', activeCampaignLearning.id);
+                                            newParams.delete('campaignLearnId');
+                                            setSearchParams(newParams);
+                                        }}
+                                        className="text-sm font-bold text-desert-gold mt-3 hover:text-yellow-600 transition-colors flex items-center gap-1 group"
+                                    >
+                                        <span className="group-hover:-translate-x-1 transition-transform">←</span> {localT('campaign.back_to_challenge', '返回挑战详情', i18n)}
+                                    </button>
+                                </>
+                            ) : taskId ? (
                                 <>
                                     <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-deep-teal to-teal-700">{t('learning_hub.task_exclusive')}</h2>
                                     <p className="text-arabian-night/60 mt-2 font-medium">{t('learning_hub.task_need_listen')} <span className="font-bold text-arabian-night">{taskTitle}</span></p>
@@ -7028,7 +7101,7 @@ export default function LearningHub() {
                 </div>
             )}
 
-            {!taskId && !targetRecordingId ? (
+            {!isFocusedMode ? (
                 <div className="space-y-8 mt-8 animate-in slide-in-from-bottom-4 duration-700">
                         {/* Rolling Banner Slider */}
                         {displayBanners.length > 0 && (
@@ -7389,8 +7462,45 @@ export default function LearningHub() {
                         </div>
             </div>
             ) : (
-                /* Focused Mode: taskId or targetRecordingId is present */
+                /* Focused Mode: taskId, campaignLearnId, or targetRecordingId is present */
                 <div className="space-y-8 mt-8">
+                    {/* Campaign Learning Progress Card */}
+                    {campaignLearnId && activeCampaignLearning && (
+                        <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/60 relative z-10 shadow-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                        <span className="bg-blue-100 text-blue-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                            {localT('campaign.challenge_label', '挑战任务', i18n)}
+                                        </span>
+                                        <span className="text-xs font-bold text-arabian-night/70 truncate">{activeCampaignLearning.certConfig?.bannerTitle}</span>
+                                    </div>
+                                    <h3 className="text-lg font-extrabold text-deep-teal mb-1">{activeCampaignLearning.title}</h3>
+                                    <p className="text-sm font-medium text-arabian-night/60">{localT('campaign.learn_progress_desc', '完成下方指定课程后，挑战进度会自动更新。', i18n)}</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowCampaignCert(activeCampaignLearning)}
+                                    disabled={!campaignLearningProgress.completed}
+                                    className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-6 py-3 rounded-xl font-black hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 border border-white/40 shadow-md active:scale-95"
+                                >
+                                    {localT('learning_hub.claim_cert', '✨ 领取荣誉证书', i18n)}
+                                </button>
+                            </div>
+                            <div className="mt-5 space-y-2">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="font-black text-arabian-night/60">{localT('campaign.details_status', '当前挑战进度', i18n)}</span>
+                                    <span className="font-extrabold text-blue-600 font-mono">{campaignLearningProgress.text} ({campaignLearningProgress.percent}%)</span>
+                                </div>
+                                <div className="w-full bg-slate-100 rounded-full h-2.5 relative overflow-hidden">
+                                    <div
+                                        className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-500 ease-out"
+                                        style={{ width: `${campaignLearningProgress.percent}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Task Submission Card */}
                     {taskId && (
                         <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 border border-white/50 relative z-10 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 shadow-sm">
@@ -7451,7 +7561,35 @@ export default function LearningHub() {
                     ) : (
                         <div className="pt-2">
                             <div className="flex flex-col gap-6">
-                                {taskId ? (
+                                {campaignLearnId && activeCampaignLearning ? (
+                                    campaignLearningRecordings.length === 0 ? (
+                                        <div className="text-center py-10 text-arabian-night/50 font-bold">{localT('campaign.no_required_recordings', '该挑战暂无关联课程，或课程已被删除', i18n)}</div>
+                                    ) : (
+                                        campaignLearningRecordings.map(rec => (
+                                            <div key={rec.id} className="flex flex-col gap-3">
+                                                <RecordingCard
+                                                    rec={rec}
+                                                    user={user}
+                                                    favorites={favorites}
+                                                    handleToggleFavorite={handleToggleFavorite}
+                                                    handleToggleLike={handleToggleLike}
+                                                    handleAudioEnded={handleAudioEnded}
+                                                    onPlayVideo={(videoRec: Recording, isSeekDisabled: boolean) => {
+                                                        setActiveVideoRecording(videoRec);
+                                                        setActiveVideoDisableSeek(isSeekDisabled);
+                                                    }}
+                                                    onViewTranscript={setActiveTranscriptRecording}
+                                                    onShare={setShareRecording}
+                                                    onViewProgress={setActiveProgressRecording}
+                                                    isUnlocked={completedAudioIds.includes(rec.id)}
+                                                    className="w-full h-full"
+                                                    commentCount={globalCommentCounts[rec.id] || 0}
+                                                    isLeader={isLeader}
+                                                />
+                                            </div>
+                                        ))
+                                    )
+                                ) : taskId ? (
                                     validTaskRecordingIds.length === 0 ? (
                                         <div className="text-center py-10 text-arabian-night/50 font-bold">{t('learning_hub.no_recordings_for_task', '该任务没有关联录音，或录音已被管理员删除')}</div>
                                     ) : (
