@@ -356,17 +356,17 @@ export default function TeamTasks() {
 
                 const data = await res.json();
                 console.log("[TeamTasks] Notification trigger result:", data);
-                if (data.fcmPush && data.fcmPush.failureCount > 0) {
-                    setPublishNotice({
-                        tone: 'warning',
-                        title: t('team_tasks.publish_warning_title', '任务已发布，App 推送暂未送达'),
-                        message: t('team_tasks.fcm_push_error', '任务已成功创建，学员可以在系统内通知和个人任务列表中正常查看并完成。App 推送暂时发送失败，已记录给管理员检查 FCM 配置。')
-                    });
-                } else if (data.fcmPush && data.fcmPush.tokensCount === 0) {
+                if (data.fcmPush && data.fcmPush.tokensCount === 0) {
                     setPublishNotice({
                         tone: 'warning',
                         title: t('team_tasks.publish_warning_title', '任务已发布，App 推送暂未送达'),
                         message: t('team_tasks.fcm_no_tokens', '任务已成功创建。目前没有检测到已登录 App 并开启通知权限的学员设备；学员仍可在系统内通知和个人任务列表中查看并完成。')
+                    });
+                } else if (data.fcmPush && data.fcmPush.success === false) {
+                    setPublishNotice({
+                        tone: 'warning',
+                        title: t('team_tasks.publish_warning_title', '任务已发布，App 推送暂未送达'),
+                        message: t('team_tasks.fcm_push_error', '任务已成功创建，学员可以在系统内通知和个人任务列表中正常查看并完成。App 推送暂时发送失败，已记录给管理员检查 FCM 配置。')
                     });
                 } else if (data.success === false) {
                     setPublishNotice({
@@ -1221,7 +1221,7 @@ export default function TeamTasks() {
                             </button>
                             <button 
                                 onClick={handleCreateTask}
-                                disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime}
+                                disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime || isDeadlineInvalid}
                                 className="px-6 py-2 bg-deep-teal text-white rounded-lg font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {submitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
