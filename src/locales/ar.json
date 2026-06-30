@@ -630,7 +630,16 @@
         "current_deadline": "الموعد النهائي الحالي: ",
         "new_deadline_date": "تاريخ الموعد الجديد",
         "new_deadline_time": "وقت الموعد الجديد",
-        "deadline_update_success": "تم تحديث الموعد النهائي بنجاح!"
+        "deadline_update_success": "تم تحديث الموعد النهائي بنجاح!",
+        "task_type_label": "نوع المهمة",
+        "task_type_general": "مهمة تعلم عامة",
+        "task_type_new_cc": "مهمة منطقة CC الجديدة",
+        "category_label": "اختر فئة",
+        "all_categories": "جميع الفئات",
+        "recording_mode_label": "وضع اختيار التسجيل",
+        "recording_mode_all": "تحديد الكل (افتراضي)",
+        "recording_mode_custom": "اختيار مخصص",
+        "recording_mode_all_tip": "في وضع 'تحديد الكل' حالياً، يتم تلقائياً تعيين جميع تسجيلات الموظفين الجدد ضمن الفئة/الفئات المحددة."
     },
     "dashboard": {
         "title": "نظرة عامة على لوحة القيادة",

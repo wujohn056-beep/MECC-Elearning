@@ -631,7 +631,16 @@
         "current_deadline": "Current Deadline: ",
         "new_deadline_date": "New Deadline Date",
         "new_deadline_time": "New Deadline Time",
-        "deadline_update_success": "Deadline updated successfully!"
+        "deadline_update_success": "Deadline updated successfully!",
+        "task_type_label": "Task Type",
+        "task_type_general": "General Study Task",
+        "task_type_new_cc": "New CC Zone Task",
+        "category_label": "Select Category",
+        "all_categories": "All Categories",
+        "recording_mode_label": "Recording Selection Mode",
+        "recording_mode_all": "Select All (Default)",
+        "recording_mode_custom": "Custom Selection",
+        "recording_mode_all_tip": "Currently in 'Select All' mode, all newcomer recordings within the chosen category/categories are automatically assigned."
     },
     "dashboard": {
         "title": "Dashboard Overview",

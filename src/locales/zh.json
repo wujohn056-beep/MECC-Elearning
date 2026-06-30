@@ -630,7 +630,16 @@
         "current_deadline": "当前截止：",
         "new_deadline_date": "新截止日期",
         "new_deadline_time": "新截止时间",
-        "deadline_update_success": "截止时间修改成功！"
+        "deadline_update_success": "截止时间修改成功！",
+        "task_type_label": "任务类型",
+        "task_type_general": "普通学习任务",
+        "task_type_new_cc": "新人专区学习任务",
+        "category_label": "选择分类",
+        "all_categories": "全选分类",
+        "recording_mode_label": "素材选择模式",
+        "recording_mode_all": "全选素材 (默认)",
+        "recording_mode_custom": "手动选择素材",
+        "recording_mode_all_tip": "当前处于“全选素材”模式，所选分类下的所有素材已自动全部勾选指派。"
     },
     "dashboard": {
         "title": "仪表盘总览",
