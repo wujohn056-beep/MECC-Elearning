@@ -6775,7 +6775,7 @@ export default function LearningHub() {
                                             return prev;
                                         });
                                     }}
-                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-[10px] min-[375px]:text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer ${
                                         (hubScope === 'public' && publicHubTab === 'public')
                                             ? 'text-white dark:text-arabian-night'
                                             : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
@@ -6794,7 +6794,7 @@ export default function LearningHub() {
                                             return prev;
                                         });
                                     }}
-                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-[10px] min-[375px]:text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer ${
                                         (hubScope === 'public' && publicHubTab === 'new_cc')
                                             ? 'text-white dark:text-arabian-night'
                                             : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
@@ -6810,7 +6810,7 @@ export default function LearningHub() {
                                             setActiveSmId(profile.crmId || '');
                                         }
                                     }}
-                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
+                                    className={`relative z-10 w-1/3 py-2.5 rounded-xl font-black text-[10px] min-[375px]:text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer ${
                                         hubScope === 'team'
                                             ? 'text-white dark:text-arabian-night'
                                             : 'text-[#0D5C75]/60 hover:text-[#0D5C75] dark:text-slate-400 dark:hover:text-white'
