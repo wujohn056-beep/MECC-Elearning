@@ -3512,6 +3512,8 @@ export default function LearningHub() {
     const [campaignCertImageDataUrl, setCampaignCertImageDataUrl] = useState<string | null>(null);
     const [isDownloadingCampaignCert, setIsDownloadingCampaignCert] = useState(false);
     const [recordings, setRecordings] = useState<Recording[]>([]);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeTab, setActiveTab] = useState<string>('all');
     const [publicHubTab, setPublicHubTab] = useState<'public' | 'new_cc'>(() => (searchParams.get('publicTab') === 'new_cc' ? 'new_cc' : 'public'));
@@ -3521,8 +3523,6 @@ export default function LearningHub() {
     const [sortType, setSortType] = useState<'latest' | 'popular' | 'leaderboard'>('latest');
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
     const [displayCount, setDisplayCount] = useState(12);
-    const [searchParams, setSearchParams] = useSearchParams();
-    const navigate = useNavigate();
     const taskId = searchParams.get('taskId');
     const targetRecordingId = searchParams.get('recordingId');
     const targetCampaignId = searchParams.get('campaignId');
