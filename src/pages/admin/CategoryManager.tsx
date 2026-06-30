@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../services/firebase';
-import { FolderPlus, Edit2, Trash2, Save, X } from 'lucide-react';
+import { FolderPlus, Edit2, Trash2, Save, X, GripVertical } from 'lucide-react';
 
 interface Category {
     id: string;
@@ -14,6 +14,7 @@ interface Category {
     hubScope?: 'public' | 'team';
     targetSmId?: string;
     scope?: 'public' | 'new_cc';
+    sortOrder?: number;
 }
 
 export default function CategoryManager() {
@@ -28,6 +29,7 @@ export default function CategoryManager() {
     const [pageError, setPageError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const { hasPermission, profile, isLeader } = useAuth();
     
     if (!hasPermission('manageCategories')) {
@@ -52,8 +54,19 @@ export default function CategoryManager() {
                     businessType: docData.businessType || 'kid',
                     hubScope: docData.hubScope || 'public',
                     targetSmId: docData.targetSmId || '',
-                    scope: docData.scope || 'public'
+                    scope: docData.scope || 'public',
+                    sortOrder: docData.sortOrder !== undefined ? docData.sortOrder : undefined,
+                    createdAt: docData.createdAt
                 });
+            });
+            // Client-side sorting: sortOrder asc, then createdAt desc
+            data.sort((a, b) => {
+                const aOrder = typeof a.sortOrder === 'number' ? a.sortOrder : Number.MAX_SAFE_INTEGER;
+                const bOrder = typeof b.sortOrder === 'number' ? b.sortOrder : Number.MAX_SAFE_INTEGER;
+                if (aOrder !== bOrder) return aOrder - bOrder;
+                const aTime = a.createdAt?.seconds || 0;
+                const bTime = b.createdAt?.seconds || 0;
+                return bTime - aTime;
             });
             setCategories(data);
             setPageError(null);
@@ -91,6 +104,70 @@ export default function CategoryManager() {
         return hubScope === 'team' && cat.targetSmId === profile?.crmId;
     });
 
+    const handleDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+        if (e.currentTarget instanceof HTMLElement) {
+            e.currentTarget.style.opacity = '0.5';
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDragEnd = (e: React.DragEvent) => {
+        setDraggedIndex(null);
+        if (e.currentTarget instanceof HTMLElement) {
+            e.currentTarget.style.opacity = '1';
+        }
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+        const updatedList = [...filteredCategories];
+        const [draggedItem] = updatedList.splice(draggedIndex, 1);
+        updatedList.splice(targetIndex, 0, draggedItem);
+
+        const reorderedCats = categories.map(cat => {
+            const indexInFiltered = updatedList.findIndex(item => item.id === cat.id);
+            if (indexInFiltered !== -1) {
+                return { ...cat, sortOrder: indexInFiltered };
+            }
+            return cat;
+        });
+
+        // Client-side sort locally so interface updates instantly
+        reorderedCats.sort((a, b) => {
+            const aOrder = typeof a.sortOrder === 'number' ? a.sortOrder : Number.MAX_SAFE_INTEGER;
+            const bOrder = typeof b.sortOrder === 'number' ? b.sortOrder : Number.MAX_SAFE_INTEGER;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            const aTime = a.createdAt?.seconds || 0;
+            const bTime = b.createdAt?.seconds || 0;
+            return bTime - aTime;
+        });
+
+        setCategories(reorderedCats);
+        setActionLoading(true);
+
+        try {
+            const batch = writeBatch(db);
+            updatedList.forEach((cat, index) => {
+                const catRef = doc(db, 'categories', cat.id);
+                batch.update(catRef, { sortOrder: index });
+            });
+            await batch.commit();
+        } catch (error: any) {
+            setPageError(`${t('common.save_fail', '保存失败')} ${error.message}`);
+            await fetchCategories();
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleCreate = async () => {
         if (!newCategoryName.trim()) return;
         setActionLoading(true);
@@ -126,11 +203,12 @@ export default function CategoryManager() {
             return;
         }
         
-        // Safeguard check: only super_admin or the category owner can modify
+        // Safeguard check: only super_admin, the category owner, or anyone with access to new_cc categories can modify
         const cat = categories.find(c => c.id === id);
         const isSuper = profile?.role === 'super_admin';
+        const isNewCc = cat && cat.scope === 'new_cc';
         const isOwner = cat && cat.hubScope === 'team' && cat.targetSmId === profile?.crmId;
-        if (!isSuper && !isOwner) {
+        if (!isSuper && !isOwner && !isNewCc) {
             alert(t('category_manager.no_permission', '您没有修改此目录的权限'));
             setEditingId(null);
             return;
@@ -167,11 +245,12 @@ export default function CategoryManager() {
     };
 
     const handleDelete = async (id: string) => {
-        // Safeguard check: only super_admin or the category owner can modify
+        // Safeguard check: only super_admin, the category owner, or anyone with access to new_cc categories can modify
         const cat = categories.find(c => c.id === id);
         const isSuper = profile?.role === 'super_admin';
+        const isNewCc = cat && cat.scope === 'new_cc';
         const isOwner = cat && cat.hubScope === 'team' && cat.targetSmId === profile?.crmId;
-        if (!isSuper && !isOwner) {
+        if (!isSuper && !isOwner && !isNewCc) {
             alert(t('category_manager.no_permission', '您没有删除此目录的权限'));
             return;
         }
@@ -549,29 +628,42 @@ export default function CategoryManager() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {filteredCategories.map(cat => (
-                                    <div key={cat.id} className="bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group transition-colors shadow-sm hover:shadow-md">
-                                        {editingId === cat.id ? (
-                                            <div className="flex-1 flex items-center gap-2 mr-2">
-                                                <input 
-                                                    type="text" 
-                                                    autoFocus
-                                                    className="w-full px-2 py-1 text-sm border-b-2 border-desert-gold focus:outline-none bg-transparent font-bold text-deep-teal"
-                                                 value={editName}
-                                                    onChange={(e) => setEditName(e.target.value)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id, cat.name)}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="flex-1 font-bold text-arabian-night truncate pr-4 flex items-center gap-2">
-                                                <span>{cat.name}</span>
-                                                {cat.scope === 'new_cc' && (
-                                                    <span className="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded-full select-none transform scale-90 origin-left">
-                                                        New CC
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
+                                {filteredCategories.map((cat, index) => (
+                                    <div 
+                                        key={cat.id} 
+                                        draggable={editingId !== cat.id && !actionLoading}
+                                        onDragStart={(e) => handleDragStart(e, index)}
+                                        onDragOver={(e) => handleDragOver(e, index)}
+                                        onDragEnd={handleDragEnd}
+                                        onDrop={(e) => handleDrop(e, index)}
+                                        className={`bg-white/60 p-4 rounded-xl border border-transparent hover:border-desert-gold/30 flex justify-between items-center group transition-colors shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing ${
+                                            draggedIndex === index ? 'opacity-40 border-dashed border-desert-gold' : ''
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                                            <GripVertical className="h-4 w-4 text-arabian-night/30 group-hover:text-arabian-night/60 cursor-grab flex-shrink-0" />
+                                            {editingId === cat.id ? (
+                                                <div className="flex-1 flex items-center gap-2">
+                                                    <input 
+                                                        type="text" 
+                                                        autoFocus
+                                                        className="w-full px-2 py-1 text-sm border-b-2 border-desert-gold focus:outline-none bg-transparent font-bold text-deep-teal"
+                                                        value={editName}
+                                                        onChange={(e) => setEditName(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleUpdate(cat.id, cat.name)}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="flex-1 font-bold text-arabian-night truncate flex items-center gap-2">
+                                                    <span>{cat.name}</span>
+                                                    {cat.scope === 'new_cc' && (
+                                                        <span className="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded-full select-none transform scale-90 origin-left">
+                                                            New CC
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                         
                                         <div className="flex items-center gap-1 opacity-100 md:opacity-50 md:group-hover:opacity-100 transition-opacity">
                                             {editingId === cat.id ? (
@@ -585,7 +677,7 @@ export default function CategoryManager() {
                                                 </>
                                             ) : (
                                                 <>
-                                                    {(profile?.role === 'super_admin' || cat.targetSmId === profile?.crmId) && (
+                                                    {(profile?.role === 'super_admin' || cat.targetSmId === profile?.crmId || cat.scope === 'new_cc') && (
                                                         <>
                                                             <button 
                                                                 onClick={() => { setEditingId(cat.id); setEditName(cat.name); }} 

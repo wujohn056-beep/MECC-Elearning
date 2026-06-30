@@ -3848,8 +3848,18 @@ export default function LearningHub() {
                         id: doc.id, 
                         name: docData.name,
                         businessType: docData.businessType || 'kid',
-                        scope: docData.scope || 'public'
+                        scope: docData.scope || 'public',
+                        sortOrder: docData.sortOrder !== undefined ? docData.sortOrder : undefined,
+                        createdAt: docData.createdAt
                     });
+                });
+                catData.sort((a, b) => {
+                    const aOrder = typeof a.sortOrder === 'number' ? a.sortOrder : Number.MAX_SAFE_INTEGER;
+                    const bOrder = typeof b.sortOrder === 'number' ? b.sortOrder : Number.MAX_SAFE_INTEGER;
+                    if (aOrder !== bOrder) return aOrder - bOrder;
+                    const aTime = a.createdAt?.seconds || 0;
+                    const bTime = b.createdAt?.seconds || 0;
+                    return bTime - aTime;
                 });
                 setCategories(catData);
 
