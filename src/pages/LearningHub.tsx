@@ -2759,6 +2759,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.challenge_label': '挑战任务',
             'campaign.learn_progress_desc': '完成下方指定课程后，挑战进度会自动更新。',
             'campaign.no_required_recordings': '该挑战暂无关联课程，或课程已被删除',
+            'campaign.continue_next': '继续下一节',
+            'campaign.all_done': '全部课程已完成',
+            'campaign.next_up': '下一节',
             'learning_hub.tab_recordings': '录音广场',
             'learning_hub.tab_policies': '政策激励',
             'learning_hub.tab_brands': '品牌专栏',
@@ -2838,6 +2841,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.challenge_label': 'Challenge',
             'campaign.learn_progress_desc': 'Complete the required courses below and your challenge progress will update automatically.',
             'campaign.no_required_recordings': 'No required courses are linked to this challenge, or they were deleted',
+            'campaign.continue_next': 'Continue next',
+            'campaign.all_done': 'All courses completed',
+            'campaign.next_up': 'Next up',
             'learning_hub.tab_recordings': 'Recordings',
             'learning_hub.tab_policies': 'Policies & Incentives',
             'learning_hub.tab_brands': 'Marketing Brands',
@@ -2917,6 +2923,9 @@ const localT = (key: string, defaultVal: string, i18n: any) => {
             'campaign.challenge_label': 'تحدي',
             'campaign.learn_progress_desc': 'أكمل الدورات المطلوبة أدناه وسيتم تحديث تقدم التحدي تلقائيًا.',
             'campaign.no_required_recordings': 'لا توجد دورات مطلوبة مرتبطة بهذا التحدي، أو تم حذفها',
+            'campaign.continue_next': 'تابع الدرس التالي',
+            'campaign.all_done': 'اكتملت جميع الدروس',
+            'campaign.next_up': 'التالي',
             'learning_hub.tab_recordings': 'ساحة التسجيلات',
             'learning_hub.tab_policies': 'السياسات والحوافز',
             'learning_hub.tab_brands': 'ركن العلامة التجارية',
@@ -3681,6 +3690,22 @@ export default function LearningHub() {
             percent: reqIds.length > 0 ? Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100)) : 0
         };
     }, [activeCampaignLearning, campaignLearningRecordings, completedAudioIds, i18n]);
+
+    const campaignCompletedRecordingCount = React.useMemo(() => {
+        return campaignLearningRecordings.filter(rec => completedAudioIds.includes(rec.id)).length;
+    }, [campaignLearningRecordings, completedAudioIds]);
+
+    const campaignPendingRecordingCount = Math.max(0, campaignLearningRecordings.length - campaignCompletedRecordingCount);
+
+    const nextCampaignRecording = React.useMemo(() => {
+        return campaignLearningRecordings.find(rec => !completedAudioIds.includes(rec.id)) || null;
+    }, [campaignLearningRecordings, completedAudioIds]);
+
+    const campaignLearningOrderedRecordings = React.useMemo(() => {
+        const pending = campaignLearningRecordings.filter(rec => !completedAudioIds.includes(rec.id));
+        const completed = campaignLearningRecordings.filter(rec => completedAudioIds.includes(rec.id));
+        return [...pending, ...completed];
+    }, [campaignLearningRecordings, completedAudioIds]);
     
     const [plazaMode, setPlazaMode] = useState<'recordings' | 'policies' | 'brands'>('recordings');
 
@@ -7478,17 +7503,39 @@ export default function LearningHub() {
                                     <h3 className="text-lg font-extrabold text-deep-teal mb-1">{activeCampaignLearning.title}</h3>
                                     <p className="text-sm font-medium text-arabian-night/60">{localT('campaign.learn_progress_desc', '完成下方指定课程后，挑战进度会自动更新。', i18n)}</p>
                                 </div>
-                                <button
-                                    onClick={() => setShowCampaignCert(activeCampaignLearning)}
-                                    disabled={!campaignLearningProgress.completed}
-                                    className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-6 py-3 rounded-xl font-black hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 border border-white/40 shadow-md active:scale-95"
-                                >
-                                    {localT('learning_hub.claim_cert', '✨ 领取荣誉证书', i18n)}
-                                </button>
+                                {campaignLearningProgress.completed ? (
+                                    <button
+                                        onClick={() => setShowCampaignCert(activeCampaignLearning)}
+                                        className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-6 py-3 rounded-xl font-black hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0 border border-white/40 shadow-md active:scale-95"
+                                    >
+                                        {localT('learning_hub.claim_cert', '✨ 领取荣誉证书', i18n)}
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            if (!nextCampaignRecording) return;
+                                            setActiveVideoRecording(nextCampaignRecording);
+                                            setActiveVideoDisableSeek(false);
+                                        }}
+                                        disabled={!nextCampaignRecording}
+                                        className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-black hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 border border-white/40 shadow-md active:scale-95"
+                                    >
+                                        <Play className="w-4 h-4" />
+                                        {localT('campaign.continue_next', '继续下一节', i18n)}
+                                    </button>
+                                )}
                             </div>
                             <div className="mt-5 space-y-2">
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="font-black text-arabian-night/60">{localT('campaign.details_status', '当前挑战进度', i18n)}</span>
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-xs">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-black text-arabian-night/60">{localT('campaign.details_status', '当前挑战进度', i18n)}</span>
+                                        <span className="bg-orange-50 text-orange-700 border border-orange-100 px-2.5 py-1 rounded-full font-extrabold">
+                                            {localT('common.pending', '待完成', i18n)} {campaignPendingRecordingCount}
+                                        </span>
+                                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-full font-extrabold">
+                                            {localT('common.done', '已完成', i18n)} {campaignCompletedRecordingCount}
+                                        </span>
+                                    </div>
                                     <span className="font-extrabold text-blue-600 font-mono">{campaignLearningProgress.text} ({campaignLearningProgress.percent}%)</span>
                                 </div>
                                 <div className="w-full bg-slate-100 rounded-full h-2.5 relative overflow-hidden">
@@ -7497,6 +7544,11 @@ export default function LearningHub() {
                                         style={{ width: `${campaignLearningProgress.percent}%` }}
                                     ></div>
                                 </div>
+                                {campaignLearningProgress.completed && (
+                                    <p className="text-xs font-extrabold text-emerald-700 pt-1">
+                                        {localT('campaign.all_done', '全部课程已完成', i18n)}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
@@ -7565,8 +7617,46 @@ export default function LearningHub() {
                                     campaignLearningRecordings.length === 0 ? (
                                         <div className="text-center py-10 text-arabian-night/50 font-bold">{localT('campaign.no_required_recordings', '该挑战暂无关联课程，或课程已被删除', i18n)}</div>
                                     ) : (
-                                        campaignLearningRecordings.map(rec => (
-                                            <div key={rec.id} className="flex flex-col gap-3">
+                                        campaignLearningOrderedRecordings.map(rec => {
+                                            const isCompleted = completedAudioIds.includes(rec.id);
+                                            const isNext = nextCampaignRecording?.id === rec.id;
+                                            return (
+                                            <div
+                                                key={rec.id}
+                                                className={`flex flex-col gap-3 rounded-3xl border p-3 sm:p-4 shadow-sm ${
+                                                    isCompleted
+                                                        ? 'bg-white/35 border-emerald-100'
+                                                        : isNext
+                                                            ? 'bg-blue-50/70 border-blue-200'
+                                                            : 'bg-white/50 border-white/70'
+                                                }`}
+                                            >
+                                                <div className="flex items-center justify-between gap-3 px-1">
+                                                    <span className={`text-[11px] font-black px-3 py-1 rounded-full border ${
+                                                        isCompleted
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                            : isNext
+                                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                                : 'bg-orange-50 text-orange-700 border-orange-100'
+                                                    }`}>
+                                                        {isCompleted
+                                                            ? localT('common.done', '已完成', i18n)
+                                                            : isNext
+                                                                ? localT('campaign.next_up', '下一节', i18n)
+                                                                : localT('common.pending', '待完成', i18n)}
+                                                    </span>
+                                                    {!isCompleted && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setActiveVideoRecording(rec);
+                                                                setActiveVideoDisableSeek(false);
+                                                            }}
+                                                            className="text-[11px] font-black text-blue-700 bg-white/80 hover:bg-white border border-blue-100 px-3 py-1 rounded-full shadow-sm transition-colors"
+                                                        >
+                                                            {localT('learning_hub.go_learn', '去学习', i18n)}
+                                                        </button>
+                                                    )}
+                                                </div>
                                                 <RecordingCard
                                                     rec={rec}
                                                     user={user}
@@ -7587,7 +7677,8 @@ export default function LearningHub() {
                                                     isLeader={isLeader}
                                                 />
                                             </div>
-                                        ))
+                                            );
+                                        })
                                     )
                                 ) : taskId ? (
                                     validTaskRecordingIds.length === 0 ? (
