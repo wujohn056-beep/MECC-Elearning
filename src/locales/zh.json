@@ -640,7 +640,17 @@
         "recording_mode_label": "素材选择模式",
         "recording_mode_all": "全选素材 (默认)",
         "recording_mode_custom": "手动选择素材",
-        "recording_mode_all_tip": "当前处于“全选素材”模式，所选分类下的所有素材已自动全部勾选指派。"
+        "recording_mode_all_tip": "当前处于“全选素材”模式，所选分类下的所有素材已自动全部勾选指派。",
+        "publish_success_title": "任务已发布",
+        "publish_warning_title": "任务已发布，通知部分异常",
+        "publish_failed_title": "任务发布失败",
+        "publish_failed_desc": "任务未能创建，请检查网络后重试。",
+        "task_create_success": "学习任务已指派成功，通知已发送给指定学员。",
+        "fcm_push_error": "任务已成功创建，学员可以在系统内通知和个人任务列表中正常查看并完成。App 推送暂时发送失败，已记录给管理员检查 FCM 配置。",
+        "fcm_no_tokens": "任务已成功创建。目前没有检测到已登录 App 并开启通知权限的学员设备；学员仍可在系统内通知和个人任务列表中查看并完成。",
+        "dingtalk_push_error": "任务已成功创建。外部通知暂时未完全送达，学员仍可在系统内通知和个人任务列表中查看并完成。",
+        "notification_error": "任务已成功创建。通知服务暂时异常，学员仍可在系统内通知和个人任务列表中查看并完成。",
+        "notification_fail": "发送任务通知失败，请检查网络或后台配置。"
     },
     "dashboard": {
         "title": "仪表盘总览",

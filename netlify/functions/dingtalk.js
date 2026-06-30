@@ -696,10 +696,14 @@ export const handler = async (event, context) => {
             }
 
             const getMsgMarkdown = (lang) => {
+                const taskLearningUrl = taskId
+                    ? `https://learning.mecloudhub.com/hub?taskId=${encodeURIComponent(taskId)}`
+                    : 'https://learning.mecloudhub.com/hub';
+                const dingTalkLearningLink = `dingtalk://dingtalkclient/page/link?url=${encodeURIComponent(taskLearningUrl)}`;
                 if (lang === 'en') {
-                    return `### 📚 **ME Cloud Academy**\n**New Learning Task Assigned**\n\n---\n\n**📋 Task Details:**\n* 🏷️ **Task Name:** ${title}\n* 📅 **Start Time:** ${finalStartTime}\n* ⏰ **Deadline:** ${deadline || '-'}\n* 👤 **Assigner:** ${assignerName}\n\n---\n\n> 💡 *Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline.*\n\n[👉 Click Here to Start Learning](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fteam-tasks)`;
+                    return `### 📚 **ME Cloud Academy**\n**New Learning Task Assigned**\n\n---\n\n**📋 Task Details:**\n* 🏷️ **Task Name:** ${title}\n* 📅 **Start Time:** ${finalStartTime}\n* ⏰ **Deadline:** ${deadline || '-'}\n* 👤 **Assigner:** ${assignerName}\n\n---\n\n> 💡 *Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline.*\n\n[👉 Click Here to Start Learning](${dingTalkLearningLink})`;
                 }
-                return `### 📚 **ME 云学堂**\n**收到新的学习任务**\n\n---\n\n**📋 任务详情：**\n* 🏷️ **任务名称**：${title}\n* 📅 **开始时间**：${finalStartTime}\n* ⏰ **截止时间**：${deadline || '-'}\n* 👤 **指派导师**：${assignerName}\n\n---\n\n> 💡 *优秀的销售录音复盘，能助推专业成长。请及时在截止日期前听完相关录音并提交心得感悟。*\n\n[👉 点击立即开始学习](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fteam-tasks)`;
+                return `### 📚 **ME 云学堂**\n**收到新的学习任务**\n\n---\n\n**📋 任务详情：**\n* 🏷️ **任务名称**：${title}\n* 📅 **开始时间**：${finalStartTime}\n* ⏰ **截止时间**：${deadline || '-'}\n* 👤 **指派导师**：${assignerName}\n\n---\n\n> 💡 *优秀的销售录音复盘，能助推专业成长。请及时在截止日期前听完相关录音并提交心得感悟。*\n\n[👉 点击立即开始学习](${dingTalkLearningLink})`;
             };
 
             const getMsgTitle = (lang) => {

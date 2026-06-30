@@ -57,6 +57,12 @@ interface LearningTask {
     createdAt: any;
 }
 
+type PublishNotice = {
+    tone: 'success' | 'warning' | 'error';
+    title: string;
+    message: string;
+};
+
 export default function TeamTasks() {
     const { t, i18n } = useTranslation();
     const { user, profile, isSuperAdmin } = useAuth();
@@ -97,6 +103,7 @@ export default function TeamTasks() {
     const [deadlineTime, setDeadlineTime] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [recordingSearchQuery, setRecordingSearchQuery] = useState('');
+    const [publishNotice, setPublishNotice] = useState<PublishNotice | null>(null);
 
     const isDeadlineInvalid = React.useMemo(() => {
         if (!deadlineDate || !deadlineTime) return false;
@@ -289,6 +296,7 @@ export default function TeamTasks() {
         if (!user || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime) return;
 
         setSubmitting(true);
+        setPublishNotice(null);
         try {
             const deadlineObj = new Date(`${deadlineDate}T${deadlineTime}`);
             
@@ -349,13 +357,37 @@ export default function TeamTasks() {
                 const data = await res.json();
                 console.log("[TeamTasks] Notification trigger result:", data);
                 if (data.fcmPush && data.fcmPush.failureCount > 0) {
-                    alert(t('team_tasks.fcm_push_error', `任务已创建，但推送通知发送失败：\n${data.fcmPush.error}`));
+                    setPublishNotice({
+                        tone: 'warning',
+                        title: t('team_tasks.publish_warning_title', '任务已发布，App 推送暂未送达'),
+                        message: t('team_tasks.fcm_push_error', '任务已成功创建，学员可以在系统内通知和个人任务列表中正常查看并完成。App 推送暂时发送失败，已记录给管理员检查 FCM 配置。')
+                    });
                 } else if (data.fcmPush && data.fcmPush.tokensCount === 0) {
-                    alert(t('team_tasks.fcm_no_tokens', '任务已创建，但未找到任何注册了推送通知的 App 设备。'));
+                    setPublishNotice({
+                        tone: 'warning',
+                        title: t('team_tasks.publish_warning_title', '任务已发布，App 推送暂未送达'),
+                        message: t('team_tasks.fcm_no_tokens', '任务已成功创建。目前没有检测到已登录 App 并开启通知权限的学员设备；学员仍可在系统内通知和个人任务列表中查看并完成。')
+                    });
+                } else if (data.success === false) {
+                    setPublishNotice({
+                        tone: 'warning',
+                        title: t('team_tasks.publish_warning_title', '任务已发布，通知部分异常'),
+                        message: t('team_tasks.dingtalk_push_error', '任务已成功创建。外部通知暂时未完全送达，学员仍可在系统内通知和个人任务列表中查看并完成。')
+                    });
+                } else {
+                    setPublishNotice({
+                        tone: 'success',
+                        title: t('team_tasks.publish_success_title', '任务已发布'),
+                        message: t('team_tasks.task_create_success', '学习任务已指派成功，通知已发送给指定学员。')
+                    });
                 }
             } catch (notifyErr: any) {
                 console.error("Failed to initiate DingTalk task notification request:", notifyErr);
-                alert(t('team_tasks.notification_error', `发送任务通知时发生网络或服务错误：${notifyErr.message}`));
+                setPublishNotice({
+                    tone: 'warning',
+                    title: t('team_tasks.publish_warning_title', '任务已发布，通知部分异常'),
+                    message: t('team_tasks.notification_error', '任务已成功创建。通知服务暂时异常，学员仍可在系统内通知和个人任务列表中查看并完成。')
+                });
             }
 
             setShowCreateModal(false);
@@ -372,6 +404,11 @@ export default function TeamTasks() {
             fetchTasks();
         } catch (error) {
             console.error("Error creating task", error);
+            setPublishNotice({
+                tone: 'error',
+                title: t('team_tasks.publish_failed_title', '任务发布失败'),
+                message: t('team_tasks.publish_failed_desc', '任务未能创建，请检查网络后重试。')
+            });
         } finally {
             setSubmitting(false);
         }
@@ -605,6 +642,38 @@ export default function TeamTasks() {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {publishNotice && activeTab !== 'campaigns' && (
+                <div
+                    className={`rounded-2xl border p-4 flex items-start gap-3 shadow-sm ${
+                        publishNotice.tone === 'success'
+                            ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                            : publishNotice.tone === 'warning'
+                                ? 'bg-amber-50 border-amber-100 text-amber-800'
+                                : 'bg-red-50 border-red-100 text-red-800'
+                    }`}
+                >
+                    <div className="mt-0.5 shrink-0">
+                        {publishNotice.tone === 'success' ? (
+                            <CheckCircle className="w-5 h-5" />
+                        ) : (
+                            <AlertCircle className="w-5 h-5" />
+                        )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="font-black text-sm">{publishNotice.title}</h3>
+                        <p className="text-xs font-semibold mt-1 opacity-85 leading-relaxed">{publishNotice.message}</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setPublishNotice(null)}
+                        className="text-lg leading-none opacity-50 hover:opacity-90 px-1"
+                        aria-label={t('common.close', '关闭')}
+                    >
+                        ×
+                    </button>
                 </div>
             )}
 
