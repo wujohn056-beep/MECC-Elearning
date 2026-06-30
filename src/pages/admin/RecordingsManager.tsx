@@ -1318,7 +1318,18 @@ export default function RecordingsManager() {
                                 <select 
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/50"
                                     value={selectedCategoryId}
-                                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedCategoryId(val);
+                                        const selectedCat = categories.find(c => c.id === val);
+                                        if (selectedCat) {
+                                            if (selectedCat.scope === 'new_cc') {
+                                                setTargetHubs(prev => prev.includes('new_cc') ? prev : [...prev, 'new_cc']);
+                                            } else {
+                                                setTargetHubs(prev => prev.includes('public') ? prev : [...prev, 'public']);
+                                            }
+                                        }
+                                    }}
                                 >
                                     <option value="">{t('common.uncategorized', '未分类')}</option>
                                     {categories.filter(cat => {
@@ -1330,18 +1341,13 @@ export default function RecordingsManager() {
                                             const catScope = cat.hubScope || 'public';
                                             return catScope === 'public' || (catScope === 'team' && cat.targetSmId === activeSm);
                                         } else {
-                                            // Public scope recordings can only use public hub categories
-                                            if ((cat.hubScope || 'public') !== 'public') return false;
-                                            
-                                            // Check zone scope: new_cc categories are only select-able if recording targetHubs includes 'new_cc'
-                                            const catZoneScope = cat.scope || 'public';
-                                            if (catZoneScope === 'new_cc') {
-                                                return targetHubs.includes('new_cc');
-                                            }
-                                            return true;
+                                            // Public scope recordings can use any public hub category
+                                            return (cat.hubScope || 'public') === 'public';
                                         }
                                     }).map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.name}{cat.scope === 'new_cc' ? ` (${t('category_manager.scope_new_cc', '新CC专区')})` : ''}
+                                        </option>
                                     ))}
                                 </select>
                             </div>

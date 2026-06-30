@@ -4374,8 +4374,16 @@ export default function LearningHub() {
         if (!matchesTab) {
             const selectedCat = categories.find(c => c.id === activeTab);
             if (selectedCat) {
-                if (publicHubTab === 'new_cc' && hubScope === 'public') {
-                    matchesTab = rec.categoryId === activeTab || (rec.categoryName === selectedCat.name);
+                if (hubScope === 'public') {
+                    // Match by direct ID, by sibling category ID (sharing the same name), or by name fallback case-insensitively
+                    const targetName = (selectedCat.name || '').trim().toLowerCase();
+                    const siblingCategoryIds = categories
+                        .filter(c => (c.name || '').trim().toLowerCase() === targetName)
+                        .map(c => c.id);
+
+                    matchesTab = rec.categoryId === activeTab || 
+                        siblingCategoryIds.includes(rec.categoryId) || 
+                        ((rec.categoryName || '').trim().toLowerCase() === targetName);
                 } else {
                     matchesTab = rec.categoryId === activeTab;
                 }
