@@ -173,6 +173,7 @@
         "most_liked": "最多点赞",
         "task_exclusive": "任务专属录音",
         "task_need_listen": "您需要听完以下录音以完成任务：",
+        "category_recordings_count": "共 {{count}} 个素材",
         "back_to_courses": "← 返回全部课程",
         "my_favorite_learning": "我的收藏学习",
         "play_favorites_desc": "您可以直接在这里播放和学习您收藏的录音。",

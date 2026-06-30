@@ -15,6 +15,7 @@ interface Recording {
     audioUrl: string;
     avatarUrl?: string;
     categoryId?: string;
+    categoryName?: string;
     createdAt: any;
     likes?: string[];
     displayId?: string;
@@ -4310,6 +4311,34 @@ export default function LearningHub() {
 
     const validTaskRecordingIds = taskRecordingIds.filter(id => recordings.some(r => r.id === id));
 
+    const taskRecordingGroups = React.useMemo(() => {
+        const groups: { key: string; name: string; recordingIds: string[] }[] = [];
+        const groupIndex = new Map<string, number>();
+        const categoryById = new Map(categories.map(cat => [cat.id, cat]));
+
+        validTaskRecordingIds.forEach(recId => {
+            const rec = recordings.find(r => r.id === recId);
+            if (!rec) return;
+
+            const category = rec.categoryId ? categoryById.get(rec.categoryId) : undefined;
+            const categoryName = category?.name || rec.categoryName || t('common.uncategorized', '未分类');
+            const groupKey = rec.categoryId || `name:${categoryName}`;
+
+            if (!groupIndex.has(groupKey)) {
+                groupIndex.set(groupKey, groups.length);
+                groups.push({
+                    key: groupKey,
+                    name: categoryName,
+                    recordingIds: []
+                });
+            }
+
+            groups[groupIndex.get(groupKey)!].recordingIds.push(recId);
+        });
+
+        return groups;
+    }, [validTaskRecordingIds, recordings, categories, t]);
+
     const reflectionWordLimit = taskType === 'new_cc' ? 50 : 100;
 
     const canSubmit = taskId && 
@@ -7362,66 +7391,85 @@ export default function LearningHub() {
                                     validTaskRecordingIds.length === 0 ? (
                                         <div className="text-center py-10 text-arabian-night/50 font-bold">{t('learning_hub.no_recordings_for_task', '该任务没有关联录音，或录音已被管理员删除')}</div>
                                     ) : (
-                                        validTaskRecordingIds.map(recId => {
-                                            const rec = recordings.find(r => r.id === recId);
-                                            if (!rec) return null;
-                                            return (
-                                                <div key={recId} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm">
-                                                    <div className="w-full lg:w-[340px] shrink-0">
-                                                        <RecordingCard 
-                                                            rec={rec} 
-                                                            user={user} 
-                                                            favorites={favorites}
-                                                            handleToggleFavorite={handleToggleFavorite}
-                                                            handleToggleLike={handleToggleLike}
-                                                            handleAudioEnded={handleAudioEnded}
-                                                            onPlayVideo={(videoRec: Recording, isSeekDisabled: boolean) => {
-                                                                setActiveVideoRecording(videoRec);
-                                                                setActiveVideoDisableSeek(isSeekDisabled);
-                                                            }}
-                                                            onViewTranscript={setActiveTranscriptRecording}
-                                                            onShare={setShareRecording}
-                                                            onViewProgress={setActiveProgressRecording}
-                                                            disableSeek={!isTaskCompleted}
-                                                            isUnlocked={completedAudioIds.includes(rec.id)}
-                                                            className="w-full h-full"
-                                                            commentCount={globalCommentCounts[recId] || 0}
-                                                            isLeader={isLeader}
-                                                        />
+                                        <div className="flex flex-col gap-8">
+                                            {taskRecordingGroups.map(group => (
+                                                <section key={group.key} className="rounded-[1.75rem] border border-white/70 bg-white/30 p-3 sm:p-4 shadow-sm">
+                                                    <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <span className="w-1.5 h-6 bg-desert-gold rounded-full shrink-0"></span>
+                                                            <h3 className="text-lg sm:text-xl font-black text-deep-teal truncate">
+                                                                {group.name}
+                                                            </h3>
+                                                        </div>
+                                                        <span className="self-start sm:self-auto text-xs font-extrabold text-desert-gold bg-white/80 border border-desert-gold/20 px-3 py-1 rounded-full shadow-sm">
+                                                            {t('learning_hub.category_recordings_count', '{{count}} recordings', { count: group.recordingIds.length })}
+                                                        </span>
                                                     </div>
-                                                    <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-desert-gold/30 flex flex-col relative overflow-hidden">
-                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-desert-gold/10 to-transparent rounded-bl-full pointer-events-none"></div>
-                                                        <h4 className="text-lg font-extrabold text-deep-teal mb-4 flex items-center justify-between relative z-10">
-                                                            <span className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-5 bg-desert-gold rounded-full inline-block"></span>
-                                                                {t('learning_hub.learning_reflection')}
-                                                            </span>
-                                                            {!isTaskCompleted && (
-                                                                <span className={`text-xs px-3 py-1.5 rounded-full shadow-sm border ${completedAudioIds.includes(recId) ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
-                                                                    {completedAudioIds.includes(recId) ? t('learning_hub.listened', '已完整听完') : t('learning_hub.listen_first')}
-                                                                </span>
-                                                            )}
-                                                        </h4>
-                                                        <textarea
-                                                            value={reflections[recId] || ''}
-                                                            onChange={(e) => setReflections(prev => ({...prev, [recId]: e.target.value}))}
-                                                            placeholder={isTaskCompleted ? '' : t('learning_hub.reflection_placeholder')}
-                                                            readOnly={isTaskCompleted}
-                                                            className={`flex-1 w-full p-5 border border-gray-100 rounded-xl outline-none resize-y min-h-[160px] text-base relative z-10 transition-all ${isTaskCompleted ? 'bg-transparent border-none text-arabian-night/80 italic shadow-inner' : 'focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-gray-50/50 hover:bg-white'}`}
-                                                        />
-                                                        {!isTaskCompleted && (
-                                                            <div className="flex justify-end items-center mt-4 relative z-10">
-                                                                <span className={`text-sm font-bold bg-white px-3 py-1 rounded-lg shadow-sm border ${
-                                                                    (reflections[recId]?.length || 0) < reflectionWordLimit ? 'text-red-500 border-red-100' : 'text-green-500 border-green-100'
-                                                                }`}>
-                                                                    {t('learning_hub.current_words')} <span className="text-lg mx-1">{reflections[recId]?.length || 0}</span> {(reflections[recId]?.length || 0) < reflectionWordLimit ? t('learning_hub.words_needed', { count: reflectionWordLimit - (reflections[recId]?.length || 0) }) : ''}
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                    <div className="flex flex-col gap-6">
+                                                        {group.recordingIds.map(recId => {
+                                                            const rec = recordings.find(r => r.id === recId);
+                                                            if (!rec) return null;
+                                                            return (
+                                                                <div key={recId} className="flex flex-col lg:flex-row gap-6 items-stretch bg-white/40 p-4 rounded-3xl border border-white shadow-sm">
+                                                                    <div className="w-full lg:w-[340px] shrink-0">
+                                                                        <RecordingCard 
+                                                                            rec={rec} 
+                                                                            user={user} 
+                                                                            favorites={favorites}
+                                                                            handleToggleFavorite={handleToggleFavorite}
+                                                                            handleToggleLike={handleToggleLike}
+                                                                            handleAudioEnded={handleAudioEnded}
+                                                                            onPlayVideo={(videoRec: Recording, isSeekDisabled: boolean) => {
+                                                                                setActiveVideoRecording(videoRec);
+                                                                                setActiveVideoDisableSeek(isSeekDisabled);
+                                                                            }}
+                                                                            onViewTranscript={setActiveTranscriptRecording}
+                                                                            onShare={setShareRecording}
+                                                                            onViewProgress={setActiveProgressRecording}
+                                                                            disableSeek={!isTaskCompleted}
+                                                                            isUnlocked={completedAudioIds.includes(rec.id)}
+                                                                            className="w-full h-full"
+                                                                            commentCount={globalCommentCounts[recId] || 0}
+                                                                            isLeader={isLeader}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-desert-gold/30 flex flex-col relative overflow-hidden">
+                                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-desert-gold/10 to-transparent rounded-bl-full pointer-events-none"></div>
+                                                                        <h4 className="text-lg font-extrabold text-deep-teal mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 relative z-10">
+                                                                            <span className="flex items-center gap-2">
+                                                                                <span className="w-1.5 h-5 bg-desert-gold rounded-full inline-block"></span>
+                                                                                {t('learning_hub.learning_reflection')}
+                                                                            </span>
+                                                                            {!isTaskCompleted && (
+                                                                                <span className={`text-xs px-3 py-1.5 rounded-full shadow-sm border ${completedAudioIds.includes(recId) ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                                                                                    {completedAudioIds.includes(recId) ? t('learning_hub.listened', '已完整听完') : t('learning_hub.listen_first')}
+                                                                                </span>
+                                                                            )}
+                                                                        </h4>
+                                                                        <textarea
+                                                                            value={reflections[recId] || ''}
+                                                                            onChange={(e) => setReflections(prev => ({...prev, [recId]: e.target.value}))}
+                                                                            placeholder={isTaskCompleted ? '' : t('learning_hub.reflection_placeholder')}
+                                                                            readOnly={isTaskCompleted}
+                                                                            className={`flex-1 w-full p-5 border border-gray-100 rounded-xl outline-none resize-y min-h-[160px] text-base relative z-10 transition-all ${isTaskCompleted ? 'bg-transparent border-none text-arabian-night/80 italic shadow-inner' : 'focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-gray-50/50 hover:bg-white'}`}
+                                                                        />
+                                                                        {!isTaskCompleted && (
+                                                                            <div className="flex justify-end items-center mt-4 relative z-10">
+                                                                                <span className={`text-sm font-bold bg-white px-3 py-1 rounded-lg shadow-sm border ${
+                                                                                    (reflections[recId]?.length || 0) < reflectionWordLimit ? 'text-red-500 border-red-100' : 'text-green-500 border-green-100'
+                                                                                }`}>
+                                                                                    {t('learning_hub.current_words')} <span className="text-lg mx-1">{reflections[recId]?.length || 0}</span> {(reflections[recId]?.length || 0) < reflectionWordLimit ? t('learning_hub.words_needed', { count: reflectionWordLimit - (reflections[recId]?.length || 0) }) : ''}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
-                                                </div>
-                                            );
-                                        })
+                                                </section>
+                                            ))}
+                                        </div>
                                     )
                                 ) : (
                                     displayedRecordings.map(rec => (

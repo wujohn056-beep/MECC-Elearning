@@ -173,6 +173,7 @@
         "most_liked": "الأكثر إعجاباً",
         "task_exclusive": "تسجيلات حصرية للمهام",
         "task_need_listen": "تحتاج إلى الاستماع إلى التسجيلات التالية لإكمال المهمة:",
+        "category_recordings_count": "{{count}} تسجيلات",
         "back_to_courses": "← العودة لجميع الدورات",
         "my_favorite_learning": "تعلمي المفضل",
         "play_favorites_desc": "يمكنك تشغيل وتعلم تسجيلاتك المفضلة هنا مباشرة.",
