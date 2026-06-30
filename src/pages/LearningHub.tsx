@@ -7055,7 +7055,7 @@ export default function LearningHub() {
                                 {categories.filter(cat => {
                                     if ((cat.businessType || 'kid') !== businessType) return false;
                                     if (hubScope === 'public' && publicHubTab === 'new_cc') {
-                                        return cat.scope === 'new_cc';
+                                        return cat.scope === 'new_cc' || cat.scope === 'public' || !cat.scope;
                                     } else {
                                         return cat.scope !== 'new_cc';
                                     }

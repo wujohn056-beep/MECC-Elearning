@@ -1330,8 +1330,15 @@ export default function RecordingsManager() {
                                             const catScope = cat.hubScope || 'public';
                                             return catScope === 'public' || (catScope === 'team' && cat.targetSmId === activeSm);
                                         } else {
-                                            // Public scope recordings can only use public categories
-                                            return (cat.hubScope || 'public') === 'public';
+                                            // Public scope recordings can only use public hub categories
+                                            if ((cat.hubScope || 'public') !== 'public') return false;
+                                            
+                                            // Check zone scope: new_cc categories are only select-able if recording targetHubs includes 'new_cc'
+                                            const catZoneScope = cat.scope || 'public';
+                                            if (catZoneScope === 'new_cc') {
+                                                return targetHubs.includes('new_cc');
+                                            }
+                                            return true;
                                         }
                                     }).map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
