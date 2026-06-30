@@ -5366,6 +5366,15 @@ export default function LearningHub() {
         setSearchParams(newParams);
     };
 
+    const openCampaignDetails = (campaign: any) => {
+        setShowCampaignDetails(campaign);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('campaignId', campaign.id);
+        newParams.delete('taskId');
+        newParams.delete('recordingId');
+        setSearchParams(newParams);
+    };
+
     const renderCampaignCard = (campaign: any) => {
         // Calculate progress
         let completed = false;
@@ -5403,14 +5412,14 @@ export default function LearningHub() {
             if (completed) {
                 setShowCampaignCert(campaign);
             } else {
-                openCampaignLearningTarget(campaign);
+                openCampaignDetails(campaign);
             }
         };
 
         return (
             <div 
                 key={campaign.id}
-                onClick={() => setShowCampaignDetails(campaign)}
+                onClick={() => openCampaignDetails(campaign)}
                 className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-[#E6DFD3] dark:border-white/10 p-4 shadow-sm hover:shadow-md hover:scale-[1.01] hover:border-blue-600/30 dark:hover:border-blue-500/30 transition-all duration-300 flex items-center justify-between gap-4 relative overflow-hidden cursor-pointer"
             >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
