@@ -174,7 +174,7 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
                 title: "8. 移动端 App 下载与 FCM 消息即时通知",
                 desc: "多端体验，消息不延误：",
                 bullets: [
-                    "移动端 App 安装：扫码下载 Android APK 或加入 TestFlight 安装 1.0.5+ 版本 App，体验更流畅的原生操作。",
+                    "移动端 App 安装：扫码下载 Android APK 或加入 TestFlight 安装 1.0.6+ 版本 App，体验更流畅的原生操作。",
                     "Google FCM 即时推送：任务分派、任务即将过期（提前 2 小时）、挑战包发布、主管加急催办均会即时在手机系统状态栏弹出通知，确保重要信息不遗漏。"
                 ]
             }
@@ -336,7 +336,7 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
                 title: "8. Mobile App Companion & FCM Notifications",
                 desc: "Stay updated with push notifications:",
                 bullets: [
-                    "Mobile App Installation: Scan QR code to download Android APK or join iOS TestFlight 1.0.5+.",
+                    "Mobile App Installation: Scan QR code to download Android APK or join iOS TestFlight 1.0.6+.",
                     "FCM Instant Alerts: Receive instant push banners on your phone for task assignments, task warnings (2 hours before deadline), campaign releases, or manager buzzes."
                 ]
             }
@@ -498,7 +498,7 @@ export default function UserGuideModal({ isOpen, onClose, role }: UserGuideModal
                 title: "8. تطبيق الهاتف الجوال وإشعارات FCM الفورية",
                 desc: "تلقي الإشعارات الفورية على هاتفك المحمول:",
                 bullets: [
-                    "تطبيق الهاتف الجوال: امسح رمز QR لتحميل تطبيق الأندرويد APK أو الانضمام لـ TestFlight (النسخة 1.0.5+) لتجربة استخدام أسرع.",
+                    "تطبيق الهاتف الجوال: امسح رمز QR لتحميل تطبيق الأندرويد APK أو الانضمام لـ TestFlight (النسخة 1.0.6+) لتجربة استخدام أسرع.",
                     "إشعارات FCM الفورية: استقبل إشعارات منبثقة على هاتفك عند تعيين مهام جديدة، اقتراب موعد التسليم (قبل ساعتين)، نشر حملة تحدي، أو تذكير عاجل من مديرك."
                 ]
             }

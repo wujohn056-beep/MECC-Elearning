@@ -3726,8 +3726,8 @@ export default function LearningHub() {
                     const hasDownloaded = profile?.platform === 'ios' || profile?.platform === 'android' || !!profile?.appVersion;
                     
                     if (isNative || hasDownloaded) {
-                        const CURRENT_APP_VERSION = '1.0.5';
-                        const currentVersionToCheck = isNative ? CURRENT_APP_VERSION : (profile?.appVersion || '1.0.5');
+                        const CURRENT_APP_VERSION = '1.0.6';
+                        const currentVersionToCheck = isNative ? CURRENT_APP_VERSION : (profile?.appVersion || '1.0.6');
                         const platform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
                         const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
                         
@@ -4746,7 +4746,7 @@ export default function LearningHub() {
         const hasDownloaded = profile?.platform === 'ios' || profile?.platform === 'android' || !!profile?.appVersion;
         
         const isAppUser = isNative || hasDownloaded;
-        const currentVersionToCheck = isNative ? '1.0.5' : (profile?.appVersion || '1.0.5');
+        const currentVersionToCheck = isNative ? '1.0.6' : (profile?.appVersion || '1.0.6');
         const userPlatform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
         
         return (
@@ -4807,7 +4807,7 @@ export default function LearningHub() {
                                     <h3 className={`text-sm sm:text-base font-extrabold ${
                                         businessType === 'leader' ? 'text-white' : 'text-slate-900'
                                     }`}>
-                                        {t('update_modal.version', '版本: 1.0.5').replace('1.0.0', currentVersionToCheck).replace('1.0.4', currentVersionToCheck).replace('1.0.5', currentVersionToCheck)}
+                                        {t('update_modal.version', '版本: 1.0.6').replace('1.0.0', currentVersionToCheck).replace('1.0.4', currentVersionToCheck).replace('1.0.5', currentVersionToCheck).replace('1.0.6', currentVersionToCheck)}
                                     </h3>
                                 </div>
                             </div>
