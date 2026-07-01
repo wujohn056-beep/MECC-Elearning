@@ -3726,9 +3726,9 @@ export default function LearningHub() {
                     const hasDownloaded = profile?.platform === 'ios' || profile?.platform === 'android' || !!profile?.appVersion;
                     
                     if (isNative || hasDownloaded) {
-                        const CURRENT_APP_VERSION = '1.0.6';
-                        const currentVersionToCheck = isNative ? CURRENT_APP_VERSION : (profile?.appVersion || '1.0.6');
                         const platform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
+                        const currentNativeVersion = platform === 'ios' ? '1.1' : '1.0.6';
+                        const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
                         const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
                         
                         const parseVersion = (v: string) => v.split('.').map(Number);
@@ -4746,8 +4746,9 @@ export default function LearningHub() {
         const hasDownloaded = profile?.platform === 'ios' || profile?.platform === 'android' || !!profile?.appVersion;
         
         const isAppUser = isNative || hasDownloaded;
-        const currentVersionToCheck = isNative ? '1.0.6' : (profile?.appVersion || '1.0.6');
         const userPlatform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
+        const currentNativeVersion = userPlatform === 'ios' ? '1.1' : '1.0.6';
+        const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
         
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 relative overflow-hidden group shadow-lg transition-all duration-300 hover:shadow-xl ${
@@ -4807,7 +4808,7 @@ export default function LearningHub() {
                                     <h3 className={`text-sm sm:text-base font-extrabold ${
                                         businessType === 'leader' ? 'text-white' : 'text-slate-900'
                                     }`}>
-                                        {t('update_modal.version', '版本: 1.0.6').replace('1.0.0', currentVersionToCheck).replace('1.0.4', currentVersionToCheck).replace('1.0.5', currentVersionToCheck).replace('1.0.6', currentVersionToCheck)}
+                                        {t('update_modal.version', '版本: {{version}}', { version: currentVersionToCheck })}
                                     </h3>
                                 </div>
                             </div>

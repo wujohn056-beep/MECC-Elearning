@@ -10,6 +10,16 @@ import { db } from '../services/firebase';
 import { Capacitor } from '@capacitor/core';
 import UserGuideModal from './UserGuideModal';
 
+const CLIENT_APP_VERSIONS: Record<string, string> = {
+    ios: '1.1',
+    android: '1.0.6',
+    web: '1.0.6'
+};
+
+const getCurrentClientAppVersion = (platform = Capacitor.getPlatform()) => {
+    return CLIENT_APP_VERSIONS[platform] || CLIENT_APP_VERSIONS.web;
+};
+
 const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -146,8 +156,6 @@ export default function AppLayout() {
     }, [isTrainingUser]);
 
     // 2. App-Side Version Checker Effect
-    const CURRENT_APP_VERSION = '1.0.6'; // Hardcoded baseline version code for current client packaging
-
     useEffect(() => {
         if (!Capacitor.isNativePlatform() || isTrainingUser) return;
 
@@ -173,8 +181,10 @@ export default function AppLayout() {
                         return false;
                     };
 
-                    if (latestVersion && isOutdated(CURRENT_APP_VERSION, latestVersion)) {
-                        const forceUpdate = data.min_required_version && isOutdated(CURRENT_APP_VERSION, data.min_required_version);
+                    const currentAppVersion = getCurrentClientAppVersion(platform);
+
+                    if (latestVersion && isOutdated(currentAppVersion, latestVersion)) {
+                        const forceUpdate = data.min_required_version && isOutdated(currentAppVersion, data.min_required_version);
                         setUpdateConfig(data);
                         setIsForceUpdate(!!forceUpdate);
                         setShowUpdateModal(true);
@@ -309,12 +319,13 @@ export default function AppLayout() {
                 try {
                     const today = new Date().toISOString().split('T')[0];
                     const currentPlatform = Capacitor.getPlatform();
+                    const currentAppVersion = getCurrentClientAppVersion(currentPlatform);
                     
                     // Update user profile document with version telemetry
                     const userRef = doc(db, 'users', user.uid);
                     await setDoc(userRef, {
                         lastActiveAt: serverTimestamp(),
-                        appVersion: '1.0.6',
+                        appVersion: currentAppVersion,
                         platform: currentPlatform
                     }, { merge: true });
 
@@ -331,7 +342,7 @@ export default function AppLayout() {
                         team: profile.team || '',
                         date: today,
                         lastLoginAt: serverTimestamp(),
-                        appVersion: '1.0.6',
+                        appVersion: currentAppVersion,
                         platform: currentPlatform
                     }, { merge: true });
                 } catch (error) {
