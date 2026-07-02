@@ -65,6 +65,11 @@ const TaskCard = ({ task }: { task: any }) => {
     );
 };
 
+const isTaskIncomplete = (task: any) => task.myStatus !== 'completed';
+const matchesTaskTab = (task: any, activeTaskTab: 'pending' | 'completed') => (
+    activeTaskTab === 'completed' ? task.myStatus === 'completed' : isTaskIncomplete(task)
+);
+
 export default function Account() {
     const { t } = useTranslation();
     const { user, profile, updateProfile } = useAuth();
@@ -427,7 +432,7 @@ export default function Account() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs bg-deep-teal/10 text-deep-teal px-2 py-0.5 rounded-full font-bold">
-                                    {myTasks.filter(t => t.myStatus === 'pending').length} {t('account.pending')}
+                                    {myTasks.filter(isTaskIncomplete).length} {t('account.pending')}
                                 </span>
                                 {openSection === 'tasks' ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                             </div>
@@ -440,7 +445,7 @@ export default function Account() {
                                         onClick={() => setActiveTaskTab('pending')}
                                         className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTaskTab === 'pending' ? 'bg-white shadow text-deep-teal font-black' : 'text-gray-500 hover:bg-gray-100'}`}
                                     >
-                                        {t('account.pending')} ({myTasks.filter(t => t.myStatus === 'pending').length})
+                                        {t('account.pending')} ({myTasks.filter(isTaskIncomplete).length})
                                     </button>
                                     <button 
                                         onClick={() => setActiveTaskTab('completed')}
@@ -453,7 +458,7 @@ export default function Account() {
                                     <div className="flex justify-center py-6">
                                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-desert-gold"></div>
                                     </div>
-                                ) : myTasks.filter(t => t.myStatus === activeTaskTab).length === 0 ? (
+                                ) : myTasks.filter(t => matchesTaskTab(t, activeTaskTab)).length === 0 ? (
                                     <div className="text-center py-10 text-slate-400 text-sm">
                                         <Target className="w-12 h-12 mx-auto mb-2 opacity-20" />
                                         <p className="font-semibold">{t('account.empty_tasks_title')}</p>
@@ -462,7 +467,7 @@ export default function Account() {
                                 ) : (
                                     <div className="space-y-3">
                                         {myTasks
-                                            .filter(t => t.myStatus === activeTaskTab)
+                                            .filter(t => matchesTaskTab(t, activeTaskTab))
                                             .map((task) => (
                                                 <TaskCard key={task.id} task={task} />
                                         ))}
@@ -702,7 +707,7 @@ export default function Account() {
                                 onClick={() => setActiveTaskTab('pending')}
                                 className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${activeTaskTab === 'pending' ? 'bg-white shadow text-deep-teal' : 'text-gray-500 hover:bg-gray-100'}`}
                             >
-                                {t('account.pending')} ({myTasks.filter(t => t.myStatus === 'pending').length})
+                                {t('account.pending')} ({myTasks.filter(isTaskIncomplete).length})
                             </button>
                             <button 
                                 onClick={() => setActiveTaskTab('completed')}
@@ -716,7 +721,7 @@ export default function Account() {
                             <div className="flex-1 flex justify-center items-center">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-desert-gold"></div>
                             </div>
-                        ) : myTasks.filter(t => t.myStatus === activeTaskTab).length === 0 ? (
+                        ) : myTasks.filter(t => matchesTaskTab(t, activeTaskTab)).length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-arabian-night/40">
                                 <Target className="w-16 h-16 mb-4 opacity-20" />
                                 <p className="text-lg font-semibold">{t('account.empty_tasks_title')}</p>
@@ -725,7 +730,7 @@ export default function Account() {
                         ) : (
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
                                 {myTasks
-                                    .filter(t => t.myStatus === activeTaskTab)
+                                    .filter(t => matchesTaskTab(t, activeTaskTab))
                                     .map((task) => (
                                         <TaskCard key={task.id} task={task} />
                                 ))}
