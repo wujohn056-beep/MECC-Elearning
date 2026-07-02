@@ -104,6 +104,7 @@ const getRemoteFileHash = async (path) => {
 
 try {
   let homePage = null;
+  const shellPages = [];
   addCheck('local build output exists for production shell comparison', Boolean(localDistIndex), localDistIndexPath);
   const htmlRoutes = [
     ['home', '/'],
@@ -129,14 +130,20 @@ try {
     addCheck(`production ${name} returns 200`, page.response.ok, `${page.response.status} ${page.url}`);
     addCheck(`production ${name} is html`, pageType.includes('text/html'), pageType);
     addCheck(`production ${name} serves app shell`, hasAppShell, `${page.body.length} bytes`);
+    addCheck(
+      `production ${name} shell matches current build output`,
+      Boolean(localDistIndex) && page.body === localDistIndex,
+      `production=${page.body.length} bytes, local=${localDistIndex.length} bytes`
+    );
+    shellPages.push(page);
     if (path === '/') homePage = page;
   }
 
   const assetPaths = homePage ? getAppAssetPaths(homePage.body) : [];
   addCheck(
-    'production app shell matches current build output',
-    Boolean(localDistIndex) && homePage?.body === localDistIndex,
-    `production=${homePage?.body.length || 0} bytes, local=${localDistIndex.length} bytes`
+    'all production HTML routes match current build output',
+    shellPages.length === htmlRoutes.length && shellPages.every((page) => Boolean(localDistIndex) && page.body === localDistIndex),
+    `${shellPages.length}/${htmlRoutes.length} routes checked`
   );
   addCheck('production app shell references build assets', assetPaths.length > 0, assetPaths.join(', '));
   for (const assetPath of assetPaths) {

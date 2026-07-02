@@ -229,7 +229,7 @@ const sourceAssertions = [
   ['app release admin route exists', 'src/App.tsx', ['AppReleaseManager', 'app-release']],
   ['app release admin menu exists', 'src/components/AdminLayout.tsx', ['/admin/app-release', 'admin_menu.app_release']],
   ['app release admin manages Firestore config', 'src/pages/admin/AppReleaseManager.tsx', ['system_config', 'app_versions', 'android_latest', 'android_apk_url']],
-  ['production smoke verifies current shell and APK hash', 'scripts/smoke-production.mjs', ['localDistIndexPath', 'local build output exists for production shell comparison', 'production app shell matches current build output', 'createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
+  ['production smoke verifies current shell and APK hash', 'scripts/smoke-production.mjs', ['localDistIndexPath', 'local build output exists for production shell comparison', 'shell matches current build output', 'all production HTML routes match current build output', 'createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
   ['production smoke workflow builds current shell first', '.github/workflows/release-verify.yml', ['Build current shell for smoke comparison', 'npm run build', 'npm run smoke:prod']],
   ['manual QA evidence generator exists', 'scripts/create-manual-qa-evidence.mjs', ['manual-qa-evidence-template.md', 'QA_EVIDENCE_DIR', 'docs/qa-evidence', 'Android APK SHA-256']],
   ['manual QA evidence verifier exists', 'scripts/verify-manual-qa-evidence.mjs', ['QA_EVIDENCE_DIR', 'Manual QA evidence generator verified']],
