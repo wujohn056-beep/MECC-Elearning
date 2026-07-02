@@ -1,0 +1,134 @@
+import { existsSync, readFileSync } from 'node:fs';
+
+const evidencePath = process.argv[2];
+
+const fail = (message) => {
+  console.error(message);
+  process.exit(1);
+};
+
+if (!evidencePath) {
+  fail('Usage: node scripts/validate-manual-qa-evidence.mjs <evidence-file.md>');
+}
+
+if (!existsSync(evidencePath)) {
+  fail(`Manual QA evidence file not found: ${evidencePath}`);
+}
+
+const content = readFileSync(evidencePath, 'utf8');
+const errors = [];
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const listValue = (label) => {
+  const match = content.match(new RegExp(`^- ${escapeRegExp(label)}:\\s*(.*)$`, 'm'));
+  return match?.[1]?.trim() || '';
+};
+
+const normalize = (value) => value.replace(/`/g, '').trim().toLowerCase();
+const tableResult = (label) => {
+  const escapedLabel = escapeRegExp(label).replace(/\\`/g, '`');
+  const row = content.match(new RegExp(`^\\|\\s*${escapedLabel}\\s*\\|\\s*([^|]+)\\|`, 'm'));
+  return row?.[1]?.trim() || '';
+};
+
+const requiredFields = [
+  'Release commit',
+  'Production URL',
+  'QA date',
+  'QA owner',
+  'Leader account',
+  'Learner account',
+  'Android device and OS',
+  'Android APK SHA-256',
+  'Sign-off name and time'
+];
+
+for (const field of requiredFields) {
+  if (!listValue(field)) errors.push(`Missing required field: ${field}`);
+}
+
+const productionUrl = listValue('Production URL');
+if (productionUrl && !/^https?:\/\//.test(productionUrl)) {
+  errors.push('Production URL must start with http:// or https://');
+}
+
+const apkHash = listValue('Android APK SHA-256');
+if (apkHash && !/^[a-f0-9]{64}$/i.test(apkHash)) {
+  errors.push('Android APK SHA-256 must be a 64-character hex hash');
+}
+
+const exactPassRows = [
+  '`npm run verify:release`',
+  '`npm run smoke:prod`',
+  'GitHub Actions latest main run',
+  'Production APK hash matches repository APK',
+  'Leader creates a challenge task for the learner',
+  'Learner sees the assigned challenge task',
+  '`Go Learn` opens the challenge learning page',
+  'Challenge does not fall back to the general hub tab',
+  'Task recordings are grouped by category',
+  'Category order follows the configured Learning Hub order',
+  'Partial listening progress survives leaving and reopening',
+  'Reflection draft survives leaving and reopening',
+  'Task completion is visible to learner and leader',
+  'Learner receives in-system notification',
+  'In-system notification opens the challenge learning page',
+  'Android push notification is received, if configured',
+  'Android push tap opens the correct recording/task/campaign page',
+  '`/download` renders iOS and Android options',
+  'Android APK installs successfully',
+  'Android learner login works',
+  'Android challenge task flow matches Web',
+  'Android reflection draft and completion behavior match Web',
+  'App update prompt shows current/latest versions in active language',
+  'Chinese',
+  'English',
+  'Arabic'
+];
+
+for (const row of exactPassRows) {
+  const result = tableResult(row);
+  if (!result) {
+    errors.push(`Missing QA row: ${row}`);
+  } else if (normalize(result) !== 'pass') {
+    errors.push(`QA row must be Pass: ${row} (${result})`);
+  }
+}
+
+const fcmFallbackResult = tableResult('FCM failure fallback still leaves task accessible');
+if (!fcmFallbackResult) {
+  errors.push('Missing QA row: FCM failure fallback still leaves task accessible');
+} else if (!['pass', 'not applicable'].includes(normalize(fcmFallbackResult))) {
+  errors.push(`FCM fallback row must be Pass or Not applicable (${fcmFallbackResult})`);
+}
+
+const fullyVerified = listValue('Fully verified');
+if (fullyVerified !== 'Yes') {
+  errors.push(`Fully verified must be Yes after all required evidence is present (${fullyVerified || 'blank'})`);
+}
+
+const unresolvedPlaceholders = [
+  'Pass / Fail',
+  'Pass / Fail / Not configured',
+  'Pass / Fail / Not applicable',
+  'Yes / No'
+].filter((placeholder) => content.includes(placeholder));
+if (unresolvedPlaceholders.length > 0) {
+  errors.push(`Unresolved placeholders remain: ${unresolvedPlaceholders.join(', ')}`);
+}
+
+const failedRows = content
+  .split('\n')
+  .filter((line) => /^\|/.test(line))
+  .filter((line) => /\|\s*Fail\s*(?:\/|\|)/i.test(line));
+if (failedRows.length > 0) {
+  errors.push(`Fail rows remain: ${failedRows.length}`);
+}
+
+if (errors.length > 0) {
+  console.error(`Manual QA evidence validation failed for ${evidencePath}:`);
+  for (const error of errors) console.error(`- ${error}`);
+  process.exit(1);
+}
+
+console.log(`Manual QA evidence validated: ${evidencePath}`);

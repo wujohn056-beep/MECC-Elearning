@@ -2,6 +2,8 @@
 
 Use this file as the release sign-off record after `npm run verify:release` and
 `npm run smoke:prod` pass. Fill one copy per production release.
+After filling the copy, run `npm run qa:evidence:check -- <path-to-copy>` before
+calling the release fully verified.
 
 ## Release Under Test
 

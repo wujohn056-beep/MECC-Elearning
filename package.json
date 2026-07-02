@@ -11,6 +11,7 @@
     "verify:release": "npm run build && node scripts/verify-release.mjs",
     "smoke:prod": "node scripts/smoke-production.mjs",
     "qa:evidence": "node scripts/create-manual-qa-evidence.mjs",
+    "qa:evidence:check": "node scripts/validate-manual-qa-evidence.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

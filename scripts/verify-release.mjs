@@ -136,6 +136,15 @@ addCheck(
   (manualQaEvidenceCheck.stdout + manualQaEvidenceCheck.stderr).trim()
 );
 
+const manualQaEvidenceValidatorCheck = spawnSync(process.execPath, ['scripts/verify-manual-qa-evidence-validator.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'manual QA evidence validator behavior',
+  manualQaEvidenceValidatorCheck.status === 0,
+  (manualQaEvidenceValidatorCheck.stdout + manualQaEvidenceValidatorCheck.stderr).trim()
+);
+
 const dingtalkPushPayloadsCheck = spawnSync(process.execPath, ['scripts/verify-dingtalk-push-payloads.mjs'], {
   encoding: 'utf8'
 });
@@ -223,7 +232,10 @@ const sourceAssertions = [
   ['production smoke verifies APK hash', 'scripts/smoke-production.mjs', ['createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
   ['manual QA evidence generator exists', 'scripts/create-manual-qa-evidence.mjs', ['manual-qa-evidence-template.md', 'QA_EVIDENCE_DIR', 'docs/qa-evidence', 'Android APK SHA-256']],
   ['manual QA evidence verifier exists', 'scripts/verify-manual-qa-evidence.mjs', ['QA_EVIDENCE_DIR', 'Manual QA evidence generator verified']],
+  ['manual QA evidence validator exists', 'scripts/validate-manual-qa-evidence.mjs', ['Fully verified must be Yes', 'Android push tap opens the correct recording/task/campaign page', 'Manual QA evidence validated']],
+  ['manual QA evidence validator verifier exists', 'scripts/verify-manual-qa-evidence-validator.mjs', ['Manual QA evidence validator verified', 'Expected invalid evidence with a Fail row to be rejected']],
   ['manual QA evidence command exists', 'package.json', ['qa:evidence', 'create-manual-qa-evidence.mjs']],
+  ['manual QA evidence check command exists', 'package.json', ['qa:evidence:check', 'validate-manual-qa-evidence.mjs']],
   ['manual QA evidence stays local', '.gitignore', ['docs/qa-evidence/*.md', '!docs/qa-evidence/README.md']],
   ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
   ['safe native sync script', 'package.json', ['clean-native-download-assets.mjs']]

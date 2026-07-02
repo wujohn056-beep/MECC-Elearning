@@ -61,6 +61,9 @@ mobile device confirm:
 
 Record sign-off evidence in `docs/manual-qa-evidence-template.md`, or run
 `npm run qa:evidence` to create a prefilled file under `docs/qa-evidence/`.
+After the evidence file is filled, run
+`npm run qa:evidence:check -- docs/qa-evidence/<file>.md`. A release should not
+be called fully verified when this evidence check fails.
 
 ## External Release Configuration
 

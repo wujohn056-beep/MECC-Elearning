@@ -7,6 +7,10 @@ and screenshot evidence for release sign-off.
 Run `npm run qa:evidence` to generate a prefilled release evidence file under
 `docs/qa-evidence/`. Generated evidence files are local-only and gitignored by
 default because they may contain real accounts and screenshot notes.
+After filling the file, run
+`npm run qa:evidence:check -- docs/qa-evidence/<file>.md`. The check rejects
+blank required fields, unresolved `Pass / Fail` placeholders, failed rows, and
+missing push/download/trilingual sign-off rows.
 
 ## Required Accounts And Devices
 
@@ -59,6 +63,7 @@ Repeat the learner task page in Chinese, English, and Arabic:
 npm run verify:release
 npm run smoke:prod
 npm run qa:evidence
+npm run qa:evidence:check -- docs/qa-evidence/<file>.md
 git status --short
 ```
 
