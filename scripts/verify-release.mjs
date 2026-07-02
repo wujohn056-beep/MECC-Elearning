@@ -97,6 +97,15 @@ addCheck(
   (learningRoutesCheck.stdout + learningRoutesCheck.stderr).trim()
 );
 
+const appDownloadLinksCheck = spawnSync(process.execPath, ['scripts/verify-app-download-links.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'app download link behavior',
+  appDownloadLinksCheck.status === 0,
+  (appDownloadLinksCheck.stdout + appDownloadLinksCheck.stderr).trim()
+);
+
 const criticalLintFiles = [
   'src/components/AppLayout.tsx',
   'src/components/NotificationBell.tsx',
@@ -109,6 +118,7 @@ const criticalLintFiles = [
   'src/pages/admin/RecordingsManager.tsx',
   'src/pages/admin/ReferralManager.tsx',
   'src/pages/admin/UserManager.tsx',
+  'src/utils/appDownloadLinks.ts',
   'src/utils/appVersion.ts',
   'src/utils/campaignProgress.ts',
   'src/utils/learningRoutes.ts',
@@ -161,10 +171,11 @@ const sourceAssertions = [
   ['task draft autosave', 'src/pages/LearningHub.tsx', ['draftSavedAt']],
   ['effective user id helper', 'src/utils/userIdentity.ts', ['getEffectiveUserId']],
   ['download route is public', 'src/App.tsx', ['path="/download"', 'element={<DownloadPage />}']],
-  ['app download page uses latest APK', 'src/pages/DownloadPage.tsx', ['mecc-latest.apk', 'download_page.android_btn', 'download_page.ios_btn']],
-  ['download page reads configurable app links', 'src/pages/DownloadPage.tsx', ['system_config', 'app_versions', 'ios_testflight_url', 'android_apk_url']],
-  ['native update modal has platform fallbacks', 'src/components/AppLayout.tsx', ['ios_testflight_url', 'android_apk_url', 'mecc-latest.apk']],
-  ['hub update card has platform fallbacks', 'src/pages/LearningHub.tsx', ['ios_testflight_url', 'android_apk_url', 'mecc-latest.apk']],
+  ['app download link resolver', 'src/utils/appDownloadLinks.ts', ['DEFAULT_IOS_TESTFLIGHT_URL', 'DEFAULT_ANDROID_APK_PATH', 'resolveAppDownloadUrl', 'mecc-latest.apk']],
+  ['app download page uses latest APK', 'src/pages/DownloadPage.tsx', ['resolveAppDownloadUrl', 'download_page.android_btn', 'download_page.ios_btn']],
+  ['download page reads configurable app links', 'src/pages/DownloadPage.tsx', ['system_config', 'app_versions', 'resolveAppDownloadUrl']],
+  ['native update modal has platform fallbacks', 'src/components/AppLayout.tsx', ['resolveAppDownloadUrl']],
+  ['hub update card has platform fallbacks', 'src/pages/LearningHub.tsx', ['resolveAppDownloadUrl']],
   ['app version update gate exists', 'src/utils/appVersion.ts', ['CLIENT_APP_VERSIONS', 'isVersionOutdated']],
   ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
   ['safe native sync script', 'package.json', ['clean-native-download-assets.mjs']]

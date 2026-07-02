@@ -6,14 +6,15 @@ import { Smartphone, Download, AlertTriangle, ArrowLeft, ArrowDownToLine, Loader
 import { useNavigate, Navigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { useTranslation } from 'react-i18next';
+import { DEFAULT_IOS_TESTFLIGHT_URL, getDefaultAndroidApkUrl, resolveAppDownloadUrl } from '../utils/appDownloadLinks';
 
 export default function DownloadPage() {
     const { user, profile } = useAuth();
     const navigate = useNavigate();
     const { t } = useTranslation();
     
-    const [testflightUrl, setTestflightUrl] = useState('https://testflight.apple.com/join/xxxxxx');
-    const [apkUrl, setApkUrl] = useState('https://learning.mecloudhub.com/downloads/mecc-latest.apk');
+    const [testflightUrl, setTestflightUrl] = useState(DEFAULT_IOS_TESTFLIGHT_URL);
+    const [apkUrl, setApkUrl] = useState(getDefaultAndroidApkUrl);
     const [iosQrCode, setIosQrCode] = useState('');
     const [androidQrCode, setAndroidQrCode] = useState('');
     const [loading, setLoading] = useState(true);
@@ -28,14 +29,11 @@ export default function DownloadPage() {
                 const docSnap = await getDoc(doc(db, 'system_config', 'app_versions'));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data.ios_testflight_url) setTestflightUrl(data.ios_testflight_url);
-                    if (data.android_apk_url) {
-                        setApkUrl(data.android_apk_url);
-                    } else {
-                        setApkUrl(`${window.location.origin}/downloads/mecc-latest.apk`);
-                    }
+                    setTestflightUrl(resolveAppDownloadUrl('ios', data));
+                    setApkUrl(resolveAppDownloadUrl('android', data));
                 } else {
-                    setApkUrl(`${window.location.origin}/downloads/mecc-latest.apk`);
+                    setTestflightUrl(resolveAppDownloadUrl('ios'));
+                    setApkUrl(resolveAppDownloadUrl('android'));
                 }
             } catch (err) {
                 console.error("Error loading download URLs:", err);

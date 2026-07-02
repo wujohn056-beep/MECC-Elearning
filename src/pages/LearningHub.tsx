@@ -10,6 +10,7 @@ import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersi
 import { getEffectiveUserId } from '../utils/userIdentity';
 import { calculateCampaignProgress, getCampaignRequiredRecordings as resolveCampaignRequiredRecordings } from '../utils/campaignProgress';
 import { getTaskRecordingGroups } from '../utils/taskRecordingGroups';
+import { resolveAppDownloadUrl } from '../utils/appDownloadLinks';
 
 interface Recording {
     id: string;
@@ -4766,10 +4767,7 @@ export default function LearningHub() {
                                 )}
                             </div>
                             <a
-                                href={userPlatform === 'ios' 
-                                    ? (appUpdateConfig?.ios_testflight_url || 'https://testflight.apple.com/join/s2t21vU5') 
-                                    : (appUpdateConfig?.android_apk_url || `${window.location.origin}/downloads/mecc-latest.apk`)
-                                }
+                                href={resolveAppDownloadUrl(userPlatform, appUpdateConfig)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-red-500/10 hover:brightness-110 active:scale-95 transition-all cursor-pointer border-0 outline-none"

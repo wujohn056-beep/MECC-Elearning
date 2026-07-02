@@ -12,6 +12,7 @@ import UserGuideModal from './UserGuideModal';
 import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersion';
 import { getEffectiveUserId } from '../utils/userIdentity';
 import { buildLearningRoute } from '../utils/learningRoutes';
+import { resolveAppDownloadUrl } from '../utils/appDownloadLinks';
 
 const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { t } = useTranslation();
@@ -735,10 +736,7 @@ export default function AppLayout() {
 
                             <div className="flex flex-col gap-2 pt-2">
                                 <a
-                                    href={Capacitor.getPlatform() === 'ios' 
-                                        ? (updateConfig.ios_testflight_url || 'https://testflight.apple.com/join/xxxxxx') 
-                                        : (updateConfig.android_apk_url || `${window.location.origin}/downloads/mecc-latest.apk`)
-                                    }
+                                    href={resolveAppDownloadUrl(Capacitor.getPlatform(), updateConfig)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="w-full py-3 bg-desert-gold text-slate-900 font-extrabold rounded-xl text-sm hover:bg-desert-gold/90 transition-colors shadow-lg shadow-desert-gold/10 flex justify-center items-center gap-1.5 cursor-pointer"
