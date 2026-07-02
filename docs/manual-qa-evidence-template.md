@@ -48,8 +48,10 @@ calling the release fully verified.
 | In-system notification opens the challenge learning page | Pass / Fail | URL/screenshot |
 | DingTalk task message opens the task learning page | Pass / Fail | URL/screenshot showing `taskId` |
 | DingTalk challenge message opens the challenge learning page | Pass / Fail | URL/screenshot showing `campaignLearnId` |
+| Arabic DingTalk task/challenge messages render in Arabic | Pass / Fail | Screenshot showing Arabic notification text |
 | Android push notification is received | Pass / Fail | Device screenshot |
 | Android push tap opens the correct recording/task/campaign page | Pass / Fail | Device screenshot |
+| Arabic Android push notification renders in Arabic | Pass / Fail | Device screenshot showing Arabic push text |
 | FCM failure fallback still leaves task accessible | Pass / Fail / Not applicable | Task list screenshot |
 
 ## Manual Mobile App Evidence
