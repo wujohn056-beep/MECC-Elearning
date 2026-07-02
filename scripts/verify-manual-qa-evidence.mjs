@@ -38,6 +38,13 @@ try {
   assert(content.includes(`- Production URL: ${productionUrl}`), 'Generated evidence must include production URL');
   assert(content.includes(`- Android APK SHA-256: ${apkHash}`), 'Generated evidence must include APK hash');
   assert(content.includes('| Production APK hash matches repository APK | Pass / Fail |'), 'Generated evidence must keep APK hash evidence row');
+  assert(content.includes('| DingTalk task message opens the task learning page | Pass / Fail |'), 'Generated evidence must include DingTalk task deep-link row');
+  assert(content.includes('| DingTalk challenge message opens the challenge learning page | Pass / Fail |'), 'Generated evidence must include DingTalk challenge deep-link row');
+  assert(content.includes('| Material App push notification is received | Pass / Fail |'), 'Generated evidence must include material App push receive row');
+  assert(content.includes('| Material App push opens the recording detail page | Pass / Fail |'), 'Generated evidence must include material App push recording route row');
+  assert(content.includes('| Arabic Android push notification renders in Arabic | Pass / Fail |'), 'Generated evidence must include Arabic Android push row');
+  assert(!content.includes('Pass / Fail / Not configured'), 'Generated evidence must not allow Not configured push placeholders');
+  assert(!content.includes('if configured'), 'Generated evidence must not use optional push language');
   assert(result.stdout.includes('local-only and gitignored'), 'Generator must remind users that evidence is local-only');
 
   console.log('Manual QA evidence generator verified.');
