@@ -6,6 +6,7 @@ import { Bell, Clock, AlertTriangle, CheckCircle, ChevronRight, MessageSquare } 
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
+import { getEffectiveUserId } from '../utils/userIdentity';
 
 interface TaskNotification {
     id: string;
@@ -65,7 +66,7 @@ export default function NotificationBell() {
 
     useEffect(() => {
         if (!user) return;
-        const myUid = profile?.realUid || user.uid;
+        const myUid = getEffectiveUserId(user, profile);
 
         // 1. Listen to learning tasks
         const q1 = query(
@@ -223,7 +224,7 @@ export default function NotificationBell() {
         setIsOpen(false);
         if (!task.read && user) {
             try {
-                const myUid = profile?.realUid || user.uid;
+                const myUid = getEffectiveUserId(user, profile);
                 await updateDoc(doc(db, 'learning_tasks', task.id), {
                     [`assignees.${myUid}.read`]: true
                 });
