@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const workflowPath = '.github/workflows/release-verify.yml';
 const source = readFileSync(workflowPath, 'utf8');
+const packageSource = readFileSync('package.json', 'utf8');
 const lines = source.split('\n');
 const errors = [];
 
@@ -37,12 +38,13 @@ requireContains('release verification command', 'run: npm run verify:release');
 requireContains('production smoke job', 'smoke-production:');
 requireContains('production smoke depends on release verification', 'needs: verify-release');
 requireContains('production smoke skips pull requests', "if: github.event_name != 'pull_request'");
-requireContains('production smoke builds shell before smoke', 'Build current shell for smoke comparison');
-requireContains('production smoke build command', 'run: npm run build');
 requireContains('production smoke waits for deploy', 'Wait for production deploy');
 requireContains('production smoke retry count env', 'PROD_SMOKE_RETRIES');
 requireContains('production smoke retry delay env', 'PROD_SMOKE_RETRY_DELAY_MS');
 requireContains('production smoke command', 'run: npm run smoke:prod');
+if (!packageSource.includes('"smoke:prod": "npm run build && node scripts/smoke-production.mjs"')) {
+  errors.push('production smoke command must build current shell before comparing production');
+}
 
 if (envNumber('PROD_SMOKE_RETRIES') < 8) {
   errors.push(`production smoke retry count is too low: ${envNumber('PROD_SMOKE_RETRIES') || 'missing'}`);
@@ -53,8 +55,7 @@ if (envNumber('PROD_SMOKE_RETRY_DELAY_MS') < 20000) {
 
 requireOrder('release job must run before production smoke job', 'verify-release:', 'smoke-production:');
 requireOrder('release command must run before production smoke job', 'run: npm run verify:release', 'smoke-production:');
-requireOrder('production smoke must install dependencies before build', 'run: npm ci', 'Build current shell for smoke comparison');
-requireOrder('production smoke must build before waiting for deploy', 'Build current shell for smoke comparison', 'Wait for production deploy');
+requireOrder('production smoke must install dependencies before waiting', 'run: npm ci', 'Wait for production deploy');
 requireOrder('production smoke retry env must be set before smoke command', 'PROD_SMOKE_RETRIES', 'run: npm run smoke:prod');
 requireOrder('production smoke must wait before smoke command', 'Wait for production deploy', 'run: npm run smoke:prod');
 
