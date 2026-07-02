@@ -74,6 +74,7 @@ const criticalLintFiles = [
   'src/components/AppLayout.tsx',
   'src/components/NotificationBell.tsx',
   'src/contexts/AuthContext.tsx',
+  'src/hooks/usePushNotifications.ts',
   'src/pages/Account.tsx',
   'src/pages/LearningHub.tsx',
   'src/pages/TeamTasks.tsx',
@@ -134,6 +135,16 @@ for (const [name, path, needles] of sourceAssertions) {
   const content = existsSync(path) ? readFileSync(path, 'utf8') : '';
   const missingNeedles = needles.filter((needle) => !content.includes(needle));
   addCheck(name, missingNeedles.length === 0, missingNeedles.length > 0 ? `${path} missing ${missingNeedles.join(', ')}` : path);
+}
+
+const forbiddenSourceAssertions = [
+  ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']]
+];
+
+for (const [name, path, needles] of forbiddenSourceAssertions) {
+  const content = existsSync(path) ? readFileSync(path, 'utf8') : '';
+  const foundNeedles = needles.filter((needle) => content.includes(needle));
+  addCheck(name, foundNeedles.length === 0, foundNeedles.length > 0 ? `${path} still contains ${foundNeedles.join(', ')}` : path);
 }
 
 let failed = 0;

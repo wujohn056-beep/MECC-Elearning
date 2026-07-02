@@ -57,11 +57,6 @@ export const usePushNotifications = () => {
         console.log('[Push] Notification received in foreground:', notification);
       });
 
-      // 7. Handle notification action clicked
-      PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-        console.log('[Push] Notification action performed:', notification);
-      });
-
     } catch (error) {
       console.error("[Push] Error during push notification registration:", error);
     }
