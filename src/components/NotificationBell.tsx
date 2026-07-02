@@ -13,7 +13,7 @@ interface TaskNotification {
     assignerName: string;
     deadline: any;
     read: boolean;
-    status: 'pending' | 'completed';
+    status: 'pending' | 'in_progress' | 'completed';
     isUrgent: boolean; // < 3 hours
     isCritical: boolean; // < 1 hour
     createdAt?: Date;
@@ -205,11 +205,11 @@ export default function NotificationBell() {
         });
     }, [tasks, comments, t]);
 
-    const unreadTasksCount = tasks.filter(t => !t.read && t.status === 'pending').length;
+    const unreadTasksCount = tasks.filter(t => !t.read && t.status !== 'completed').length;
     const unreadCommentsCount = comments.filter(c => !c.read).length;
     
     const unreadCount = unreadTasksCount + unreadCommentsCount;
-    const pendingCount = tasks.filter(t => t.status === 'pending').length + unreadCommentsCount;
+    const pendingCount = tasks.filter(t => t.status !== 'completed').length + unreadCommentsCount;
 
     useEffect(() => {
         if (unreadTasksCount > 0 && !hasSeenGlobalModal) {
@@ -229,7 +229,7 @@ export default function NotificationBell() {
                 console.error("Error marking task as read", error);
             }
         }
-        if (task.status === 'pending') {
+        if (task.status !== 'completed') {
             navigate(`/hub?taskId=${task.id}`);
         }
     };

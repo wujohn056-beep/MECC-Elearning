@@ -116,6 +116,7 @@ const sourceAssertions = [
   ['task category grouping follows configured category order', 'src/pages/LearningHub.tsx', ['taskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
   ['campaign notification route', 'src/components/NotificationBell.tsx', ['campaignLearnId']],
+  ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ["status !== 'completed'", 'navigate(`/hub?taskId=${task.id}`)']],
   ['native campaign push route', 'src/components/AppLayout.tsx', ['campaignLearnId']],
   ['campaign push payload includes campaign id', 'src/pages/admin/CampaignManager.tsx', ["action: 'notifyCampaign'", 'campaignId: campaignId']],
   ['campaign push function forwards campaign id', 'netlify/functions/dingtalk.js', ['notifyCampaign', 'campaignId', "type: 'campaign'"]],
