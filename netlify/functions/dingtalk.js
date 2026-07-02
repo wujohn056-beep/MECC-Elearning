@@ -231,6 +231,74 @@ function isUserChineseSpeaker(userData) {
     return isSdOrAbove || isWuchuan;
 }
 
+function getUserNotificationLanguage(userData) {
+    if (isUserChineseSpeaker(userData)) return 'zh';
+
+    const explicitLanguage = String(
+        userData?.preferredLanguage ||
+        userData?.language ||
+        userData?.lang ||
+        userData?.locale ||
+        userData?.uiLanguage ||
+        ''
+    ).trim().toLowerCase();
+
+    if (
+        explicitLanguage.startsWith('ar') ||
+        explicitLanguage.includes('arabic') ||
+        explicitLanguage.includes('العربية')
+    ) {
+        return 'ar';
+    }
+
+    return 'en';
+}
+
+function getMockNotificationLanguage(id) {
+    const normalizedId = String(id || '').trim().toLowerCase();
+    if (normalizedId.includes('wuchuan')) return 'zh';
+    if (normalizedId.includes('arabic') || normalizedId.includes('learner-ar') || normalizedId.endsWith('-ar')) return 'ar';
+    return 'en';
+}
+
+function getTaskFcmNotification(lang, { title, assignerName }) {
+    if (lang === 'ar') {
+        return {
+            title: '📋 مهمة تعلم جديدة',
+            body: `${title} (المُكلِّف: ${assignerName || 'المدرب'})`
+        };
+    }
+    if (lang === 'en') {
+        return {
+            title: '📋 New Learning Task',
+            body: `${title} (Assigned by: ${assignerName || 'Coach'})`
+        };
+    }
+    return {
+        title: '📋 收到新的学习任务',
+        body: `${title} (指派人: ${assignerName || '导师'})`
+    };
+}
+
+function getCampaignFcmNotification(lang, { title, creatorName }) {
+    if (lang === 'ar') {
+        return {
+            title: '🏆 تحدي شهادة جديد',
+            body: `${title} (المُكلِّف: ${creatorName || 'القائد'})`
+        };
+    }
+    if (lang === 'en') {
+        return {
+            title: '🏆 New Certificate Challenge',
+            body: `${title} (Assigned by: ${creatorName || 'Leader'})`
+        };
+    }
+    return {
+        title: '🏆 收到新的专属证书挑战',
+        body: `${title} (指派人: ${creatorName || '主管'})`
+    };
+}
+
 async function searchDingTalkUser(accessToken, queryWord, logs) {
     try {
         const res = await fetch(`https://api.dingtalk.com/v1.0/contact/users/search`, {
@@ -807,7 +875,9 @@ export const handler = async (event, context) => {
 
             const recipientsZh = [];
             const recipientsEn = [];
+            const recipientsAr = [];
             const fcmTokens = [];
+            const fcmTokensByLang = { zh: [], en: [], ar: [] };
             const fcmTokenOwners = new Map();
             let dbError = null;
             const queryLogs = [];
@@ -820,16 +890,18 @@ export const handler = async (event, context) => {
                         const doc = await db.collection('users').doc(uid).get();
                         if (doc.exists) {
                             const data = doc.data();
+                            const notificationLang = getUserNotificationLanguage(data);
                             
                             // Collect DingTalk User ID
                             if (data.dingtalkUserId) {
-                                const isEnglishSpeaker = !isUserChineseSpeaker(data);
-                                if (isEnglishSpeaker) {
+                                if (notificationLang === 'ar') {
+                                    recipientsAr.push(data.dingtalkUserId);
+                                } else if (notificationLang === 'en') {
                                     recipientsEn.push(data.dingtalkUserId);
                                 } else {
                                     recipientsZh.push(data.dingtalkUserId);
                                 }
-                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId, lang: isEnglishSpeaker ? 'en' : 'zh' });
+                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId, lang: notificationLang });
                             } else {
                                 queryLogs.push({ uid, found: true, dingtalkUserId: null, crmId: data.crmId, msg: "dingtalkUserId is missing in database profile" });
                             }
@@ -839,6 +911,7 @@ export const handler = async (event, context) => {
                                 data.deviceTokens.forEach(t => {
                                     if (t && typeof t === 'string') {
                                         fcmTokens.push(t);
+                                        fcmTokensByLang[notificationLang].push(t);
                                         fcmTokenOwners.set(t, uid);
                                     }
                                 });
@@ -855,18 +928,26 @@ export const handler = async (event, context) => {
                 // Mock Recipients: wuchuan receives Chinese, others English
                 assigneeIds.forEach(id => {
                     const mockId = `dd_mock_id_${id}`;
-                    if (id.toLowerCase().includes('wuchuan')) {
+                    const mockLang = getMockNotificationLanguage(id);
+                    if (mockLang === 'zh') {
                         recipientsZh.push(mockId);
+                    } else if (mockLang === 'ar') {
+                        recipientsAr.push(mockId);
                     } else {
                         recipientsEn.push(mockId);
                     }
-                    queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, msg: "mocked" });
+                    const mockToken = `mock_fcm_token_${mockLang}_${id}`;
+                    fcmTokens.push(mockToken);
+                    fcmTokensByLang[mockLang].push(mockToken);
+                    queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, lang: mockLang, msg: "mocked" });
                 });
-                fcmTokens.push('mock_fcm_token_1', 'mock_fcm_token_2');
             }
 
             const getMsgMarkdown = (lang) => {
                 const dingTalkLearningLink = buildDingTalkLearningLink({ type: 'task', taskId });
+                if (lang === 'ar') {
+                    return `### 📚 **ME Cloud Academy**\n**تم تعيين مهمة تعلم جديدة**\n\n---\n\n**📋 تفاصيل المهمة:**\n* 🏷️ **اسم المهمة:** ${title}\n* 📅 **وقت البدء:** ${finalStartTime}\n* ⏰ **الموعد النهائي:** ${deadline || '-'}\n* 👤 **المُكلِّف:** ${assignerName}\n\n---\n\n> 💡 *مراجعة تسجيلات المبيعات تساعدك على تطوير مهاراتك المهنية. يرجى الاستماع إلى التسجيلات المطلوبة وإرسال انعكاساتك قبل الموعد النهائي.*\n\n[👉 ابدأ التعلم الآن](${dingTalkLearningLink})`;
+                }
                 if (lang === 'en') {
                     return `### 📚 **ME Cloud Academy**\n**New Learning Task Assigned**\n\n---\n\n**📋 Task Details:**\n* 🏷️ **Task Name:** ${title}\n* 📅 **Start Time:** ${finalStartTime}\n* ⏰ **Deadline:** ${deadline || '-'}\n* 👤 **Assigner:** ${assignerName}\n\n---\n\n> 💡 *Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline.*\n\n[👉 Click Here to Start Learning](${dingTalkLearningLink})`;
                 }
@@ -874,6 +955,7 @@ export const handler = async (event, context) => {
             };
 
             const getMsgTitle = (lang) => {
+                if (lang === 'ar') return "📚 ME Cloud Academy - مهمة تعلم جديدة";
                 return lang === 'en' ? "📚 ME Cloud Academy - New Task" : "📚 ME 云学堂 - 新学习任务指派";
             };
 
@@ -882,7 +964,7 @@ export const handler = async (event, context) => {
             let dingtalkApiResponse = [];
             let errorMessage = null;
 
-            if (!isMockDingTalk && agentId && (recipientsZh.length > 0 || recipientsEn.length > 0)) {
+            if (!isMockDingTalk && agentId && (recipientsZh.length > 0 || recipientsEn.length > 0 || recipientsAr.length > 0)) {
                 try {
                     // Get Token
                     const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
@@ -921,12 +1003,14 @@ export const handler = async (event, context) => {
 
                         const enResult = await sendNotification(recipientsEn, 'en');
                         const zhResult = await sendNotification(recipientsZh, 'zh');
+                        const arResult = await sendNotification(recipientsAr, 'ar');
                         
-                        sentSuccess = enResult.success && zhResult.success;
+                        sentSuccess = enResult.success && zhResult.success && arResult.success;
                         if (!sentSuccess) {
                             errorMessage = [
                                 !enResult.success ? `English Push: ${enResult.error}` : null,
-                                !zhResult.success ? `Chinese Push: ${zhResult.error}` : null
+                                !zhResult.success ? `Chinese Push: ${zhResult.error}` : null,
+                                !arResult.success ? `Arabic Push: ${arResult.error}` : null
                             ].filter(Boolean).join(" | ");
                         }
                     } else {
@@ -944,8 +1028,10 @@ export const handler = async (event, context) => {
                     mockPayload = {
                         recipientsZh,
                         recipientsEn,
+                        recipientsAr,
                         markdownZh: getMsgMarkdown('zh'),
                         markdownEn: getMsgMarkdown('en'),
+                        markdownAr: getMsgMarkdown('ar'),
                         note: "System is running in Mock Mode. Message simulated successfully.",
                         isMockDingTalk,
                         hasAgentId: !!agentId
@@ -953,7 +1039,7 @@ export const handler = async (event, context) => {
                     console.log("[Mock Notification sent]", mockPayload);
                 } else if (!agentId) {
                     errorMessage = "DingTalk Agent ID (DINGTALK_AGENT_ID) is not configured in Netlify environment variables.";
-                } else if (recipientsZh.length === 0 && recipientsEn.length === 0) {
+                } else if (recipientsZh.length === 0 && recipientsEn.length === 0 && recipientsAr.length === 0) {
                     errorMessage = "未找到任何匹配且关联了钉钉账号的指派学员。请确保目标学员在用户管理中已同步钉钉，或管理员已手动绑定其工号。 / No matched assignees with bound DingTalk accounts found. Please ensure target users have synced their DingTalk profiles or their UserID is manually bound.";
                 }
             }
@@ -972,42 +1058,51 @@ export const handler = async (event, context) => {
                 if (!isMockFirebase) {
                     try {
                         const db = getFirestoreDb();
-                        const fcmPayload = {
-                            notification: {
-                                title: `📋 收到新的学习任务`,
-                                body: `${title} (指派人: ${assignerName || '导师'})`
-                            },
-                            data: {
-                                title: title,
-                                type: 'task',
-                                deadline: deadline || '',
-                                assignerName: assignerName || '',
-                                taskId: taskId || ''
-                            },
-                            apns: {
-                                payload: {
-                                    aps: {
-                                        sound: 'default',
-                                        badge: 1
+                        const fcmResults = [];
+
+                        for (const lang of ['zh', 'en', 'ar']) {
+                            const langTokens = Array.from(new Set(fcmTokensByLang[lang]));
+                            if (langTokens.length === 0) continue;
+                            const taskFcmCopy = getTaskFcmNotification(lang, { title, assignerName });
+                            const fcmPayload = {
+                                notification: {
+                                    title: taskFcmCopy.title,
+                                    body: taskFcmCopy.body
+                                },
+                                data: {
+                                    title: title,
+                                    type: 'task',
+                                    deadline: deadline || '',
+                                    assignerName: assignerName || '',
+                                    taskId: taskId || ''
+                                },
+                                apns: {
+                                    payload: {
+                                        aps: {
+                                            sound: 'default',
+                                            badge: 1
+                                        }
                                     }
                                 }
-                            }
-                        };
+                            };
 
-                        const fcmResult = await sendFcmWithDiagnostics({
-                            payload: fcmPayload,
-                            tokens: uniqueFcmTokens,
-                            logPrefix: 'FCM Task Push',
-                            db,
-                            tokenOwners: fcmTokenOwners
-                        });
-                        fcmSentSuccess = fcmResult.success;
-                        fcmError = fcmResult.error;
-                        fcmSuccessCount = fcmResult.successCount;
-                        fcmFailureCount = fcmResult.failureCount;
-                        fcmInvalidTokensRemoved = fcmResult.invalidTokensRemoved;
-                        fcmCleanupLogs = fcmResult.cleanupLogs;
-                        fcmFailedTokenDetails = fcmResult.failedTokenDetails;
+                            const fcmResult = await sendFcmWithDiagnostics({
+                                payload: fcmPayload,
+                                tokens: langTokens,
+                                logPrefix: `FCM Task Push ${lang.toUpperCase()}`,
+                                db,
+                                tokenOwners: fcmTokenOwners
+                            });
+                            fcmResults.push({ lang, ...fcmResult });
+                        }
+
+                        fcmSentSuccess = fcmResults.some(result => result.success);
+                        fcmError = fcmResults.map(result => result.error).filter(Boolean).join(' | ') || null;
+                        fcmSuccessCount = fcmResults.reduce((sum, result) => sum + result.successCount, 0);
+                        fcmFailureCount = fcmResults.reduce((sum, result) => sum + result.failureCount, 0);
+                        fcmInvalidTokensRemoved = fcmResults.reduce((sum, result) => sum + result.invalidTokensRemoved, 0);
+                        fcmCleanupLogs = fcmResults.flatMap(result => result.cleanupLogs || []);
+                        fcmFailedTokenDetails = fcmResults.flatMap(result => result.failedTokenDetails || []);
                     } catch (fcmErr) {
                         console.error("FCM task push error:", fcmErr);
                         fcmError = fcmErr.message;
@@ -1017,8 +1112,13 @@ export const handler = async (event, context) => {
                     if (!mockPayload) mockPayload = {};
                     mockPayload.fcm = {
                         tokens: uniqueFcmTokens,
-                        title: `📋 收到新的学习任务`,
-                        body: `${title} (指派人: ${assignerName || '导师'})`,
+                        localized: {
+                            zh: getTaskFcmNotification('zh', { title, assignerName }),
+                            en: getTaskFcmNotification('en', { title, assignerName }),
+                            ar: getTaskFcmNotification('ar', { title, assignerName })
+                        },
+                        title: getTaskFcmNotification('zh', { title, assignerName }).title,
+                        body: getTaskFcmNotification('zh', { title, assignerName }).body,
                         data: {
                             title: title,
                             type: 'task',
@@ -1039,6 +1139,7 @@ export const handler = async (event, context) => {
                     error: errorMessage,
                     recipientsZhCount: recipientsZh.length,
                     recipientsEnCount: recipientsEn.length,
+                    recipientsArCount: recipientsAr.length,
                     mockPayload: mockPayload,
                     dbError: dbError,
                     queryLogs: queryLogs,
@@ -1070,7 +1171,9 @@ export const handler = async (event, context) => {
 
             const recipientsZh = [];
             const recipientsEn = [];
+            const recipientsAr = [];
             const fcmTokens = [];
+            const fcmTokensByLang = { zh: [], en: [], ar: [] };
             const fcmTokenOwners = new Map();
             let dbError = null;
             const queryLogs = [];
@@ -1083,16 +1186,18 @@ export const handler = async (event, context) => {
                         const doc = await db.collection('users').doc(uid).get();
                         if (doc.exists) {
                             const data = doc.data();
+                            const notificationLang = getUserNotificationLanguage(data);
                             
                             // Collect DingTalk User ID
                             if (data.dingtalkUserId) {
-                                const isEnglishSpeaker = !isUserChineseSpeaker(data);
-                                if (isEnglishSpeaker) {
+                                if (notificationLang === 'ar') {
+                                    recipientsAr.push(data.dingtalkUserId);
+                                } else if (notificationLang === 'en') {
                                     recipientsEn.push(data.dingtalkUserId);
                                 } else {
                                     recipientsZh.push(data.dingtalkUserId);
                                 }
-                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId, lang: isEnglishSpeaker ? 'en' : 'zh' });
+                                queryLogs.push({ uid, found: true, dingtalkUserId: data.dingtalkUserId, crmId: data.crmId, lang: notificationLang });
                             } else {
                                 queryLogs.push({ uid, found: true, dingtalkUserId: null, crmId: data.crmId, msg: "dingtalkUserId is missing in database profile" });
                             }
@@ -1102,6 +1207,7 @@ export const handler = async (event, context) => {
                                 data.deviceTokens.forEach(t => {
                                     if (t && typeof t === 'string') {
                                         fcmTokens.push(t);
+                                        fcmTokensByLang[notificationLang].push(t);
                                         fcmTokenOwners.set(t, uid);
                                     }
                                 });
@@ -1118,18 +1224,26 @@ export const handler = async (event, context) => {
                 // Mock Recipients
                 assigneeIds.forEach(id => {
                     const mockId = `dd_mock_id_${id}`;
-                    if (id.toLowerCase().includes('wuchuan')) {
+                    const mockLang = getMockNotificationLanguage(id);
+                    if (mockLang === 'zh') {
                         recipientsZh.push(mockId);
+                    } else if (mockLang === 'ar') {
+                        recipientsAr.push(mockId);
                     } else {
                         recipientsEn.push(mockId);
                     }
-                    queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, msg: "mocked" });
+                    const mockToken = `mock_fcm_token_${mockLang}_${id}`;
+                    fcmTokens.push(mockToken);
+                    fcmTokensByLang[mockLang].push(mockToken);
+                    queryLogs.push({ uid: id, found: true, dingtalkUserId: mockId, lang: mockLang, msg: "mocked" });
                 });
-                fcmTokens.push('mock_fcm_token_1', 'mock_fcm_token_2');
             }
 
             const getMsgMarkdown = (lang) => {
                 const dingTalkCampaignLink = buildDingTalkLearningLink({ type: 'campaign', campaignId });
+                if (lang === 'ar') {
+                    return `### 🏆 **ME Cloud Academy**\n**تم تعيين تحدي شهادة جديد**\n\n---\n\n**📋 تفاصيل التحدي:**\n* 🏷️ **عنوان التحدي:** ${title}\n* 🎖️ **وسام الهدف:** ${bannerTitle}\n* ⏰ **الموعد النهائي:** ${endDate || '-'}\n* 👤 **القائد:** ${creatorName}\n\n---\n\n> 💡 *بعد إكمال ساعات التعلم أو المهام المطلوبة، ستحصل على شهادة إنجاز إلكترونية رسمية. واصل التقدم!*\n\n[👉 ابدأ التحدي الآن](${dingTalkCampaignLink})`;
+                }
                 if (lang === 'en') {
                     return `### 🏆 **ME Cloud Academy**\n**New Certificate Challenge Assigned**\n\n---\n\n**📋 Challenge Details:**\n* 🏷️ **Challenge Title:** ${title}\n* 🎖️ **Target Honor:** ${bannerTitle}\n* ⏰ **Deadline:** ${endDate || '-'}\n* 👤 **Manager:** ${creatorName}\n\n---\n\n> 💡 *After completing the required learning hours or tasks, you will unlock an official electronic certificate of achievement! Keep up the great work!*\n\n[👉 Click Here to Start Challenge](${dingTalkCampaignLink})`;
                 }
@@ -1137,6 +1251,7 @@ export const handler = async (event, context) => {
             };
 
             const getMsgTitle = (lang) => {
+                if (lang === 'ar') return "🏆 ME Cloud Academy - تحدي شهادة جديد";
                 return lang === 'en' ? "🏆 ME Cloud Academy - New Challenge" : "🏆 ME 云学堂 - 专属证书挑战指派";
             };
 
@@ -1145,7 +1260,7 @@ export const handler = async (event, context) => {
             let dingtalkApiResponse = [];
             let errorMessage = null;
 
-            if (!isMockDingTalk && agentId && (recipientsZh.length > 0 || recipientsEn.length > 0)) {
+            if (!isMockDingTalk && agentId && (recipientsZh.length > 0 || recipientsEn.length > 0 || recipientsAr.length > 0)) {
                 try {
                     // Get Token
                     const tokenRes = await fetch(`https://oapi.dingtalk.com/gettoken?appkey=${appKey.trim()}&appsecret=${appSecret.trim()}`);
@@ -1184,12 +1299,14 @@ export const handler = async (event, context) => {
 
                         const enResult = await sendNotification(recipientsEn, 'en');
                         const zhResult = await sendNotification(recipientsZh, 'zh');
+                        const arResult = await sendNotification(recipientsAr, 'ar');
                         
-                        sentSuccess = enResult.success && zhResult.success;
+                        sentSuccess = enResult.success && zhResult.success && arResult.success;
                         if (!sentSuccess) {
                             errorMessage = [
                                 !enResult.success ? `English Push: ${enResult.error}` : null,
-                                !zhResult.success ? `Chinese Push: ${zhResult.error}` : null
+                                !zhResult.success ? `Chinese Push: ${zhResult.error}` : null,
+                                !arResult.success ? `Arabic Push: ${arResult.error}` : null
                             ].filter(Boolean).join(" | ");
                         }
                     } else {
@@ -1207,8 +1324,10 @@ export const handler = async (event, context) => {
                     mockPayload = {
                         recipientsZh,
                         recipientsEn,
+                        recipientsAr,
                         markdownZh: getMsgMarkdown('zh'),
                         markdownEn: getMsgMarkdown('en'),
+                        markdownAr: getMsgMarkdown('ar'),
                         note: "System is running in Mock Mode. Message simulated successfully.",
                         isMockDingTalk,
                         hasAgentId: !!agentId
@@ -1216,7 +1335,7 @@ export const handler = async (event, context) => {
                     console.log("[Mock Notification sent]", mockPayload);
                 } else if (!agentId) {
                     errorMessage = "DingTalk Agent ID (DINGTALK_AGENT_ID) is not configured in Netlify environment variables.";
-                } else if (recipientsZh.length === 0 && recipientsEn.length === 0) {
+                } else if (recipientsZh.length === 0 && recipientsEn.length === 0 && recipientsAr.length === 0) {
                     errorMessage = "No matched assignees with bound DingTalk accounts found.";
                 }
             }
@@ -1235,43 +1354,52 @@ export const handler = async (event, context) => {
                 if (!isMockFirebase) {
                     try {
                         const db = getFirestoreDb();
-                        const fcmPayload = {
-                            notification: {
-                                title: `🏆 收到新的专属证书挑战`,
-                                body: `${title} (指派人: ${creatorName || '主管'})`
-                            },
-                            data: {
-                                title: title,
-                                type: 'campaign',
-                                campaignId: campaignId || '',
-                                bannerTitle: bannerTitle || '',
-                                creatorName: creatorName || '',
-                                endDate: endDate || ''
-                            },
-                            apns: {
-                                payload: {
-                                    aps: {
-                                        sound: 'default',
-                                        badge: 1
+                        const fcmResults = [];
+
+                        for (const lang of ['zh', 'en', 'ar']) {
+                            const langTokens = Array.from(new Set(fcmTokensByLang[lang]));
+                            if (langTokens.length === 0) continue;
+                            const campaignFcmCopy = getCampaignFcmNotification(lang, { title, creatorName });
+                            const fcmPayload = {
+                                notification: {
+                                    title: campaignFcmCopy.title,
+                                    body: campaignFcmCopy.body
+                                },
+                                data: {
+                                    title: title,
+                                    type: 'campaign',
+                                    campaignId: campaignId || '',
+                                    bannerTitle: bannerTitle || '',
+                                    creatorName: creatorName || '',
+                                    endDate: endDate || ''
+                                },
+                                apns: {
+                                    payload: {
+                                        aps: {
+                                            sound: 'default',
+                                            badge: 1
+                                        }
                                     }
                                 }
-                            }
-                        };
+                            };
 
-                        const fcmResult = await sendFcmWithDiagnostics({
-                            payload: fcmPayload,
-                            tokens: uniqueFcmTokens,
-                            logPrefix: 'FCM Campaign Push',
-                            db,
-                            tokenOwners: fcmTokenOwners
-                        });
-                        fcmSentSuccess = fcmResult.success;
-                        fcmError = fcmResult.error;
-                        fcmSuccessCount = fcmResult.successCount;
-                        fcmFailureCount = fcmResult.failureCount;
-                        fcmInvalidTokensRemoved = fcmResult.invalidTokensRemoved;
-                        fcmCleanupLogs = fcmResult.cleanupLogs;
-                        fcmFailedTokenDetails = fcmResult.failedTokenDetails;
+                            const fcmResult = await sendFcmWithDiagnostics({
+                                payload: fcmPayload,
+                                tokens: langTokens,
+                                logPrefix: `FCM Campaign Push ${lang.toUpperCase()}`,
+                                db,
+                                tokenOwners: fcmTokenOwners
+                            });
+                            fcmResults.push({ lang, ...fcmResult });
+                        }
+
+                        fcmSentSuccess = fcmResults.some(result => result.success);
+                        fcmError = fcmResults.map(result => result.error).filter(Boolean).join(' | ') || null;
+                        fcmSuccessCount = fcmResults.reduce((sum, result) => sum + result.successCount, 0);
+                        fcmFailureCount = fcmResults.reduce((sum, result) => sum + result.failureCount, 0);
+                        fcmInvalidTokensRemoved = fcmResults.reduce((sum, result) => sum + result.invalidTokensRemoved, 0);
+                        fcmCleanupLogs = fcmResults.flatMap(result => result.cleanupLogs || []);
+                        fcmFailedTokenDetails = fcmResults.flatMap(result => result.failedTokenDetails || []);
                     } catch (fcmErr) {
                         console.error("FCM campaign push error:", fcmErr);
                         fcmError = fcmErr.message;
@@ -1281,8 +1409,13 @@ export const handler = async (event, context) => {
                     if (!mockPayload) mockPayload = {};
                     mockPayload.fcm = {
                         tokens: uniqueFcmTokens,
-                        title: `🏆 收到新的专属证书挑战`,
-                        body: `${title} (指派人: ${creatorName || '主管'})`,
+                        localized: {
+                            zh: getCampaignFcmNotification('zh', { title, creatorName }),
+                            en: getCampaignFcmNotification('en', { title, creatorName }),
+                            ar: getCampaignFcmNotification('ar', { title, creatorName })
+                        },
+                        title: getCampaignFcmNotification('zh', { title, creatorName }).title,
+                        body: getCampaignFcmNotification('zh', { title, creatorName }).body,
                         data: {
                             title: title,
                             type: 'campaign',
@@ -1304,6 +1437,7 @@ export const handler = async (event, context) => {
                     error: errorMessage,
                     recipientsZhCount: recipientsZh.length,
                     recipientsEnCount: recipientsEn.length,
+                    recipientsArCount: recipientsAr.length,
                     mockPayload: mockPayload,
                     dbError: dbError,
                     queryLogs: queryLogs,

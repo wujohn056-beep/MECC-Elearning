@@ -27,7 +27,7 @@ const task = await invoke({
   action: 'notifyTask',
   title: 'Mock Task',
   assignerName: 'Manager',
-  assigneeIds: ['learner-one'],
+  assigneeIds: ['learner-one', 'learner-ar'],
   taskId: 'task-123',
   deadline: '2026-07-03 10:00'
 });
@@ -36,8 +36,12 @@ assert(task.isMockDingTalk === true, 'Task verification must run in mock DingTal
 assert(task.isMockFirebase === true, 'Task verification must run in mock Firebase mode');
 assert(task.mockPayload?.markdownEn?.includes('taskId%3Dtask-123'), 'Task DingTalk markdown must deep-link to task learning page');
 assert(task.mockPayload?.markdownZh?.includes('taskId%3Dtask-123'), 'Task Chinese DingTalk markdown must deep-link to task learning page');
+assert(task.mockPayload?.markdownAr?.includes('taskId%3Dtask-123'), 'Task Arabic DingTalk markdown must deep-link to task learning page');
 assert(extractLearningUrl(task.mockPayload?.markdownEn) === 'https://learning.mecloudhub.com/hub?taskId=task-123', 'Task English DingTalk link must resolve exactly to the task learning page');
 assert(extractLearningUrl(task.mockPayload?.markdownZh) === 'https://learning.mecloudhub.com/hub?taskId=task-123', 'Task Chinese DingTalk link must resolve exactly to the task learning page');
+assert(extractLearningUrl(task.mockPayload?.markdownAr) === 'https://learning.mecloudhub.com/hub?taskId=task-123', 'Task Arabic DingTalk link must resolve exactly to the task learning page');
+assert(task.recipientsArCount === 1, 'Task mock verification must route Arabic learners to Arabic DingTalk recipients');
+assert(task.mockPayload?.fcm?.localized?.ar?.title === '📋 مهمة تعلم جديدة', 'Task FCM payload must include Arabic title copy');
 assert(task.mockPayload?.fcm?.data?.type === 'task', 'Task FCM payload must include type=task');
 assert(task.mockPayload?.fcm?.data?.taskId === 'task-123', 'Task FCM payload must include taskId');
 
@@ -46,7 +50,7 @@ const campaign = await invoke({
   title: 'Mock Challenge',
   bannerTitle: 'Certificate',
   creatorName: 'Leader',
-  assigneeIds: ['learner-one'],
+  assigneeIds: ['learner-one', 'learner-ar'],
   campaignId: 'campaign-456',
   endDate: '2026-07-04 10:00'
 });
@@ -55,8 +59,12 @@ assert(campaign.isMockDingTalk === true, 'Campaign verification must run in mock
 assert(campaign.isMockFirebase === true, 'Campaign verification must run in mock Firebase mode');
 assert(campaign.mockPayload?.markdownEn?.includes('campaignLearnId%3Dcampaign-456'), 'Campaign DingTalk markdown must deep-link to campaign learning page');
 assert(campaign.mockPayload?.markdownZh?.includes('campaignLearnId%3Dcampaign-456'), 'Campaign Chinese DingTalk markdown must deep-link to campaign learning page');
+assert(campaign.mockPayload?.markdownAr?.includes('campaignLearnId%3Dcampaign-456'), 'Campaign Arabic DingTalk markdown must deep-link to campaign learning page');
 assert(extractLearningUrl(campaign.mockPayload?.markdownEn) === 'https://learning.mecloudhub.com/hub?campaignLearnId=campaign-456', 'Campaign English DingTalk link must resolve exactly to the campaign learning page');
 assert(extractLearningUrl(campaign.mockPayload?.markdownZh) === 'https://learning.mecloudhub.com/hub?campaignLearnId=campaign-456', 'Campaign Chinese DingTalk link must resolve exactly to the campaign learning page');
+assert(extractLearningUrl(campaign.mockPayload?.markdownAr) === 'https://learning.mecloudhub.com/hub?campaignLearnId=campaign-456', 'Campaign Arabic DingTalk link must resolve exactly to the campaign learning page');
+assert(campaign.recipientsArCount === 1, 'Campaign mock verification must route Arabic learners to Arabic DingTalk recipients');
+assert(campaign.mockPayload?.fcm?.localized?.ar?.title === '🏆 تحدي شهادة جديد', 'Campaign FCM payload must include Arabic title copy');
 assert(campaign.mockPayload?.fcm?.data?.type === 'campaign', 'Campaign FCM payload must include type=campaign');
 assert(campaign.mockPayload?.fcm?.data?.campaignId === 'campaign-456', 'Campaign FCM payload must include campaignId');
 
