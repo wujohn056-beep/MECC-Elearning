@@ -30,6 +30,11 @@ export interface UserProfile {
     identity?: string;
     realUid?: string;
     avatarUrl?: string;
+    preferredLanguage?: 'zh' | 'en' | 'ar' | string;
+    language?: 'zh' | 'en' | 'ar' | string;
+    lang?: 'zh' | 'en' | 'ar' | string;
+    locale?: 'zh' | 'en' | 'ar' | string;
+    uiLanguage?: 'zh' | 'en' | 'ar' | string;
 }
 
 export function getUserTeam(profile: UserProfile | null): 'KCC' | 'GCC' | 'Adult' | 'SS' | 'other' {

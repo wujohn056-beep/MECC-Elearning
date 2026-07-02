@@ -14,6 +14,14 @@ import { getEffectiveUserId } from '../utils/userIdentity';
 import { buildLearningRoute } from '../utils/learningRoutes';
 import { resolveAppDownloadUrl } from '../utils/appDownloadLinks';
 
+const normalizeAppLanguage = (lang?: string | null): 'zh' | 'en' | 'ar' | null => {
+    const value = String(lang || '').trim().toLowerCase();
+    if (value.startsWith('ar') || value.includes('arabic') || value.includes('العربية')) return 'ar';
+    if (value.startsWith('zh') || value.includes('chinese') || value.includes('中文')) return 'zh';
+    if (value.startsWith('en') || value.includes('english')) return 'en';
+    return null;
+};
+
 const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -124,7 +132,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: ()
 
 export default function AppLayout() {
     const { t, i18n } = useTranslation();
-    const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission, canAccessTasks, canAccessDashboard } = useAuth();
+    const { logout, isSuperAdmin, isLeader, profile, user, hasAnyAdminPermission, canAccessTasks, canAccessDashboard, updateProfile } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [showUserGuideModal, setShowUserGuideModal] = useState(false);
@@ -214,10 +222,55 @@ export default function AppLayout() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const persistUserLanguage = async (lang: 'zh' | 'en' | 'ar') => {
+        if (!user || !profile || profile.role === 'blocked') return;
+        const targetUid = profile.realUid || user.uid;
+        try {
+            await setDoc(doc(db, 'users', targetUid), {
+                preferredLanguage: lang,
+                language: lang,
+                locale: lang,
+                uiLanguage: lang,
+                languageUpdatedAt: serverTimestamp()
+            }, { merge: true });
+            updateProfile({
+                preferredLanguage: lang,
+                language: lang,
+                locale: lang,
+                uiLanguage: lang
+            });
+        } catch (err) {
+            console.warn('[Language] Failed to persist user language preference:', err);
+        }
+    };
+
     const toggleLanguage = () => {
         const nextLang = i18n.language === 'en' ? 'ar' : (i18n.language === 'ar' ? 'zh' : 'en');
         i18n.changeLanguage(nextLang);
+        persistUserLanguage(nextLang);
     };
+
+    useEffect(() => {
+        if (!user || !profile || profile.role === 'blocked') return;
+
+        const currentLang = normalizeAppLanguage(i18n.language) || 'en';
+        const profileLang = normalizeAppLanguage(
+            profile.preferredLanguage ||
+            profile.language ||
+            profile.lang ||
+            profile.locale ||
+            profile.uiLanguage
+        );
+
+        if (profileLang && profileLang !== currentLang) {
+            i18n.changeLanguage(profileLang);
+            return;
+        }
+
+        if (!profileLang) {
+            persistUserLanguage(currentLang);
+        }
+    }, [user?.uid, profile?.realUid, profile?.preferredLanguage, profile?.language, profile?.lang, profile?.locale, profile?.uiLanguage, i18n.language]);
 
     // Keep document direction updated for RTL support
     useEffect(() => {
