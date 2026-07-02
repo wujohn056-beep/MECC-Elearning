@@ -256,6 +256,7 @@ const sourceAssertions = [
   ['app release admin menu exists', 'src/components/AdminLayout.tsx', ['/admin/app-release', 'admin_menu.app_release']],
   ['app release admin manages Firestore config', 'src/pages/admin/AppReleaseManager.tsx', ['system_config', 'app_versions', 'android_latest', 'android_apk_url']],
   ['production smoke verifies current shell and APK hash', 'scripts/smoke-production.mjs', ['localDistIndexPath', 'local build output exists for production shell comparison', 'shell matches current build output', 'all production HTML routes match current build output', 'createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
+  ['production smoke command builds current shell first', 'package.json', ['"smoke:prod": "npm run build && node scripts/smoke-production.mjs"']],
   ['production smoke workflow builds current shell first', '.github/workflows/release-verify.yml', ['Build current shell for smoke comparison', 'npm run build', 'PROD_SMOKE_RETRIES', 'PROD_SMOKE_RETRY_DELAY_MS', 'npm run smoke:prod']],
   ['release workflow verifier exists', 'scripts/verify-release-workflow.mjs', ['Release workflow verified', 'needs: verify-release', "if: github.event_name != 'pull_request'", 'Build current shell for smoke comparison', 'envNumber', "envNumber('PROD_SMOKE_RETRIES') < 8", "envNumber('PROD_SMOKE_RETRY_DELAY_MS') < 20000"]],
   ['manual QA evidence generator exists', 'scripts/create-manual-qa-evidence.mjs', ['manual-qa-evidence-template.md', 'QA_EVIDENCE_DIR', 'docs/qa-evidence', 'Android APK SHA-256']],

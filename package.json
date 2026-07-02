@@ -9,7 +9,7 @@
     "cap:sync": "npm run build && cap sync && node scripts/clean-native-download-assets.mjs",
     "android:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk ../public/downloads/mecc-latest.apk",
     "verify:release": "npm run build && node scripts/verify-release.mjs",
-    "smoke:prod": "node scripts/smoke-production.mjs",
+    "smoke:prod": "npm run build && node scripts/smoke-production.mjs",
     "qa:evidence": "node scripts/create-manual-qa-evidence.mjs",
     "qa:evidence:check": "node scripts/validate-manual-qa-evidence.mjs",
     "lint": "eslint .",
