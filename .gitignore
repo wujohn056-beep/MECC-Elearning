@@ -29,3 +29,7 @@ build
 .npm-cache-temp
 local-npm-cache
 scratch
+
+# Local QA evidence may include real accounts, devices, and screenshot notes.
+docs/qa-evidence/*.md
+!docs/qa-evidence/README.md

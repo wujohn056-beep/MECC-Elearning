@@ -5,7 +5,8 @@ See `docs/release-readiness.md` for the automated/manual verification boundary.
 Use `docs/manual-qa-evidence-template.md` to record the account, device, result,
 and screenshot evidence for release sign-off.
 Run `npm run qa:evidence` to generate a prefilled release evidence file under
-`docs/qa-evidence/`.
+`docs/qa-evidence/`. Generated evidence files are local-only and gitignored by
+default because they may contain real accounts and screenshot notes.
 
 ## Required Accounts And Devices
 

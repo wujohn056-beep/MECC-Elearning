@@ -36,3 +36,4 @@ if (existsSync(outputPath) && process.env.OVERWRITE_QA_EVIDENCE !== '1') {
 
 writeFileSync(outputPath, content);
 console.log(`Created manual QA evidence file: ${outputPath}`);
+console.log('Generated QA evidence files are local-only and gitignored by default.');
