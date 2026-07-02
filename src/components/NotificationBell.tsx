@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { getEffectiveUserId } from '../utils/userIdentity';
+import { buildLearningRoute } from '../utils/learningRoutes';
 
 interface TaskNotification {
     id: string;
@@ -233,7 +234,7 @@ export default function NotificationBell() {
             }
         }
         if (isIncompleteTask(task)) {
-            navigate(`/hub?taskId=${task.id}`);
+            navigate(buildLearningRoute({ type: 'task', taskId: task.id }));
         }
     };
 
@@ -249,9 +250,9 @@ export default function NotificationBell() {
             }
         }
         if (notif.type === 'campaign' && notif.campaignId) {
-            navigate(`/hub?campaignLearnId=${notif.campaignId}`);
+            navigate(buildLearningRoute({ type: 'campaign', campaignId: notif.campaignId }));
         } else if (notif.recordingId) {
-            navigate(`/hub?recordingId=${notif.recordingId}`);
+            navigate(buildLearningRoute({ type: 'recording', recordingId: notif.recordingId }));
         } else {
             navigate('/hub');
         }

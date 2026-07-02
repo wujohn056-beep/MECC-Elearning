@@ -11,6 +11,7 @@ import { Capacitor } from '@capacitor/core';
 import UserGuideModal from './UserGuideModal';
 import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersion';
 import { getEffectiveUserId } from '../utils/userIdentity';
+import { buildLearningRoute } from '../utils/learningRoutes';
 
 const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { t } = useTranslation();
@@ -256,13 +257,13 @@ export default function AppLayout() {
                         const type = data.type;
                         if (type === 'recording' && data.recordingId) {
                             console.log('[Native Push] Navigating to recording:', data.recordingId);
-                            navigate(`/hub?recordingId=${data.recordingId}`);
+                            navigate(buildLearningRoute({ type: 'recording', recordingId: data.recordingId }));
                         } else if (type === 'task' && data.taskId) {
                             console.log('[Native Push] Navigating to task:', data.taskId);
-                            navigate(`/hub?taskId=${data.taskId}`);
+                            navigate(buildLearningRoute({ type: 'task', taskId: data.taskId }));
                         } else if (type === 'campaign' && data.campaignId) {
                             console.log('[Native Push] Navigating to campaign learning:', data.campaignId);
-                            navigate(`/hub?campaignLearnId=${data.campaignId}`);
+                            navigate(buildLearningRoute({ type: 'campaign', campaignId: data.campaignId }));
                         } else if (type === 'task') {
                             console.log('[Native Push] Navigating to tasks list');
                             navigate('/account');

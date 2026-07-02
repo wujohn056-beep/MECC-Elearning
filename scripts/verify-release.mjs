@@ -79,6 +79,15 @@ addCheck(
   (taskRecordingGroupsCheck.stdout + taskRecordingGroupsCheck.stderr).trim()
 );
 
+const learningRoutesCheck = spawnSync(process.execPath, ['scripts/verify-learning-routes.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'learning route behavior',
+  learningRoutesCheck.status === 0,
+  (learningRoutesCheck.stdout + learningRoutesCheck.stderr).trim()
+);
+
 const criticalLintFiles = [
   'src/components/AppLayout.tsx',
   'src/components/NotificationBell.tsx',
@@ -93,6 +102,7 @@ const criticalLintFiles = [
   'src/pages/admin/UserManager.tsx',
   'src/utils/appVersion.ts',
   'src/utils/campaignProgress.ts',
+  'src/utils/learningRoutes.ts',
   'src/utils/taskRecordingGroups.ts',
   'src/utils/userIdentity.ts'
 ];
@@ -124,15 +134,16 @@ const sourceAssertions = [
   ['campaign learning route', 'src/pages/LearningHub.tsx', ['campaignLearnId']],
   ['campaign go learn opens challenge page', 'src/pages/LearningHub.tsx', ['openCampaignLearningTarget', "newParams.set('campaignLearnId', campaign.id)", "newParams.delete('taskId')"]],
   ['campaign focused view has trilingual fallback copy', 'src/pages/LearningHub.tsx', ['learning_hub.go_learn', 'campaign.back_to_challenge', 'campaign.challenge_label']],
+  ['central learning route builder', 'src/utils/learningRoutes.ts', ['buildLearningRoute', "params.set('campaignLearnId', target.campaignId)", "params.set('taskId', target.taskId)", "params.set('recordingId', target.recordingId)"]],
   ['task category grouping follows configured category order', 'src/utils/taskRecordingGroups.ts', ['getTaskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
-  ['campaign notification route', 'src/components/NotificationBell.tsx', ['campaignLearnId']],
+  ['campaign notification route', 'src/components/NotificationBell.tsx', ['buildLearningRoute', "type: 'campaign'", 'campaignId: notif.campaignId']],
   ['notification identity uses effective uid helper', 'src/components/NotificationBell.tsx', ['getEffectiveUserId', "where('assigneeIds', 'array-contains', myUid)", '[`assignees.${myUid}.read`]']],
-  ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ['isIncompleteTask', 'tasks.filter(isIncompleteTask)', 'navigate(`/hub?taskId=${task.id}`)']],
+  ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ['isIncompleteTask', 'tasks.filter(isIncompleteTask)', "buildLearningRoute({ type: 'task', taskId: task.id })"]],
   ['account task list keeps in-progress tasks visible', 'src/pages/Account.tsx', ['isTaskIncomplete', 'matchesTaskTab', "task.myStatus !== 'completed'"]],
-  ['native recording push route', 'src/components/AppLayout.tsx', ["type === 'recording'", 'data.recordingId', 'navigate(`/hub?recordingId=${data.recordingId}`)']],
-  ['native task push route', 'src/components/AppLayout.tsx', ["type === 'task'", 'data.taskId', 'navigate(`/hub?taskId=${data.taskId}`)']],
-  ['native campaign push route', 'src/components/AppLayout.tsx', ["type === 'campaign'", 'data.campaignId', 'navigate(`/hub?campaignLearnId=${data.campaignId}`)']],
+  ['native recording push route', 'src/components/AppLayout.tsx', ["type === 'recording'", 'data.recordingId', "buildLearningRoute({ type: 'recording'"]],
+  ['native task push route', 'src/components/AppLayout.tsx', ["type === 'task'", 'data.taskId', "buildLearningRoute({ type: 'task'"]],
+  ['native campaign push route', 'src/components/AppLayout.tsx', ["type === 'campaign'", 'data.campaignId', "buildLearningRoute({ type: 'campaign'"]],
   ['task push payload includes task id', 'src/pages/TeamTasks.tsx', ["action: 'notifyTask'", 'taskId: docRef.id']],
   ['task push function forwards task id', 'netlify/functions/dingtalk.js', ['notifyTask', 'taskId', "type: 'task'"]],
   ['campaign push payload includes campaign id', 'src/pages/admin/CampaignManager.tsx', ["action: 'notifyCampaign'", 'campaignId: campaignId']],
