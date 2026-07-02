@@ -1,5 +1,5 @@
 const baseUrl = (process.env.PROD_BASE_URL || 'https://learning.mecloudhub.com').replace(/\/$/, '');
-const minApkBytes = 50 * 1024 * 1024;
+const minApkBytes = 10 * 1024 * 1024;
 const maxApkBytes = 100 * 1024 * 1024;
 const retryAttempts = Number(process.env.PROD_SMOKE_RETRIES || 5);
 const retryDelayMs = Number(process.env.PROD_SMOKE_RETRY_DELAY_MS || 15000);

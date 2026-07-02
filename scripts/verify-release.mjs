@@ -45,13 +45,16 @@ const missingRequiredLocaleKeys = locales.flatMap((lang) => (
 addCheck('critical trilingual keys', missingRequiredLocaleKeys.length === 0, missingRequiredLocaleKeys.join(', '));
 
 const apkPath = 'public/downloads/mecc-latest.apk';
+const minApkBytes = 10 * 1024 * 1024;
 const maxGithubBytes = 100 * 1024 * 1024;
 if (existsSync(apkPath)) {
   const apkSize = statSync(apkPath).size;
   addCheck('download APK exists', true, `${apkSize} bytes`);
+  addCheck('download APK above minimum plausible size', apkSize >= minApkBytes, `${apkSize} bytes`);
   addCheck('download APK below GitHub hard limit', apkSize < maxGithubBytes, `${apkSize} bytes`);
 } else {
   addCheck('download APK exists', false, apkPath);
+  addCheck('download APK above minimum plausible size', false, apkPath);
   addCheck('download APK below GitHub hard limit', false, apkPath);
 }
 
@@ -196,6 +199,16 @@ for (const [name, path, needles] of sourceAssertions) {
   const missingNeedles = needles.filter((needle) => !content.includes(needle));
   addCheck(name, missingNeedles.length === 0, missingNeedles.length > 0 ? `${path} missing ${missingNeedles.join(', ')}` : path);
 }
+
+const appVersionSource = existsSync('src/utils/appVersion.ts') ? readFileSync('src/utils/appVersion.ts', 'utf8') : '';
+const androidGradleSource = existsSync('android/app/build.gradle') ? readFileSync('android/app/build.gradle', 'utf8') : '';
+const androidClientVersion = appVersionSource.match(/android:\s*'([^']+)'/)?.[1] || '';
+const webClientVersion = appVersionSource.match(/web:\s*'([^']+)'/)?.[1] || '';
+const androidVersionName = androidGradleSource.match(/versionName\s+"([^"]+)"/)?.[1] || '';
+const androidVersionCode = Number(androidGradleSource.match(/versionCode\s+(\d+)/)?.[1] || 0);
+addCheck('android native version matches client version', androidClientVersion && androidClientVersion === androidVersionName, `client=${androidClientVersion}, native=${androidVersionName}`);
+addCheck('web client version matches android client version', webClientVersion && webClientVersion === androidClientVersion, `web=${webClientVersion}, android=${androidClientVersion}`);
+addCheck('android native version code advanced', androidVersionCode >= 7, `versionCode=${androidVersionCode}`);
 
 const forbiddenSourceAssertions = [
   ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']]

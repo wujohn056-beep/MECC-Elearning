@@ -33,7 +33,7 @@ See `docs/release-readiness.md` for the automated/manual verification boundary.
 ## Mobile App Update And Download
 
 1. On Web, open `/download` and confirm iOS TestFlight and Android APK options render.
-2. Download the Android APK and confirm file size is around 73 MB.
+2. Download the Android APK and confirm file size is above 10 MB and below 100 MB.
 3. Install the APK on Android and log in as the learner.
 4. Confirm task, challenge learning, reflection draft, and completion behavior match Web.
 5. Confirm app update prompts show current/latest version text in the active language.

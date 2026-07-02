@@ -1,7 +1,7 @@
 export const CLIENT_APP_VERSIONS: Record<string, string> = {
     ios: '1.1',
-    android: '1.0.6',
-    web: '1.0.6'
+    android: '1.0.7',
+    web: '1.0.7'
 };
 
 export const getCurrentClientAppVersion = (platform = 'web') => {
