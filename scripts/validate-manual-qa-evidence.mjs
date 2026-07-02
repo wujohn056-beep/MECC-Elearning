@@ -122,6 +122,8 @@ const exactPassRows = [
   'Arabic DingTalk task/challenge messages render in Arabic',
   'Android push notification is received',
   'Android push tap opens the correct recording/task/campaign page',
+  'Material App push notification is received',
+  'Material App push opens the recording detail page',
   'Arabic Android push notification renders in Arabic',
   '`/download` renders iOS and Android options',
   'Android APK installs successfully',

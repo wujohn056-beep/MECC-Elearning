@@ -38,6 +38,8 @@ const passRows = [
   ['Arabic DingTalk task/challenge messages render in Arabic', 'Pass', 'تم تعيين مهمة تعلم جديدة / تم تعيين تحدي شهادة جديد'],
   ['Android push notification is received', 'Pass', 'Pixel 8 notification shade 15:28'],
   ['Android push tap opens the correct recording/task/campaign page', 'Pass', 'Android opened campaignLearnId=campaign-456'],
+  ['Material App push notification is received', 'Pass', 'Pixel 8 material notification 15:31'],
+  ['Material App push opens the recording detail page', 'Pass', 'https://learning.mecloudhub.com/hub?recordingId=recording-789'],
   ['Arabic Android push notification renders in Arabic', 'Pass', 'مهمة تعلم جديدة / تحدي شهادة جديد'],
   ['FCM failure fallback still leaves task accessible', 'Not applicable', 'push delivered in this QA run'],
   ['`/download` renders iOS and Android options', 'Pass', 'https://learning.mecloudhub.com/download'],

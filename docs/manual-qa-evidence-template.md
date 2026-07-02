@@ -51,6 +51,8 @@ calling the release fully verified.
 | Arabic DingTalk task/challenge messages render in Arabic | Pass / Fail | Screenshot showing Arabic notification text |
 | Android push notification is received | Pass / Fail | Device screenshot |
 | Android push tap opens the correct recording/task/campaign page | Pass / Fail | Device screenshot |
+| Material App push notification is received | Pass / Fail | Device screenshot |
+| Material App push opens the recording detail page | Pass / Fail | URL/screenshot showing `recordingId` |
 | Arabic Android push notification renders in Arabic | Pass / Fail | Device screenshot showing Arabic push text |
 | FCM failure fallback still leaves task accessible | Pass / Fail / Not applicable | Task list screenshot |
 

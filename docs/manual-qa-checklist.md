@@ -10,7 +10,8 @@ default because they may contain real accounts and screenshot notes.
 After filling the file, run
 `npm run qa:evidence:check -- docs/qa-evidence/<file>.md`. The check rejects
 blank required fields, unresolved `Pass / Fail` placeholders, failed rows,
-unconfigured Android push rows, and missing push/download/trilingual sign-off rows.
+placeholder evidence text, unconfigured Android push rows, and missing
+push/download/trilingual sign-off rows.
 
 ## Required Accounts And Devices
 
@@ -39,8 +40,10 @@ unconfigured Android push rows, and missing push/download/trilingual sign-off ro
 3. Click the notification and confirm it opens `/hub?campaignLearnId=...` for challenge tasks.
 4. From the DingTalk task message, confirm the deep link resolves to `/hub?taskId=...`.
 5. From the DingTalk challenge message, confirm the deep link resolves to `/hub?campaignLearnId=...`.
-6. Tap the mobile push notification and confirm it opens the same challenge learning page.
-7. If FCM delivery fails, confirm the task still appears in the learner task list and in-system notifications.
+6. Push a premium recording to App notifications and confirm the learner receives it.
+7. Tap the premium recording App push and confirm it opens `/hub?recordingId=...`.
+8. Tap the task or challenge mobile push notification and confirm it opens the same learning page.
+9. If FCM delivery fails, confirm the task still appears in the learner task list and in-system notifications.
 
 ## Mobile App Update And Download
 

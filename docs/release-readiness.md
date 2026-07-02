@@ -58,6 +58,7 @@ mobile device confirm:
 - DingTalk task and challenge messages resolve to the exact task or challenge learning page.
 - Arabic DingTalk and Android push notifications render Arabic copy for Arabic-language learners.
 - Native mobile push is configured, received, and taps open the correct recording, task, or campaign page.
+- Premium recording App pushes are received and tap through to the exact recording detail page.
 - Web `/download` installs the current Android APK successfully.
 - The same learner flow works in Chinese, English, and Arabic without raw locale keys.
 
