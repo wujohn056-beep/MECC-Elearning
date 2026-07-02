@@ -208,9 +208,9 @@ addCheck(
 
 const sourceAssertions = [
   ['campaign learning route', 'src/pages/LearningHub.tsx', ['campaignLearnId']],
-  ['campaign go learn opens challenge page', 'src/pages/LearningHub.tsx', ['openCampaignLearningTarget', "newParams.set('campaignLearnId', campaign.id)", "newParams.delete('taskId')"]],
+  ['campaign go learn opens challenge page', 'src/pages/LearningHub.tsx', ['openCampaignLearningTarget', 'buildLearningSearchParams', "type: 'campaign'", 'campaignId: campaign.id']],
   ['campaign focused view has trilingual fallback copy', 'src/pages/LearningHub.tsx', ['learning_hub.go_learn', 'campaign.back_to_challenge', 'campaign.challenge_label']],
-  ['central learning route builder', 'src/utils/learningRoutes.ts', ['buildLearningRoute', "params.set('campaignLearnId', target.campaignId)", "params.set('taskId', target.taskId)", "params.set('recordingId', target.recordingId)"]],
+  ['central learning route builder', 'src/utils/learningRoutes.ts', ['buildLearningRoute', 'buildLearningSearchParams', 'focusedRouteParams', "params.set('campaignLearnId', target.campaignId)", "params.set('taskId', target.taskId)", "params.set('recordingId', target.recordingId)"]],
   ['task category grouping follows configured category order', 'src/utils/taskRecordingGroups.ts', ['getTaskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
   ['campaign notification route', 'src/components/NotificationBell.tsx', ['buildLearningRoute', "type: 'campaign'", 'campaignId: notif.campaignId']],

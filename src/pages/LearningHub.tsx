@@ -11,6 +11,7 @@ import { getEffectiveUserId } from '../utils/userIdentity';
 import { calculateCampaignProgress, getCampaignRequiredRecordings as resolveCampaignRequiredRecordings } from '../utils/campaignProgress';
 import { getTaskRecordingGroups } from '../utils/taskRecordingGroups';
 import { resolveAppDownloadUrl } from '../utils/appDownloadLinks';
+import { buildLearningSearchParams } from '../utils/learningRoutes';
 
 interface Recording {
     id: string;
@@ -5426,12 +5427,7 @@ export default function LearningHub() {
         setSearchQuery('');
         setDisplayCount(12);
 
-        const newParams = new URLSearchParams(searchParams);
-        newParams.set('campaignLearnId', campaign.id);
-        newParams.delete('taskId');
-        newParams.delete('recordingId');
-        newParams.delete('campaignId');
-        setSearchParams(newParams);
+        setSearchParams(buildLearningSearchParams({ type: 'campaign', campaignId: campaign.id }, searchParams));
     };
 
     const openCampaignDetails = (campaign: any) => {
