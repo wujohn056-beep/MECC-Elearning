@@ -14,6 +14,13 @@ import { Users, Upload, Edit, Trash2, Key, Search, Plus, X, RefreshCw, AlertCirc
 import { useAuth } from '../../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
+const DEFAULT_USER_LANGUAGE = {
+    preferredLanguage: 'en',
+    language: 'en',
+    locale: 'en',
+    uiLanguage: 'en'
+};
+
 interface ExcelRow {
     SD: string;
     SM: string;
@@ -507,6 +514,10 @@ export default function UserManager() {
                                 policyScope: existingUser.policyScope || 'all',
                                 brandScope: existingUser.brandScope || 'all',
                                 identity: existingUser.identity || null,
+                                preferredLanguage: existingUser.preferredLanguage || existingUser.language || DEFAULT_USER_LANGUAGE.preferredLanguage,
+                                language: existingUser.language || existingUser.preferredLanguage || DEFAULT_USER_LANGUAGE.language,
+                                locale: existingUser.locale || existingUser.preferredLanguage || existingUser.language || DEFAULT_USER_LANGUAGE.locale,
+                                uiLanguage: existingUser.uiLanguage || existingUser.preferredLanguage || existingUser.language || DEFAULT_USER_LANGUAGE.uiLanguage,
                                 createdAt: existingUser.createdAt || serverTimestamp()
                             });
                             
@@ -585,6 +596,7 @@ export default function UserManager() {
                         policyScope: 'all',
                         brandScope: 'all',
                         identity: '',
+                        ...DEFAULT_USER_LANGUAGE,
                         createdAt: serverTimestamp()
                     });
 
@@ -1094,6 +1106,7 @@ export default function UserManager() {
                     policyScope: formData.policyScope || 'all',
                     brandScope: formData.brandScope || 'all',
                     identity: formData.identity || null,
+                    ...DEFAULT_USER_LANGUAGE,
                     createdAt: serverTimestamp()
                 });
                 await deleteApp(secondaryApp);

@@ -167,6 +167,10 @@ export default function Login() {
                             team: '',
                             dep: 'CC',
                             sd: 'JOHN',
+                            preferredLanguage: i18n.language || 'en',
+                            language: i18n.language || 'en',
+                            locale: i18n.language || 'en',
+                            uiLanguage: i18n.language || 'en',
                             permissions: { manageCategories: false, manageRecordings: false, manageUsers: false, manageDashboard: false, manageTasks: false }
                         });
                     }
