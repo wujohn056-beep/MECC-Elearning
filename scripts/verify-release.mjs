@@ -233,6 +233,7 @@ const sourceAssertions = [
   ['campaign push has trilingual DingTalk and FCM copy', 'netlify/functions/dingtalk.js', ['getUserNotificationLanguage', 'recipientsAr', 'markdownAr', 'getCampaignFcmNotification', 'تحدي شهادة جديد']],
   ['campaign dingtalk link opens learning page', 'netlify/functions/dingtalk.js', ['campaignLearnId', 'dingTalkCampaignLink', 'buildDingTalkLearningLink']],
   ['material app push forwards recording id', 'netlify/functions/dingtalk.js', ['notifyMaterial', 'recordingId: recordingId', "type: 'recording'"]],
+  ['material app push verifier exercises recording route payload', 'scripts/verify-dingtalk-push-payloads.mjs', ['notifyMaterial', "targetType: 'app'", "recordingId: 'recording-789'", "type=recording", 'displayId']],
   ['task draft autosave', 'src/pages/LearningHub.tsx', ['draftSavedAt']],
   ['effective user id helper', 'src/utils/userIdentity.ts', ['getEffectiveUserId']],
   ['download route is public', 'src/App.tsx', ['path="/download"', 'element={<DownloadPage />}']],

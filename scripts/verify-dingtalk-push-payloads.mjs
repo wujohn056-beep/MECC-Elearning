@@ -68,4 +68,23 @@ assert(campaign.mockPayload?.fcm?.localized?.ar?.title === '🏆 تحدي شها
 assert(campaign.mockPayload?.fcm?.data?.type === 'campaign', 'Campaign FCM payload must include type=campaign');
 assert(campaign.mockPayload?.fcm?.data?.campaignId === 'campaign-456', 'Campaign FCM payload must include campaignId');
 
+const material = await invoke({
+  action: 'notifyMaterial',
+  targetType: 'app',
+  recordingId: 'recording-789',
+  title: 'Mock Recording',
+  displayId: 'RD0789',
+  lecturerName: 'Coach',
+  categoryName: 'Expertise',
+  description: 'Mock material push verification'
+});
+
+assert(material.success === true, 'Material App push verification must succeed in mock Firebase mode');
+assert(material.mockPayload?.tokens?.length === 2, 'Material App push mock payload must include mock FCM tokens');
+assert(material.mockPayload?.data?.type === 'recording', 'Material App push FCM payload must include type=recording');
+assert(material.mockPayload?.data?.recordingId === 'recording-789', 'Material App push FCM payload must include recordingId');
+assert(material.mockPayload?.data?.displayId === 'RD0789', 'Material App push FCM payload must include displayId');
+assert(material.mockPayload?.title?.includes('ME云学堂'), 'Material App push mock payload must include notification title');
+assert(material.mockPayload?.body?.includes('Mock Recording'), 'Material App push mock payload must include recording title');
+
 console.log('DingTalk and FCM push payload behavior verified.');
