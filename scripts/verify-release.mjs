@@ -25,6 +25,25 @@ const missingLocaleKeys = locales.flatMap((lang) => (
 ));
 addCheck('locale key parity', missingLocaleKeys.length === 0, missingLocaleKeys.join(', '));
 
+const requiredLocaleKeys = [
+  'navbar.download_app',
+  'download_page.android_btn',
+  'download_page.android_desc',
+  'download_page.ios_btn',
+  'update_modal.btn_update',
+  'team_tasks.fcm_push_error',
+  'team_tasks.fcm_apns_auth_error',
+  'team_tasks.notification_error',
+  'learning_hub.category_recordings_count',
+  'learning_hub.task_resume_notice'
+];
+const missingRequiredLocaleKeys = locales.flatMap((lang) => (
+  requiredLocaleKeys
+    .filter((key) => !localeKeys[lang].has(key))
+    .map((key) => `${lang}:${key}`)
+));
+addCheck('critical trilingual keys', missingRequiredLocaleKeys.length === 0, missingRequiredLocaleKeys.join(', '));
+
 const apkPath = 'public/downloads/mecc-latest.apk';
 const maxGithubBytes = 100 * 1024 * 1024;
 if (existsSync(apkPath)) {
@@ -91,17 +110,25 @@ addCheck(
 );
 
 const sourceAssertions = [
-  ['campaign learning route', 'src/pages/LearningHub.tsx', 'campaignLearnId'],
-  ['campaign notification route', 'src/components/NotificationBell.tsx', 'campaignLearnId'],
-  ['native campaign push route', 'src/components/AppLayout.tsx', 'campaignLearnId'],
-  ['task draft autosave', 'src/pages/LearningHub.tsx', 'draftSavedAt'],
-  ['effective user id helper', 'src/utils/userIdentity.ts', 'getEffectiveUserId'],
-  ['safe native sync script', 'package.json', 'clean-native-download-assets.mjs']
+  ['campaign learning route', 'src/pages/LearningHub.tsx', ['campaignLearnId']],
+  ['campaign go learn opens challenge page', 'src/pages/LearningHub.tsx', ['openCampaignLearningTarget', "newParams.set('campaignLearnId', campaign.id)", "newParams.delete('taskId')"]],
+  ['campaign focused view has trilingual fallback copy', 'src/pages/LearningHub.tsx', ['learning_hub.go_learn', 'campaign.back_to_challenge', 'campaign.challenge_label']],
+  ['task category grouping follows configured category order', 'src/pages/LearningHub.tsx', ['taskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
+  ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
+  ['campaign notification route', 'src/components/NotificationBell.tsx', ['campaignLearnId']],
+  ['native campaign push route', 'src/components/AppLayout.tsx', ['campaignLearnId']],
+  ['task draft autosave', 'src/pages/LearningHub.tsx', ['draftSavedAt']],
+  ['effective user id helper', 'src/utils/userIdentity.ts', ['getEffectiveUserId']],
+  ['app download page uses latest APK', 'src/pages/DownloadPage.tsx', ['mecc-latest.apk', 'download_page.android_btn', 'download_page.ios_btn']],
+  ['app version update gate exists', 'src/utils/appVersion.ts', ['CLIENT_APP_VERSIONS', 'isVersionOutdated']],
+  ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
+  ['safe native sync script', 'package.json', ['clean-native-download-assets.mjs']]
 ];
 
-for (const [name, path, needle] of sourceAssertions) {
+for (const [name, path, needles] of sourceAssertions) {
   const content = existsSync(path) ? readFileSync(path, 'utf8') : '';
-  addCheck(name, content.includes(needle), `${path} -> ${needle}`);
+  const missingNeedles = needles.filter((needle) => !content.includes(needle));
+  addCheck(name, missingNeedles.length === 0, missingNeedles.length > 0 ? `${path} missing ${missingNeedles.join(', ')}` : path);
 }
 
 let failed = 0;
