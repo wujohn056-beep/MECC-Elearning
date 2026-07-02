@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const productionUrl = (process.env.PROD_BASE_URL || 'https://learning.mecloudhub.com').replace(/\/$/, '');
-const evidenceDir = 'docs/qa-evidence';
+const evidenceDir = process.env.QA_EVIDENCE_DIR || 'docs/qa-evidence';
 const templatePath = 'docs/manual-qa-evidence-template.md';
 const apkPath = 'public/downloads/mecc-latest.apk';
 

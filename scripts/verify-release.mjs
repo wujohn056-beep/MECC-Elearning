@@ -127,6 +127,15 @@ addCheck(
   (appReleaseConfigCheck.stdout + appReleaseConfigCheck.stderr).trim()
 );
 
+const manualQaEvidenceCheck = spawnSync(process.execPath, ['scripts/verify-manual-qa-evidence.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'manual QA evidence generator behavior',
+  manualQaEvidenceCheck.status === 0,
+  (manualQaEvidenceCheck.stdout + manualQaEvidenceCheck.stderr).trim()
+);
+
 const dingtalkPushPayloadsCheck = spawnSync(process.execPath, ['scripts/verify-dingtalk-push-payloads.mjs'], {
   encoding: 'utf8'
 });
@@ -212,7 +221,8 @@ const sourceAssertions = [
   ['app release admin menu exists', 'src/components/AdminLayout.tsx', ['/admin/app-release', 'admin_menu.app_release']],
   ['app release admin manages Firestore config', 'src/pages/admin/AppReleaseManager.tsx', ['system_config', 'app_versions', 'android_latest', 'android_apk_url']],
   ['production smoke verifies APK hash', 'scripts/smoke-production.mjs', ['createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
-  ['manual QA evidence generator exists', 'scripts/create-manual-qa-evidence.mjs', ['manual-qa-evidence-template.md', 'docs/qa-evidence', 'Android APK SHA-256']],
+  ['manual QA evidence generator exists', 'scripts/create-manual-qa-evidence.mjs', ['manual-qa-evidence-template.md', 'QA_EVIDENCE_DIR', 'docs/qa-evidence', 'Android APK SHA-256']],
+  ['manual QA evidence verifier exists', 'scripts/verify-manual-qa-evidence.mjs', ['QA_EVIDENCE_DIR', 'Manual QA evidence generator verified']],
   ['manual QA evidence command exists', 'package.json', ['qa:evidence', 'create-manual-qa-evidence.mjs']],
   ['manual QA evidence stays local', '.gitignore', ['docs/qa-evidence/*.md', '!docs/qa-evidence/README.md']],
   ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
