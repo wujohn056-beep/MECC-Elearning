@@ -564,6 +564,7 @@ export default function CampaignManager({ triggerCreate, onTriggerCreateClose }:
                             bannerTitle: bannerTitle,
                             creatorName: profile?.name || 'Manager',
                             endDate: endDate,
+                            campaignId: campaignId,
                             assigneeIds: targetUids
                         })
                     });

@@ -117,6 +117,8 @@ const sourceAssertions = [
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
   ['campaign notification route', 'src/components/NotificationBell.tsx', ['campaignLearnId']],
   ['native campaign push route', 'src/components/AppLayout.tsx', ['campaignLearnId']],
+  ['campaign push payload includes campaign id', 'src/pages/admin/CampaignManager.tsx', ["action: 'notifyCampaign'", 'campaignId: campaignId']],
+  ['campaign push function forwards campaign id', 'netlify/functions/dingtalk.js', ['notifyCampaign', 'campaignId', "type: 'campaign'"]],
   ['task draft autosave', 'src/pages/LearningHub.tsx', ['draftSavedAt']],
   ['effective user id helper', 'src/utils/userIdentity.ts', ['getEffectiveUserId']],
   ['app download page uses latest APK', 'src/pages/DownloadPage.tsx', ['mecc-latest.apk', 'download_page.android_btn', 'download_page.ios_btn']],
