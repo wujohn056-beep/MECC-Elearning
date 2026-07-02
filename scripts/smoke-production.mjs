@@ -33,13 +33,19 @@ const getRemoteFileSize = async (path, headResponse) => {
 };
 
 try {
-  const home = await head('/');
-  addCheck('production home returns 200', home.response.ok, `${home.response.status} ${home.url}`);
-  addCheck(
-    'production home is html',
-    (home.response.headers.get('content-type') || '').includes('text/html'),
-    home.response.headers.get('content-type') || ''
-  );
+  const htmlRoutes = [
+    ['home', '/'],
+    ['download page', '/download'],
+    ['campaign learning route', '/hub?campaignLearnId=smoke-test'],
+    ['task learning route', '/hub?taskId=smoke-test']
+  ];
+
+  for (const [name, path] of htmlRoutes) {
+    const page = await head(path);
+    const pageType = page.response.headers.get('content-type') || '';
+    addCheck(`production ${name} returns 200`, page.response.ok, `${page.response.status} ${page.url}`);
+    addCheck(`production ${name} is html`, pageType.includes('text/html'), pageType);
+  }
 
   const apk = await head('/downloads/mecc-latest.apk');
   const apkBytes = await getRemoteFileSize('/downloads/mecc-latest.apk', apk.response);
