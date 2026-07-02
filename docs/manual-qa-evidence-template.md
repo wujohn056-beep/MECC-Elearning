@@ -46,8 +46,8 @@ calling the release fully verified.
 | --- | --- | --- |
 | Learner receives in-system notification | Pass / Fail | Screenshot |
 | In-system notification opens the challenge learning page | Pass / Fail | URL/screenshot |
-| Android push notification is received, if configured | Pass / Fail / Not configured | Device screenshot |
-| Android push tap opens the correct recording/task/campaign page | Pass / Fail / Not configured | Device screenshot |
+| Android push notification is received | Pass / Fail | Device screenshot |
+| Android push tap opens the correct recording/task/campaign page | Pass / Fail | Device screenshot |
 | FCM failure fallback still leaves task accessible | Pass / Fail / Not applicable | Task list screenshot |
 
 ## Manual Mobile App Evidence
@@ -76,5 +76,6 @@ calling the release fully verified.
 - Follow-up owner:
 - Sign-off name and time:
 
-Do not mark a release as fully verified when any required row is `Fail` or when
-real assigned account/device evidence is missing.
+Do not mark a release as fully verified when any required row is `Fail`, when
+Android push is not configured, or when real assigned account/device evidence is
+missing.

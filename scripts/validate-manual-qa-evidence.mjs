@@ -73,7 +73,7 @@ const exactPassRows = [
   'Task completion is visible to learner and leader',
   'Learner receives in-system notification',
   'In-system notification opens the challenge learning page',
-  'Android push notification is received, if configured',
+  'Android push notification is received',
   'Android push tap opens the correct recording/task/campaign page',
   '`/download` renders iOS and Android options',
   'Android APK installs successfully',
@@ -123,6 +123,14 @@ const failedRows = content
   .filter((line) => /\|\s*Fail\s*(?:\/|\|)/i.test(line));
 if (failedRows.length > 0) {
   errors.push(`Fail rows remain: ${failedRows.length}`);
+}
+
+const notConfiguredRows = content
+  .split('\n')
+  .filter((line) => /^\|/.test(line))
+  .filter((line) => /\|\s*Not configured\s*(?:\/|\|)/i.test(line));
+if (notConfiguredRows.length > 0) {
+  errors.push(`Android push must be configured for full verification: ${notConfiguredRows.length} row(s) still say Not configured`);
 }
 
 if (errors.length > 0) {

@@ -9,14 +9,15 @@ Run `npm run qa:evidence` to generate a prefilled release evidence file under
 default because they may contain real accounts and screenshot notes.
 After filling the file, run
 `npm run qa:evidence:check -- docs/qa-evidence/<file>.md`. The check rejects
-blank required fields, unresolved `Pass / Fail` placeholders, failed rows, and
-missing push/download/trilingual sign-off rows.
+blank required fields, unresolved `Pass / Fail` placeholders, failed rows,
+unconfigured Android push rows, and missing push/download/trilingual sign-off rows.
 
 ## Required Accounts And Devices
 
 - One leader or manager account that can create team tasks and certificate challenges.
 - One assigned sales learner account.
-- One Android device with the latest APK installed.
+- One Android device with the latest APK installed, push permission enabled, and
+  an FCM token registered for the learner account.
 - One iOS TestFlight device, if iOS push or wrapper behavior changed.
 
 ## Web Learning Task Flow
@@ -36,7 +37,7 @@ missing push/download/trilingual sign-off rows.
 1. Create a new challenge task for the learner.
 2. Confirm the learner receives an in-system notification.
 3. Click the notification and confirm it opens `/hub?campaignLearnId=...` for challenge tasks.
-4. If app push is configured for the learner, tap the mobile push notification and confirm it opens the same challenge learning page.
+4. Tap the mobile push notification and confirm it opens the same challenge learning page.
 5. If FCM delivery fails, confirm the task still appears in the learner task list and in-system notifications.
 
 ## Mobile App Update And Download
@@ -67,4 +68,6 @@ npm run qa:evidence:check -- docs/qa-evidence/<file>.md
 git status --short
 ```
 
-Do not mark the release as fully verified until both automated checks pass and the manual learner flow has been tested with a real assigned account.
+Do not mark the release as fully verified until both automated checks pass and
+the manual learner flow, including Android push receive/tap behavior, has been
+tested with a real assigned account.

@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 const tempDir = mkdtempSync(join(tmpdir(), 'mecc-qa-validator-'));
 const passFile = join(tempDir, 'pass.md');
 const failFile = join(tempDir, 'fail.md');
+const notConfiguredFile = join(tempDir, 'not-configured.md');
 
 const table = (rows) => rows.map(([label, result, evidence = 'screenshot']) => `| ${label} | ${result} | ${evidence} |`).join('\n');
 const passRows = [
@@ -24,7 +25,7 @@ const passRows = [
   ['Task completion is visible to learner and leader', 'Pass'],
   ['Learner receives in-system notification', 'Pass'],
   ['In-system notification opens the challenge learning page', 'Pass'],
-  ['Android push notification is received, if configured', 'Pass'],
+  ['Android push notification is received', 'Pass'],
   ['Android push tap opens the correct recording/task/campaign page', 'Pass'],
   ['FCM failure fallback still leaves task accessible', 'Not applicable'],
   ['`/download` renders iOS and Android options', 'Pass'],
@@ -66,6 +67,7 @@ ${table(passRows)}
 try {
   writeFileSync(passFile, content);
   writeFileSync(failFile, content.replace('| Android APK installs successfully | Pass |', '| Android APK installs successfully | Fail |'));
+  writeFileSync(notConfiguredFile, content.replace('| Android push notification is received | Pass |', '| Android push notification is received | Not configured |'));
 
   const passResult = spawnSync(process.execPath, ['scripts/validate-manual-qa-evidence.mjs', passFile], {
     encoding: 'utf8'
@@ -79,6 +81,13 @@ try {
   });
   if (failResult.status === 0) {
     throw new Error('Expected invalid evidence with a Fail row to be rejected');
+  }
+
+  const notConfiguredResult = spawnSync(process.execPath, ['scripts/validate-manual-qa-evidence.mjs', notConfiguredFile], {
+    encoding: 'utf8'
+  });
+  if (notConfiguredResult.status === 0) {
+    throw new Error('Expected invalid evidence with a Not configured push row to be rejected');
   }
 
   console.log('Manual QA evidence validator verified.');

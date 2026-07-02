@@ -55,7 +55,7 @@ mobile device confirm:
 - Partial progress and reflection drafts survive leaving and reopening the task.
 - Completion updates are visible to the learner and leader.
 - In-system notifications open the correct learning page.
-- Native mobile push taps open the correct recording, task, or campaign page.
+- Native mobile push is configured, received, and taps open the correct recording, task, or campaign page.
 - Web `/download` installs the current Android APK successfully.
 - The same learner flow works in Chinese, English, and Arabic without raw locale keys.
 
@@ -79,4 +79,5 @@ Use direct Firestore edits only as an emergency fallback.
 Use "automated release gates passed" only after both commands pass.
 
 Use "fully verified" only after the manual gates above are tested with real
-accounts and devices.
+accounts and devices. If Android push is not configured, report that explicitly
+instead of calling the release fully verified.
