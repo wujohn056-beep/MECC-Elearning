@@ -154,6 +154,15 @@ addCheck(
   (manualQaEvidenceValidatorCheck.stdout + manualQaEvidenceValidatorCheck.stderr).trim()
 );
 
+const manualQaTemplateSyncCheck = spawnSync(process.execPath, ['scripts/verify-manual-qa-template-sync.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'manual QA template sync behavior',
+  manualQaTemplateSyncCheck.status === 0,
+  (manualQaTemplateSyncCheck.stdout + manualQaTemplateSyncCheck.stderr).trim()
+);
+
 const dingtalkPushPayloadsCheck = spawnSync(process.execPath, ['scripts/verify-dingtalk-push-payloads.mjs'], {
   encoding: 'utf8'
 });
@@ -253,6 +262,7 @@ const sourceAssertions = [
   ['manual QA evidence verifier exists', 'scripts/verify-manual-qa-evidence.mjs', ['QA_EVIDENCE_DIR', 'Manual QA evidence generator verified']],
   ['manual QA evidence validator exists', 'scripts/validate-manual-qa-evidence.mjs', ['Release commit must match current release commit', 'Android APK SHA-256 must match current repository APK', 'Fully verified must be Yes', 'Android push must be configured for full verification', 'DingTalk task message opens the task learning page', 'DingTalk challenge message opens the challenge learning page', 'Arabic DingTalk task/challenge messages render in Arabic', 'Arabic Android push notification renders in Arabic', 'Android push tap opens the correct recording/task/campaign page', 'Material App push notification is received', 'Material App push opens the recording detail page', 'QA row must include concrete evidence', 'Manual QA evidence validated']],
   ['manual QA evidence validator verifier exists', 'scripts/verify-manual-qa-evidence-validator.mjs', ['Manual QA evidence validator verified', 'Expected invalid evidence with a Fail row to be rejected', 'Expected invalid evidence with a Not configured push row to be rejected', 'Expected invalid evidence with a stale release commit to be rejected', 'Expected invalid evidence with blank evidence to be rejected', 'Expected invalid evidence with placeholder evidence to be rejected']],
+  ['manual QA template sync verifier exists', 'scripts/verify-manual-qa-template-sync.mjs', ['exactPassRows', 'requiredFields', 'Manual QA template and validator are in sync']],
   ['manual QA evidence command exists', 'package.json', ['qa:evidence', 'create-manual-qa-evidence.mjs']],
   ['manual QA evidence check command exists', 'package.json', ['qa:evidence:check', 'validate-manual-qa-evidence.mjs']],
   ['manual QA evidence stays local', '.gitignore', ['docs/qa-evidence/*.md', '!docs/qa-evidence/README.md']],
