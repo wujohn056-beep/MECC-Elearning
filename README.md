@@ -11,7 +11,7 @@ npm run verify:release
 npm run smoke:prod
 ```
 
-Use `npm run verify:release` before every production deploy. It runs the production build and checks the release-critical paths: trilingual locale parity, APK size, native APK nesting, DingTalk function syntax, task/challenge routing markers, task draft persistence markers, effective UID handling, and targeted lint for recently touched release files.
+Use `npm run verify:release` before every production deploy. It runs the production build and checks the release-critical paths: trilingual locale parity, APK size, APK Web asset freshness, native APK nesting, DingTalk function syntax, task/challenge/material push payloads, focused learning routes, category-ordered task recordings, task draft persistence, effective UID handling, app download/update config, manual QA evidence validation, manual QA template sync, and targeted lint for release-critical files.
 
 ## Mobile Packaging
 
@@ -55,13 +55,15 @@ After deployment, run:
 npm run smoke:prod
 ```
 
-This checks that the production home page and Android APK download URL are externally reachable.
+This checks that the production home, download, focused learning, and App release routes serve the current app shell, and that the production Android APK URL matches the repository APK size and SHA-256 hash.
 
 For real-account and mobile-device validation, use:
 
 ```text
 docs/manual-qa-checklist.md
 ```
+
+Generate a local evidence file after deployment with `npm run qa:evidence`, fill it with concrete account/device evidence, then run `npm run qa:evidence:check -- docs/qa-evidence/<file>.md`. A release is not fully verified until the evidence check passes with real Android push receive/tap proof.
 
 If an Android APK was rebuilt, confirm `public/downloads/mecc-latest.apk` is the intended file and that native assets do not contain nested APK copies:
 
