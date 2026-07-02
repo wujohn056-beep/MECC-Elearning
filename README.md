@@ -57,6 +57,12 @@ npm run smoke:prod
 
 This checks that the production home page and Android APK download URL are externally reachable.
 
+For real-account and mobile-device validation, use:
+
+```text
+docs/manual-qa-checklist.md
+```
+
 If an Android APK was rebuilt, confirm `public/downloads/mecc-latest.apk` is the intended file and that native assets do not contain nested APK copies:
 
 ```bash
