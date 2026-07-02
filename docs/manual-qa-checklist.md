@@ -2,6 +2,8 @@
 
 Use this checklist after release verification passes and the production deploy is live.
 See `docs/release-readiness.md` for the automated/manual verification boundary.
+Use `docs/manual-qa-evidence-template.md` to record the account, device, result,
+and screenshot evidence for release sign-off.
 
 ## Required Accounts And Devices
 

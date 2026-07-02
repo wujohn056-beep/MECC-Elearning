@@ -59,6 +59,8 @@ mobile device confirm:
 - Web `/download` installs the current Android APK successfully.
 - The same learner flow works in Chinese, English, and Arabic without raw locale keys.
 
+Record sign-off evidence in `docs/manual-qa-evidence-template.md`.
+
 ## External Release Configuration
 
 After publishing a new Android APK, open `/admin/app-release` with a super admin account and set
