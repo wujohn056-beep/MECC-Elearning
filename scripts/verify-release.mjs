@@ -210,6 +210,7 @@ const sourceAssertions = [
   ['campaign learning route', 'src/pages/LearningHub.tsx', ['campaignLearnId']],
   ['campaign go learn opens challenge page', 'src/pages/LearningHub.tsx', ['openCampaignLearningTarget', 'buildLearningSearchParams', "type: 'campaign'", 'campaignId: campaign.id']],
   ['campaign focused view has trilingual fallback copy', 'src/pages/LearningHub.tsx', ['learning_hub.go_learn', 'campaign.back_to_challenge', 'campaign.challenge_label']],
+  ['recording card opens focused route through shared helper', 'src/pages/LearningHub.tsx', ["type: 'recording'", 'recordingId: rec.id', 'buildLearningSearchParams']],
   ['central learning route builder', 'src/utils/learningRoutes.ts', ['buildLearningRoute', 'buildLearningSearchParams', 'focusedRouteParams', "params.set('campaignLearnId', target.campaignId)", "params.set('taskId', target.taskId)", "params.set('recordingId', target.recordingId)"]],
   ['task category grouping follows configured category order', 'src/utils/taskRecordingGroups.ts', ['getTaskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],

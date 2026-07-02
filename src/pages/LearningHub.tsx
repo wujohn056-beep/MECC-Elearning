@@ -5036,9 +5036,7 @@ export default function LearningHub() {
                                 key={rec.id} 
                                 className="flex items-center gap-3 group cursor-pointer hover:bg-white p-2.5 rounded-xl transition-all border border-transparent hover:border-white/60 hover:shadow-sm" 
                                 onClick={() => {
-                                    const newParams = new URLSearchParams(searchParams);
-                                    newParams.set('recordingId', rec.id);
-                                    setSearchParams(newParams);
+                                    setSearchParams(buildLearningSearchParams({ type: 'recording', recordingId: rec.id }, searchParams));
                                 }}
                             >
                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600 shadow-sm' : idx === 1 ? 'bg-gray-200 text-gray-600 shadow-sm' : idx === 2 ? 'bg-orange-100 text-orange-600 shadow-sm' : 'bg-gray-50 text-gray-400'}`}>
