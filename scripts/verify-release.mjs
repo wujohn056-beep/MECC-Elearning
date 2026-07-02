@@ -218,6 +218,7 @@ const sourceAssertions = [
   ['notification identity uses effective uid helper', 'src/components/NotificationBell.tsx', ['getEffectiveUserId', "where('assigneeIds', 'array-contains', myUid)", '[`assignees.${myUid}.read`]']],
   ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ['isIncompleteTask', 'tasks.filter(isIncompleteTask)', "buildLearningRoute({ type: 'task', taskId: task.id })"]],
   ['account task list keeps in-progress tasks visible', 'src/pages/Account.tsx', ['isTaskIncomplete', 'matchesTaskTab', "task.myStatus !== 'completed'"]],
+  ['account learning links use shared route builder', 'src/pages/Account.tsx', ['buildLearningRoute', "type: 'task'", 'taskId: task.id', "type: 'recording'", 'recordingId: rec.id']],
   ['native recording push route', 'src/components/AppLayout.tsx', ["type === 'recording'", 'data.recordingId', "buildLearningRoute({ type: 'recording'"]],
   ['native task push route', 'src/components/AppLayout.tsx', ["type === 'task'", 'data.taskId', "buildLearningRoute({ type: 'task'"]],
   ['native campaign push route', 'src/components/AppLayout.tsx', ["type === 'campaign'", 'data.campaignId', "buildLearningRoute({ type: 'campaign'"]],

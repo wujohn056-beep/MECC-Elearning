@@ -8,12 +8,13 @@ import { ref as sRef, uploadBytesResumable, getDownloadURL } from 'firebase/stor
 import { Link } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { getEffectiveUserId } from '../utils/userIdentity';
+import { buildLearningRoute } from '../utils/learningRoutes';
 
 const TaskCard = ({ task }: { task: any }) => {
     const { t } = useTranslation();
     
     return (
-        <Link to={`/hub?taskId=${task.id}`} className="bg-white/70 p-5 rounded-2xl border border-transparent hover:border-desert-gold/30 hover:shadow-md transition-all flex flex-col group block">
+        <Link to={buildLearningRoute({ type: 'task', taskId: task.id })} className="bg-white/70 p-5 rounded-2xl border border-transparent hover:border-desert-gold/30 hover:shadow-md transition-all flex flex-col group block">
             <div className="flex justify-between items-start mb-2">
                 <div>
                     <h4 className="font-bold text-arabian-night text-base group-hover:text-deep-teal transition-colors flex items-center gap-1.5">
@@ -512,7 +513,7 @@ export default function Account() {
                                 ) : (
                                     <div className="space-y-3">
                                         {favRecordings.map(rec => (
-                                            <Link to={`/hub?recordingId=${rec.id}`} key={rec.id} className="bg-white/70 p-3.5 rounded-xl border border-transparent hover:border-red-200 transition-all flex justify-between items-center group block">
+                                            <Link to={buildLearningRoute({ type: 'recording', recordingId: rec.id })} key={rec.id} className="bg-white/70 p-3.5 rounded-xl border border-transparent hover:border-red-200 transition-all flex justify-between items-center group block">
                                                 <div className="flex-1 min-w-0 pr-4">
                                                     <h4 className="font-bold text-slate-800 text-sm group-hover:text-red-500 transition-colors truncate">{rec.title}</h4>
                                                     <p className="text-xs font-semibold text-slate-500 mt-0.5 truncate">{rec.description}</p>
@@ -623,7 +624,7 @@ export default function Account() {
                         ) : (
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
                                 {favRecordings.map(rec => (
-                                    <Link to={`/hub?recordingId=${rec.id}`} key={rec.id} className="bg-white/70 p-4 rounded-2xl border border-transparent hover:border-red-200 hover:shadow-md transition-all flex justify-between items-center group block">
+                                    <Link to={buildLearningRoute({ type: 'recording', recordingId: rec.id })} key={rec.id} className="bg-white/70 p-4 rounded-2xl border border-transparent hover:border-red-200 hover:shadow-md transition-all flex justify-between items-center group block">
                                         <div className="flex-1 min-w-0 pr-4">
                                             <h4 className="font-bold text-arabian-night text-base group-hover:text-red-500 transition-colors truncate">{rec.title}</h4>
                                             <p className="text-xs font-semibold text-arabian-night/50 mt-1 truncate">{rec.description}</p>
