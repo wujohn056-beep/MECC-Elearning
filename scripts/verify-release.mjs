@@ -211,6 +211,7 @@ const sourceAssertions = [
   ['app release admin route exists', 'src/App.tsx', ['AppReleaseManager', 'app-release']],
   ['app release admin menu exists', 'src/components/AdminLayout.tsx', ['/admin/app-release', 'admin_menu.app_release']],
   ['app release admin manages Firestore config', 'src/pages/admin/AppReleaseManager.tsx', ['system_config', 'app_versions', 'android_latest', 'android_apk_url']],
+  ['production smoke verifies APK hash', 'scripts/smoke-production.mjs', ['createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
   ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
   ['safe native sync script', 'package.json', ['clean-native-download-assets.mjs']]
 ];
