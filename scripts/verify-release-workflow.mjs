@@ -29,6 +29,17 @@ const requireJobContains = (job, description, needle) => {
   const jobText = job === 'release' ? releaseJobSource : smokeJobSource;
   if (!jobText.includes(needle)) errors.push(`${description}: missing ${needle}`);
 };
+const jobLineNumber = (job, needle) => {
+  const jobText = job === 'release' ? releaseJobSource : smokeJobSource;
+  return jobText.split('\n').findIndex((line) => line.includes(needle));
+};
+const requireJobOrder = (job, description, before, after) => {
+  const beforeLine = jobLineNumber(job, before);
+  const afterLine = jobLineNumber(job, after);
+  if (beforeLine === -1 || afterLine === -1 || beforeLine >= afterLine) {
+    errors.push(`${description}: expected "${before}" before "${after}"`);
+  }
+};
 const requireOrder = (description, before, after) => {
   const beforeLine = lineNumber(before);
   const afterLine = lineNumber(after);
@@ -72,8 +83,11 @@ if (envNumber('PROD_SMOKE_RETRY_DELAY_MS') < 20000) {
 
 requireOrder('release job must run before production smoke job', 'verify-release:', 'smoke-production:');
 requireOrder('release command must run before production smoke job', 'run: npm run verify:release', 'smoke-production:');
-requireOrder('production smoke retry env must be set before smoke command', 'PROD_SMOKE_RETRIES', 'run: npm run smoke:prod');
-requireOrder('production smoke must wait before smoke command', 'Wait for production deploy', 'run: npm run smoke:prod');
+requireJobOrder('release', 'release job must install before verification', 'run: npm ci', 'run: npm run verify:release');
+requireJobOrder('smoke', 'production smoke job must install before waiting', 'run: npm ci', 'Wait for production deploy');
+requireJobOrder('smoke', 'production smoke job must wait before smoke command', 'Wait for production deploy', 'run: npm run smoke:prod');
+requireJobOrder('smoke', 'production smoke retry env must be set before smoke command', 'PROD_SMOKE_RETRIES', 'run: npm run smoke:prod');
+requireJobOrder('smoke', 'production smoke retry delay env must be set before smoke command', 'PROD_SMOKE_RETRY_DELAY_MS', 'run: npm run smoke:prod');
 
 if (errors.length > 0) {
   console.error('Release workflow verification failed:');
