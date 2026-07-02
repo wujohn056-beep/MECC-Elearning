@@ -9,6 +9,7 @@ import { Capacitor } from '@capacitor/core';
 import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersion';
 import { getEffectiveUserId } from '../utils/userIdentity';
 import { calculateCampaignProgress, getCampaignRequiredRecordings as resolveCampaignRequiredRecordings } from '../utils/campaignProgress';
+import { getTaskRecordingGroups } from '../utils/taskRecordingGroups';
 
 interface Recording {
     id: string;
@@ -4409,51 +4410,12 @@ export default function LearningHub() {
     const validTaskRecordingIds = taskRecordingIds.filter(id => recordings.some(r => r.id === id));
 
     const taskRecordingGroups = React.useMemo(() => {
-        const groups: { key: string; name: string; recordingIds: string[]; categoryOrder: number; firstSeen: number }[] = [];
-        const groupIndex = new Map<string, number>();
-        const categoryById = new Map(categories.map(cat => [cat.id, cat]));
-        const categoryOrderById = new Map(categories.map((cat, index) => [cat.id, index]));
-        const categoryOrderByName = new Map<string, number>();
-
-        categories.forEach((cat, index) => {
-            const normalizedName = (cat.name || '').trim().toLowerCase();
-            if (normalizedName && !categoryOrderByName.has(normalizedName)) {
-                categoryOrderByName.set(normalizedName, index);
-            }
-        });
-
-        validTaskRecordingIds.forEach((recId, recIndex) => {
-            const rec = recordings.find(r => r.id === recId);
-            if (!rec) return;
-
-            const category = rec.categoryId ? categoryById.get(rec.categoryId) : undefined;
-            const categoryName = category?.name || rec.categoryName || t('common.uncategorized', '未分类');
-            const groupKey = rec.categoryId || `name:${categoryName}`;
-            const normalizedName = (categoryName || '').trim().toLowerCase();
-            const categoryOrder = rec.categoryId && categoryOrderById.has(rec.categoryId)
-                ? categoryOrderById.get(rec.categoryId)!
-                : categoryOrderByName.get(normalizedName) ?? Number.MAX_SAFE_INTEGER;
-
-            if (!groupIndex.has(groupKey)) {
-                groupIndex.set(groupKey, groups.length);
-                groups.push({
-                    key: groupKey,
-                    name: categoryName,
-                    recordingIds: [],
-                    categoryOrder,
-                    firstSeen: recIndex
-                });
-            }
-
-            groups[groupIndex.get(groupKey)!].recordingIds.push(recId);
-        });
-
-        return groups
-            .sort((a, b) => {
-                if (a.categoryOrder !== b.categoryOrder) return a.categoryOrder - b.categoryOrder;
-                return a.firstSeen - b.firstSeen;
-            })
-            .map(({ key, name, recordingIds }) => ({ key, name, recordingIds }));
+        return getTaskRecordingGroups(
+            validTaskRecordingIds,
+            recordings,
+            categories,
+            t('common.uncategorized', '未分类')
+        );
     }, [validTaskRecordingIds, recordings, categories, t]);
 
     const reflectionWordLimit = taskType === 'new_cc' ? 50 : 100;

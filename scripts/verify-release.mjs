@@ -70,6 +70,15 @@ const dingtalkCheck = spawnSync(process.execPath, ['--check', 'netlify/functions
 });
 addCheck('dingtalk function syntax', dingtalkCheck.status === 0, dingtalkCheck.stderr.trim());
 
+const taskRecordingGroupsCheck = spawnSync(process.execPath, ['scripts/verify-task-recording-groups.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'task recording group behavior',
+  taskRecordingGroupsCheck.status === 0,
+  (taskRecordingGroupsCheck.stdout + taskRecordingGroupsCheck.stderr).trim()
+);
+
 const criticalLintFiles = [
   'src/components/AppLayout.tsx',
   'src/components/NotificationBell.tsx',
@@ -84,6 +93,7 @@ const criticalLintFiles = [
   'src/pages/admin/UserManager.tsx',
   'src/utils/appVersion.ts',
   'src/utils/campaignProgress.ts',
+  'src/utils/taskRecordingGroups.ts',
   'src/utils/userIdentity.ts'
 ];
 const criticalLint = spawnSync('npx', [
@@ -114,7 +124,7 @@ const sourceAssertions = [
   ['campaign learning route', 'src/pages/LearningHub.tsx', ['campaignLearnId']],
   ['campaign go learn opens challenge page', 'src/pages/LearningHub.tsx', ['openCampaignLearningTarget', "newParams.set('campaignLearnId', campaign.id)", "newParams.delete('taskId')"]],
   ['campaign focused view has trilingual fallback copy', 'src/pages/LearningHub.tsx', ['learning_hub.go_learn', 'campaign.back_to_challenge', 'campaign.challenge_label']],
-  ['task category grouping follows configured category order', 'src/pages/LearningHub.tsx', ['taskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
+  ['task category grouping follows configured category order', 'src/utils/taskRecordingGroups.ts', ['getTaskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
   ['campaign notification route', 'src/components/NotificationBell.tsx', ['campaignLearnId']],
   ['notification identity uses effective uid helper', 'src/components/NotificationBell.tsx', ['getEffectiveUserId', "where('assigneeIds', 'array-contains', myUid)", '[`assignees.${myUid}.read`]']],
