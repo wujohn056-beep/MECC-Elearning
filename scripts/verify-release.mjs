@@ -106,6 +106,15 @@ addCheck(
   (appDownloadLinksCheck.stdout + appDownloadLinksCheck.stderr).trim()
 );
 
+const dingtalkPushPayloadsCheck = spawnSync(process.execPath, ['scripts/verify-dingtalk-push-payloads.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'dingtalk push payload behavior',
+  dingtalkPushPayloadsCheck.status === 0,
+  (dingtalkPushPayloadsCheck.stdout + dingtalkPushPayloadsCheck.stderr).trim().split('\n').slice(-4).join(' | ')
+);
+
 const criticalLintFiles = [
   'src/components/AppLayout.tsx',
   'src/components/NotificationBell.tsx',

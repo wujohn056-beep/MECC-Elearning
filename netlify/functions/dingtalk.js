@@ -997,11 +997,20 @@ export const handler = async (event, context) => {
                     }
                 } else {
                     fcmSentSuccess = true;
-                    console.log("[Mock FCM Task Push sent]", {
+                    if (!mockPayload) mockPayload = {};
+                    mockPayload.fcm = {
                         tokens: uniqueFcmTokens,
                         title: `📋 收到新的学习任务`,
-                        body: `${title} (指派人: ${assignerName || '导师'})`
-                    });
+                        body: `${title} (指派人: ${assignerName || '导师'})`,
+                        data: {
+                            title: title,
+                            type: 'task',
+                            deadline: deadline || '',
+                            assignerName: assignerName || '',
+                            taskId: taskId || ''
+                        }
+                    };
+                    console.log("[Mock FCM Task Push sent]", mockPayload.fcm);
                 }
             }
 
@@ -1255,11 +1264,21 @@ export const handler = async (event, context) => {
                     }
                 } else {
                     fcmSentSuccess = true;
-                    console.log("[Mock FCM Campaign Push sent]", {
+                    if (!mockPayload) mockPayload = {};
+                    mockPayload.fcm = {
                         tokens: uniqueFcmTokens,
                         title: `🏆 收到新的专属证书挑战`,
-                        body: `${title} (指派人: ${creatorName || '主管'})`
-                    });
+                        body: `${title} (指派人: ${creatorName || '主管'})`,
+                        data: {
+                            title: title,
+                            type: 'campaign',
+                            campaignId: campaignId || '',
+                            bannerTitle: bannerTitle || '',
+                            creatorName: creatorName || '',
+                            endDate: endDate || ''
+                        }
+                    };
+                    console.log("[Mock FCM Campaign Push sent]", mockPayload.fcm);
                 }
             }
 
