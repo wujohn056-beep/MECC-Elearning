@@ -37,7 +37,8 @@ try {
     ['home', '/'],
     ['download page', '/download'],
     ['campaign learning route', '/hub?campaignLearnId=smoke-test'],
-    ['task learning route', '/hub?taskId=smoke-test']
+    ['task learning route', '/hub?taskId=smoke-test'],
+    ['recording detail route', '/hub?recordingId=smoke-test']
   ];
 
   for (const [name, path] of htmlRoutes) {
