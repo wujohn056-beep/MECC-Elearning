@@ -4,6 +4,8 @@ Use this checklist after release verification passes and the production deploy i
 See `docs/release-readiness.md` for the automated/manual verification boundary.
 Use `docs/manual-qa-evidence-template.md` to record the account, device, result,
 and screenshot evidence for release sign-off.
+Run `npm run qa:evidence` to generate a prefilled release evidence file under
+`docs/qa-evidence/`.
 
 ## Required Accounts And Devices
 
@@ -55,6 +57,7 @@ Repeat the learner task page in Chinese, English, and Arabic:
 ```bash
 npm run verify:release
 npm run smoke:prod
+npm run qa:evidence
 git status --short
 ```
 

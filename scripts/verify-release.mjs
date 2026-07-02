@@ -212,6 +212,8 @@ const sourceAssertions = [
   ['app release admin menu exists', 'src/components/AdminLayout.tsx', ['/admin/app-release', 'admin_menu.app_release']],
   ['app release admin manages Firestore config', 'src/pages/admin/AppReleaseManager.tsx', ['system_config', 'app_versions', 'android_latest', 'android_apk_url']],
   ['production smoke verifies APK hash', 'scripts/smoke-production.mjs', ['createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
+  ['manual QA evidence generator exists', 'scripts/create-manual-qa-evidence.mjs', ['manual-qa-evidence-template.md', 'docs/qa-evidence', 'Android APK SHA-256']],
+  ['manual QA evidence command exists', 'package.json', ['qa:evidence', 'create-manual-qa-evidence.mjs']],
   ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
   ['safe native sync script', 'package.json', ['clean-native-download-assets.mjs']]
 ];

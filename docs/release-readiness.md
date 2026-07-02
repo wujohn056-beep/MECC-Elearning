@@ -59,7 +59,8 @@ mobile device confirm:
 - Web `/download` installs the current Android APK successfully.
 - The same learner flow works in Chinese, English, and Arabic without raw locale keys.
 
-Record sign-off evidence in `docs/manual-qa-evidence-template.md`.
+Record sign-off evidence in `docs/manual-qa-evidence-template.md`, or run
+`npm run qa:evidence` to create a prefilled file under `docs/qa-evidence/`.
 
 ## External Release Configuration
 
