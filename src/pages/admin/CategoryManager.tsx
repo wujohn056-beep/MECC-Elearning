@@ -31,10 +31,6 @@ export default function CategoryManager() {
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const { hasPermission, profile, isLeader } = useAuth();
-    
-    if (!hasPermission('manageCategories')) {
-        return <Navigate to="/admin" replace />;
-    }
 
     const fetchCategories = async () => {
         setLoading(true);
@@ -78,8 +74,12 @@ export default function CategoryManager() {
     };
 
     useEffect(() => {
-        fetchCategories();
-    }, []);
+        if (hasPermission('manageCategories')) {
+            fetchCategories();
+        } else {
+            setLoading(false);
+        }
+    }, [hasPermission]);
 
     useEffect(() => {
         if (profile?.dep === 'SS') {
@@ -103,6 +103,10 @@ export default function CategoryManager() {
         if (hubScope === 'public') return true;
         return hubScope === 'team' && cat.targetSmId === profile?.crmId;
     });
+
+    if (!hasPermission('manageCategories')) {
+        return <Navigate to="/admin" replace />;
+    }
 
     const handleDragStart = (e: React.DragEvent, index: number) => {
         setDraggedIndex(index);
@@ -343,6 +347,7 @@ export default function CategoryManager() {
                     hubScope: catScope,
                     targetSmId: catSmId,
                     scope: 'new_cc',
+                    sortOrder: typeof cat.sortOrder === 'number' ? cat.sortOrder : 0,
                     createdAt: serverTimestamp()
                 });
             });

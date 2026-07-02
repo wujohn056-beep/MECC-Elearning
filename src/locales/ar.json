@@ -111,6 +111,9 @@
         "status_pending": "تحديث التطبيق المعلق",
         "status_latest": "تطبيق العميل محدث",
         "version": "الإصدار: 1.0.5",
+        "current_version": "الإصدار الحالي: {{version}}",
+        "latest_version": "أحدث إصدار: {{version}}",
+        "force_required": "إصدارك الحالي أقل من الحد الأدنى المدعوم. يرجى التحديث قبل المتابعة.",
         "outdated_tip": "يتوفر إصدار جديد للتطبيق أكثر سلاسة. يوصى بالترقية الآن للحفاظ على عمل ميزات الهاتف المحمول بشكل صحيح.",
         "latest_tip": "أنت تستخدم حاليًا أحدث إصدار من تطبيق MECC للهاتف المحمول. استمتع بتجربة تعليمية سلسة وفعالة!"
     },
@@ -139,6 +142,7 @@
     "login": {
         "email_label": "حساب CRM",
         "email_placeholder": "مثال: JOCC-ahmadalkhatib",
+        "password_placeholder": "أدخل كلمة المرور",
         "login_fail": "فشل تسجيل الدخول، يرجى التحقق من الحساب وكلمة المرور.",
         "account_blocked": "تم تعطيل حسابك أو حذفه. يرجى الاتصال بالمسؤول.",
         "subtitle": "أكاديمية ME السحابية"
@@ -188,6 +192,9 @@
         "submit_fail": "فشل التقديم، يرجى المحاولة مرة أخرى.",
         "task_submission": "إرسال مهمة التعلم",
         "task_submission_desc": "يرجى الاستماع إلى جميع التسجيلات المعينة وكتابة تأمل لكل تسجيل قبل إرسال المهمة.",
+        "task_resume_notice": "إذا غادرت في منتصف المهمة، افتح نفس المهمة للمتابعة. سيتم حفظ سجلات الاستماع المكتملة ومسودات التأمل تلقائيًا.",
+        "task_draft_saving": "جاري حفظ المسودة...",
+        "task_draft_saved": "تم حفظ المسودة",
         "complete_all_requirements": "أكمل جميع المتطلبات",
         "task_completed_title": "اكتملت المهمة",
         "task_completed_desc": "لقد أكملت جميع المحتويات التعليمية لهذه المهمة وقدمت تأملك.",
@@ -695,7 +702,22 @@
         "members": "أعضاء",
         "unassigned_sd": "SD غير معين",
         "unassigned_sm": "SM غير معين",
-        "unassigned_tl": "TL غير معين"
+        "unassigned_tl": "TL غير معين",
+        "contribution_rankings": "تصنيفات المساهمة",
+        "task_publishing_rankings": "تصنيفات نشر المهام",
+        "cc_contribution": "ترتيب مساهمة CC",
+        "sd_contribution": "ترتيب مساهمة SD",
+        "sm_contribution": "ترتيب مساهمة SM",
+        "team_contribution": "ترتيب مساهمة الفريق",
+        "cc_published": "مهام CC المنشورة",
+        "sd_published": "مهام SD المنشورة",
+        "sm_published": "مهام SM المنشورة",
+        "team_published": "مهام الفريق المنشورة",
+        "total_published": "إجمالي المهام المنشورة",
+        "avg_published": "ترتيب متوسط المهام المنشورة لكل مستخدم",
+        "sd_avg_published": "ترتيب متوسط النشر حسب SD",
+        "sm_avg_published": "ترتيب متوسط النشر حسب SM",
+        "team_avg_published": "ترتيب متوسط النشر حسب الفريق"
     },
     "policy_manager": {
         "title": "سياسات وحوافز المبيعات التشغيلية",

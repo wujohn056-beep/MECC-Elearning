@@ -320,7 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 const userRef = doc(db, 'users', targetUid);
                                 await updateDoc(userRef, {
                                     deviceTokens: arrayUnion(fcmToken),
-                                    lastActiveDevice: 'ios'
+                                    lastActiveDevice: Capacitor.getPlatform()
                                 });
                                 console.log('[Native Push] Associated FCM token in Firestore.');
                             } catch (e: any) {

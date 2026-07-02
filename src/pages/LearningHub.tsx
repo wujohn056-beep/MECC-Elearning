@@ -6,6 +6,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
+import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersion';
+import { getEffectiveUserId } from '../utils/userIdentity';
+import { calculateCampaignProgress, getCampaignRequiredRecordings as resolveCampaignRequiredRecordings } from '../utils/campaignProgress';
 
 interface Recording {
     id: string;
@@ -372,7 +375,9 @@ const RecordingCard = ({
                                     const canView = isVideo ? isSDLevel : isLeader;
                                     if (canView) {
                                         e.stopPropagation();
-                                        onViewTranscript && onViewTranscript(rec);
+                                        if (onViewTranscript) {
+                                            onViewTranscript(rec);
+                                        }
                                     }
                                 }}
                                 className={`text-[9.5px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-extrabold shadow-sm flex items-center gap-1.5 shrink-0 select-none backdrop-blur-md transition-all duration-300 ${
@@ -450,7 +455,9 @@ const RecordingCard = ({
                                 <button 
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        onViewProgress && onViewProgress(rec);
+                                        if (onViewProgress) {
+                                            onViewProgress(rec);
+                                        }
                                     }}
                                     className={`flex items-center gap-1.5 transition-all duration-300 outline-none px-2.5 py-1 rounded-full border shadow-sm hover:shadow hover:scale-110 active:scale-95 cursor-pointer ${
                                         rec.businessType === 'leader'
@@ -541,7 +548,9 @@ const RecordingCard = ({
                                         onClick={(e) => {
                                             if (isLeader) {
                                                 e.stopPropagation();
-                                                onViewTranscript && onViewTranscript(rec);
+                                                if (onViewTranscript) {
+                                                    onViewTranscript(rec);
+                                                }
                                             } else {
                                                 onPlayVideo(rec, disableSeek);
                                             }
@@ -2368,28 +2377,6 @@ const DirectTranscriptModal = ({ rec: initialRec, onClose }: DirectTranscriptMod
 
     const [rec, setRec] = useState<any>(initialRec);
 
-    if (isVideo && !isSDLevel) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl text-center space-y-4 animate-in zoom-in duration-300">
-                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-[#006d77]">
-                        🔒
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-800">{t('learning_hub.no_permission', '暂无访问权限')}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed font-semibold">
-                        {t('learning_hub.video_transcript_permission_tip', '视频物料的阿语逐字稿仅供 SD 总监及以上层级查阅。')}
-                    </p>
-                    <button
-                        onClick={onClose}
-                        className="w-full py-2.5 bg-deep-teal text-white rounded-xl font-bold hover:bg-deep-teal/90 transition-colors shadow-sm cursor-pointer"
-                    >
-                        {t('common.close', '关闭')}
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     React.useEffect(() => {
         setRec(initialRec);
     }, [initialRec]);
@@ -2448,6 +2435,28 @@ const DirectTranscriptModal = ({ rec: initialRec, onClose }: DirectTranscriptMod
             .finally(() => setLoadingTranslation(false));
         }
     }, [activeTab, rec.id, transcriptZh, rec.transcriptZh, isSDLevel, t]);
+
+    if (isVideo && !isSDLevel) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl text-center space-y-4 animate-in zoom-in duration-300">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-[#006d77]">
+                        🔒
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800">{t('learning_hub.no_permission', '暂无访问权限')}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed font-semibold">
+                        {t('learning_hub.video_transcript_permission_tip', '视频物料的阿语逐字稿仅供 SD 总监及以上层级查阅。')}
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="w-full py-2.5 bg-deep-teal text-white rounded-xl font-bold hover:bg-deep-teal/90 transition-colors shadow-sm cursor-pointer"
+                    >
+                        {t('common.close', '关闭')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const handleCopy = () => {
         const textToCopy = activeTab === 'chinese' ? transcriptZh : rec.transcript;
@@ -3600,6 +3609,7 @@ export default function LearningHub() {
     const [reflections, setReflections] = useState<Record<string, string>>({});
     const [isSubmittingTask, setIsSubmittingTask] = useState(false);
     const [isTaskCompleted, setIsTaskCompleted] = useState(false);
+    const [taskDraftStatus, setTaskDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [favorites, setFavorites] = useState<string[]>([]);
     const [selectedLecturer, setSelectedLecturer] = useState<string>('');
     const [showAllLecturers, setShowAllLecturers] = useState(false);
@@ -3618,7 +3628,7 @@ export default function LearningHub() {
     const activeCampaignsForUser = React.useMemo(() => {
         if (!user) return [];
         const userTeam = profile?.team || '';
-        const userId = user.uid;
+        const userId = getEffectiveUserId(user, profile);
         
         return campaigns.filter(c => {
             // Check if user is in target team
@@ -3636,58 +3646,33 @@ export default function LearningHub() {
         });
     }, [campaigns, user, profile]);
 
-    const getCampaignRequiredRecordings = React.useCallback((campaign: any) => {
-        if (!campaign?.conditions) return [];
-
-        if (campaign.conditions.category) {
-            return recordings.filter(r =>
-                r.categoryId === campaign.conditions.category &&
-                (!campaign.conditions.requiredTaskIds ||
-                    campaign.conditions.requiredTaskIds.length === 0 ||
-                    campaign.conditions.requiredTaskIds.includes(r.id))
-            );
-        }
-
-        if (campaign.conditions.requiredTaskIds) {
-            return recordings.filter(r => campaign.conditions.requiredTaskIds.includes(r.id));
-        }
-
-        return [];
-    }, [recordings]);
-
     const activeCampaignLearning = React.useMemo(() => {
         if (!campaignLearnId) return null;
         return campaigns.find(c => c.id === campaignLearnId) || null;
     }, [campaignLearnId, campaigns]);
 
     const campaignLearningRecordings = React.useMemo(() => {
-        return getCampaignRequiredRecordings(activeCampaignLearning);
-    }, [activeCampaignLearning, getCampaignRequiredRecordings]);
+        return resolveCampaignRequiredRecordings(activeCampaignLearning, recordings);
+    }, [activeCampaignLearning, recordings]);
 
     const campaignLearningProgress = React.useMemo(() => {
-        if (!activeCampaignLearning) {
+        const progress = calculateCampaignProgress(activeCampaignLearning, campaignLearningRecordings, completedAudioIds);
+        if (progress.mode === 'none') {
             return { completed: false, text: '', percent: 0 };
         }
 
-        if (activeCampaignLearning.conditions?.category) {
-            const completedInCampaign = Array.from(new Set(
-                completedAudioIds.filter(id => campaignLearningRecordings.some(r => r.id === id))
-            ));
-            const progressMins = completedInCampaign.length * 12;
-            const reqMins = activeCampaignLearning.conditions.requiredMinutes || 120;
+        if (progress.mode === 'minutes') {
             return {
-                completed: progressMins >= reqMins,
-                text: `${progressMins} / ${reqMins} ${localT('common.minutes', '分钟', i18n)}`,
-                percent: Math.min(100, Math.round((progressMins / reqMins) * 100))
+                completed: progress.completed,
+                text: `${progress.progressValue} / ${progress.requiredValue} ${localT('common.minutes', '分钟', i18n)}`,
+                percent: progress.percent
             };
         }
 
-        const reqIds = activeCampaignLearning.conditions?.requiredTaskIds || [];
-        const completedTasks = Array.from(new Set(completedAudioIds.filter(id => reqIds.includes(id))));
         return {
-            completed: reqIds.length > 0 && completedTasks.length === reqIds.length,
-            text: `${completedTasks.length} / ${reqIds.length} ${localT('learning_hub.courses', '门课', i18n)}`,
-            percent: reqIds.length > 0 ? Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100)) : 0
+            completed: progress.completed,
+            text: `${progress.progressValue} / ${progress.requiredValue} ${localT('learning_hub.courses', '门课', i18n)}`,
+            percent: progress.percent
         };
     }, [activeCampaignLearning, campaignLearningRecordings, completedAudioIds, i18n]);
 
@@ -3727,24 +3712,11 @@ export default function LearningHub() {
                     
                     if (isNative || hasDownloaded) {
                         const platform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
-                        const currentNativeVersion = platform === 'ios' ? '1.1' : '1.0.6';
+                        const currentNativeVersion = getCurrentClientAppVersion(platform);
                         const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
                         const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
                         
-                        const parseVersion = (v: string) => v.split('.').map(Number);
-                        const isOutdated = (current: string, latest: string) => {
-                            const cur = parseVersion(current);
-                            const lat = parseVersion(latest);
-                            for (let i = 0; i < Math.max(cur.length, lat.length); i++) {
-                                const c = cur[i] || 0;
-                                const l = lat[i] || 0;
-                                if (c < l) return true;
-                                if (c > l) return false;
-                            }
-                            return false;
-                        };
-                        
-                        if (latestVersion && isOutdated(currentVersionToCheck, latestVersion)) {
+                        if (latestVersion && isVersionOutdated(currentVersionToCheck, latestVersion)) {
                             setIsAppOutdated(true);
                         } else {
                             setIsAppOutdated(false);
@@ -3909,7 +3881,7 @@ export default function LearningHub() {
                         setTaskTitle(data.title || '学习任务');
                         setTaskType(data.taskType || 'general');
                         
-                        const myUid = profile?.realUid || user.uid;
+                        const myUid = getEffectiveUserId(user, profile);
                         const myAssigneeData = data.assignees?.[myUid];
                         if (myAssigneeData) {
                             if (myAssigneeData.reflections) {
@@ -3920,6 +3892,11 @@ export default function LearningHub() {
                                 setIsTaskCompleted(true);
                             } else {
                                 setIsTaskCompleted(false);
+                                await updateDoc(doc(db, 'learning_tasks', taskId), {
+                                    [`assignees.${myUid}.status`]: myAssigneeData.status && myAssigneeData.status !== 'pending' ? myAssigneeData.status : 'in_progress',
+                                    [`assignees.${myUid}.read`]: true,
+                                    [`assignees.${myUid}.startedAt`]: myAssigneeData.startedAt || serverTimestamp()
+                                });
                             }
                         } else {
                             setIsTaskCompleted(false);
@@ -4052,24 +4029,33 @@ export default function LearningHub() {
 
                 // Fetch current User's Favorites
                 if (user) {
-                    const favDoc = await getDoc(doc(db, 'user_favorites', user.uid));
+                    const learnerUid = getEffectiveUserId(user, profile);
+                    const favDoc = await getDoc(doc(db, 'user_favorites', learnerUid));
                     if (favDoc.exists()) {
                         setFavorites(favDoc.data().recordingIds || []);
+                    } else if (learnerUid !== user.uid) {
+                        const legacyFavDoc = await getDoc(doc(db, 'user_favorites', user.uid));
+                        if (legacyFavDoc.exists()) {
+                            setFavorites(legacyFavDoc.data().recordingIds || []);
+                        }
                     }
 
                     // Fetch current User's learning history to populate completedAudioIds
-                    const historyQ = query(
-                        collection(db, 'learning_history'),
-                        where('userId', '==', user.uid)
-                    );
-                    const historySnap = await getDocs(historyQ);
+                    const historyUserIds = Array.from(new Set([learnerUid, user.uid]));
                     const completedIds: string[] = [];
-                    historySnap.forEach(hDoc => {
-                        const hData = hDoc.data();
-                        if (hData.recordingId) {
-                            completedIds.push(hData.recordingId);
-                        }
-                    });
+                    for (const historyUserId of historyUserIds) {
+                        const historyQ = query(
+                            collection(db, 'learning_history'),
+                            where('userId', '==', historyUserId)
+                        );
+                        const historySnap = await getDocs(historyQ);
+                        historySnap.forEach(hDoc => {
+                            const hData = hDoc.data();
+                            if (hData.recordingId) {
+                                completedIds.push(hData.recordingId);
+                            }
+                        });
+                    }
                     setCompletedAudioIds(prev => Array.from(new Set([...prev, ...completedIds])));
                 }
             } catch (error) {
@@ -4354,12 +4340,13 @@ export default function LearningHub() {
 
     const handleToggleFavorite = async (recId: string) => {
         if (!user) return;
+        const learnerUid = getEffectiveUserId(user, profile);
         const isFav = favorites.includes(recId);
         const newFavs = isFav ? favorites.filter(id => id !== recId) : [...favorites, recId];
         setFavorites(newFavs);
 
         try {
-            await setDoc(doc(db, 'user_favorites', user.uid), {
+            await setDoc(doc(db, 'user_favorites', learnerUid), {
                 recordingIds: isFav ? arrayRemove(recId) : arrayUnion(recId)
             }, { merge: true });
         } catch (error) {
@@ -4394,8 +4381,10 @@ export default function LearningHub() {
         setCompletedAudioIds(prev => prev.includes(rec.id) ? prev : [...prev, rec.id]);
 
         try {
+            const learnerUid = getEffectiveUserId(user, profile);
             await addDoc(collection(db, 'learning_history'), {
-                userId: user.uid,
+                userId: learnerUid,
+                authUid: user.uid,
                 recordingId: rec.id,
                 recordingTitle: rec.title,
                 lecturerName: rec.lecturerName || '',
@@ -4473,13 +4462,37 @@ export default function LearningHub() {
         validTaskRecordingIds.length > 0 &&
         validTaskRecordingIds.every(id => completedAudioIds.includes(id) && (reflections[id]?.length || 0) >= reflectionWordLimit);
 
+    useEffect(() => {
+        if (!user || !taskId || isTaskCompleted) return;
+        if (Object.keys(reflections).length === 0) return;
+
+        const myUid = getEffectiveUserId(user, profile);
+        setTaskDraftStatus('saving');
+        const timer = window.setTimeout(async () => {
+            try {
+                await updateDoc(doc(db, 'learning_tasks', taskId), {
+                    [`assignees.${myUid}.status`]: 'in_progress',
+                    [`assignees.${myUid}.read`]: true,
+                    [`assignees.${myUid}.reflections`]: reflections,
+                    [`assignees.${myUid}.draftSavedAt`]: serverTimestamp()
+                });
+                setTaskDraftStatus('saved');
+            } catch (error) {
+                console.error("Error saving task draft", error);
+                setTaskDraftStatus('idle');
+            }
+        }, 1200);
+
+        return () => window.clearTimeout(timer);
+    }, [reflections, taskId, user, profile, isTaskCompleted]);
+
     const handleSubmitTask = async () => {
         if (!user || !taskId || !canSubmit) return;
         
         setIsSubmittingTask(true);
         try {
             const taskRef = doc(db, 'learning_tasks', taskId);
-            const myUid = profile?.realUid || user.uid;
+            const myUid = getEffectiveUserId(user, profile);
             await updateDoc(taskRef, {
                 [`assignees.${myUid}.status`]: 'completed',
                 [`assignees.${myUid}.completedAt`]: serverTimestamp(),
@@ -4747,8 +4760,11 @@ export default function LearningHub() {
         
         const isAppUser = isNative || hasDownloaded;
         const userPlatform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
-        const currentNativeVersion = userPlatform === 'ios' ? '1.1' : '1.0.6';
+        const currentNativeVersion = getCurrentClientAppVersion(userPlatform);
         const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
+        const latestVersionToCheck = appUpdateConfig
+            ? (userPlatform === 'ios' ? appUpdateConfig.ios_latest : appUpdateConfig.android_latest)
+            : '';
         
         return (
             <div className={`glass-panel rounded-2xl border border-white p-5 relative overflow-hidden group shadow-lg transition-all duration-300 hover:shadow-xl ${
@@ -4781,6 +4797,12 @@ export default function LearningHub() {
                             <p className="text-xs text-slate-400 dark:text-slate-400/80 leading-relaxed">
                                 {t('update_modal.outdated_tip', '系统发现更流畅的全新版本，建议您立即升级以保证功能正常。')}
                             </p>
+                            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-300 flex flex-wrap gap-x-2 gap-y-1">
+                                <span>{t('update_modal.current_version', '当前版本: {{version}}', { version: currentVersionToCheck })}</span>
+                                {latestVersionToCheck && (
+                                    <span className="text-red-500">{t('update_modal.latest_version', '最新版本: {{version}}', { version: latestVersionToCheck })}</span>
+                                )}
+                            </div>
                             <a
                                 href={userPlatform === 'ios' 
                                     ? (appUpdateConfig?.ios_testflight_url || 'https://testflight.apple.com/join/s2t21vU5') 
@@ -4815,6 +4837,9 @@ export default function LearningHub() {
                             <p className="text-xs text-slate-400 dark:text-slate-400/80 leading-relaxed">
                                 {t('update_modal.latest_tip', '您当前正在使用最新版 MECC 移动端，体验流畅高效的移动学习！')}
                             </p>
+                            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-300">
+                                {latestVersionToCheck && t('update_modal.latest_version', '最新版本: {{version}}', { version: latestVersionToCheck })}
+                            </div>
                         </div>
                     )
                 ) : (
@@ -5460,42 +5485,19 @@ export default function LearningHub() {
 
     const renderCampaignCard = (campaign: any) => {
         // Calculate progress
-        let completed = false;
-        let progressText = '';
-        let progressPercent = 0;
-
-        if (campaign.conditions.category) {
-            const catRecs = recordings.filter(r => 
-                r.categoryId === campaign.conditions.category &&
-                (!campaign.conditions.requiredTaskIds || 
-                 campaign.conditions.requiredTaskIds.length === 0 || 
-                 campaign.conditions.requiredTaskIds.includes(r.id))
-            );
-            const catRecIds = catRecs.map(r => r.id);
-            const completedInCat = Array.from(new Set(
-                completedAudioIds.filter(id => catRecIds.includes(id))
-            ));
-            
-            const progressMins = completedInCat.length * 12;
-            const reqMins = campaign.conditions.requiredMinutes || 120;
-            progressPercent = Math.min(100, Math.round((progressMins / reqMins) * 100));
-            completed = progressPercent >= 100;
-            progressText = `${progressMins} / ${reqMins} ${localT('common.minutes', '分钟', i18n)}`;
-        } else if (campaign.conditions.requiredTaskIds) {
-            const reqIds = campaign.conditions.requiredTaskIds;
-            const completedTasks = Array.from(new Set(
-                completedAudioIds.filter(id => reqIds.includes(id))
-            ));
-            progressPercent = Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100));
-            completed = completedTasks.length === reqIds.length;
-            progressText = `${completedTasks.length} / ${reqIds.length} ${localT('learning_hub.courses', '门课', i18n)}`;
-        }
+        const requiredRecordings = resolveCampaignRequiredRecordings(campaign, recordings);
+        const progress = calculateCampaignProgress(campaign, requiredRecordings, completedAudioIds);
+        const completed = progress.completed;
+        const progressPercent = progress.percent;
+        const progressText = progress.mode === 'minutes'
+            ? `${progress.progressValue} / ${progress.requiredValue} ${localT('common.minutes', '分钟', i18n)}`
+            : `${progress.progressValue} / ${progress.requiredValue} ${localT('learning_hub.courses', '门课', i18n)}`;
 
         const handleCardAction = () => {
             if (completed) {
                 setShowCampaignCert(campaign);
             } else {
-                openCampaignDetails(campaign);
+                openCampaignLearningTarget(campaign);
             }
         };
 
@@ -5775,38 +5777,13 @@ export default function LearningHub() {
         const isRtl = i18n.language?.startsWith('ar');
 
         // Calculate progress just like renderCampaignCard
-        let completed = false;
-        let progressText = '';
-        let progressPercent = 0;
-        let reqRecs: Recording[] = [];
-
-        if (campaign.conditions.category) {
-            reqRecs = recordings.filter(r => 
-                r.categoryId === campaign.conditions.category &&
-                (!campaign.conditions.requiredTaskIds || 
-                 campaign.conditions.requiredTaskIds.length === 0 || 
-                 campaign.conditions.requiredTaskIds.includes(r.id))
-            );
-            const catRecIds = reqRecs.map(r => r.id);
-            const completedInCat = Array.from(new Set(
-                completedAudioIds.filter(id => catRecIds.includes(id))
-            ));
-            
-            const progressMins = completedInCat.length * 12;
-            const reqMins = campaign.conditions.requiredMinutes || 120;
-            progressPercent = Math.min(100, Math.round((progressMins / reqMins) * 100));
-            completed = progressPercent >= 100;
-            progressText = `${progressMins} / ${reqMins} ${localT('common.minutes', '分钟', i18n)}`;
-        } else if (campaign.conditions.requiredTaskIds) {
-            const reqIds = campaign.conditions.requiredTaskIds;
-            reqRecs = recordings.filter(r => reqIds.includes(r.id));
-            const completedTasks = Array.from(new Set(
-                completedAudioIds.filter(id => reqIds.includes(id))
-            ));
-            progressPercent = Math.min(100, Math.round((completedTasks.length / reqIds.length) * 100));
-            completed = completedTasks.length === reqIds.length;
-            progressText = `${completedTasks.length} / ${reqIds.length} ${localT('learning_hub.courses', '门课', i18n)}`;
-        }
+        const reqRecs = resolveCampaignRequiredRecordings(campaign, recordings);
+        const progress = calculateCampaignProgress(campaign, reqRecs, completedAudioIds);
+        const completed = progress.completed;
+        const progressPercent = progress.percent;
+        const progressText = progress.mode === 'minutes'
+            ? `${progress.progressValue} / ${progress.requiredValue} ${localT('common.minutes', '分钟', i18n)}`
+            : `${progress.progressValue} / ${progress.requiredValue} ${localT('learning_hub.courses', '门课', i18n)}`;
 
         const categoryName = campaign.conditions.category 
             ? (categories.find(c => c.id === campaign.conditions.category)?.name || '')
@@ -7590,6 +7567,22 @@ export default function LearningHub() {
                                         </div>
                                         <h3 className="text-lg font-extrabold text-deep-teal mb-1">{t('learning_hub.task_submission', '提交学习任务')}</h3>
                                         <p className="text-sm font-medium text-arabian-night/60">{t('learning_hub.task_submission_desc', '请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。')}</p>
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-arabian-night/50">
+                                            <span className="bg-white/70 border border-white px-2.5 py-1 rounded-full shadow-sm">
+                                                {t('learning_hub.task_resume_notice', '中途退出后可从同一任务入口继续学习，已听完记录和心得草稿会自动保留。')}
+                                            </span>
+                                            {taskDraftStatus !== 'idle' && (
+                                                <span className={`px-2.5 py-1 rounded-full border shadow-sm ${
+                                                    taskDraftStatus === 'saving'
+                                                        ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                }`}>
+                                                    {taskDraftStatus === 'saving'
+                                                        ? t('learning_hub.task_draft_saving', '草稿保存中...')
+                                                        : t('learning_hub.task_draft_saved', '草稿已保存')}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <button
                                         onClick={handleSubmitTask}

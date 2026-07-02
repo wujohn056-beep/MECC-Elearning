@@ -14,8 +14,6 @@ export const firebaseConfig = {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-console.log("ACTUAL FIREBASE CONFIG:", firebaseConfig);
-
 // Only initialize Firebase if we have config
 export let app: any = null;
 export let auth: any = null;

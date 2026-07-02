@@ -111,6 +111,9 @@
         "status_pending": "APP 有新版本待更新",
         "status_latest": "APP 客户端已是最新",
         "version": "版本: 1.0.5",
+        "current_version": "当前版本: {{version}}",
+        "latest_version": "最新版本: {{version}}",
+        "force_required": "当前版本已低于最低支持版本，请先更新后继续使用。",
         "outdated_tip": "系统发现更流畅的全新 APP 版本，建议您立即升级以保证移动端功能正常。",
         "latest_tip": "您当前正在使用最新版 MECC 移动端，体验流畅高效的移动学习！"
     },
@@ -139,6 +142,7 @@
     "login": {
         "email_label": "CRM 账号",
         "email_placeholder": "例如: JOCC-ahmadalkhatib",
+        "password_placeholder": "请输入密码",
         "login_fail": "登录失败，请检查账号和密码是否正确。",
         "account_blocked": "您的账号已被禁用或删除，请联系管理员。",
         "subtitle": "ME 云学堂"
@@ -188,6 +192,9 @@
         "submit_fail": "提交失败，请重试。",
         "task_submission": "提交学习任务",
         "task_submission_desc": "请听完所有分配的录音，并为每条录音撰写心得后即可提交任务。",
+        "task_resume_notice": "中途退出后可从同一任务入口继续学习，已听完记录和心得草稿会自动保留。",
+        "task_draft_saving": "草稿保存中...",
+        "task_draft_saved": "草稿已保存",
         "complete_all_requirements": "请完成所有要求",
         "task_completed_title": "任务已完成",
         "task_completed_desc": "您已经完成了该任务的所有学习内容并提交了心得。",

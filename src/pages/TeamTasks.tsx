@@ -474,7 +474,8 @@ export default function TeamTasks() {
                 // If logged-in user is SM or TL, write the SM's name instead of the SD's name (e.g. "JOHN Team")
                 const loggedInRole = String(profile?.role).trim().toLowerCase();
                 if (loggedInRole === 'sm' || loggedInRole === 'tl') {
-                    const smName = (profile?.role === 'sm' ? profile?.crmId : (profile?.sm || u.sm || '')).trim().toUpperCase();
+                    const smNameSource = profile?.role === 'sm' ? (profile?.crmId || '') : (profile?.sm || u.sm || '');
+                    const smName = smNameSource.trim().toUpperCase();
                     if (smName) {
                         teamName = `${smName} Team`;
                     } else {

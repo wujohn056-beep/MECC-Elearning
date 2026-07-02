@@ -246,7 +246,7 @@ export default function NotificationBell() {
             }
         }
         if (notif.type === 'campaign' && notif.campaignId) {
-            navigate(`/hub?campaignId=${notif.campaignId}`);
+            navigate(`/hub?campaignLearnId=${notif.campaignId}`);
         } else if (notif.recordingId) {
             navigate(`/hub?recordingId=${notif.recordingId}`);
         } else {

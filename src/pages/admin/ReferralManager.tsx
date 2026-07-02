@@ -59,11 +59,6 @@ interface NestedCategoryOption {
 export default function ReferralManager() {
     const { t } = useTranslation();
     const { hasPermission, isSuperAdmin } = useAuth();
-    
-    // Guard access
-    if (!hasPermission('manageReferrals')) {
-        return <Navigate to="/admin" replace />;
-    }
 
     // State for Active Tab
     const [activeTab, setActiveTab] = useState<'materials' | 'categories'>('materials');
@@ -98,11 +93,6 @@ export default function ReferralManager() {
     const [editingDirId, setEditingDirId] = useState<string | null>(null);
     const [dirName, setDirName] = useState('');
     const [dirParentId, setDirParentId] = useState<string | null>(null);
-
-    // Load Data
-    useEffect(() => {
-        fetchData();
-    }, []);
 
     const fetchData = async () => {
         try {
@@ -151,6 +141,15 @@ export default function ReferralManager() {
         }
     };
 
+    // Load data only after permission is confirmed; hooks still run in a stable order.
+    useEffect(() => {
+        if (hasPermission('manageReferrals')) {
+            fetchData();
+        } else {
+            setLoading(false);
+        }
+    }, [hasPermission]);
+
     // Auto-clear feedback messages
     useEffect(() => {
         if (success || error) {
@@ -195,6 +194,11 @@ export default function ReferralManager() {
         roots.forEach(root => traverse(root, 0));
         return result;
     }, [categories]);
+
+    // Guard access after hooks so React hook order stays stable if permissions resolve asynchronously.
+    if (!hasPermission('manageReferrals')) {
+        return <Navigate to="/admin" replace />;
+    }
 
     // Upload selected file directly to storage
     const uploadSelectedFile = (file: File) => {

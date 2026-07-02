@@ -109,10 +109,6 @@ export default function UserManager() {
         }
     };
 
-    if (!canManageUsers) {
-        return <Navigate to="/admin" replace />;
-    }
-
     const filteredUsers = users.filter(u => {
         if (!profile || !profile.role) return false;
         
@@ -327,6 +323,10 @@ export default function UserManager() {
 
         return Array.from(new Set(depUsers.map(u => u.team).filter(Boolean))).sort();
     }, [users, formData.sd, formData.sm, formData.tl, formData.dep]);
+
+    if (!canManageUsers) {
+        return <Navigate to="/admin" replace />;
+    }
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

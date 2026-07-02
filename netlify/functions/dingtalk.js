@@ -1037,7 +1037,7 @@ export const handler = async (event, context) => {
         // ACTION: NOTIFY CAMPAIGN (Custom Certificate Challenge Alerts)
         // ==========================================
         if (action === 'notifyCampaign') {
-            const { title, bannerTitle, creatorName, endDate, assigneeIds } = body;
+            const { title, bannerTitle, creatorName, endDate, assigneeIds, campaignId } = body;
             if (!assigneeIds || !Array.isArray(assigneeIds)) {
                 return { statusCode: 400, body: JSON.stringify({ error: 'Missing assigneeIds' }) };
             }
@@ -1216,6 +1216,7 @@ export const handler = async (event, context) => {
                             data: {
                                 title: title,
                                 type: 'campaign',
+                                campaignId: campaignId || '',
                                 bannerTitle: bannerTitle || '',
                                 creatorName: creatorName || '',
                                 endDate: endDate || ''

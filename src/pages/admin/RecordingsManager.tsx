@@ -113,10 +113,6 @@ export default function RecordingsManager() {
         }
     }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, isSDLevel, t]);
 
-    if (!hasPermission('manageRecordings')) {
-        return <Navigate to="/admin" replace />;
-    }
-    
     // Form States
     const [editingId, setEditingId] = useState<string | null>(null);
     const [title, setTitle] = useState('');
@@ -418,8 +414,10 @@ export default function RecordingsManager() {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (hasPermission('manageRecordings')) {
+            fetchData();
+        }
+    }, [hasPermission]);
 
     // Polling effect: auto-refresh list if any recording is in 'transcribing' state
     useEffect(() => {
@@ -680,6 +678,29 @@ export default function RecordingsManager() {
             }
         } finally {
             setTranscribingIds(prev => ({ ...prev, [rec.id]: false }));
+        }
+    };
+
+    const triggerBackgroundTranscription = async (recordingId: string) => {
+        const recordingRef = doc(db, 'recordings', recordingId);
+        try {
+            await updateDoc(recordingRef, { transcriptStatus: 'transcribing' });
+            const res = await fetch('/.netlify/functions/transcribe-background', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recordingId })
+            });
+
+            if (res.status !== 202) {
+                throw new Error(`Unexpected transcription status: ${res.status}`);
+            }
+        } catch (error) {
+            console.error("Auto transcription trigger failed:", error);
+            try {
+                await updateDoc(recordingRef, { transcriptStatus: 'error' });
+            } catch (dbErr) {
+                console.error("Failed to mark auto transcription error:", dbErr);
+            }
         }
     };
 
@@ -947,6 +968,9 @@ export default function RecordingsManager() {
 
             const category = categories.find(c => c.id === selectedCategoryId);
             const resolvedBusinessType = category?.businessType || businessType;
+            const shouldAutoTranscribe = !!file && !!audioUrl && (
+                file.type.startsWith('audio/') || file.type.startsWith('video/')
+            );
             const dataToSave: any = {
                 title,
                 description,
@@ -965,6 +989,7 @@ export default function RecordingsManager() {
                 targetHubs: targetHubs.length > 0 ? targetHubs : ['public']
             };
 
+            let savedRecordingId = editingId || '';
             if (editingId) {
                 await updateDoc(doc(db, 'recordings', editingId), dataToSave);
             } else {
@@ -979,11 +1004,16 @@ export default function RecordingsManager() {
                 });
                 dataToSave.displayId = `RD${(maxId + 1).toString().padStart(4, '0')}`;
 
-                await addDoc(collection(db, 'recordings'), {
+                const newDocRef = await addDoc(collection(db, 'recordings'), {
                     ...dataToSave,
                     isPinned: false,
                     createdAt: serverTimestamp()
                 });
+                savedRecordingId = newDocRef.id;
+            }
+
+            if (shouldAutoTranscribe && savedRecordingId) {
+                await triggerBackgroundTranscription(savedRecordingId);
             }
             
             resetForm();
@@ -1277,6 +1307,10 @@ export default function RecordingsManager() {
     const toggleGroupExpand = React.useCallback((groupId: string) => {
         setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
     }, []);
+
+    if (!hasPermission('manageRecordings')) {
+        return <Navigate to="/admin" replace />;
+    }
 
     return (
         <div className="animate-in fade-in duration-500 space-y-8">
@@ -2133,12 +2167,12 @@ export default function RecordingsManager() {
                                                                  📝 {t('recordings_manager.transcript_ready', '阿语逐字稿已就绪')}
                                                              </span>
                                                          )}
-                                                         {false && ((rec as any).transcriptStatus === 'transcribing' || transcribingIds[rec.id]) && !isVideo && (
+                                                         {((rec as any).transcriptStatus === 'transcribing' || transcribingIds[rec.id]) && !isVideo && (
                                                              <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-0.5 animate-pulse">
                                                                  ⚙️ {t('recordings_manager.transcribing', '正在解析为逐字稿...')}
                                                              </span>
                                                          )}
-                                                         {false && (rec as any).transcriptStatus === 'error' && !isVideo && (
+                                                         {(rec as any).transcriptStatus === 'error' && !isVideo && (
                                                              <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-semibold">
                                                                  ❌ {t('recordings_manager.transcribe_fail', '语音解析失败')}
                                                              </span>

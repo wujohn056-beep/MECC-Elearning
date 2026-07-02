@@ -9,16 +9,8 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Capacitor } from '@capacitor/core';
 import UserGuideModal from './UserGuideModal';
-
-const CLIENT_APP_VERSIONS: Record<string, string> = {
-    ios: '1.1',
-    android: '1.0.6',
-    web: '1.0.6'
-};
-
-const getCurrentClientAppVersion = (platform = Capacitor.getPlatform()) => {
-    return CLIENT_APP_VERSIONS[platform] || CLIENT_APP_VERSIONS.web;
-};
+import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersion';
+import { getEffectiveUserId } from '../utils/userIdentity';
 
 const ChangePasswordModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const { t } = useTranslation();
@@ -167,24 +159,11 @@ export default function AppLayout() {
                     const data = docSnap.data();
                     const platform = Capacitor.getPlatform(); // 'ios' or 'android'
                     const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
-                    
-                    const parseVersion = (v: string) => v.split('.').map(Number);
-                    const isOutdated = (current: string, latest: string) => {
-                        const cur = parseVersion(current);
-                        const lat = parseVersion(latest);
-                        for (let i = 0; i < Math.max(cur.length, lat.length); i++) {
-                            const c = cur[i] || 0;
-                            const l = lat[i] || 0;
-                            if (c < l) return true;
-                            if (c > l) return false;
-                        }
-                        return false;
-                    };
 
                     const currentAppVersion = getCurrentClientAppVersion(platform);
 
-                    if (latestVersion && isOutdated(currentAppVersion, latestVersion)) {
-                        const forceUpdate = data.min_required_version && isOutdated(currentAppVersion, data.min_required_version);
+                    if (latestVersion && isVersionOutdated(currentAppVersion, latestVersion)) {
+                        const forceUpdate = data.min_required_version && isVersionOutdated(currentAppVersion, data.min_required_version);
                         setUpdateConfig(data);
                         setIsForceUpdate(!!forceUpdate);
                         setShowUpdateModal(true);
@@ -281,6 +260,9 @@ export default function AppLayout() {
                         } else if (type === 'task' && data.taskId) {
                             console.log('[Native Push] Navigating to task:', data.taskId);
                             navigate(`/hub?taskId=${data.taskId}`);
+                        } else if (type === 'campaign' && data.campaignId) {
+                            console.log('[Native Push] Navigating to campaign learning:', data.campaignId);
+                            navigate(`/hub?campaignLearnId=${data.campaignId}`);
                         } else if (type === 'task') {
                             console.log('[Native Push] Navigating to tasks list');
                             navigate('/account');
@@ -320,9 +302,10 @@ export default function AppLayout() {
                     const today = new Date().toISOString().split('T')[0];
                     const currentPlatform = Capacitor.getPlatform();
                     const currentAppVersion = getCurrentClientAppVersion(currentPlatform);
+                    const profileUid = getEffectiveUserId(user, profile);
                     
                     // Update user profile document with version telemetry
-                    const userRef = doc(db, 'users', user.uid);
+                    const userRef = doc(db, 'users', profileUid);
                     await setDoc(userRef, {
                         lastActiveAt: serverTimestamp(),
                         appVersion: currentAppVersion,
@@ -330,9 +313,10 @@ export default function AppLayout() {
                     }, { merge: true });
 
                     // Daily login activity log
-                    const logRef = doc(db, 'user_activity_logs', `${user.uid}_${today}`);
+                    const logRef = doc(db, 'user_activity_logs', `${profileUid}_${today}`);
                     await setDoc(logRef, {
-                        userId: user.uid,
+                        userId: profileUid,
+                        authUid: user.uid,
                         crmId: profile.crmId || '',
                         name: (profile as any).name || profile.crmId || '',
                         role: profile.role || 'user',
@@ -367,6 +351,12 @@ export default function AppLayout() {
     const getBottomTabClass = (path: string) => {
         return "flex flex-col items-center justify-center flex-1 h-full select-none cursor-pointer";
     };
+
+    const updatePlatform = Capacitor.getPlatform();
+    const updateCurrentVersion = getCurrentClientAppVersion(updatePlatform);
+    const updateLatestVersion = updateConfig
+        ? (updatePlatform === 'ios' ? updateConfig.ios_latest : updateConfig.android_latest)
+        : '';
 
     return (
         <div 
@@ -713,6 +703,20 @@ export default function AppLayout() {
                                 <p className="text-slate-400 text-xs leading-relaxed">
                                     {t('update_modal.subtitle', '为了保证功能正常使用，请及时更新到最新版。')}
                                 </p>
+                                <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-slate-300">
+                                    <span>{t('update_modal.current_version', '当前版本: {{version}}', { version: updateCurrentVersion })}</span>
+                                    {updateLatestVersion && (
+                                        <>
+                                            <span className="text-slate-600">→</span>
+                                            <span className="text-desert-gold">{t('update_modal.latest_version', '最新版本: {{version}}', { version: updateLatestVersion })}</span>
+                                        </>
+                                    )}
+                                </div>
+                                {isForceUpdate && (
+                                    <p className="text-[11px] font-bold text-red-300 bg-red-500/10 border border-red-400/20 rounded-xl px-3 py-2">
+                                        {t('update_modal.force_required', '当前版本已低于最低支持版本，请先更新后继续使用。')}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Localized Update Notes */}

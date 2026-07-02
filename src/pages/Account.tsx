@@ -7,6 +7,7 @@ import { User, Clock, BookOpen, Target, ChevronDown, ChevronUp, Heart, PlayCircl
 import { ref as sRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Link } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
+import { getEffectiveUserId } from '../utils/userIdentity';
 
 const TaskCard = ({ task }: { task: any }) => {
     const { t } = useTranslation();
@@ -114,6 +115,9 @@ export default function Account() {
         if (!user) return;
         const fetchHistoryAndRank = async () => {
             try {
+                const effectiveUid = getEffectiveUserId(user, profile);
+                const legacyUid = user.uid;
+                const myUidSet = new Set([effectiveUid, legacyUid].filter(Boolean));
                 // Fetch all history to calculate ranks
                 const allSnapshot = await getDocs(collection(db, 'learning_history'));
                 const historyData: any[] = [];
@@ -123,13 +127,14 @@ export default function Account() {
                 
                 allSnapshot.forEach(doc => {
                     const data = doc.data();
+                    const historyUserId = myUidSet.has(data.userId) ? effectiveUid : data.userId;
                     // Aggregate for rank
-                    if (data.userId && data.durationSeconds) {
-                        userDurations[data.userId] = (userDurations[data.userId] || 0) + data.durationSeconds;
+                    if (historyUserId && data.durationSeconds) {
+                        userDurations[historyUserId] = (userDurations[historyUserId] || 0) + data.durationSeconds;
                     }
                     
                     // Filter for my history
-                    if (data.userId === user.uid) {
+                    if (myUidSet.has(data.userId)) {
                         historyData.push({ id: doc.id, ...data });
                         if (data.durationSeconds) {
                             myTotalDuration += data.durationSeconds;
@@ -145,15 +150,15 @@ export default function Account() {
 
                 // Calculate Rank
                 // Add current user to map if not present to ensure they rank even with 0 hours
-                if (userDurations[user.uid] === undefined) {
-                    userDurations[user.uid] = 0;
+                if (userDurations[effectiveUid] === undefined) {
+                    userDurations[effectiveUid] = 0;
                 }
                 
                 const sortedDurations = Object.entries(userDurations)
                     .map(([uid, dur]) => ({ uid, dur }))
                     .sort((a, b) => b.dur - a.dur);
                 
-                const myRankIndex = sortedDurations.findIndex(x => x.uid === user.uid);
+                const myRankIndex = sortedDurations.findIndex(x => x.uid === effectiveUid);
                 const myRank = myRankIndex >= 0 ? myRankIndex + 1 : sortedDurations.length;
                 const totalActiveUsers = sortedDurations.length;
                 
@@ -172,7 +177,7 @@ export default function Account() {
             }
         };
         fetchHistoryAndRank();
-    }, [user]);
+    }, [user, profile]);
 
     const [myTasks, setMyTasks] = useState<any[]>([]);
     const [tasksLoading, setTasksLoading] = useState(true);
@@ -182,7 +187,7 @@ export default function Account() {
         if (!user) return;
         const fetchTasks = async () => {
             try {
-                const myUid = profile?.realUid || user.uid;
+                const myUid = getEffectiveUserId(user, profile);
                 const q = query(
                     collection(db, 'learning_tasks'),
                     where('assigneeIds', 'array-contains', myUid)
@@ -229,9 +234,14 @@ export default function Account() {
         if (!user) return;
         const fetchFavorites = async () => {
             try {
-                const favDoc = await getDoc(doc(db, 'user_favorites', user.uid));
-                if (favDoc.exists()) {
-                    const recIds = favDoc.data().recordingIds || [];
+                const effectiveUid = getEffectiveUserId(user, profile);
+                const favDoc = await getDoc(doc(db, 'user_favorites', effectiveUid));
+                const legacyFavDoc = !favDoc.exists() && effectiveUid !== user.uid
+                    ? await getDoc(doc(db, 'user_favorites', user.uid))
+                    : null;
+                const favoritesDoc = favDoc.exists() ? favDoc : legacyFavDoc;
+                if (favoritesDoc?.exists()) {
+                    const recIds = favoritesDoc.data().recordingIds || [];
                     if (recIds.length > 0) {
                         const promises = recIds.map((id: string) => getDoc(doc(db, 'recordings', id)));
                         const docs = await Promise.all(promises);
@@ -248,14 +258,14 @@ export default function Account() {
             }
         };
         fetchFavorites();
-    }, [user]);
+    }, [user, profile]);
 
     const handleUnfavorite = async (e: React.MouseEvent, recordingId: string) => {
         e.preventDefault();
         e.stopPropagation();
         if (!user) return;
         try {
-            const favRef = doc(db, 'user_favorites', user.uid);
+            const favRef = doc(db, 'user_favorites', getEffectiveUserId(user, profile));
             await updateDoc(favRef, {
                 recordingIds: arrayRemove(recordingId)
             });
