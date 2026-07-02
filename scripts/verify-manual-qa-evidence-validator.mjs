@@ -1,4 +1,6 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -7,6 +9,10 @@ const tempDir = mkdtempSync(join(tmpdir(), 'mecc-qa-validator-'));
 const passFile = join(tempDir, 'pass.md');
 const failFile = join(tempDir, 'fail.md');
 const notConfiguredFile = join(tempDir, 'not-configured.md');
+const staleReleaseFile = join(tempDir, 'stale-release.md');
+const expectedCommit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+const expectedApkHash = createHash('sha256').update(readFileSync('public/downloads/mecc-latest.apk')).digest('hex');
+const expectedProductionUrl = (process.env.PROD_BASE_URL || 'https://learning.mecloudhub.com').replace(/\/$/, '');
 
 const table = (rows) => rows.map(([label, result, evidence = 'screenshot']) => `| ${label} | ${result} | ${evidence} |`).join('\n');
 const passRows = [
@@ -44,14 +50,14 @@ const content = `
 
 ## Release Under Test
 
-- Release commit: 822258f5
-- Production URL: https://learning.mecloudhub.com
+- Release commit: ${expectedCommit}
+- Production URL: ${expectedProductionUrl}
 - QA date: 2026-07-02
 - QA owner: QA Owner
 - Leader account: leader@example.com
 - Learner account: learner@example.com
 - Android device and OS: Pixel 8 / Android 15
-- Android APK SHA-256: 3e51ad7f49bae815a57eb07728b25c6ffef0619ae0592a4b3695a2047f86338a
+- Android APK SHA-256: ${expectedApkHash}
 - iOS TestFlight device and OS, if tested: iPhone / iOS 18
 - Sign-off name and time: QA Owner 2026-07-02 15:30
 
@@ -68,6 +74,7 @@ try {
   writeFileSync(passFile, content);
   writeFileSync(failFile, content.replace('| Android APK installs successfully | Pass |', '| Android APK installs successfully | Fail |'));
   writeFileSync(notConfiguredFile, content.replace('| Android push notification is received | Pass |', '| Android push notification is received | Not configured |'));
+  writeFileSync(staleReleaseFile, content.replace(`- Release commit: ${expectedCommit}`, '- Release commit: stale123'));
 
   const passResult = spawnSync(process.execPath, ['scripts/validate-manual-qa-evidence.mjs', passFile], {
     encoding: 'utf8'
@@ -88,6 +95,13 @@ try {
   });
   if (notConfiguredResult.status === 0) {
     throw new Error('Expected invalid evidence with a Not configured push row to be rejected');
+  }
+
+  const staleReleaseResult = spawnSync(process.execPath, ['scripts/validate-manual-qa-evidence.mjs', staleReleaseFile], {
+    encoding: 'utf8'
+  });
+  if (staleReleaseResult.status === 0) {
+    throw new Error('Expected invalid evidence with a stale release commit to be rejected');
   }
 
   console.log('Manual QA evidence validator verified.');

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 
 const evidencePath = process.argv[2];
@@ -17,6 +19,14 @@ if (!existsSync(evidencePath)) {
 
 const content = readFileSync(evidencePath, 'utf8');
 const errors = [];
+const apkPath = 'public/downloads/mecc-latest.apk';
+const productionBaseUrl = (process.env.PROD_BASE_URL || 'https://learning.mecloudhub.com').replace(/\/$/, '');
+
+const runGit = (args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+const expectedCommit = process.env.QA_EVIDENCE_COMMIT || runGit(['rev-parse', '--short', 'HEAD']);
+const expectedApkHash = process.env.QA_EVIDENCE_APK_SHA256 || (
+  existsSync(apkPath) ? createHash('sha256').update(readFileSync(apkPath)).digest('hex') : ''
+);
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const listValue = (label) => {
@@ -51,10 +61,21 @@ const productionUrl = listValue('Production URL');
 if (productionUrl && !/^https?:\/\//.test(productionUrl)) {
   errors.push('Production URL must start with http:// or https://');
 }
+if (productionUrl && productionUrl.replace(/\/$/, '') !== productionBaseUrl) {
+  errors.push(`Production URL must match ${productionBaseUrl} (${productionUrl})`);
+}
+
+const releaseCommit = listValue('Release commit');
+if (releaseCommit && releaseCommit !== expectedCommit) {
+  errors.push(`Release commit must match current release commit ${expectedCommit} (${releaseCommit})`);
+}
 
 const apkHash = listValue('Android APK SHA-256');
 if (apkHash && !/^[a-f0-9]{64}$/i.test(apkHash)) {
   errors.push('Android APK SHA-256 must be a 64-character hex hash');
+}
+if (apkHash && expectedApkHash && apkHash.toLowerCase() !== expectedApkHash.toLowerCase()) {
+  errors.push(`Android APK SHA-256 must match current repository APK ${expectedApkHash} (${apkHash})`);
 }
 
 const exactPassRows = [
