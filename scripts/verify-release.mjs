@@ -222,7 +222,7 @@ const sourceAssertions = [
   ['native recording push route', 'src/components/AppLayout.tsx', ["type === 'recording'", 'data.recordingId', "buildLearningRoute({ type: 'recording'"]],
   ['native task push route', 'src/components/AppLayout.tsx', ["type === 'task'", 'data.taskId', "buildLearningRoute({ type: 'task'"]],
   ['native campaign push route', 'src/components/AppLayout.tsx', ["type === 'campaign'", 'data.campaignId', "buildLearningRoute({ type: 'campaign'"]],
-  ['user language preference syncs for trilingual push targeting', 'src/components/AppLayout.tsx', ['normalizeAppLanguage', 'persistUserLanguage', 'preferredLanguage', 'languageUpdatedAt', 'setDoc(doc(db, \'users\', targetUid)']],
+  ['user language preference syncs for trilingual push targeting', 'src/components/AppLayout.tsx', ['normalizeAppLanguage', 'persistUserLanguage', 'preferredLanguage', 'languageUpdatedAt', 'const languageUpdates', 'updateProfile(languageUpdates)', 'setDoc(doc(db, \'users\', targetUid)']],
   ['task push payload includes task id', 'src/pages/TeamTasks.tsx', ["action: 'notifyTask'", 'taskId: docRef.id']],
   ['task push function forwards task id', 'netlify/functions/dingtalk.js', ['notifyTask', 'taskId', "type: 'task'", 'buildLearningUrl', 'buildDingTalkLearningLink']],
   ['task push has trilingual DingTalk and FCM copy', 'netlify/functions/dingtalk.js', ['getUserNotificationLanguage', 'recipientsAr', 'markdownAr', 'getTaskFcmNotification', 'مهمة تعلم جديدة']],

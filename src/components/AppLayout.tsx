@@ -225,20 +225,20 @@ export default function AppLayout() {
     const persistUserLanguage = async (lang: 'zh' | 'en' | 'ar') => {
         if (!user || !profile || profile.role === 'blocked') return;
         const targetUid = profile.realUid || user.uid;
+        const languageUpdates = {
+            preferredLanguage: lang,
+            language: lang,
+            locale: lang,
+            uiLanguage: lang
+        };
+
+        updateProfile(languageUpdates);
+
         try {
             await setDoc(doc(db, 'users', targetUid), {
-                preferredLanguage: lang,
-                language: lang,
-                locale: lang,
-                uiLanguage: lang,
+                ...languageUpdates,
                 languageUpdatedAt: serverTimestamp()
             }, { merge: true });
-            updateProfile({
-                preferredLanguage: lang,
-                language: lang,
-                locale: lang,
-                uiLanguage: lang
-            });
         } catch (err) {
             console.warn('[Language] Failed to persist user language preference:', err);
         }
