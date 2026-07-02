@@ -18,8 +18,9 @@ const jobSource = (jobName) => {
 };
 const releaseJobSource = jobSource('verify-release');
 const smokeJobSource = jobSource('smoke-production');
-const envNumber = (name) => {
-  const match = source.match(new RegExp(`${name}:\\s*['"]?(\\d+)['"]?`));
+const envNumber = (job, name) => {
+  const jobText = job === 'release' ? releaseJobSource : smokeJobSource;
+  const match = jobText.match(new RegExp(`${name}:\\s*['"]?(\\d+)['"]?`));
   return match ? Number(match[1]) : 0;
 };
 const requireContains = (description, needle) => {
@@ -74,11 +75,11 @@ if (!packageSource.includes('"smoke:prod": "npm run build && node scripts/smoke-
   errors.push('production smoke command must build current shell before comparing production');
 }
 
-if (envNumber('PROD_SMOKE_RETRIES') < 8) {
-  errors.push(`production smoke retry count is too low: ${envNumber('PROD_SMOKE_RETRIES') || 'missing'}`);
+if (envNumber('smoke', 'PROD_SMOKE_RETRIES') < 8) {
+  errors.push(`production smoke retry count is too low: ${envNumber('smoke', 'PROD_SMOKE_RETRIES') || 'missing'}`);
 }
-if (envNumber('PROD_SMOKE_RETRY_DELAY_MS') < 20000) {
-  errors.push(`production smoke retry delay is too low: ${envNumber('PROD_SMOKE_RETRY_DELAY_MS') || 'missing'}`);
+if (envNumber('smoke', 'PROD_SMOKE_RETRY_DELAY_MS') < 20000) {
+  errors.push(`production smoke retry delay is too low: ${envNumber('smoke', 'PROD_SMOKE_RETRY_DELAY_MS') || 'missing'}`);
 }
 
 requireOrder('release job must run before production smoke job', 'verify-release:', 'smoke-production:');
