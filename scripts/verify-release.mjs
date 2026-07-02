@@ -167,6 +167,7 @@ const sourceAssertions = [
   ['task push function forwards task id', 'netlify/functions/dingtalk.js', ['notifyTask', 'taskId', "type: 'task'"]],
   ['campaign push payload includes campaign id', 'src/pages/admin/CampaignManager.tsx', ["action: 'notifyCampaign'", 'campaignId: campaignId']],
   ['campaign push function forwards campaign id', 'netlify/functions/dingtalk.js', ['notifyCampaign', 'campaignId', "type: 'campaign'"]],
+  ['campaign dingtalk link opens learning page', 'netlify/functions/dingtalk.js', ['campaignLearningUrl', 'campaignLearnId', 'dingTalkCampaignLink']],
   ['material app push forwards recording id', 'netlify/functions/dingtalk.js', ['notifyMaterial', 'recordingId: recordingId', "type: 'recording'"]],
   ['task draft autosave', 'src/pages/LearningHub.tsx', ['draftSavedAt']],
   ['effective user id helper', 'src/utils/userIdentity.ts', ['getEffectiveUserId']],

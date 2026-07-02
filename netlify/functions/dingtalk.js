@@ -1103,10 +1103,14 @@ export const handler = async (event, context) => {
             }
 
             const getMsgMarkdown = (lang) => {
+                const campaignLearningUrl = campaignId
+                    ? `https://learning.mecloudhub.com/hub?campaignLearnId=${encodeURIComponent(campaignId)}`
+                    : 'https://learning.mecloudhub.com/hub';
+                const dingTalkCampaignLink = `dingtalk://dingtalkclient/page/link?url=${encodeURIComponent(campaignLearningUrl)}`;
                 if (lang === 'en') {
-                    return `### 🏆 **ME Cloud Academy**\n**New Certificate Challenge Assigned**\n\n---\n\n**📋 Challenge Details:**\n* 🏷️ **Challenge Title:** ${title}\n* 🎖️ **Target Honor:** ${bannerTitle}\n* ⏰ **Deadline:** ${endDate || '-'}\n* 👤 **Manager:** ${creatorName}\n\n---\n\n> 💡 *After completing the required learning hours or tasks, you will unlock an official electronic certificate of achievement! Keep up the great work!*\n\n[👉 Click Here to Start Challenge](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub)`;
+                    return `### 🏆 **ME Cloud Academy**\n**New Certificate Challenge Assigned**\n\n---\n\n**📋 Challenge Details:**\n* 🏷️ **Challenge Title:** ${title}\n* 🎖️ **Target Honor:** ${bannerTitle}\n* ⏰ **Deadline:** ${endDate || '-'}\n* 👤 **Manager:** ${creatorName}\n\n---\n\n> 💡 *After completing the required learning hours or tasks, you will unlock an official electronic certificate of achievement! Keep up the great work!*\n\n[👉 Click Here to Start Challenge](${dingTalkCampaignLink})`;
                 }
-                return `### 🏆 **ME 云学堂**\n**收到新的荣誉证书挑战**\n\n---\n\n**📋 挑战详情：**\n* 🏷️ **挑战名称**：${title}\n* 🎖️ **目标荣誉**：${bannerTitle}\n* ⏰ **截止时间**：${endDate || '-'}\n* 👤 **发布主管**：${creatorName}\n\n---\n\n> 💡 *达成挑战要求的学时或学习任务后，您将获得官方认证的专属电子荣誉证书，可下载并分享！加油！*\n\n[👉 点击立即开启挑战](dingtalk://dingtalkclient/page/link?url=https%3A%2F%2Flearning.mecloudhub.com%2Fhub)`;
+                return `### 🏆 **ME 云学堂**\n**收到新的荣誉证书挑战**\n\n---\n\n**📋 挑战详情：**\n* 🏷️ **挑战名称**：${title}\n* 🎖️ **目标荣誉**：${bannerTitle}\n* ⏰ **截止时间**：${endDate || '-'}\n* 👤 **发布主管**：${creatorName}\n\n---\n\n> 💡 *达成挑战要求的学时或学习任务后，您将获得官方认证的专属电子荣誉证书，可下载并分享！加油！*\n\n[👉 点击立即开启挑战](${dingTalkCampaignLink})`;
             };
 
             const getMsgTitle = (lang) => {
