@@ -51,6 +51,18 @@ const getHtml = async (path) => {
   return { url, response, body };
 };
 
+const getAppAssetPaths = (html) => {
+  const assetPaths = new Set();
+  const assetPattern = /(?:src|href)="([^"]*\/assets\/index-[^"]+\.(?:js|css))"/g;
+  let match = assetPattern.exec(html);
+  while (match) {
+    const assetUrl = new URL(match[1], baseUrl);
+    assetPaths.add(`${assetUrl.pathname}${assetUrl.search}`);
+    match = assetPattern.exec(html);
+  }
+  return [...assetPaths];
+};
+
 const getRemoteFileSize = async (path, headResponse) => {
   const headLength = Number(headResponse.headers.get('content-length') || 0);
   if (headLength > 0) return headLength;
@@ -69,6 +81,7 @@ const getRemoteFileSize = async (path, headResponse) => {
 };
 
 try {
+  let homePage = null;
   const htmlRoutes = [
     ['home', '/'],
     ['download page', '/download'],
@@ -92,6 +105,21 @@ try {
     addCheck(`production ${name} returns 200`, page.response.ok, `${page.response.status} ${page.url}`);
     addCheck(`production ${name} is html`, pageType.includes('text/html'), pageType);
     addCheck(`production ${name} serves app shell`, hasAppShell, `${page.body.length} bytes`);
+    if (path === '/') homePage = page;
+  }
+
+  const assetPaths = homePage ? getAppAssetPaths(homePage.body) : [];
+  addCheck('production app shell references build assets', assetPaths.length > 0, assetPaths.join(', '));
+  for (const assetPath of assetPaths) {
+    const asset = await withRetry(
+      `production asset ${assetPath}`,
+      () => head(assetPath),
+      (result) => result.response.ok
+    );
+    const assetType = asset.response.headers.get('content-type') || '';
+    const expectedType = assetPath.endsWith('.css') ? 'text/css' : 'javascript';
+    addCheck(`production asset ${assetPath} returns 200`, asset.response.ok, `${asset.response.status} ${asset.url}`);
+    addCheck(`production asset ${assetPath} content type`, assetType.includes(expectedType), assetType);
   }
 
   const apk = await withRetry(
