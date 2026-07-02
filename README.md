@@ -8,6 +8,7 @@ MECC learning platform built with React, Vite, Firebase, Netlify Functions, and 
 npm run dev
 npm run build
 npm run verify:release
+npm run smoke:prod
 ```
 
 Use `npm run verify:release` before every production deploy. It runs the production build and checks the release-critical paths: trilingual locale parity, APK size, native APK nesting, DingTalk function syntax, task/challenge routing markers, task draft persistence markers, effective UID handling, and targeted lint for recently touched release files.
@@ -47,6 +48,14 @@ Before pushing to `main`, run:
 npm run verify:release
 git status --short
 ```
+
+After deployment, run:
+
+```bash
+npm run smoke:prod
+```
+
+This checks that the production home page and Android APK download URL are externally reachable.
 
 If an Android APK was rebuilt, confirm `public/downloads/mecc-latest.apk` is the intended file and that native assets do not contain nested APK copies:
 
