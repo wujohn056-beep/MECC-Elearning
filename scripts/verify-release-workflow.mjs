@@ -7,6 +7,10 @@ const errors = [];
 
 const has = (needle) => source.includes(needle);
 const lineNumber = (needle) => lines.findIndex((line) => line.includes(needle));
+const envNumber = (name) => {
+  const match = source.match(new RegExp(`${name}:\\s*['"]?(\\d+)['"]?`));
+  return match ? Number(match[1]) : 0;
+};
 const requireContains = (description, needle) => {
   if (!has(needle)) errors.push(`${description}: missing ${needle}`);
 };
@@ -39,6 +43,13 @@ requireContains('production smoke waits for deploy', 'Wait for production deploy
 requireContains('production smoke retry count env', 'PROD_SMOKE_RETRIES');
 requireContains('production smoke retry delay env', 'PROD_SMOKE_RETRY_DELAY_MS');
 requireContains('production smoke command', 'run: npm run smoke:prod');
+
+if (envNumber('PROD_SMOKE_RETRIES') < 8) {
+  errors.push(`production smoke retry count is too low: ${envNumber('PROD_SMOKE_RETRIES') || 'missing'}`);
+}
+if (envNumber('PROD_SMOKE_RETRY_DELAY_MS') < 20000) {
+  errors.push(`production smoke retry delay is too low: ${envNumber('PROD_SMOKE_RETRY_DELAY_MS') || 'missing'}`);
+}
 
 requireOrder('release job must run before production smoke job', 'verify-release:', 'smoke-production:');
 requireOrder('release command must run before production smoke job', 'run: npm run verify:release', 'smoke-production:');
