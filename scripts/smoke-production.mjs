@@ -1,9 +1,35 @@
 const baseUrl = (process.env.PROD_BASE_URL || 'https://learning.mecloudhub.com').replace(/\/$/, '');
 const minApkBytes = 50 * 1024 * 1024;
 const maxApkBytes = 100 * 1024 * 1024;
+const retryAttempts = Number(process.env.PROD_SMOKE_RETRIES || 5);
+const retryDelayMs = Number(process.env.PROD_SMOKE_RETRY_DELAY_MS || 15000);
 
 const checks = [];
 const addCheck = (name, pass, detail = '') => checks.push({ name, pass, detail });
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withRetry = async (label, run, isReady) => {
+  let lastResult;
+  let lastError;
+
+  for (let attempt = 1; attempt <= retryAttempts; attempt += 1) {
+    try {
+      const result = await run();
+      lastResult = result;
+      if (isReady(result)) return result;
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < retryAttempts) {
+      console.log(`[wait] ${label} not ready yet, retrying in ${Math.round(retryDelayMs / 1000)}s (${attempt}/${retryAttempts})`);
+      await sleep(retryDelayMs);
+    }
+  }
+
+  if (lastError) throw lastError;
+  return lastResult;
+};
 
 const head = async (path) => {
   const url = `${baseUrl}${path}`;
@@ -52,7 +78,15 @@ try {
   ];
 
   for (const [name, path] of htmlRoutes) {
-    const page = await getHtml(path);
+    const page = await withRetry(
+      `production ${name}`,
+      () => getHtml(path),
+      (result) => {
+        const pageType = result.response.headers.get('content-type') || '';
+        const hasAppShell = result.body.includes('id="root"') && result.body.includes('type="module"');
+        return result.response.ok && pageType.includes('text/html') && hasAppShell;
+      }
+    );
     const pageType = page.response.headers.get('content-type') || '';
     const hasAppShell = page.body.includes('id="root"') && page.body.includes('type="module"');
     addCheck(`production ${name} returns 200`, page.response.ok, `${page.response.status} ${page.url}`);
@@ -60,9 +94,24 @@ try {
     addCheck(`production ${name} serves app shell`, hasAppShell, `${page.body.length} bytes`);
   }
 
-  const apk = await head('/downloads/mecc-latest.apk');
+  const apk = await withRetry(
+    'production APK',
+    async () => {
+      const response = await head('/downloads/mecc-latest.apk');
+      const bytes = await getRemoteFileSize('/downloads/mecc-latest.apk', response.response);
+      const type = response.response.headers.get('content-type') || '';
+      return { ...response, bytes, type };
+    },
+    (result) => result.response.ok
+      && result.bytes >= minApkBytes
+      && result.bytes < maxApkBytes
+      && (
+        result.type.includes('application/vnd.android.package-archive')
+        || result.type.includes('application/octet-stream')
+      )
+  );
   const apkBytes = await getRemoteFileSize('/downloads/mecc-latest.apk', apk.response);
-  const apkType = apk.response.headers.get('content-type') || '';
+  const apkType = apk.type || apk.response.headers.get('content-type') || '';
   addCheck('production APK returns 200', apk.response.ok, `${apk.response.status} ${apk.url}`);
   addCheck('production APK size looks valid', apkBytes >= minApkBytes && apkBytes < maxApkBytes, `${apkBytes} bytes`);
   addCheck(
