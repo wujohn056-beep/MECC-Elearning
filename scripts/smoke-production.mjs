@@ -15,6 +15,16 @@ const head = async (path) => {
   return { url, response };
 };
 
+const getHtml = async (path) => {
+  const url = `${baseUrl}${path}`;
+  const response = await fetch(url, {
+    headers: { 'Accept-Encoding': 'identity' },
+    redirect: 'follow'
+  });
+  const body = await response.text();
+  return { url, response, body };
+};
+
 const getRemoteFileSize = async (path, headResponse) => {
   const headLength = Number(headResponse.headers.get('content-length') || 0);
   if (headLength > 0) return headLength;
@@ -42,10 +52,12 @@ try {
   ];
 
   for (const [name, path] of htmlRoutes) {
-    const page = await head(path);
+    const page = await getHtml(path);
     const pageType = page.response.headers.get('content-type') || '';
+    const hasAppShell = page.body.includes('id="root"') && page.body.includes('type="module"');
     addCheck(`production ${name} returns 200`, page.response.ok, `${page.response.status} ${page.url}`);
     addCheck(`production ${name} is html`, pageType.includes('text/html'), pageType);
+    addCheck(`production ${name} serves app shell`, hasAppShell, `${page.body.length} bytes`);
   }
 
   const apk = await head('/downloads/mecc-latest.apk');
