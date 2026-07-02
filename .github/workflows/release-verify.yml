@@ -50,4 +50,7 @@ jobs:
         run: sleep 60
 
       - name: Smoke production
+        env:
+          PROD_SMOKE_RETRIES: '8'
+          PROD_SMOKE_RETRY_DELAY_MS: '20000'
         run: npm run smoke:prod

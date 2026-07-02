@@ -36,12 +36,15 @@ requireContains('production smoke skips pull requests', "if: github.event_name !
 requireContains('production smoke builds shell before smoke', 'Build current shell for smoke comparison');
 requireContains('production smoke build command', 'run: npm run build');
 requireContains('production smoke waits for deploy', 'Wait for production deploy');
+requireContains('production smoke retry count env', 'PROD_SMOKE_RETRIES');
+requireContains('production smoke retry delay env', 'PROD_SMOKE_RETRY_DELAY_MS');
 requireContains('production smoke command', 'run: npm run smoke:prod');
 
 requireOrder('release job must run before production smoke job', 'verify-release:', 'smoke-production:');
 requireOrder('release command must run before production smoke job', 'run: npm run verify:release', 'smoke-production:');
 requireOrder('production smoke must install dependencies before build', 'run: npm ci', 'Build current shell for smoke comparison');
 requireOrder('production smoke must build before waiting for deploy', 'Build current shell for smoke comparison', 'Wait for production deploy');
+requireOrder('production smoke retry env must be set before smoke command', 'PROD_SMOKE_RETRIES', 'run: npm run smoke:prod');
 requireOrder('production smoke must wait before smoke command', 'Wait for production deploy', 'run: npm run smoke:prod');
 
 if (errors.length > 0) {
