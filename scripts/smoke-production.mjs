@@ -8,10 +8,12 @@ const maxApkBytes = 100 * 1024 * 1024;
 const retryAttempts = Number(process.env.PROD_SMOKE_RETRIES || 5);
 const retryDelayMs = Number(process.env.PROD_SMOKE_RETRY_DELAY_MS || 15000);
 const localApkPath = 'public/downloads/mecc-latest.apk';
+const localDistIndexPath = 'dist/index.html';
 const localApkBytes = existsSync(localApkPath) ? statSync(localApkPath).size : 0;
 const localApkHash = existsSync(localApkPath)
   ? createHash('sha256').update(await readFile(localApkPath)).digest('hex')
   : '';
+const localDistIndex = existsSync(localDistIndexPath) ? await readFile(localDistIndexPath, 'utf8') : '';
 
 const checks = [];
 const addCheck = (name, pass, detail = '') => checks.push({ name, pass, detail });
@@ -130,6 +132,13 @@ try {
   }
 
   const assetPaths = homePage ? getAppAssetPaths(homePage.body) : [];
+  if (localDistIndex) {
+    addCheck(
+      'production app shell matches current build output',
+      homePage?.body === localDistIndex,
+      `production=${homePage?.body.length || 0} bytes, local=${localDistIndex.length} bytes`
+    );
+  }
   addCheck('production app shell references build assets', assetPaths.length > 0, assetPaths.join(', '));
   for (const assetPath of assetPaths) {
     const asset = await withRetry(
