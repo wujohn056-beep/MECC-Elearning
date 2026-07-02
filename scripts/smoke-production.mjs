@@ -104,6 +104,7 @@ const getRemoteFileHash = async (path) => {
 
 try {
   let homePage = null;
+  addCheck('local build output exists for production shell comparison', Boolean(localDistIndex), localDistIndexPath);
   const htmlRoutes = [
     ['home', '/'],
     ['download page', '/download'],
@@ -132,13 +133,11 @@ try {
   }
 
   const assetPaths = homePage ? getAppAssetPaths(homePage.body) : [];
-  if (localDistIndex) {
-    addCheck(
-      'production app shell matches current build output',
-      homePage?.body === localDistIndex,
-      `production=${homePage?.body.length || 0} bytes, local=${localDistIndex.length} bytes`
-    );
-  }
+  addCheck(
+    'production app shell matches current build output',
+    Boolean(localDistIndex) && homePage?.body === localDistIndex,
+    `production=${homePage?.body.length || 0} bytes, local=${localDistIndex.length} bytes`
+  );
   addCheck('production app shell references build assets', assetPaths.length > 0, assetPaths.join(', '));
   for (const assetPath of assetPaths) {
     const asset = await withRetry(
