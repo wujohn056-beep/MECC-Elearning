@@ -116,7 +116,7 @@ const sourceAssertions = [
   ['task category grouping follows configured category order', 'src/pages/LearningHub.tsx', ['taskRecordingGroups', 'categoryOrderById', 'categoryOrderByName', 'a.categoryOrder - b.categoryOrder']],
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
   ['campaign notification route', 'src/components/NotificationBell.tsx', ['campaignLearnId']],
-  ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ["status !== 'completed'", 'navigate(`/hub?taskId=${task.id}`)']],
+  ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ['isIncompleteTask', 'tasks.filter(isIncompleteTask)', 'navigate(`/hub?taskId=${task.id}`)']],
   ['account task list keeps in-progress tasks visible', 'src/pages/Account.tsx', ['isTaskIncomplete', 'matchesTaskTab', "task.myStatus !== 'completed'"]],
   ['native campaign push route', 'src/components/AppLayout.tsx', ['campaignLearnId']],
   ['campaign push payload includes campaign id', 'src/pages/admin/CampaignManager.tsx', ["action: 'notifyCampaign'", 'campaignId: campaignId']],

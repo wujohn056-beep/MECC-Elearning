@@ -49,6 +49,8 @@ interface UnifiedNotification {
     deadline?: Date;
 }
 
+const isIncompleteTask = (task: { status?: string }) => task.status !== 'completed';
+
 export default function NotificationBell() {
     const { t } = useTranslation();
     const { user, profile } = useAuth();
@@ -205,11 +207,11 @@ export default function NotificationBell() {
         });
     }, [tasks, comments, t]);
 
-    const unreadTasksCount = tasks.filter(t => !t.read && t.status !== 'completed').length;
+    const unreadTasksCount = tasks.filter(t => !t.read && isIncompleteTask(t)).length;
     const unreadCommentsCount = comments.filter(c => !c.read).length;
     
     const unreadCount = unreadTasksCount + unreadCommentsCount;
-    const pendingCount = tasks.filter(t => t.status !== 'completed').length + unreadCommentsCount;
+    const pendingCount = tasks.filter(isIncompleteTask).length + unreadCommentsCount;
 
     useEffect(() => {
         if (unreadTasksCount > 0 && !hasSeenGlobalModal) {
@@ -229,7 +231,7 @@ export default function NotificationBell() {
                 console.error("Error marking task as read", error);
             }
         }
-        if (task.status !== 'completed') {
+        if (isIncompleteTask(task)) {
             navigate(`/hub?taskId=${task.id}`);
         }
     };
@@ -401,16 +403,16 @@ export default function NotificationBell() {
                                     onClick={() => {
                                         setShowGlobalModal(false);
                                         setHasSeenGlobalModal(true);
-                                        const pendingTasks = tasks.filter(t => t.status === 'pending');
-                                        if (pendingTasks.length > 0) {
+                                        const incompleteTasks = tasks.filter(isIncompleteTask);
+                                        if (incompleteTasks.length > 0) {
                                             const item: UnifiedNotification = {
-                                                id: pendingTasks[0].id,
+                                                id: incompleteTasks[0].id,
                                                 type: 'task',
-                                                title: pendingTasks[0].title,
-                                                senderName: pendingTasks[0].assignerName,
-                                                read: pendingTasks[0].read,
-                                                createdAt: pendingTasks[0].createdAt || new Date(),
-                                                status: pendingTasks[0].status
+                                                title: incompleteTasks[0].title,
+                                                senderName: incompleteTasks[0].assignerName,
+                                                read: incompleteTasks[0].read,
+                                                createdAt: incompleteTasks[0].createdAt || new Date(),
+                                                status: incompleteTasks[0].status
                                             };
                                             handleTaskClick(item);
                                         } else {
