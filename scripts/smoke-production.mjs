@@ -87,7 +87,8 @@ try {
     ['download page', '/download'],
     ['campaign learning route', '/hub?campaignLearnId=smoke-test'],
     ['task learning route', '/hub?taskId=smoke-test'],
-    ['recording detail route', '/hub?recordingId=smoke-test']
+    ['recording detail route', '/hub?recordingId=smoke-test'],
+    ['admin app release route', '/admin/app-release']
   ];
 
   for (const [name, path] of htmlRoutes) {

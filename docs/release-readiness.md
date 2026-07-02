@@ -39,6 +39,7 @@ npm run smoke:prod
 - Campaign learning route serves the app shell.
 - Task learning route serves the app shell.
 - Recording detail route serves the app shell.
+- Admin App release route serves the app shell.
 - Latest APK URL returns a valid Android package with a plausible file size.
 
 ## Manual Gates
