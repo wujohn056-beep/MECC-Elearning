@@ -82,6 +82,15 @@ const dingtalkCheck = spawnSync(process.execPath, ['--check', 'netlify/functions
 });
 addCheck('dingtalk function syntax', dingtalkCheck.status === 0, dingtalkCheck.stderr.trim());
 
+const releaseWorkflowCheck = spawnSync(process.execPath, ['scripts/verify-release-workflow.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'release workflow behavior',
+  releaseWorkflowCheck.status === 0,
+  (releaseWorkflowCheck.stdout + releaseWorkflowCheck.stderr).trim()
+);
+
 const taskRecordingGroupsCheck = spawnSync(process.execPath, ['scripts/verify-task-recording-groups.mjs'], {
   encoding: 'utf8'
 });
@@ -231,6 +240,7 @@ const sourceAssertions = [
   ['app release admin manages Firestore config', 'src/pages/admin/AppReleaseManager.tsx', ['system_config', 'app_versions', 'android_latest', 'android_apk_url']],
   ['production smoke verifies current shell and APK hash', 'scripts/smoke-production.mjs', ['localDistIndexPath', 'local build output exists for production shell comparison', 'shell matches current build output', 'all production HTML routes match current build output', 'createHash', 'sha256', 'getRemoteFileHash', 'production APK matches repository APK hash']],
   ['production smoke workflow builds current shell first', '.github/workflows/release-verify.yml', ['Build current shell for smoke comparison', 'npm run build', 'npm run smoke:prod']],
+  ['release workflow verifier exists', 'scripts/verify-release-workflow.mjs', ['Release workflow verified', 'needs: verify-release', "if: github.event_name != 'pull_request'", 'Build current shell for smoke comparison']],
   ['manual QA evidence generator exists', 'scripts/create-manual-qa-evidence.mjs', ['manual-qa-evidence-template.md', 'QA_EVIDENCE_DIR', 'docs/qa-evidence', 'Android APK SHA-256']],
   ['manual QA evidence verifier exists', 'scripts/verify-manual-qa-evidence.mjs', ['QA_EVIDENCE_DIR', 'Manual QA evidence generator verified']],
   ['manual QA evidence validator exists', 'scripts/validate-manual-qa-evidence.mjs', ['Release commit must match current release commit', 'Android APK SHA-256 must match current repository APK', 'Fully verified must be Yes', 'Android push must be configured for full verification', 'Android push tap opens the correct recording/task/campaign page', 'Manual QA evidence validated']],
