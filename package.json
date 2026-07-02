@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "cap:sync": "npm run build && cap sync && node scripts/clean-native-download-assets.mjs",
+    "android:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk ../public/downloads/mecc-latest.apk",
     "lint": "eslint .",
     "preview": "vite preview"
   },
