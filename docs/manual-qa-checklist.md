@@ -37,8 +37,10 @@ unconfigured Android push rows, and missing push/download/trilingual sign-off ro
 1. Create a new challenge task for the learner.
 2. Confirm the learner receives an in-system notification.
 3. Click the notification and confirm it opens `/hub?campaignLearnId=...` for challenge tasks.
-4. Tap the mobile push notification and confirm it opens the same challenge learning page.
-5. If FCM delivery fails, confirm the task still appears in the learner task list and in-system notifications.
+4. From the DingTalk task message, confirm the deep link resolves to `/hub?taskId=...`.
+5. From the DingTalk challenge message, confirm the deep link resolves to `/hub?campaignLearnId=...`.
+6. Tap the mobile push notification and confirm it opens the same challenge learning page.
+7. If FCM delivery fails, confirm the task still appears in the learner task list and in-system notifications.
 
 ## Mobile App Update And Download
 

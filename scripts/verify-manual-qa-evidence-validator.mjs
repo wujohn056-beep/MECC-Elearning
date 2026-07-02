@@ -31,6 +31,8 @@ const passRows = [
   ['Task completion is visible to learner and leader', 'Pass'],
   ['Learner receives in-system notification', 'Pass'],
   ['In-system notification opens the challenge learning page', 'Pass'],
+  ['DingTalk task message opens the task learning page', 'Pass', 'https://learning.mecloudhub.com/hub?taskId=task-123'],
+  ['DingTalk challenge message opens the challenge learning page', 'Pass', 'https://learning.mecloudhub.com/hub?campaignLearnId=campaign-456'],
   ['Android push notification is received', 'Pass'],
   ['Android push tap opens the correct recording/task/campaign page', 'Pass'],
   ['FCM failure fallback still leaves task accessible', 'Not applicable'],

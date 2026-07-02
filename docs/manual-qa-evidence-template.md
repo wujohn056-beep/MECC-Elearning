@@ -46,6 +46,8 @@ calling the release fully verified.
 | --- | --- | --- |
 | Learner receives in-system notification | Pass / Fail | Screenshot |
 | In-system notification opens the challenge learning page | Pass / Fail | URL/screenshot |
+| DingTalk task message opens the task learning page | Pass / Fail | URL/screenshot showing `taskId` |
+| DingTalk challenge message opens the challenge learning page | Pass / Fail | URL/screenshot showing `campaignLearnId` |
 | Android push notification is received | Pass / Fail | Device screenshot |
 | Android push tap opens the correct recording/task/campaign page | Pass / Fail | Device screenshot |
 | FCM failure fallback still leaves task accessible | Pass / Fail / Not applicable | Task list screenshot |

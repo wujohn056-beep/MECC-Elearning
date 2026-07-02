@@ -55,6 +55,7 @@ mobile device confirm:
 - Partial progress and reflection drafts survive leaving and reopening the task.
 - Completion updates are visible to the learner and leader.
 - In-system notifications open the correct learning page.
+- DingTalk task and challenge messages resolve to the exact task or challenge learning page.
 - Native mobile push is configured, received, and taps open the correct recording, task, or campaign page.
 - Web `/download` installs the current Android APK successfully.
 - The same learner flow works in Chinese, English, and Arabic without raw locale keys.

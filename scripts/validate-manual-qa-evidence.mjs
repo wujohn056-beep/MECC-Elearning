@@ -94,6 +94,8 @@ const exactPassRows = [
   'Task completion is visible to learner and leader',
   'Learner receives in-system notification',
   'In-system notification opens the challenge learning page',
+  'DingTalk task message opens the task learning page',
+  'DingTalk challenge message opens the challenge learning page',
   'Android push notification is received',
   'Android push tap opens the correct recording/task/campaign page',
   '`/download` renders iOS and Android options',
