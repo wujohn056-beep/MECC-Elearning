@@ -41,6 +41,7 @@ npm run smoke:prod
 - Recording detail route serves the app shell.
 - Admin App release route serves the app shell.
 - Latest APK URL returns a valid Android package with a plausible file size.
+- Latest APK URL matches the repository APK file size.
 
 ## Manual Gates
 

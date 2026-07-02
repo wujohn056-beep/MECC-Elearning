@@ -1,8 +1,12 @@
+import { existsSync, statSync } from 'node:fs';
+
 const baseUrl = (process.env.PROD_BASE_URL || 'https://learning.mecloudhub.com').replace(/\/$/, '');
 const minApkBytes = 10 * 1024 * 1024;
 const maxApkBytes = 100 * 1024 * 1024;
 const retryAttempts = Number(process.env.PROD_SMOKE_RETRIES || 5);
 const retryDelayMs = Number(process.env.PROD_SMOKE_RETRY_DELAY_MS || 15000);
+const localApkPath = 'public/downloads/mecc-latest.apk';
+const localApkBytes = existsSync(localApkPath) ? statSync(localApkPath).size : 0;
 
 const checks = [];
 const addCheck = (name, pass, detail = '') => checks.push({ name, pass, detail });
@@ -143,6 +147,9 @@ try {
   const apkType = apk.type || apk.response.headers.get('content-type') || '';
   addCheck('production APK returns 200', apk.response.ok, `${apk.response.status} ${apk.url}`);
   addCheck('production APK size looks valid', apkBytes >= minApkBytes && apkBytes < maxApkBytes, `${apkBytes} bytes`);
+  if (localApkBytes > 0) {
+    addCheck('production APK matches repository APK size', apkBytes === localApkBytes, `production=${apkBytes}, local=${localApkBytes}`);
+  }
   addCheck(
     'production APK content type looks valid',
     apkType.includes('application/vnd.android.package-archive') || apkType.includes('application/octet-stream'),
