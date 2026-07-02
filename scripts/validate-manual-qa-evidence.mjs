@@ -35,10 +35,33 @@ const listValue = (label) => {
 };
 
 const normalize = (value) => value.replace(/`/g, '').trim().toLowerCase();
-const tableResult = (label) => {
+const tableRow = (label) => {
   const escapedLabel = escapeRegExp(label).replace(/\\`/g, '`');
-  const row = content.match(new RegExp(`^\\|\\s*${escapedLabel}\\s*\\|\\s*([^|]+)\\|`, 'm'));
-  return row?.[1]?.trim() || '';
+  const row = content.match(new RegExp(`^\\|\\s*${escapedLabel}\\s*\\|\\s*([^|]+)\\|\\s*([^|]*)\\|`, 'm'));
+  return {
+    result: row?.[1]?.trim() || '',
+    evidence: row?.[2]?.trim() || ''
+  };
+};
+
+const tableResult = (label) => tableRow(label).result;
+const evidenceLooksFilled = (value) => {
+  const normalized = normalize(value);
+  if (!normalized) return false;
+  const placeholderSnippets = [
+    'paste ',
+    'screenshot',
+    'url/screenshot',
+    'task title, task id',
+    'before/after',
+    'category list',
+    'device screenshot',
+    'command timestamp',
+    'ci run url',
+    'run url',
+    'sha-256'
+  ];
+  return !placeholderSnippets.some((snippet) => normalized.includes(snippet));
 };
 
 const requiredFields = [
@@ -112,19 +135,26 @@ const exactPassRows = [
 ];
 
 for (const row of exactPassRows) {
-  const result = tableResult(row);
+  const { result, evidence } = tableRow(row);
   if (!result) {
     errors.push(`Missing QA row: ${row}`);
   } else if (normalize(result) !== 'pass') {
     errors.push(`QA row must be Pass: ${row} (${result})`);
   }
+  if (result && !evidenceLooksFilled(evidence)) {
+    errors.push(`QA row must include concrete evidence: ${row} (${evidence || 'blank'})`);
+  }
 }
 
-const fcmFallbackResult = tableResult('FCM failure fallback still leaves task accessible');
+const fcmFallbackRow = tableRow('FCM failure fallback still leaves task accessible');
+const fcmFallbackResult = fcmFallbackRow.result;
 if (!fcmFallbackResult) {
   errors.push('Missing QA row: FCM failure fallback still leaves task accessible');
 } else if (!['pass', 'not applicable'].includes(normalize(fcmFallbackResult))) {
   errors.push(`FCM fallback row must be Pass or Not applicable (${fcmFallbackResult})`);
+}
+if (fcmFallbackResult && !evidenceLooksFilled(fcmFallbackRow.evidence)) {
+  errors.push(`FCM fallback row must include concrete evidence (${fcmFallbackRow.evidence || 'blank'})`);
 }
 
 const fullyVerified = listValue('Fully verified');
