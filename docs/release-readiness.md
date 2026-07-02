@@ -58,9 +58,12 @@ mobile device confirm:
 
 ## External Release Configuration
 
-After publishing a new Android APK, set Firestore `system_config/app_versions.android_latest`
-to the released Android version or higher. Existing installed clients use that remote value
-to decide whether to show the update prompt.
+After publishing a new Android APK, open `/admin/app-release` with a super admin account and set
+`Android Latest Version` to the released Android `versionName` or higher. Existing installed
+clients use Firestore `system_config/app_versions.android_latest` to decide whether to show the
+update prompt.
+
+Use direct Firestore edits only as an emergency fallback.
 
 ## Release Status Language
 

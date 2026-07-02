@@ -21,6 +21,7 @@ import CommentManager from './pages/admin/CommentManager';
 import PolicyManager from './pages/admin/PolicyManager';
 import ReferralManager from './pages/admin/ReferralManager';
 import BannerManager from './pages/admin/BannerManager';
+import AppReleaseManager from './pages/admin/AppReleaseManager';
 
 import DownloadPage from './pages/DownloadPage';
 
@@ -77,6 +78,7 @@ function App() {
             <Route path="brands" element={<PolicyManager initialSection="brand" />} />
             <Route path="referrals" element={<ReferralManager />} />
             <Route path="banners" element={<BannerManager />} />
+            <Route path="app-release" element={<AppReleaseManager />} />
 
           </Route>
         </Routes>

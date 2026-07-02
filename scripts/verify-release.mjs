@@ -118,6 +118,15 @@ addCheck(
   (appVersionCheck.stdout + appVersionCheck.stderr).trim()
 );
 
+const appReleaseConfigCheck = spawnSync(process.execPath, ['scripts/verify-app-release-config.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'app release config admin behavior',
+  appReleaseConfigCheck.status === 0,
+  (appReleaseConfigCheck.stdout + appReleaseConfigCheck.stderr).trim()
+);
+
 const dingtalkPushPayloadsCheck = spawnSync(process.execPath, ['scripts/verify-dingtalk-push-payloads.mjs'], {
   encoding: 'utf8'
 });
@@ -199,6 +208,9 @@ const sourceAssertions = [
   ['native update modal has platform fallbacks', 'src/components/AppLayout.tsx', ['resolveAppDownloadUrl']],
   ['hub update card has platform fallbacks', 'src/pages/LearningHub.tsx', ['resolveAppDownloadUrl']],
   ['app version update gate exists', 'src/utils/appVersion.ts', ['CLIENT_APP_VERSIONS', 'getLatestClientAppVersion', 'isVersionOutdated']],
+  ['app release admin route exists', 'src/App.tsx', ['AppReleaseManager', 'app-release']],
+  ['app release admin menu exists', 'src/components/AdminLayout.tsx', ['/admin/app-release', 'admin_menu.app_release']],
+  ['app release admin manages Firestore config', 'src/pages/admin/AppReleaseManager.tsx', ['system_config', 'app_versions', 'android_latest', 'android_apk_url']],
   ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
   ['safe native sync script', 'package.json', ['clean-native-download-assets.mjs']]
 ];

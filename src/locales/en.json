@@ -137,7 +137,27 @@
         "return_hub": "Return to Hub",
         "referrals": "Referral Management",
         "brands": "Branding Management",
-        "banners": "Banner Management"
+        "banners": "Banner Management",
+        "app_release": "App Release"
+    },
+    "app_release": {
+        "badge": "App Release",
+        "title": "App Release Settings",
+        "subtitle": "After publishing a new APK, sync the latest version and download links here so the Web download page and older App update prompts stay aligned.",
+        "load_error": "Unable to load the current App release settings. Please check the network or Firestore permissions.",
+        "save_success": "App release settings saved. Older App clients will show update prompts using the latest version.",
+        "save_error": "Save failed. Please check Firestore permissions or try again later.",
+        "android_latest": "Android Latest Version",
+        "ios_latest": "iOS Latest Version",
+        "web_latest": "Web Latest Version",
+        "min_required_version": "Minimum Required Version",
+        "min_required_placeholder": "Leave blank if updates are not mandatory",
+        "min_required_hint": "Only fill this when old versions must be blocked; for normal releases, update the latest version only.",
+        "android_url": "Android APK Download Link",
+        "ios_url": "iOS TestFlight Link",
+        "checklist_title": "Post-release Check",
+        "checklist_body": "Confirm the APK is deployed at the download link, Android latest version matches the APK versionName, and an older App shows the update prompt when opening Learning Hub.",
+        "open_download": "Open Download Page"
     },
     "login": {
         "email_label": "CRM Account",
