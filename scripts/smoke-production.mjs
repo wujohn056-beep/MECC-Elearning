@@ -1,4 +1,6 @@
+import { createHash } from 'node:crypto';
 import { existsSync, statSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 
 const baseUrl = (process.env.PROD_BASE_URL || 'https://learning.mecloudhub.com').replace(/\/$/, '');
 const minApkBytes = 10 * 1024 * 1024;
@@ -7,6 +9,9 @@ const retryAttempts = Number(process.env.PROD_SMOKE_RETRIES || 5);
 const retryDelayMs = Number(process.env.PROD_SMOKE_RETRY_DELAY_MS || 15000);
 const localApkPath = 'public/downloads/mecc-latest.apk';
 const localApkBytes = existsSync(localApkPath) ? statSync(localApkPath).size : 0;
+const localApkHash = existsSync(localApkPath)
+  ? createHash('sha256').update(await readFile(localApkPath)).digest('hex')
+  : '';
 
 const checks = [];
 const addCheck = (name, pass, detail = '') => checks.push({ name, pass, detail });
@@ -84,6 +89,17 @@ const getRemoteFileSize = async (path, headResponse) => {
   return match ? Number(match[1]) : 0;
 };
 
+const getRemoteFileHash = async (path) => {
+  const url = `${baseUrl}${path}`;
+  const response = await fetch(url, {
+    headers: { 'Accept-Encoding': 'identity' },
+    redirect: 'follow'
+  });
+  if (!response.ok) return '';
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return createHash('sha256').update(buffer).digest('hex');
+};
+
 try {
   let homePage = null;
   const htmlRoutes = [
@@ -149,6 +165,10 @@ try {
   addCheck('production APK size looks valid', apkBytes >= minApkBytes && apkBytes < maxApkBytes, `${apkBytes} bytes`);
   if (localApkBytes > 0) {
     addCheck('production APK matches repository APK size', apkBytes === localApkBytes, `production=${apkBytes}, local=${localApkBytes}`);
+  }
+  if (localApkHash) {
+    const remoteApkHash = await getRemoteFileHash('/downloads/mecc-latest.apk');
+    addCheck('production APK matches repository APK hash', remoteApkHash === localApkHash, `production=${remoteApkHash}, local=${localApkHash}`);
   }
   addCheck(
     'production APK content type looks valid',
