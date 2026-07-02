@@ -53,6 +53,26 @@ const CLEANABLE_FCM_ERROR_CODES = new Set([
     'messaging/invalid-registration-token'
 ]);
 
+const LEARNING_HUB_BASE_URL = 'https://learning.mecloudhub.com';
+
+function buildLearningUrl(target = {}) {
+    const url = new URL('/hub', LEARNING_HUB_BASE_URL);
+
+    if (target.type === 'task' && target.taskId) {
+        url.searchParams.set('taskId', target.taskId);
+    } else if (target.type === 'campaign' && target.campaignId) {
+        url.searchParams.set('campaignLearnId', target.campaignId);
+    } else if (target.type === 'recording' && target.recordingId) {
+        url.searchParams.set('recordingId', target.recordingId);
+    }
+
+    return url.toString();
+}
+
+function buildDingTalkLearningLink(target) {
+    return `dingtalk://dingtalkclient/page/link?url=${encodeURIComponent(buildLearningUrl(target))}`;
+}
+
 function summarizeFcmError(error) {
     if (!error) return 'unknown: Unknown FCM error';
     const code = error.code || 'unknown';
@@ -846,10 +866,7 @@ export const handler = async (event, context) => {
             }
 
             const getMsgMarkdown = (lang) => {
-                const taskLearningUrl = taskId
-                    ? `https://learning.mecloudhub.com/hub?taskId=${encodeURIComponent(taskId)}`
-                    : 'https://learning.mecloudhub.com/hub';
-                const dingTalkLearningLink = `dingtalk://dingtalkclient/page/link?url=${encodeURIComponent(taskLearningUrl)}`;
+                const dingTalkLearningLink = buildDingTalkLearningLink({ type: 'task', taskId });
                 if (lang === 'en') {
                     return `### 📚 **ME Cloud Academy**\n**New Learning Task Assigned**\n\n---\n\n**📋 Task Details:**\n* 🏷️ **Task Name:** ${title}\n* 📅 **Start Time:** ${finalStartTime}\n* ⏰ **Deadline:** ${deadline || '-'}\n* 👤 **Assigner:** ${assignerName}\n\n---\n\n> 💡 *Reviewing sales recordings is vital for professional growth. Please listen to the assigned recordings and submit your reflections before the deadline.*\n\n[👉 Click Here to Start Learning](${dingTalkLearningLink})`;
                 }
@@ -1112,10 +1129,7 @@ export const handler = async (event, context) => {
             }
 
             const getMsgMarkdown = (lang) => {
-                const campaignLearningUrl = campaignId
-                    ? `https://learning.mecloudhub.com/hub?campaignLearnId=${encodeURIComponent(campaignId)}`
-                    : 'https://learning.mecloudhub.com/hub';
-                const dingTalkCampaignLink = `dingtalk://dingtalkclient/page/link?url=${encodeURIComponent(campaignLearningUrl)}`;
+                const dingTalkCampaignLink = buildDingTalkLearningLink({ type: 'campaign', campaignId });
                 if (lang === 'en') {
                     return `### 🏆 **ME Cloud Academy**\n**New Certificate Challenge Assigned**\n\n---\n\n**📋 Challenge Details:**\n* 🏷️ **Challenge Title:** ${title}\n* 🎖️ **Target Honor:** ${bannerTitle}\n* ⏰ **Deadline:** ${endDate || '-'}\n* 👤 **Manager:** ${creatorName}\n\n---\n\n> 💡 *After completing the required learning hours or tasks, you will unlock an official electronic certificate of achievement! Keep up the great work!*\n\n[👉 Click Here to Start Challenge](${dingTalkCampaignLink})`;
                 }

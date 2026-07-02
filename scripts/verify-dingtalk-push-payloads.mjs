@@ -17,6 +17,12 @@ const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
 
+const extractLearningUrl = (markdown) => {
+  const match = markdown?.match(/dingtalk:\/\/dingtalkclient\/page\/link\?url=([^)]+)/);
+  assert(match, 'Expected DingTalk markdown to include a deep link URL');
+  return decodeURIComponent(match[1]);
+};
+
 const task = await invoke({
   action: 'notifyTask',
   title: 'Mock Task',
@@ -30,6 +36,8 @@ assert(task.isMockDingTalk === true, 'Task verification must run in mock DingTal
 assert(task.isMockFirebase === true, 'Task verification must run in mock Firebase mode');
 assert(task.mockPayload?.markdownEn?.includes('taskId%3Dtask-123'), 'Task DingTalk markdown must deep-link to task learning page');
 assert(task.mockPayload?.markdownZh?.includes('taskId%3Dtask-123'), 'Task Chinese DingTalk markdown must deep-link to task learning page');
+assert(extractLearningUrl(task.mockPayload?.markdownEn) === 'https://learning.mecloudhub.com/hub?taskId=task-123', 'Task English DingTalk link must resolve exactly to the task learning page');
+assert(extractLearningUrl(task.mockPayload?.markdownZh) === 'https://learning.mecloudhub.com/hub?taskId=task-123', 'Task Chinese DingTalk link must resolve exactly to the task learning page');
 assert(task.mockPayload?.fcm?.data?.type === 'task', 'Task FCM payload must include type=task');
 assert(task.mockPayload?.fcm?.data?.taskId === 'task-123', 'Task FCM payload must include taskId');
 
@@ -47,6 +55,8 @@ assert(campaign.isMockDingTalk === true, 'Campaign verification must run in mock
 assert(campaign.isMockFirebase === true, 'Campaign verification must run in mock Firebase mode');
 assert(campaign.mockPayload?.markdownEn?.includes('campaignLearnId%3Dcampaign-456'), 'Campaign DingTalk markdown must deep-link to campaign learning page');
 assert(campaign.mockPayload?.markdownZh?.includes('campaignLearnId%3Dcampaign-456'), 'Campaign Chinese DingTalk markdown must deep-link to campaign learning page');
+assert(extractLearningUrl(campaign.mockPayload?.markdownEn) === 'https://learning.mecloudhub.com/hub?campaignLearnId=campaign-456', 'Campaign English DingTalk link must resolve exactly to the campaign learning page');
+assert(extractLearningUrl(campaign.mockPayload?.markdownZh) === 'https://learning.mecloudhub.com/hub?campaignLearnId=campaign-456', 'Campaign Chinese DingTalk link must resolve exactly to the campaign learning page');
 assert(campaign.mockPayload?.fcm?.data?.type === 'campaign', 'Campaign FCM payload must include type=campaign');
 assert(campaign.mockPayload?.fcm?.data?.campaignId === 'campaign-456', 'Campaign FCM payload must include campaignId');
 
