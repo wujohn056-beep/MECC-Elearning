@@ -21,6 +21,8 @@ npm run smoke:prod
 - Latest Android APK exists in `public/downloads/mecc-latest.apk`.
 - APK size stays below the GitHub hard limit.
 - Native app assets do not embed the APK.
+- Android native `versionName` matches the client Android version.
+- APK web assets match the current build output.
 - DingTalk function syntax.
 - Targeted lint on critical release files.
 - Challenge `Go Learn` routing through `campaignLearnId`.
@@ -53,6 +55,12 @@ mobile device confirm:
 - Native mobile push taps open the correct recording, task, or campaign page.
 - Web `/download` installs the current Android APK successfully.
 - The same learner flow works in Chinese, English, and Arabic without raw locale keys.
+
+## External Release Configuration
+
+After publishing a new Android APK, set Firestore `system_config/app_versions.android_latest`
+to the released Android version or higher. Existing installed clients use that remote value
+to decide whether to show the update prompt.
 
 ## Release Status Language
 

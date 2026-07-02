@@ -9,7 +9,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Capacitor } from '@capacitor/core';
 import UserGuideModal from './UserGuideModal';
-import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersion';
+import { getCurrentClientAppVersion, getLatestClientAppVersion, isVersionOutdated } from '../utils/appVersion';
 import { getEffectiveUserId } from '../utils/userIdentity';
 import { buildLearningRoute } from '../utils/learningRoutes';
 import { resolveAppDownloadUrl } from '../utils/appDownloadLinks';
@@ -160,11 +160,11 @@ export default function AppLayout() {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     const platform = Capacitor.getPlatform(); // 'ios' or 'android'
-                    const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
+                    const latestVersion = getLatestClientAppVersion(platform, data);
 
                     const currentAppVersion = getCurrentClientAppVersion(platform);
 
-                    if (latestVersion && isVersionOutdated(currentAppVersion, latestVersion)) {
+                    if (isVersionOutdated(currentAppVersion, latestVersion)) {
                         const forceUpdate = data.min_required_version && isVersionOutdated(currentAppVersion, data.min_required_version);
                         setUpdateConfig(data);
                         setIsForceUpdate(!!forceUpdate);
@@ -357,7 +357,7 @@ export default function AppLayout() {
     const updatePlatform = Capacitor.getPlatform();
     const updateCurrentVersion = getCurrentClientAppVersion(updatePlatform);
     const updateLatestVersion = updateConfig
-        ? (updatePlatform === 'ios' ? updateConfig.ios_latest : updateConfig.android_latest)
+        ? getLatestClientAppVersion(updatePlatform, updateConfig)
         : '';
 
     return (

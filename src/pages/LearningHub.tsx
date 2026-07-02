@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
-import { getCurrentClientAppVersion, isVersionOutdated } from '../utils/appVersion';
+import { getCurrentClientAppVersion, getLatestClientAppVersion, isVersionOutdated } from '../utils/appVersion';
 import { getEffectiveUserId } from '../utils/userIdentity';
 import { calculateCampaignProgress, getCampaignRequiredRecordings as resolveCampaignRequiredRecordings } from '../utils/campaignProgress';
 import { getTaskRecordingGroups } from '../utils/taskRecordingGroups';
@@ -3716,9 +3716,9 @@ export default function LearningHub() {
                         const platform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
                         const currentNativeVersion = getCurrentClientAppVersion(platform);
                         const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
-                        const latestVersion = platform === 'ios' ? data.ios_latest : data.android_latest;
+                        const latestVersion = getLatestClientAppVersion(platform, data);
                         
-                        if (latestVersion && isVersionOutdated(currentVersionToCheck, latestVersion)) {
+                        if (isVersionOutdated(currentVersionToCheck, latestVersion)) {
                             setIsAppOutdated(true);
                         } else {
                             setIsAppOutdated(false);
@@ -4726,7 +4726,7 @@ export default function LearningHub() {
         const currentNativeVersion = getCurrentClientAppVersion(userPlatform);
         const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
         const latestVersionToCheck = appUpdateConfig
-            ? (userPlatform === 'ios' ? appUpdateConfig.ios_latest : appUpdateConfig.android_latest)
+            ? getLatestClientAppVersion(userPlatform, appUpdateConfig)
             : '';
         
         return (

@@ -109,6 +109,15 @@ addCheck(
   (appDownloadLinksCheck.stdout + appDownloadLinksCheck.stderr).trim()
 );
 
+const appVersionCheck = spawnSync(process.execPath, ['scripts/verify-app-version.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'app version behavior',
+  appVersionCheck.status === 0,
+  (appVersionCheck.stdout + appVersionCheck.stderr).trim()
+);
+
 const dingtalkPushPayloadsCheck = spawnSync(process.execPath, ['scripts/verify-dingtalk-push-payloads.mjs'], {
   encoding: 'utf8'
 });
@@ -189,7 +198,7 @@ const sourceAssertions = [
   ['download page reads configurable app links', 'src/pages/DownloadPage.tsx', ['system_config', 'app_versions', 'resolveAppDownloadUrl']],
   ['native update modal has platform fallbacks', 'src/components/AppLayout.tsx', ['resolveAppDownloadUrl']],
   ['hub update card has platform fallbacks', 'src/pages/LearningHub.tsx', ['resolveAppDownloadUrl']],
-  ['app version update gate exists', 'src/utils/appVersion.ts', ['CLIENT_APP_VERSIONS', 'isVersionOutdated']],
+  ['app version update gate exists', 'src/utils/appVersion.ts', ['CLIENT_APP_VERSIONS', 'getLatestClientAppVersion', 'isVersionOutdated']],
   ['task push fallback messaging', 'src/pages/TeamTasks.tsx', ['getFcmFailureMessage', 'third-party-auth-error', 'fcm_apns_auth_error', 'fcm_push_error']],
   ['safe native sync script', 'package.json', ['clean-native-download-assets.mjs']]
 ];
