@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# ME Cloud Academy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MECC learning platform built with React, Vite, Firebase, Netlify Functions, and Capacitor for Android/iOS wrappers.
 
-Currently, two official plugins are available:
+## Common Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
+npm run build
+npm run verify:release
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Use `npm run verify:release` before every production deploy. It runs the production build and checks the release-critical paths: trilingual locale parity, APK size, native APK nesting, DingTalk function syntax, task/challenge routing markers, task draft persistence markers, effective UID handling, and targeted lint for recently touched release files.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Mobile Packaging
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Use the safe scripts below instead of running raw `cap sync` for release work:
+
+```bash
+npm run cap:sync
+npm run android:debug
 ```
+
+`npm run cap:sync` builds the Web app, syncs Capacitor projects, then removes `mecc-latest.apk` from the Android/iOS bundled Web assets. This prevents the downloadable APK from being embedded inside the native app package.
+
+`npm run android:debug` also builds the Android debug APK and copies it to:
+
+```text
+public/downloads/mecc-latest.apk
+```
+
+The public APK must stay below GitHub's 100MB hard file limit. The release verifier checks this automatically.
+
+## Deployment Notes
+
+The site is configured by `netlify.toml`:
+
+```text
+build command: npm run build
+publish dir: dist
+functions: netlify/functions
+```
+
+Before pushing to `main`, run:
+
+```bash
+npm run verify:release
+git status --short
+```
+
+If an Android APK was rebuilt, confirm `public/downloads/mecc-latest.apk` is the intended file and that native assets do not contain nested APK copies:
+
+```bash
+find android/app/src/main/assets/public/downloads ios/App/App/public/downloads -maxdepth 1 -type f -name '*.apk' -print
+```
+
+That command should print nothing.
