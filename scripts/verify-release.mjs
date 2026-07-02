@@ -55,6 +55,15 @@ if (existsSync(apkPath)) {
   addCheck('download APK below GitHub hard limit', false, apkPath);
 }
 
+const apkWebAssetsCheck = spawnSync(process.execPath, ['scripts/verify-apk-web-assets.mjs'], {
+  encoding: 'utf8'
+});
+addCheck(
+  'download APK contains current web assets',
+  apkWebAssetsCheck.status === 0,
+  (apkWebAssetsCheck.stdout + apkWebAssetsCheck.stderr).trim()
+);
+
 const nativeApkCopies = [
   'android/app/src/main/assets/public/downloads/mecc-latest.apk',
   'ios/App/App/public/downloads/mecc-latest.apk'
