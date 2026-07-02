@@ -1,6 +1,7 @@
 # Manual QA Checklist
 
 Use this checklist after release verification passes and the production deploy is live.
+See `docs/release-readiness.md` for the automated/manual verification boundary.
 
 ## Required Accounts And Devices
 
