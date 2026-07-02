@@ -51,6 +51,45 @@ const dingtalkCheck = spawnSync(process.execPath, ['--check', 'netlify/functions
 });
 addCheck('dingtalk function syntax', dingtalkCheck.status === 0, dingtalkCheck.stderr.trim());
 
+const criticalLintFiles = [
+  'src/components/AppLayout.tsx',
+  'src/components/NotificationBell.tsx',
+  'src/contexts/AuthContext.tsx',
+  'src/pages/Account.tsx',
+  'src/pages/LearningHub.tsx',
+  'src/pages/TeamTasks.tsx',
+  'src/pages/admin/CategoryManager.tsx',
+  'src/pages/admin/RecordingsManager.tsx',
+  'src/pages/admin/ReferralManager.tsx',
+  'src/pages/admin/UserManager.tsx',
+  'src/utils/appVersion.ts',
+  'src/utils/campaignProgress.ts',
+  'src/utils/userIdentity.ts'
+];
+const criticalLint = spawnSync('npx', [
+  'eslint',
+  ...criticalLintFiles,
+  '--rule',
+  '@typescript-eslint/no-explicit-any: off',
+  '--rule',
+  '@typescript-eslint/no-unused-vars: off',
+  '--rule',
+  'react-refresh/only-export-components: off',
+  '--rule',
+  'prefer-const: off',
+  '--rule',
+  'react-hooks/exhaustive-deps: off',
+  '--max-warnings=0'
+], {
+  encoding: 'utf8',
+  shell: process.platform === 'win32'
+});
+addCheck(
+  'critical release files lint',
+  criticalLint.status === 0,
+  (criticalLint.stdout + criticalLint.stderr).trim().split('\n').slice(0, 12).join(' | ')
+);
+
 const sourceAssertions = [
   ['campaign learning route', 'src/pages/LearningHub.tsx', 'campaignLearnId'],
   ['campaign notification route', 'src/components/NotificationBell.tsx', 'campaignLearnId'],
