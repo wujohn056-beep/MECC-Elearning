@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users, BarChart3 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { getCurrentClientAppVersion, getLatestClientAppVersion, isVersionOutdated } from '../utils/appVersion';
@@ -3012,7 +3012,7 @@ interface TeamLearningStatusModalProps {
 }
 
 const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user, profile } = useAuth();
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState<any[]>([]);
@@ -3134,6 +3134,60 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
     const totalCount = searchedUsers.length;
     const completedCount = searchedUsers.filter(u => completedInfo.has(u.id)).length;
     const completedPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+    const isSuperAdminProgressViewer = String(profile?.role || '').trim().toLowerCase() === 'super_admin';
+    const roleCompletionStats = React.useMemo(() => {
+        const roleOrder = ['sd', 'sm', 'tl', 'user', 'cc'];
+        const roleRank = (role: string) => {
+            const idx = roleOrder.indexOf(role);
+            return idx === -1 ? roleOrder.length : idx;
+        };
+        const roleLabel = (role: string) => {
+            if (i18n.language?.startsWith('ar')) {
+                if (role === 'sd') return 'مدير المنطقة (SD)';
+                if (role === 'sm') return 'مدير المبيعات (SM)';
+                if (role === 'tl') return 'قائد الفريق (TL)';
+                if (role === 'user' || role === 'cc') return 'مستشار المبيعات (CC)';
+                return role.toUpperCase();
+            }
+            if (i18n.language?.startsWith('en')) {
+                if (role === 'sd') return 'Sales Director (SD)';
+                if (role === 'sm') return 'Sales Manager (SM)';
+                if (role === 'tl') return 'Team Leader (TL)';
+                if (role === 'user' || role === 'cc') return 'Sales Consultant (CC)';
+                return role.toUpperCase();
+            }
+            if (role === 'sd') return '总监 (SD)';
+            if (role === 'sm') return '经理 (SM)';
+            if (role === 'tl') return '组长 (TL)';
+            if (role === 'user' || role === 'cc') return '销售顾问 (CC)';
+            return role.toUpperCase();
+        };
+
+        const grouped = new Map<string, { role: string; label: string; total: number; completed: number }>();
+        searchedUsers.forEach(u => {
+            const role = String(u.role || 'user').trim().toLowerCase();
+            if (role === 'super_admin') return;
+            const normalizedRole = role === 'cc' ? 'user' : role;
+            const current = grouped.get(normalizedRole) || {
+                role: normalizedRole,
+                label: roleLabel(normalizedRole),
+                total: 0,
+                completed: 0
+            };
+            current.total += 1;
+            if (completedInfo.has(u.id)) {
+                current.completed += 1;
+            }
+            grouped.set(normalizedRole, current);
+        });
+
+        return Array.from(grouped.values())
+            .map(item => ({
+                ...item,
+                percent: item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0
+            }))
+            .sort((a, b) => roleRank(a.role) - roleRank(b.role));
+    }, [searchedUsers, completedInfo, i18n.language]);
 
     // Helper to format date
     const formatDate = (val: any) => {
@@ -3425,6 +3479,48 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
                             </div>
                         </div>
                     </div>
+
+                    {isSuperAdminProgressViewer && roleCompletionStats.length > 0 && (
+                        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <h4 className="text-xs text-slate-500 font-extrabold">
+                                        {i18n.language?.startsWith('ar') ? 'معدل الإكمال حسب المستوى الوظيفي' : i18n.language?.startsWith('en') ? 'Completion Rate by Role' : '按职级完成率'}
+                                    </h4>
+                                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                                        {i18n.language?.startsWith('ar') ? 'عرض مقارنة بصرية لأداء SD / SM / TL / CC' : i18n.language?.startsWith('en') ? 'Visual comparison across SD / SM / TL / CC' : '辅助超级管理员快速对比 SD / SM / TL / CC 各层级完成情况'}
+                                    </p>
+                                </div>
+                                <div className="hidden md:flex items-center gap-1.5 text-[10px] font-bold text-[#008f99] bg-[#008f99]/10 px-2.5 py-1 rounded-full">
+                                    <BarChart3 className="w-3.5 h-3.5" />
+                                    {i18n.language?.startsWith('ar') ? 'تقرير بصري' : i18n.language?.startsWith('en') ? 'Visual report' : '图形报表'}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {roleCompletionStats.map(stat => (
+                                    <div key={stat.role} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                                        <div className="flex items-center justify-between gap-3 mb-2">
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-extrabold text-slate-800 truncate">{stat.label}</p>
+                                                <p className="text-[10px] text-slate-400 font-bold">
+                                                    {stat.completed} / {stat.total} {t('common.people_unit', '人')}
+                                                </p>
+                                            </div>
+                                            <span className={`text-sm font-black ${stat.percent >= 80 ? 'text-emerald-600' : stat.percent >= 50 ? 'text-desert-gold' : 'text-[#008f99]'}`}>
+                                                {stat.percent}%
+                                            </span>
+                                        </div>
+                                        <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-slate-100">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${stat.percent >= 80 ? 'bg-emerald-500' : stat.percent >= 50 ? 'bg-desert-gold' : 'bg-[#008f99]'}`}
+                                                style={{ width: `${stat.percent}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Content Area */}

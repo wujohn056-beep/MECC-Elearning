@@ -229,6 +229,7 @@ const sourceAssertions = [
   ['team progress groups one team once even if member TL fields differ', 'src/pages/LearningHub.tsx', ['const tlTeamKey = teamName.toLowerCase()', 'smObj.tls.has(tlTeamKey)', 'smObj.tls.set(tlTeamKey']],
   ['team progress syncs with live user org updates', 'src/pages/LearningHub.tsx', ["onSnapshot(collection(db, 'users')", 'setAllSystemUsers(usersData)', 'setUsers(filtered)', 'prev[teamKey] ?? true']],
   ['team progress uses canonical TL hierarchy for team grouping', 'src/pages/LearningHub.tsx', ['resolveOfficialTeamTlUser', 'officialTeamTlUser?.sd', 'officialTeamTlUser?.sm', 'officialTeamTlUser?.team']],
+  ['team progress super admin has role completion chart', 'src/pages/LearningHub.tsx', ['isSuperAdminProgressViewer', 'roleCompletionStats', '按职级完成率', 'Completion Rate by Role', 'معدل الإكمال حسب المستوى الوظيفي']],
   ['campaign notification route', 'src/components/NotificationBell.tsx', ['buildLearningRoute', "type: 'campaign'", 'campaignId: notif.campaignId']],
   ['notification identity uses effective uid helper', 'src/components/NotificationBell.tsx', ['getEffectiveUserId', "where('assigneeIds', 'array-contains', myUid)", '[`assignees.${myUid}.read`]']],
   ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ['isIncompleteTask', 'tasks.filter(isIncompleteTask)', "buildLearningRoute({ type: 'task', taskId: task.id })"]],
