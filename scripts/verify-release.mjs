@@ -270,6 +270,7 @@ const sourceAssertions = [
   ['native update modal has platform fallbacks', 'src/components/AppLayout.tsx', ['resolveAppDownloadUrl']],
   ['hub update card has platform fallbacks', 'src/pages/LearningHub.tsx', ['resolveAppDownloadUrl']],
   ['recordings manager keeps public materials visible to TL and above', 'src/pages/admin/RecordingsManager.tsx', ["const recHubScope = (rec as any).hubScope || 'public'", "if (recHubScope === 'team' && !isSuper)", 'isOwnTlSmTeam']],
+  ['recordings manager limits TL SM SD material actions to push and existing transcript view', 'src/pages/admin/RecordingsManager.tsx', ['const isWriteAllowed = isSuperAdmin', '{(isWriteAllowed || (rec as any).transcript) &&', 'canManageTranscript', 'else if (isWriteAllowed)']],
   ['recordings manager filters uploaded resources by category name', 'src/pages/admin/RecordingsManager.tsx', ['categoryFilterOptions', "categoryFilter.startsWith('name:')", 'recCategoryName !== categoryNameFilter', 'rec.categoryName.toLowerCase().includes(normalizedQuery)', 'category_filter_all']],
   ['recordings manager category filter has trilingual copy', 'src/locales/zh.json', ['category_filter_label', 'category_filter_all']],
   ['recordings manager category filter has english copy', 'src/locales/en.json', ['category_filter_label', 'category_filter_all']],

@@ -43,7 +43,7 @@ export default function RecordingsManager() {
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const { hasPermission, profile, isLeader, user, isSuperAdmin } = useAuth();
-    const isWriteAllowed = isSuperAdmin || profile?.role === 'sd' || profile?.role === 'sm';
+    const isWriteAllowed = isSuperAdmin;
     const [transcribingIds, setTranscribingIds] = useState<Record<string, boolean>>({});
     
     // DingTalk Multi-Target Push States
@@ -60,7 +60,7 @@ export default function RecordingsManager() {
     const [adminActiveTab, setAdminActiveTab] = useState<'arabic' | 'chinese'>('arabic');
     const [adminTranscriptZh, setAdminTranscriptZh] = useState<string>('');
     const [loadingAdminTranslation, setLoadingAdminTranslation] = useState(false);
-    const isSDLevel = profile?.role === 'sd' || profile?.role === 'super_admin';
+    const canManageTranscript = isWriteAllowed;
 
     useEffect(() => {
         if (viewingTranscriptRecording) {
@@ -78,7 +78,7 @@ export default function RecordingsManager() {
             return;
         }
 
-        if (adminActiveTab === 'chinese' && !adminTranscriptZh && viewingTranscriptRecording && !((viewingTranscriptRecording as any).transcriptZh) && isSDLevel) {
+        if (adminActiveTab === 'chinese' && !adminTranscriptZh && viewingTranscriptRecording && !((viewingTranscriptRecording as any).transcriptZh) && canManageTranscript) {
             setLoadingAdminTranslation(true);
             fetch('/.netlify/functions/translate-transcript', {
                 method: 'POST',
@@ -111,7 +111,7 @@ export default function RecordingsManager() {
             })
             .finally(() => setLoadingAdminTranslation(false));
         }
-    }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, isSDLevel, t]);
+    }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, canManageTranscript, t]);
 
     // Form States
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -2227,17 +2227,16 @@ export default function RecordingsManager() {
                                             </div>
                                             <div className="flex flex-col items-end gap-2 ml-4">
                                                 <div className="flex gap-2">
-                                                    {/* Temporarily hidden transcription generation button */}
-                                                    {isWriteAllowed && (
+                                                    {(isWriteAllowed || (rec as any).transcript) && (
                                                         <button 
                                                             onClick={() => {
                                                                 if ((rec as any).transcript) {
                                                                     setViewingTranscriptRecording(rec);
-                                                                } else {
+                                                                } else if (isWriteAllowed) {
                                                                     handleTranscribe(rec);
                                                                 }
                                                             }} 
-                                                            disabled={transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading}
+                                                            disabled={isWriteAllowed && (transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading)}
                                                             className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
                                                                 (rec as any).transcript 
                                                                     ? 'text-green-600 hover:bg-green-50' 
@@ -2368,42 +2367,44 @@ export default function RecordingsManager() {
                         {/* Control Toolbar */}
                         <div className="bg-slate-50/80 px-4 py-3 rounded-xl border border-gray-100 flex flex-wrap justify-between items-center gap-4 select-none my-3">
                             {/* Actions */}
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => {
-                                        const textToCopy = adminActiveTab === 'chinese' ? adminTranscriptZh : viewingTranscriptRecording.transcript;
-                                        if (textToCopy) {
-                                            navigator.clipboard.writeText(textToCopy);
-                                            alert(t('common.copied', '已复制到剪贴板！'));
-                                        }
-                                    }}
-                                    className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                                >
-                                    <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
-                                    <span>{t('common.copy', '复制')}</span>
-                                </button>
-                                
-                                <button
-                                    onClick={() => {
-                                        const textToDownload = adminActiveTab === 'chinese' ? adminTranscriptZh : viewingTranscriptRecording.transcript;
-                                        if (!textToDownload) return;
-                                        const element = document.createElement("a");
-                                        const file = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
-                                        element.href = URL.createObjectURL(file);
-                                        element.download = `${viewingTranscriptRecording.title}_transcript_${adminActiveTab}.txt`;
-                                        document.body.appendChild(element);
-                                        element.click();
-                                        document.body.removeChild(element);
-                                    }}
-                                    className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                                >
-                                    <Download className="w-3.5 h-3.5 text-desert-gold" />
-                                    <span>{t('common.download', '下载')}</span>
-                                </button>
-                            </div>
+                            {isWriteAllowed && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            const textToCopy = adminActiveTab === 'chinese' ? adminTranscriptZh : viewingTranscriptRecording.transcript;
+                                            if (textToCopy) {
+                                                navigator.clipboard.writeText(textToCopy);
+                                                alert(t('common.copied', '已复制到剪贴板！'));
+                                            }
+                                        }}
+                                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                                    >
+                                        <BookOpen className="w-3.5 h-3.5 text-desert-gold" />
+                                        <span>{t('common.copy', '复制')}</span>
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => {
+                                            const textToDownload = adminActiveTab === 'chinese' ? adminTranscriptZh : viewingTranscriptRecording.transcript;
+                                            if (!textToDownload) return;
+                                            const element = document.createElement("a");
+                                            const file = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
+                                            element.href = URL.createObjectURL(file);
+                                            element.download = `${viewingTranscriptRecording.title}_transcript_${adminActiveTab}.txt`;
+                                            document.body.appendChild(element);
+                                            element.click();
+                                            document.body.removeChild(element);
+                                        }}
+                                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                                    >
+                                        <Download className="w-3.5 h-3.5 text-desert-gold" />
+                                        <span>{t('common.download', '下载')}</span>
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Bilingual Translation Toggle */}
-                            {isSDLevel && (
+                            {canManageTranscript && (
                                 <div className="flex bg-gray-200 p-0.5 rounded-lg text-xs font-semibold border border-gray-300/30 select-none">
                                     <button
                                         onClick={() => setAdminActiveTab('arabic')}
@@ -2429,18 +2430,20 @@ export default function RecordingsManager() {
                             )}
 
                             {/* Trigger Regeneration inside viewer */}
-                            <button
-                                onClick={() => {
-                                    if (window.confirm(t('recordings_manager.regenerate_confirm', '确定要重新生成阿语逐字稿吗？这可能需要几分钟。'))) {
-                                        handleTranscribe(viewingTranscriptRecording);
-                                        setViewingTranscriptRecording(null);
-                                    }
-                                }}
-                                className="bg-amber-50 hover:bg-amber-100 border border-desert-gold/25 text-yellow-800 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                            >
-                                <RefreshCw className="w-3.5 h-3.5 text-desert-gold animate-spin-hover" />
-                                <span>{t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿')}</span>
-                            </button>
+                            {isWriteAllowed && (
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm(t('recordings_manager.regenerate_confirm', '确定要重新生成阿语逐字稿吗？这可能需要几分钟。'))) {
+                                            handleTranscribe(viewingTranscriptRecording);
+                                            setViewingTranscriptRecording(null);
+                                        }
+                                    }}
+                                    className="bg-amber-50 hover:bg-amber-100 border border-desert-gold/25 text-yellow-800 text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                                >
+                                    <RefreshCw className="w-3.5 h-3.5 text-desert-gold animate-spin-hover" />
+                                    <span>{t('recordings_manager.regenerate_transcript', '重新生成阿语逐字稿')}</span>
+                                </button>
+                            )}
                         </div>
                         
                         {/* Transcript Body */}
@@ -2469,7 +2472,7 @@ export default function RecordingsManager() {
                         
                         {/* Footer */}
                         <div className="pt-4 border-t border-gray-100 text-center select-none mt-4">
-                            {isSDLevel && (
+                            {canManageTranscript && (
                                 <p className="text-[10px] text-slate-400 font-bold mb-2">
                                     🔒 {t('learning_hub.sd_translation_notice', '🔒 SD 总监层级以上特权：中文对照翻译通道已激活')}
                                 </p>
