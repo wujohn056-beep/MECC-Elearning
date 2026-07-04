@@ -3175,9 +3175,23 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
             return !normalized || normalized.startsWith('unassigned');
         };
 
-        const resolveOfficialTeamTl = (member: any) => {
+        const resolveOfficialTeamTlUser = (member: any) => {
             const memberTeam = String(member.team || '').trim().toLowerCase();
-            if (!memberTeam) return '';
+            const memberTl = String(member.tl || '').trim().toLowerCase();
+            if (!memberTeam && !memberTl) return null;
+
+            const isTlUser = (candidate: any) => (
+                String(candidate.role || '').trim().toLowerCase() === 'tl' && Boolean(candidate.crmId)
+            );
+
+            const exactTlUser = orgUsers.find((candidate: any) => {
+                if (!isTlUser(candidate)) return false;
+                const sameTl = String(candidate.crmId || '').trim().toLowerCase() === memberTl;
+                const sameTeam = !memberTeam || String(candidate.team || '').trim().toLowerCase() === memberTeam;
+                return sameTl && sameTeam;
+            });
+            if (exactTlUser) return exactTlUser;
+
             const matchingTlUser = orgUsers.find((candidate: any) => {
                 const candidateRole = String(candidate.role || '').trim().toLowerCase();
                 if (candidateRole !== 'tl' || !candidate.crmId) return false;
@@ -3190,14 +3204,17 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
                 const sameSd = !memberSd || String(candidate.sd || '').trim().toLowerCase() === memberSd;
                 return sameSm && sameSd;
             });
+            if (matchingTlUser) return matchingTlUser;
 
-            return matchingTlUser?.crmId ? String(matchingTlUser.crmId).trim() : '';
+            return orgUsers.find((candidate: any) => (
+                isTlUser(candidate) &&
+                String(candidate.team || '').trim().toLowerCase() === memberTeam
+            )) || null;
         };
 
-        const resolveTlForMember = (member: any) => {
-            const officialTeamTl = resolveOfficialTeamTl(member);
-            if (officialTeamTl) {
-                return officialTeamTl;
+        const resolveTlForMember = (member: any, officialTeamTlUser = resolveOfficialTeamTlUser(member)) => {
+            if (officialTeamTlUser?.crmId) {
+                return String(officialTeamTlUser.crmId).trim();
             }
 
             if (!isMissingOrgValue(member.tl)) {
@@ -3215,10 +3232,11 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
         };
 
         searchedUsers.forEach(u => {
-            const sdCrmId = (u.sd || 'Unassigned SD').trim();
-            const smCrmId = (u.sm || 'Unassigned SM').trim();
-            const tlCrmId = resolveTlForMember(u);
-            const teamName = (u.team || 'Unassigned Team').trim();
+            const officialTeamTlUser = resolveOfficialTeamTlUser(u);
+            const sdCrmId = (officialTeamTlUser?.sd || u.sd || 'Unassigned SD').trim();
+            const smCrmId = (officialTeamTlUser?.sm || u.sm || 'Unassigned SM').trim();
+            const tlCrmId = resolveTlForMember(u, officialTeamTlUser);
+            const teamName = (officialTeamTlUser?.team || u.team || 'Unassigned Team').trim();
 
             const sdKey = sdCrmId.toLowerCase();
             const smKey = smCrmId.toLowerCase();
