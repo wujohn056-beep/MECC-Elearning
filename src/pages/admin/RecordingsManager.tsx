@@ -325,15 +325,19 @@ export default function RecordingsManager() {
         const isSuper = profile?.role === 'super_admin';
         const isSd = profile?.role === 'sd';
         const isSm = profile?.role === 'sm';
+        const isTl = profile?.role === 'tl';
+        const recHubScope = (rec as any).hubScope || 'public';
 
-        if (isSm) {
-            if ((rec as any).hubScope !== 'team' || (rec as any).targetSmId !== profile.crmId) {
-                return false;
-            }
-        } else if (isSd) {
+        if (recHubScope === 'team' && !isSuper) {
             const smId = (rec as any).targetSmId;
-            const isDownlineSm = systemUsers.some(u => u.crmId === smId && u.sd === profile.crmId);
-            if ((rec as any).hubScope !== 'team' || !isDownlineSm) {
+            const userSmId = profile?.role === 'tl'
+                ? (profile?.sm || systemUsers.find(u => u.crmId === profile?.crmId)?.sm || '')
+                : '';
+            const isDownlineSm = isSd && systemUsers.some(u => u.crmId === smId && u.sd === profile?.crmId);
+            const isOwnSmTeam = isSm && smId === profile?.crmId;
+            const isOwnTlSmTeam = isTl && !!userSmId && smId === userSmId;
+
+            if (!isDownlineSm && !isOwnSmTeam && !isOwnTlSmTeam) {
                 return false;
             }
         }
