@@ -269,7 +269,7 @@ const sourceAssertions = [
   ['download page reads configurable app links', 'src/pages/DownloadPage.tsx', ['system_config', 'app_versions', 'resolveAppDownloadUrl']],
   ['native update modal has platform fallbacks', 'src/components/AppLayout.tsx', ['resolveAppDownloadUrl']],
   ['hub update card has platform fallbacks', 'src/pages/LearningHub.tsx', ['resolveAppDownloadUrl']],
-  ['recordings manager filters uploaded resources by category', 'src/pages/admin/RecordingsManager.tsx', ['categoryFilter', 'setCategoryFilter', 'rec.categoryId !== categoryFilter', 'rec.categoryName.toLowerCase().includes(normalizedQuery)', 'category_filter_all']],
+  ['recordings manager filters uploaded resources by category name', 'src/pages/admin/RecordingsManager.tsx', ['categoryFilterOptions', "categoryFilter.startsWith('name:')", 'recCategoryName !== categoryNameFilter', 'rec.categoryName.toLowerCase().includes(normalizedQuery)', 'category_filter_all']],
   ['recordings manager category filter has trilingual copy', 'src/locales/zh.json', ['category_filter_label', 'category_filter_all']],
   ['recordings manager category filter has english copy', 'src/locales/en.json', ['category_filter_label', 'category_filter_all']],
   ['recordings manager category filter has arabic copy', 'src/locales/ar.json', ['category_filter_label', 'category_filter_all']],

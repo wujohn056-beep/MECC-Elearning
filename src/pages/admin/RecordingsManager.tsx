@@ -311,6 +311,16 @@ export default function RecordingsManager() {
         return groups;
     }, [sdList, depList, systemUsers, profile, t, getTlTeamName]);
 
+    const categoryFilterOptions = React.useMemo(() => {
+        const byName = new Map<string, Category>();
+        categories.forEach(cat => {
+            const normalizedName = cat.name.trim().toLowerCase();
+            if (!normalizedName || byName.has(normalizedName)) return;
+            byName.set(normalizedName, cat);
+        });
+        return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
+    }, [categories]);
+
     const filteredRecordings = recordings.filter(rec => {
         const isSuper = profile?.role === 'super_admin';
         const isSd = profile?.role === 'sd';
@@ -329,9 +339,17 @@ export default function RecordingsManager() {
         }
 
         if (categoryFilter === 'uncategorized') {
-            if (rec.categoryId) return false;
+            if (rec.categoryId || rec.categoryName) return false;
         } else if (categoryFilter !== 'all') {
-            if (rec.categoryId !== categoryFilter) return false;
+            const categoryNameFilter = categoryFilter.startsWith('name:')
+                ? categoryFilter.slice('name:'.length)
+                : '';
+            const recCategoryName = (rec.categoryName || categories.find(cat => cat.id === rec.categoryId)?.name || '').trim().toLowerCase();
+            if (categoryNameFilter) {
+                if (recCategoryName !== categoryNameFilter) return false;
+            } else if (rec.categoryId !== categoryFilter) {
+                return false;
+            }
         }
 
         if (!isSuper) {
@@ -2037,11 +2055,9 @@ export default function RecordingsManager() {
                                 >
                                     <option value="all">{t('recordings_manager.category_filter_all', 'All Categories')}</option>
                                     <option value="uncategorized">{t('common.uncategorized', 'Uncategorized')}</option>
-                                    {categories
-                                        .slice()
-                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                    {categoryFilterOptions
                                         .map(cat => (
-                                            <option key={cat.id} value={cat.id}>
+                                            <option key={cat.name.trim().toLowerCase()} value={`name:${cat.name.trim().toLowerCase()}`}>
                                                 {cat.name}
                                             </option>
                                         ))
