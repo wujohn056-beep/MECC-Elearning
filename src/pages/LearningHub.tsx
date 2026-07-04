@@ -3023,60 +3023,75 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
     const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (!user || !profile) return;
-            setLoading(true);
+        if (!user || !profile) return;
+
+        let isMounted = true;
+
+        const loggedInRole = String(profile?.role).trim().toLowerCase();
+        const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
+        const loggedInTeam = (profile?.team || '').trim().toLowerCase();
+
+        const unsubscribeUsers = onSnapshot(collection(db, 'users'), (usersSnap) => {
+            const usersData: any[] = [];
+            usersSnap.forEach(docSnap => {
+                usersData.push({ id: docSnap.id, ...docSnap.data() });
+            });
+
+            const filtered = usersData.filter(u => {
+                const uTeam = (u.team || '').trim();
+                const uTeamLower = uTeam.toLowerCase();
+                const uCrmId = (u.crmId || '').trim().toLowerCase();
+
+                const uSd = (u.sd || '').trim().toLowerCase();
+                const uSm = (u.sm || '').trim().toLowerCase();
+                const uTl = (u.tl || '').trim().toLowerCase();
+
+                // Super Admin: Show all users (excluding themselves)
+                if (loggedInRole === 'super_admin') {
+                    return uCrmId !== loggedInCrmId;
+                }
+
+                // SD: Show users under their hierarchy (excluding themselves)
+                if (loggedInRole === 'sd') {
+                    return uSd === loggedInCrmId && uCrmId !== loggedInCrmId;
+                }
+
+                if (!uTeam) return false;
+
+                // SM: Show users under their SM hierarchy (excluding themselves)
+                if (loggedInRole === 'sm') {
+                    return uSm === loggedInCrmId && uCrmId !== loggedInCrmId;
+                }
+
+                // TL: Show users in their team or having uTl === leader crmId (excluding themselves)
+                if (loggedInRole === 'tl') {
+                    return (uTeamLower === loggedInTeam || uTl === loggedInCrmId) && uCrmId !== loggedInCrmId;
+                }
+
+                return false;
+            });
+
+            if (!isMounted) return;
+            setAllSystemUsers(usersData);
+            setUsers(filtered);
+
+            // Initialize new teams as expanded by default while preserving manual collapse state.
+            setExpandedTeams(prev => {
+                const next: Record<string, boolean> = {};
+                filtered.forEach(u => {
+                    const teamKey = (u.team || 'Unassigned Team').trim();
+                    next[teamKey] = prev[teamKey] ?? true;
+                });
+                return next;
+            });
+            setLoading(false);
+        }, (err) => {
+            console.error("[TeamLearningStatusModal] Error syncing users:", err);
+            if (isMounted) setLoading(false);
+        });
+
+        const fetchLearningHistory = async () => {
             try {
-                // 1. Fetch all system users
-                const usersSnap = await getDocs(collection(db, 'users'));
-                const usersData: any[] = [];
-                usersSnap.forEach(docSnap => {
-                    usersData.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                setAllSystemUsers(usersData);
-
-                // 2. Filter users based on leader's scope
-                const loggedInRole = String(profile?.role).trim().toLowerCase();
-                const loggedInCrmId = (profile?.crmId || '').trim().toLowerCase();
-                const loggedInTeam = (profile?.team || '').trim().toLowerCase();
-
-                const filtered = usersData.filter(u => {
-                    const uTeam = (u.team || '').trim();
-                    const uTeamLower = uTeam.toLowerCase();
-                    const uCrmId = (u.crmId || '').trim().toLowerCase();
-
-                    const uSd = (u.sd || '').trim().toLowerCase();
-                    const uSm = (u.sm || '').trim().toLowerCase();
-                    const uTl = (u.tl || '').trim().toLowerCase();
-
-                    // Super Admin: Show all users (excluding themselves)
-                    if (loggedInRole === 'super_admin') {
-                        return uCrmId !== loggedInCrmId;
-                    }
-
-                    // SD: Show users under their hierarchy (excluding themselves)
-                    if (loggedInRole === 'sd') {
-                        return uSd === loggedInCrmId && uCrmId !== loggedInCrmId;
-                    }
-
-                    if (!uTeam) return false;
-
-                    // SM: Show users under their SM hierarchy (excluding themselves)
-                    if (loggedInRole === 'sm') {
-                        return uSm === loggedInCrmId && uCrmId !== loggedInCrmId;
-                    }
-
-                    // TL: Show users in their team or having uTl === leader crmId (excluding themselves)
-                    if (loggedInRole === 'tl') {
-                        return (uTeamLower === loggedInTeam || uTl === loggedInCrmId) && uCrmId !== loggedInCrmId;
-                    }
-
-                    return false;
-                });
-                
-                setUsers(filtered);
-
-                // 3. Fetch learning history for this recording
                 const q = query(
                     collection(db, 'learning_history'),
                     where('recordingId', '==', rec.id)
@@ -3089,24 +3104,19 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
                         completedMap.set(data.userId, data.listenedAt);
                     }
                 });
-                setCompletedInfo(completedMap);
-
-                // Initialize all teams as expanded by default
-                const initialExpanded: Record<string, boolean> = {};
-                filtered.forEach(u => {
-                    const teamKey = (u.team || 'Unassigned Team').trim();
-                    initialExpanded[teamKey] = true;
-                });
-                setExpandedTeams(initialExpanded);
+                if (isMounted) setCompletedInfo(completedMap);
 
             } catch (err) {
-                console.error("[TeamLearningStatusModal] Error fetching status:", err);
-            } finally {
-                setLoading(false);
+                console.error("[TeamLearningStatusModal] Error fetching learning history:", err);
             }
         };
 
-        fetchData();
+        fetchLearningHistory();
+
+        return () => {
+            isMounted = false;
+            unsubscribeUsers();
+        };
     }, [rec.id, user, profile]);
 
     // Search filter

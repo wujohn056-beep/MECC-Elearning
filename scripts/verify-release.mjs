@@ -225,6 +225,7 @@ const sourceAssertions = [
   ['task focused view renders category sections', 'src/pages/LearningHub.tsx', ['taskRecordingGroups.map(group', 'learning_hub.category_recordings_count']],
   ['recording modal opens supporting attachments by default', 'src/pages/LearningHub.tsx', ['if (rec.attachments && rec.attachments.length > 0)', 'setSelectedAttachment(rec.attachments[0])', 'selectedAttachment ? (']],
   ['team progress resolves missing TL from current user directory', 'src/pages/LearningHub.tsx', ['allSystemUsers', 'resolveTlForMember', "candidateRole !== 'tl'", 'teammateWithTl', "t('dashboard.unassigned_tl'"]],
+  ['team progress syncs with live user org updates', 'src/pages/LearningHub.tsx', ["onSnapshot(collection(db, 'users')", 'setAllSystemUsers(usersData)', 'setUsers(filtered)', 'prev[teamKey] ?? true']],
   ['campaign notification route', 'src/components/NotificationBell.tsx', ['buildLearningRoute', "type: 'campaign'", 'campaignId: notif.campaignId']],
   ['notification identity uses effective uid helper', 'src/components/NotificationBell.tsx', ['getEffectiveUserId', "where('assigneeIds', 'array-contains', myUid)", '[`assignees.${myUid}.read`]']],
   ['task notifications reopen incomplete work', 'src/components/NotificationBell.tsx', ['isIncompleteTask', 'tasks.filter(isIncompleteTask)', "buildLearningRoute({ type: 'task', taskId: task.id })"]],
