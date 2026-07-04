@@ -3175,28 +3175,36 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
             return !normalized || normalized.startsWith('unassigned');
         };
 
+        const resolveOfficialTeamTl = (member: any) => {
+            const memberTeam = String(member.team || '').trim().toLowerCase();
+            if (!memberTeam) return '';
+            const matchingTlUser = orgUsers.find((candidate: any) => {
+                const candidateRole = String(candidate.role || '').trim().toLowerCase();
+                if (candidateRole !== 'tl' || !candidate.crmId) return false;
+                const sameTeam = String(candidate.team || '').trim().toLowerCase() === memberTeam;
+                if (!sameTeam) return false;
+
+                const memberSm = String(member.sm || '').trim().toLowerCase();
+                const memberSd = String(member.sd || '').trim().toLowerCase();
+                const sameSm = !memberSm || String(candidate.sm || '').trim().toLowerCase() === memberSm;
+                const sameSd = !memberSd || String(candidate.sd || '').trim().toLowerCase() === memberSd;
+                return sameSm && sameSd;
+            });
+
+            return matchingTlUser?.crmId ? String(matchingTlUser.crmId).trim() : '';
+        };
+
         const resolveTlForMember = (member: any) => {
+            const officialTeamTl = resolveOfficialTeamTl(member);
+            if (officialTeamTl) {
+                return officialTeamTl;
+            }
+
             if (!isMissingOrgValue(member.tl)) {
                 return String(member.tl).trim();
             }
 
             const memberTeam = String(member.team || '').trim().toLowerCase();
-            const memberSm = String(member.sm || '').trim().toLowerCase();
-            const memberSd = String(member.sd || '').trim().toLowerCase();
-
-            const matchingTlUser = orgUsers.find((candidate: any) => {
-                const candidateRole = String(candidate.role || '').trim().toLowerCase();
-                if (candidateRole !== 'tl' || !candidate.crmId) return false;
-                const sameTeam = memberTeam && String(candidate.team || '').trim().toLowerCase() === memberTeam;
-                if (!sameTeam) return false;
-                const sameSm = !memberSm || String(candidate.sm || '').trim().toLowerCase() === memberSm;
-                const sameSd = !memberSd || String(candidate.sd || '').trim().toLowerCase() === memberSd;
-                return sameSm && sameSd;
-            });
-            if (matchingTlUser?.crmId) {
-                return String(matchingTlUser.crmId).trim();
-            }
-
             const teammateWithTl = orgUsers.find((candidate: any) => (
                 memberTeam &&
                 String(candidate.team || '').trim().toLowerCase() === memberTeam &&
@@ -3236,7 +3244,7 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
             }
 
             const smObj = sdObj.sms.get(smKey);
-            const tlTeamKey = `${tlKey}_${teamName.toLowerCase()}`;
+            const tlTeamKey = teamName.toLowerCase();
             if (!smObj.tls.has(tlTeamKey)) {
                 const tlUser = crmIdToUser.get(tlKey);
                 smObj.tls.set(tlTeamKey, {
