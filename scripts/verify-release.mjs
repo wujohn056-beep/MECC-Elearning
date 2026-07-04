@@ -273,6 +273,7 @@ const sourceAssertions = [
   ['recordings manager limits TL SM SD material actions to push and existing transcript view', 'src/pages/admin/RecordingsManager.tsx', ['const isWriteAllowed = isSuperAdmin', '{(isWriteAllowed || (rec as any).transcript) &&', 'canManageTranscript', 'else if (isWriteAllowed)']],
   ['recordings manager lets TL SM SD view Arabic and Chinese transcript tabs', 'src/pages/admin/RecordingsManager.tsx', ['canViewTranscriptTranslation', "['tl', 'sm', 'sd'].includes", "adminActiveTab === 'chinese'", 'setAdminActiveTab']],
   ['recordings manager filters uploaded resources by category name', 'src/pages/admin/RecordingsManager.tsx', ['categoryFilterOptions', "categoryFilter.startsWith('name:')", 'recCategoryName !== categoryNameFilter', 'rec.categoryName.toLowerCase().includes(normalizedQuery)', 'category_filter_all']],
+  ['team honor dashboard ranks best performers first', 'src/pages/admin/AdminDashboard.tsx', ['rankedDisplayList', 'b.weeklyTaskCompletionRate - a.weeklyTaskCompletionRate', 'b.totalLearningMinutes - a.totalLearningMinutes', 'b.streakCount - a.streakCount', 'levelOrder[b.levelKey] - levelOrder[a.levelKey]']],
   ['recordings manager category filter has trilingual copy', 'src/locales/zh.json', ['category_filter_label', 'category_filter_all']],
   ['recordings manager category filter has english copy', 'src/locales/en.json', ['category_filter_label', 'category_filter_all']],
   ['recordings manager category filter has arabic copy', 'src/locales/ar.json', ['category_filter_label', 'category_filter_all']],

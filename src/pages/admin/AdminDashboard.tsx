@@ -977,8 +977,54 @@ export default function AdminDashboard() {
     const renderTeamHonorDashboard = () => {
         // Filter out admins/directors to keep display focused on agents, TLs, and SMs
         const displayList = displayedUsers.filter(u => u && u.role !== 'super_admin' && u.role !== 'sd');
+        const levelOrder: Record<'apprentice' | 'voyager' | 'knight' | 'falcon' | 'guardian', number> = {
+            apprentice: 1,
+            voyager: 2,
+            knight: 3,
+            falcon: 4,
+            guardian: 5
+        };
+        const rankedDisplayList = displayList.map(member => {
+            const memberHistory = teamHistory.filter(h => h && h.userId === member.id && h.recordingId);
+            const memberCompletedAudioIds = Array.from(new Set(memberHistory.map(h => h.recordingId)));
+            
+            const baseMins = 45;
+            const totalLearningMinutes = baseMins + (memberCompletedAudioIds.length * 12);
+            
+            let weeklyTaskCompletionRate = 60;
+            if (memberCompletedAudioIds.length > 0) {
+                weeklyTaskCompletionRate = Math.min(100, 60 + memberCompletedAudioIds.length * 8);
+            }
+            
+            const streakCount = Math.min(7, 3 + Math.floor(totalLearningMinutes / 60));
+            
+            let levelKey: 'apprentice' | 'voyager' | 'knight' | 'falcon' | 'guardian' = 'apprentice';
+            if (totalLearningMinutes >= 7200 && weeklyTaskCompletionRate >= 95) {
+                levelKey = 'guardian';
+            } else if (totalLearningMinutes >= 3600 && weeklyTaskCompletionRate >= 85) {
+                levelKey = 'falcon';
+            } else if (totalLearningMinutes >= 1800 && weeklyTaskCompletionRate >= 75) {
+                levelKey = 'knight';
+            } else if (totalLearningMinutes >= 600) {
+                levelKey = 'voyager';
+            }
+
+            return {
+                member,
+                totalLearningMinutes,
+                weeklyTaskCompletionRate,
+                streakCount,
+                levelKey
+            };
+        }).sort((a, b) => (
+            b.weeklyTaskCompletionRate - a.weeklyTaskCompletionRate ||
+            b.totalLearningMinutes - a.totalLearningMinutes ||
+            b.streakCount - a.streakCount ||
+            levelOrder[b.levelKey] - levelOrder[a.levelKey] ||
+            (a.member.name || a.member.crmId || '').localeCompare(b.member.name || b.member.crmId || '')
+        ));
         
-        if (displayList.length === 0) {
+        if (rankedDisplayList.length === 0) {
             return (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400 font-semibold mt-6">
                     <p>{localT('learning_hub.team_empty', '当前团队暂无其他成员数据', i18n)}</p>
@@ -1025,32 +1071,7 @@ export default function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-gray-700 font-medium">
-                            {displayList.map((member, idx) => {
-                                // Compute member's stats
-                                const memberHistory = teamHistory.filter(h => h && h.userId === member.id && h.recordingId);
-                                const memberCompletedAudioIds = Array.from(new Set(memberHistory.map(h => h.recordingId)));
-                                
-                                const baseMins = 45;
-                                const totalLearningMinutes = baseMins + (memberCompletedAudioIds.length * 12);
-                                
-                                let weeklyTaskCompletionRate = 60;
-                                if (memberCompletedAudioIds.length > 0) {
-                                    weeklyTaskCompletionRate = Math.min(100, 60 + memberCompletedAudioIds.length * 8);
-                                }
-                                
-                                const streakCount = Math.min(7, 3 + Math.floor(totalLearningMinutes / 60));
-                                
-                                let levelKey: 'apprentice' | 'voyager' | 'knight' | 'falcon' | 'guardian' = 'apprentice';
-                                if (totalLearningMinutes >= 7200 && weeklyTaskCompletionRate >= 95) {
-                                    levelKey = 'guardian';
-                                } else if (totalLearningMinutes >= 3600 && weeklyTaskCompletionRate >= 85) {
-                                    levelKey = 'falcon';
-                                } else if (totalLearningMinutes >= 1800 && weeklyTaskCompletionRate >= 75) {
-                                    levelKey = 'knight';
-                                } else if (totalLearningMinutes >= 600) {
-                                    levelKey = 'voyager';
-                                }
-                                
+                            {rankedDisplayList.map(({ member, totalLearningMinutes, weeklyTaskCompletionRate, streakCount, levelKey }, idx) => {
                                 const currentLevelInfo = honorLevels[levelKey];
                                 
                                 return (
