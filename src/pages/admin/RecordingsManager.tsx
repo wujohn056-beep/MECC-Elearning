@@ -61,6 +61,7 @@ export default function RecordingsManager() {
     const [adminTranscriptZh, setAdminTranscriptZh] = useState<string>('');
     const [loadingAdminTranslation, setLoadingAdminTranslation] = useState(false);
     const canManageTranscript = isWriteAllowed;
+    const canViewTranscriptTranslation = canManageTranscript || ['tl', 'sm', 'sd'].includes(String(profile?.role || '').toLowerCase());
 
     useEffect(() => {
         if (viewingTranscriptRecording) {
@@ -78,7 +79,7 @@ export default function RecordingsManager() {
             return;
         }
 
-        if (adminActiveTab === 'chinese' && !adminTranscriptZh && viewingTranscriptRecording && !((viewingTranscriptRecording as any).transcriptZh) && canManageTranscript) {
+        if (adminActiveTab === 'chinese' && !adminTranscriptZh && viewingTranscriptRecording && !((viewingTranscriptRecording as any).transcriptZh) && canViewTranscriptTranslation) {
             setLoadingAdminTranslation(true);
             fetch('/.netlify/functions/translate-transcript', {
                 method: 'POST',
@@ -111,7 +112,7 @@ export default function RecordingsManager() {
             })
             .finally(() => setLoadingAdminTranslation(false));
         }
-    }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, canManageTranscript, t]);
+    }, [adminActiveTab, viewingTranscriptRecording, adminTranscriptZh, canViewTranscriptTranslation, t]);
 
     // Form States
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -2404,7 +2405,7 @@ export default function RecordingsManager() {
                             )}
 
                             {/* Bilingual Translation Toggle */}
-                            {canManageTranscript && (
+                            {canViewTranscriptTranslation && (
                                 <div className="flex bg-gray-200 p-0.5 rounded-lg text-xs font-semibold border border-gray-300/30 select-none">
                                     <button
                                         onClick={() => setAdminActiveTab('arabic')}
