@@ -1052,7 +1052,7 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
                     <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
                         {/* Playback viewport */}
                         <div className="bg-black flex-1 flex items-center justify-center relative overflow-hidden min-h-[300px] md:min-h-[400px]">
-                    {selectedAttachment ? (
+                    {isDoc && selectedAttachment ? (
                         // Document Preview Panel
                         <div className="w-full h-full flex flex-col min-h-[450px] md:min-h-[550px] bg-slate-950">
                             {/* Toolbar */}
