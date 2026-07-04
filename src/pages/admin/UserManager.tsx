@@ -335,6 +335,21 @@ export default function UserManager() {
         return <Navigate to="/admin" replace />;
     }
 
+    const normalizeCrmKey = (value?: string) => (value || '').trim().toLowerCase();
+
+    const deleteFirestoreUserProfiles = async (uids: string[]) => {
+        const { writeBatch, doc } = await import('firebase/firestore');
+        const BATCH_LIMIT = 400;
+        for (let i = 0; i < uids.length; i += BATCH_LIMIT) {
+            const chunk = uids.slice(i, i + BATCH_LIMIT);
+            const firestoreBatch = writeBatch(db);
+            chunk.forEach(uid => {
+                firestoreBatch.delete(doc(db, 'users', uid));
+            });
+            await firestoreBatch.commit();
+        }
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -464,6 +479,48 @@ export default function UserManager() {
             });
 
             const validRows = Array.from(accountsToCreate.values());
+            const uploadedCcCrmKeys = new Set(
+                validRows
+                    .filter(row => (row.dep || 'CC') === 'CC')
+                    .map(row => normalizeCrmKey(row.crmId))
+                    .filter(Boolean)
+            );
+            const currentAdminCrmKey = normalizeCrmKey(profile?.crmId);
+            const staleCcUsers = profile?.role === 'super_admin' && uploadedCcCrmKeys.size > 0
+                ? users.filter(u => {
+                    const crmKey = normalizeCrmKey(u.crmId);
+                    if (!crmKey) return false;
+                    if (crmKey === currentAdminCrmKey) return false;
+                    if (u.role === 'super_admin') return false;
+                    return (u.dep || 'CC') === 'CC' && !uploadedCcCrmKeys.has(crmKey);
+                })
+                : [];
+
+            if (staleCcUsers.length > 0) {
+                const preview = staleCcUsers.slice(0, 20).map(u => u.crmId).join(', ');
+                const remaining = staleCcUsers.length > 20 ? ` ... +${staleCcUsers.length - 20}` : '';
+                const confirmMessage = t(
+                    'user_manager.cc_roster_sync_confirm',
+                    '本次上传将按新名单同步 CC 用户：{{count}} 个当前 CC 账号不在 Excel 新名单内，导入成功后会删除这些账号的 App 登录身份与用户档案。\n\n待删除预览：{{preview}}{{remaining}}\n\n请确认 Excel 是新月份完整 CC 在职名单后继续。'
+                )
+                    .replace('{{count}}', staleCcUsers.length.toString())
+                    .replace('{{preview}}', preview)
+                    .replace('{{remaining}}', remaining);
+
+                if (!window.confirm(confirmMessage)) {
+                    setStatusLog(prev => [{
+                        msg: t('user_manager.cc_roster_sync_cancelled', '已取消导入：未执行 CC 名单同步删除。'),
+                        type: 'error'
+                    }, ...prev]);
+                    return;
+                }
+
+                setStatusLog(prev => [{
+                    msg: t('user_manager.cc_roster_sync_pending', '已确认 CC 名单同步：导入全部成功后，将删除 {{count}} 个不在新名单内的 CC 账号。').replace('{{count}}', staleCcUsers.length.toString()),
+                    type: 'success'
+                }, ...prev]);
+            }
+
             setTotal(validRows.length);
             setProgress(0);
 
@@ -472,6 +529,7 @@ export default function UserManager() {
             const secondaryAuth = getAuth(secondaryApp);
 
             let successCount = 0;
+            let failureCount = 0;
 
             for (let i = 0; i < validRows.length; i++) {
                 const row = validRows[i];
@@ -511,6 +569,7 @@ export default function UserManager() {
                                 dep: row.dep || existingUser.dep || 'CC',
                                 email: row.email ? row.email : (existingUser.email || ''),
                                 dingtalkUserId: row.dingtalkUserId ? row.dingtalkUserId : (existingUser.dingtalkUserId || null),
+                                dingtalkSyncedAt: existingUser.dingtalkSyncedAt || null,
                                 policyScope: existingUser.policyScope || 'all',
                                 brandScope: existingUser.brandScope || 'all',
                                 identity: existingUser.identity || null,
@@ -603,6 +662,7 @@ export default function UserManager() {
                     successCount++;
                     setStatusLog(prev => [{msg: `${t('user_manager.import_ok')}${crmId}`, type: 'success'}, ...prev]);
                 } catch (error: any) {
+                    failureCount++;
                     if (error.code === 'auth/email-already-in-use') {
                         setStatusLog(prev => [{msg: `${t('user_manager.account_exists')}${row.crmId}`, type: 'error'}, ...prev]);
                     } else {
@@ -613,6 +673,69 @@ export default function UserManager() {
             }
 
             await deleteApp(secondaryApp);
+            if (staleCcUsers.length > 0) {
+                if (failureCount > 0) {
+                    setStatusLog(prev => [{
+                        msg: t('user_manager.cc_roster_sync_skip_delete_on_error', '本次导入存在失败项，已跳过 CC 名单同步删除，避免误删仍在职账号。'),
+                        type: 'error'
+                    }, ...prev]);
+                } else {
+                    const staleUids = staleCcUsers.map(u => u.id);
+                    try {
+                        const res = await fetch('/.netlify/functions/manageUser', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'batchDelete', uids: staleUids })
+                        });
+
+                        if (!res.ok) {
+                            const errText = await res.text().catch(() => '');
+                            let errMsg = 'Backend batch delete failed';
+                            try {
+                                const errData = JSON.parse(errText);
+                                errMsg = errData.error || errMsg;
+                            } catch (e) {
+                                if (errText) errMsg = errText.substring(0, 100);
+                            }
+                            throw new Error(errMsg);
+                        }
+
+                        await deleteFirestoreUserProfiles(staleUids);
+                        setStatusLog(prev => [{
+                            msg: t('user_manager.cc_roster_sync_deleted', 'CC 名单同步完成：已删除 {{count}} 个不在新名单内的 CC 账号。').replace('{{count}}', staleCcUsers.length.toString()),
+                            type: 'success'
+                        }, ...prev]);
+                    } catch (deleteErr: any) {
+                        console.error("CC roster sync delete error:", deleteErr);
+                        const confirmDbOnly = window.confirm(
+                            t(
+                                'user_manager.cc_roster_sync_backend_failed_confirm',
+                                'CC 名单同步删除时，后端登录账号删除服务不可用或运行异常。\n\n是否仍仅从数据库中删除这 {{count}} 个不在新名单内的 CC 用户档案？'
+                            ).replace('{{count}}', staleCcUsers.length.toString())
+                        );
+                        if (confirmDbOnly) {
+                            try {
+                                await deleteFirestoreUserProfiles(staleUids);
+                                setStatusLog(prev => [{
+                                    msg: t('user_manager.cc_roster_sync_db_only_deleted', '已仅从数据库删除 {{count}} 个不在新名单内的 CC 用户档案。').replace('{{count}}', staleCcUsers.length.toString()),
+                                    type: 'success'
+                                }, ...prev]);
+                            } catch (dbErr) {
+                                console.error("CC roster sync Firestore delete error:", dbErr);
+                                setStatusLog(prev => [{
+                                    msg: t('user_manager.cc_roster_sync_delete_failed', 'CC 名单同步删除失败，请检查网络、权限或后端配置后重试。'),
+                                    type: 'error'
+                                }, ...prev]);
+                            }
+                        } else {
+                            setStatusLog(prev => [{
+                                msg: t('user_manager.cc_roster_sync_auth_delete_failed', 'CC 名单同步删除未完成：后端登录账号删除失败，且未确认仅删除数据库档案。'),
+                                type: 'error'
+                            }, ...prev]);
+                        }
+                    }
+                }
+            }
             const completeMsg = t('user_manager.import_success').replace('{{success}}', successCount.toString()).replace('{{total}}', validRows.length.toString());
             setStatusLog(prev => [{msg: completeMsg, type: 'success'}, ...prev]);
             fetchUsers();
@@ -838,16 +961,7 @@ export default function UserManager() {
             const failureCount = data.failureCount || 0;
 
             // 2. Perform Firestore write batch deletion
-            const { writeBatch, doc } = await import('firebase/firestore');
-            const BATCH_LIMIT = 400; // split into chunks of 400
-            for (let i = 0; i < selectedUids.length; i += BATCH_LIMIT) {
-                const chunk = selectedUids.slice(i, i + BATCH_LIMIT);
-                const firestoreBatch = writeBatch(db);
-                chunk.forEach(uid => {
-                    firestoreBatch.delete(doc(db, 'users', uid));
-                });
-                await firestoreBatch.commit();
-            }
+            await deleteFirestoreUserProfiles(selectedUids);
 
             // 3. Complete and refresh
             setSelectedUids([]);
@@ -869,16 +983,7 @@ export default function UserManager() {
             );
             if (confirmDbOnly) {
                 try {
-                    const { writeBatch, doc } = await import('firebase/firestore');
-                    const BATCH_LIMIT = 400;
-                    for (let i = 0; i < selectedUids.length; i += BATCH_LIMIT) {
-                        const chunk = selectedUids.slice(i, i + BATCH_LIMIT);
-                        const firestoreBatch = writeBatch(db);
-                        chunk.forEach(uid => {
-                            firestoreBatch.delete(doc(db, 'users', uid));
-                        });
-                        await firestoreBatch.commit();
-                    }
+                    await deleteFirestoreUserProfiles(selectedUids);
                     setSelectedUids([]);
                     setBatchDeleteConfirmText('');
                     setShowBatchDeleteModal(false);
