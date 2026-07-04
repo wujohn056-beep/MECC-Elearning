@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Users, FileAudio, Calendar, CheckCircle, Clock, AlertCircle, Search, LayoutDashboard, ClipboardList, Edit2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import CampaignManager from './admin/CampaignManager';
+import { parseLocalDateTime } from '../utils/localDateTime';
 
 
 interface UserRecord {
@@ -107,22 +108,16 @@ export default function TeamTasks() {
 
     const isDeadlineInvalid = React.useMemo(() => {
         if (!deadlineDate || !deadlineTime) return false;
-        try {
-            const deadlineObj = new Date(`${deadlineDate}T${deadlineTime}`);
-            return deadlineObj <= new Date();
-        } catch (e) {
-            return false;
-        }
+        const deadlineObj = parseLocalDateTime(deadlineDate, deadlineTime);
+        if (!deadlineObj) return true;
+        return deadlineObj <= new Date();
     }, [deadlineDate, deadlineTime]);
 
     const isEditDeadlineInvalid = React.useMemo(() => {
         if (!editDeadlineDate || !editDeadlineTime) return false;
-        try {
-            const deadlineObj = new Date(`${editDeadlineDate}T${editDeadlineTime}`);
-            return deadlineObj <= new Date();
-        } catch (e) {
-            return false;
-        }
+        const deadlineObj = parseLocalDateTime(editDeadlineDate, editDeadlineTime);
+        if (!deadlineObj) return true;
+        return deadlineObj <= new Date();
     }, [editDeadlineDate, editDeadlineTime]);
 
     const getFcmFailureMessage = (fcmPush: any) => {
@@ -316,14 +311,19 @@ export default function TeamTasks() {
         }
     };
 
-    const handleCreateTask = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCreateTask = async (e?: React.SyntheticEvent) => {
+        e?.preventDefault();
         if (!user || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime) return;
 
         setSubmitting(true);
         setPublishNotice(null);
         try {
-            const deadlineObj = new Date(`${deadlineDate}T${deadlineTime}`);
+            const deadlineObj = parseLocalDateTime(deadlineDate, deadlineTime);
+            if (!deadlineObj) {
+                alert(t('team_tasks.deadline_invalid_format', 'Please enter a valid deadline date and time.'));
+                setSubmitting(false);
+                return;
+            }
             
             if (deadlineObj <= new Date()) {
                 alert(t('team_tasks.deadline_must_be_future', '截止时间必须晚于当前时间！'));
@@ -547,7 +547,12 @@ export default function TeamTasks() {
         if (!editingTask || !editDeadlineDate || !editDeadlineTime) return;
         setUpdatingDeadline(true);
         try {
-            const deadlineObj = new Date(`${editDeadlineDate}T${editDeadlineTime}`);
+            const deadlineObj = parseLocalDateTime(editDeadlineDate, editDeadlineTime);
+            if (!deadlineObj) {
+                alert(t('team_tasks.deadline_invalid_format', 'Please enter a valid deadline date and time.'));
+                setUpdatingDeadline(false);
+                return;
+            }
             if (deadlineObj <= new Date()) {
                 alert(t('team_tasks.deadline_must_be_future', '截止时间必须晚于当前时间！'));
                 setUpdatingDeadline(false);
@@ -1240,14 +1245,16 @@ export default function TeamTasks() {
                         
                         <div className="p-6 border-t border-gray-200 bg-white flex justify-end gap-3">
                             <button 
+                                type="button"
                                 onClick={() => setShowCreateModal(false)}
                                 className="px-5 py-2 rounded-lg font-bold text-arabian-night/60 hover:bg-gray-100 transition-colors"
                             >
                                 {t('team_tasks.cancel')}
                             </button>
                             <button 
+                                type="button"
                                 onClick={handleCreateTask}
-                                disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime}
+                                disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime || isDeadlineInvalid}
                                 className="px-6 py-2 bg-deep-teal text-white rounded-lg font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {submitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
@@ -1264,7 +1271,7 @@ export default function TeamTasks() {
                     <div className="bg-warm-white rounded-3xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-white">
                             <h2 className="text-xl font-bold text-deep-teal">{t('team_tasks.edit_deadline_title', '修改截止时间')}</h2>
-                            <button onClick={() => setEditingTask(null)} className="text-gray-400 hover:text-gray-700 font-bold">✕</button>
+                            <button type="button" onClick={() => setEditingTask(null)} className="text-gray-400 hover:text-gray-700 font-bold">✕</button>
                         </div>
                         
                         <div className="p-6 space-y-6">
@@ -1307,12 +1314,14 @@ export default function TeamTasks() {
                         
                         <div className="p-6 border-t border-gray-200 bg-white flex justify-end gap-3">
                             <button 
+                                type="button"
                                 onClick={() => setEditingTask(null)}
                                 className="px-5 py-2 rounded-lg font-bold text-arabian-night/60 hover:bg-gray-100 transition-colors text-sm"
                             >
                                 {t('team_tasks.cancel', '取消')}
                             </button>
                             <button 
+                                type="button"
                                 onClick={handleUpdateDeadline}
                                 disabled={updatingDeadline || isEditDeadlineInvalid || !editDeadlineDate || !editDeadlineTime}
                                 className="px-6 py-2 bg-deep-teal text-white rounded-lg font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm flex items-center gap-2"

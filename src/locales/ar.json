@@ -661,6 +661,7 @@
         "management_staff": "الإدارة",
         "team_suffix": "فريق",
         "deadline_must_be_future": "يجب أن يكون الموعد النهائي في المستقبل!",
+        "deadline_invalid_format": "يرجى إدخال تاريخ ووقت صالحين للموعد النهائي.",
         "deadline_warning_past": "تحذير: لا يمكن أن يكون الموعد النهائي في الماضي أو مساوياً للوقت الحالي!",
         "edit_deadline": "تعديل الموعد النهائي",
         "edit_deadline_title": "تعديل الموعد النهائي",

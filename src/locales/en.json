@@ -661,6 +661,7 @@
         "management_staff": "Management",
         "team_suffix": "Team",
         "deadline_must_be_future": "Deadline must be in the future!",
+        "deadline_invalid_format": "Please enter a valid deadline date and time.",
         "deadline_warning_past": "Warning: Deadline cannot be in the past or equal to current time!",
         "edit_deadline": "Edit Deadline",
         "edit_deadline_title": "Edit Deadline",

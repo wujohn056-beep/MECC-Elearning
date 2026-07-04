@@ -245,9 +245,14 @@ const sourceAssertions = [
   ['cc roster sync has trilingual copy', 'src/locales/zh.json', ['cc_roster_sync_confirm', 'cc_roster_sync_deleted', 'cc_roster_sync_skip_delete_on_error']],
   ['cc roster sync has english copy', 'src/locales/en.json', ['cc_roster_sync_confirm', 'cc_roster_sync_deleted', 'cc_roster_sync_skip_delete_on_error']],
   ['cc roster sync has arabic copy', 'src/locales/ar.json', ['cc_roster_sync_confirm', 'cc_roster_sync_deleted', 'cc_roster_sync_skip_delete_on_error']],
+  ['task deadline invalid format has trilingual copy', 'src/locales/zh.json', ['deadline_invalid_format']],
+  ['task deadline invalid format has english copy', 'src/locales/en.json', ['deadline_invalid_format']],
+  ['task deadline invalid format has arabic copy', 'src/locales/ar.json', ['deadline_invalid_format']],
   ['test login profile stores language for push targeting', 'src/pages/Login.tsx', ['preferredLanguage: i18n.language', 'uiLanguage: i18n.language']],
   ['task push payload includes task id', 'src/pages/TeamTasks.tsx', ["action: 'notifyTask'", 'taskId: docRef.id']],
-  ['task publish keeps expired deadline clickable for visible validation', 'src/pages/TeamTasks.tsx', ['if (deadlineObj <= new Date())', "deadline_must_be_future", 'disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime}']],
+  ['task publish keeps expired deadline visibly blocked before submit', 'src/pages/TeamTasks.tsx', ['if (deadlineObj <= new Date())', "deadline_must_be_future", '|| isDeadlineInvalid}']],
+  ['task publish parses deadline without browser string Date parsing', 'src/pages/TeamTasks.tsx', ['parseLocalDateTime(deadlineDate, deadlineTime)', 'parseLocalDateTime(editDeadlineDate, editDeadlineTime)', "deadline_invalid_format"]],
+  ['safari-safe local date time parser exists', 'src/utils/localDateTime.ts', ['new Date(year, month - 1, day, hour, minute, second)', 'parsed.getFullYear() !== year', 'return null']],
   ['task push function forwards task id', 'netlify/functions/dingtalk.js', ['notifyTask', 'taskId', "type: 'task'", 'buildLearningUrl', 'buildDingTalkLearningLink']],
   ['task push has trilingual DingTalk and FCM copy', 'netlify/functions/dingtalk.js', ['getUserNotificationLanguage', 'recipientsAr', 'markdownAr', 'getTaskFcmNotification', 'مهمة تعلم جديدة']],
   ['campaign push payload includes campaign id', 'src/pages/admin/CampaignManager.tsx', ["action: 'notifyCampaign'", 'campaignId: campaignId']],
@@ -302,7 +307,7 @@ addCheck('android native version code advanced', androidVersionCode >= 7, `versi
 
 const forbiddenSourceAssertions = [
   ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']],
-  ['task publish button is not blocked by expired deadline before validation', 'src/pages/TeamTasks.tsx', ['|| isDeadlineInvalid}']],
+  ['task publish does not use browser string Date parsing for deadline', 'src/pages/TeamTasks.tsx', ['new Date(`${deadlineDate}T${deadlineTime}`)', 'new Date(`${editDeadlineDate}T${editDeadlineTime}`)']],
   ['cc roster import does not repair existing Auth accounts from client batch update', 'src/pages/admin/UserManager.tsx', ['发现 ${crmId} 的登录身份丢失']]
 ];
 
