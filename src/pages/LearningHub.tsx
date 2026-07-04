@@ -644,19 +644,19 @@ const VideoPlayerModal = ({ rec: initialRec, disableSeek, isUnlocked, onClose, o
     };
 
     React.useEffect(() => {
-        if (isDoc && rec.audioUrl) {
+        if (rec.attachments && rec.attachments.length > 0) {
+            setSelectedAttachment(rec.attachments[0]);
+        } else if (isDoc && rec.audioUrl) {
             setSelectedAttachment({
                 id: 'main-doc',
                 name: rec.title || 'Main Document',
                 url: rec.audioUrl,
                 type: 'pdf'
             });
-        } else if (!rec.audioUrl && rec.attachments && rec.attachments.length > 0) {
-            setSelectedAttachment(rec.attachments[0]);
         } else {
             setSelectedAttachment(null);
         }
-    }, [rec.id, rec.audioUrl, isDoc]);
+    }, [rec.id, rec.audioUrl, rec.attachments, isDoc]);
 
     React.useEffect(() => {
         setRec(initialRec);
