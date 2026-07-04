@@ -240,6 +240,7 @@ const sourceAssertions = [
   ['cc roster sync has arabic copy', 'src/locales/ar.json', ['cc_roster_sync_confirm', 'cc_roster_sync_deleted', 'cc_roster_sync_skip_delete_on_error']],
   ['test login profile stores language for push targeting', 'src/pages/Login.tsx', ['preferredLanguage: i18n.language', 'uiLanguage: i18n.language']],
   ['task push payload includes task id', 'src/pages/TeamTasks.tsx', ["action: 'notifyTask'", 'taskId: docRef.id']],
+  ['task publish keeps expired deadline clickable for visible validation', 'src/pages/TeamTasks.tsx', ['if (deadlineObj <= new Date())', "deadline_must_be_future", 'disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime}']],
   ['task push function forwards task id', 'netlify/functions/dingtalk.js', ['notifyTask', 'taskId', "type: 'task'", 'buildLearningUrl', 'buildDingTalkLearningLink']],
   ['task push has trilingual DingTalk and FCM copy', 'netlify/functions/dingtalk.js', ['getUserNotificationLanguage', 'recipientsAr', 'markdownAr', 'getTaskFcmNotification', 'مهمة تعلم جديدة']],
   ['campaign push payload includes campaign id', 'src/pages/admin/CampaignManager.tsx', ["action: 'notifyCampaign'", 'campaignId: campaignId']],
@@ -293,7 +294,8 @@ addCheck('web client version matches android client version', webClientVersion &
 addCheck('android native version code advanced', androidVersionCode >= 7, `versionCode=${androidVersionCode}`);
 
 const forbiddenSourceAssertions = [
-  ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']]
+  ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']],
+  ['task publish button is not blocked by expired deadline before validation', 'src/pages/TeamTasks.tsx', ['|| isDeadlineInvalid}']]
 ];
 
 for (const [name, path, needles] of forbiddenSourceAssertions) {
