@@ -3016,6 +3016,7 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
     const { user, profile } = useAuth();
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState<any[]>([]);
+    const [allSystemUsers, setAllSystemUsers] = useState<any[]>([]);
     const [completedInfo, setCompletedInfo] = useState<Map<string, any>>(new Map()); // userId -> listenedAt date
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<'org' | 'all'>('org');
@@ -3032,6 +3033,7 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
                 usersSnap.forEach(docSnap => {
                     usersData.push({ id: docSnap.id, ...docSnap.data() });
                 });
+                setAllSystemUsers(usersData);
 
                 // 2. Filter users based on leader's scope
                 const loggedInRole = String(profile?.role).trim().toLowerCase();
@@ -3148,19 +3150,56 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
     // Grouping for hierarchical view
     const hierarchy = React.useMemo(() => {
         const sdMap = new Map<string, any>();
+        const orgUsers = allSystemUsers.length > 0 ? allSystemUsers : users;
         
         // Lookup display names
         const crmIdToUser = new Map<string, any>();
-        users.forEach(u => {
+        orgUsers.forEach(u => {
             if (u.crmId) {
                 crmIdToUser.set(u.crmId.toLowerCase(), u);
             }
         });
 
+        const isMissingOrgValue = (value: any) => {
+            const normalized = String(value || '').trim().toLowerCase();
+            return !normalized || normalized.startsWith('unassigned');
+        };
+
+        const resolveTlForMember = (member: any) => {
+            if (!isMissingOrgValue(member.tl)) {
+                return String(member.tl).trim();
+            }
+
+            const memberTeam = String(member.team || '').trim().toLowerCase();
+            const memberSm = String(member.sm || '').trim().toLowerCase();
+            const memberSd = String(member.sd || '').trim().toLowerCase();
+
+            const matchingTlUser = orgUsers.find((candidate: any) => {
+                const candidateRole = String(candidate.role || '').trim().toLowerCase();
+                if (candidateRole !== 'tl' || !candidate.crmId) return false;
+                const sameTeam = memberTeam && String(candidate.team || '').trim().toLowerCase() === memberTeam;
+                if (!sameTeam) return false;
+                const sameSm = !memberSm || String(candidate.sm || '').trim().toLowerCase() === memberSm;
+                const sameSd = !memberSd || String(candidate.sd || '').trim().toLowerCase() === memberSd;
+                return sameSm && sameSd;
+            });
+            if (matchingTlUser?.crmId) {
+                return String(matchingTlUser.crmId).trim();
+            }
+
+            const teammateWithTl = orgUsers.find((candidate: any) => (
+                memberTeam &&
+                String(candidate.team || '').trim().toLowerCase() === memberTeam &&
+                !isMissingOrgValue(candidate.tl)
+            ));
+
+            return teammateWithTl?.tl ? String(teammateWithTl.tl).trim() : t('dashboard.unassigned_tl', 'Unassigned TL');
+        };
+
         searchedUsers.forEach(u => {
             const sdCrmId = (u.sd || 'Unassigned SD').trim();
             const smCrmId = (u.sm || 'Unassigned SM').trim();
-            const tlCrmId = (u.tl || 'Unassigned TL').trim();
+            const tlCrmId = resolveTlForMember(u);
             const teamName = (u.team || 'Unassigned Team').trim();
 
             const sdKey = sdCrmId.toLowerCase();
@@ -3224,7 +3263,7 @@ const TeamLearningStatusModal = ({ rec, onClose }: TeamLearningStatusModalProps)
         });
         list.sort((a, b) => a.sdName.localeCompare(b.sdName));
         return list;
-    }, [searchedUsers, users]);
+    }, [searchedUsers, users, allSystemUsers, t]);
 
     // Let's decide which grouping levels to show.
     // If there is only one SD and one SM, we flatten the UI to avoid deep indentation!
