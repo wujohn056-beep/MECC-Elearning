@@ -1023,6 +1023,25 @@ export default function AdminDashboard() {
             levelOrder[b.levelKey] - levelOrder[a.levelKey] ||
             (a.member.name || a.member.crmId || '').localeCompare(b.member.name || b.member.crmId || '')
         ));
+        const orgLabel = (key: 'team' | 'tl' | 'sm') => {
+            if (i18n.language === 'ar') {
+                if (key === 'team') return 'الفريق';
+                if (key === 'tl') return 'TL';
+                return 'SM';
+            }
+            if (i18n.language === 'en') {
+                if (key === 'team') return 'Team';
+                if (key === 'tl') return 'TL';
+                return 'SM';
+            }
+            if (key === 'team') return '小组';
+            if (key === 'tl') return 'TL';
+            return 'SM';
+        };
+        const orgValue = (value: any) => {
+            const normalized = String(value || '').trim();
+            return normalized || '-';
+        };
         
         if (rankedDisplayList.length === 0) {
             return (
@@ -1085,6 +1104,20 @@ export default function AdminDashboard() {
                                                 <div className="min-w-0">
                                                     <p className="font-extrabold text-deep-teal truncate max-w-[120px] md:max-w-[160px]">{member.name || member.crmId}</p>
                                                     <p className="text-[10px] text-gray-400 font-bold tracking-wider mt-0.5">{member.role?.toUpperCase() || 'AGENT'} • {member.crmId}</p>
+                                                    <div className="mt-1.5 flex flex-wrap gap-1.5 max-w-[240px]">
+                                                        <span className="inline-flex items-center gap-1 rounded-md border border-[#008f99]/10 bg-[#008f99]/5 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                                                            <span className="text-[#008f99]">{orgLabel('team')}:</span>
+                                                            <span className="max-w-[90px] truncate">{orgValue(member.team)}</span>
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 rounded-md border border-desert-gold/10 bg-desert-gold/5 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                                                            <span className="text-desert-gold">{orgLabel('tl')}:</span>
+                                                            <span className="max-w-[90px] truncate">{orgValue(member.tl)}</span>
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                                                            <span className="text-slate-500">{orgLabel('sm')}:</span>
+                                                            <span className="max-w-[90px] truncate">{orgValue(member.sm)}</span>
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>

@@ -275,6 +275,7 @@ const sourceAssertions = [
   ['recordings manager lets TL SM SD view Arabic and Chinese transcript tabs', 'src/pages/admin/RecordingsManager.tsx', ['canViewTranscriptTranslation', "['tl', 'sm', 'sd'].includes", "adminActiveTab === 'chinese'", 'setAdminActiveTab']],
   ['recordings manager filters uploaded resources by category name', 'src/pages/admin/RecordingsManager.tsx', ['categoryFilterOptions', "categoryFilter.startsWith('name:')", 'recCategoryName !== categoryNameFilter', 'rec.categoryName.toLowerCase().includes(normalizedQuery)', 'category_filter_all']],
   ['team honor dashboard ranks best performers first', 'src/pages/admin/AdminDashboard.tsx', ['rankedDisplayList', 'b.weeklyTaskCompletionRate - a.weeklyTaskCompletionRate', 'b.totalLearningMinutes - a.totalLearningMinutes', 'b.streakCount - a.streakCount', 'levelOrder[b.levelKey] - levelOrder[a.levelKey]']],
+  ['team honor dashboard shows member organization context', 'src/pages/admin/AdminDashboard.tsx', ['const orgLabel', "orgLabel('team')", 'orgValue(member.team)', 'orgValue(member.tl)', 'orgValue(member.sm)']],
   ['recordings manager category filter has trilingual copy', 'src/locales/zh.json', ['category_filter_label', 'category_filter_all']],
   ['recordings manager category filter has english copy', 'src/locales/en.json', ['category_filter_label', 'category_filter_all']],
   ['recordings manager category filter has arabic copy', 'src/locales/ar.json', ['category_filter_label', 'category_filter_all']],
