@@ -234,7 +234,8 @@ const sourceAssertions = [
   ['user language preference syncs for trilingual push targeting', 'src/components/AppLayout.tsx', ['normalizeAppLanguage', 'persistUserLanguage', 'preferredLanguage', 'languageUpdatedAt', 'const languageUpdates', 'updateProfile(languageUpdates)', 'setDoc(doc(db, \'users\', targetUid)']],
   ['new user profiles default language for push targeting', 'src/pages/admin/UserManager.tsx', ['DEFAULT_USER_LANGUAGE', 'preferredLanguage', 'uiLanguage']],
   ['cc roster import deletes users missing from new cc roster safely', 'src/pages/admin/UserManager.tsx', ['uploadedCcCrmKeys', 'staleCcUsers', "profile?.role === 'super_admin'", "return (u.dep || 'CC') === 'CC' && !uploadedCcCrmKeys.has(crmKey)", 'cc_roster_sync_confirm', "action: 'batchDelete'", 'failureCount > 0', 'cc_roster_sync_skip_delete_on_error']],
-  ['cc roster import preserves existing email and dingtalk fields', 'src/pages/admin/UserManager.tsx', ['email: row.email ? row.email : (existingUser.email || \'\')', 'dingtalkUserId: row.dingtalkUserId ? row.dingtalkUserId : (existingUser.dingtalkUserId || null)', 'dingtalkSyncedAt: existingUser.dingtalkSyncedAt || null']],
+  ['cc roster import preserves existing email and dingtalk fields', 'src/pages/admin/UserManager.tsx', ['email: row.email ? row.email : (existingUser.email || \'\')', 'dingtalkUserId: row.dingtalkUserId ? row.dingtalkUserId : (existingUser.dingtalkUserId || null)']],
+  ['cc roster import updates existing users without Auth anti-abuse calls', 'src/pages/admin/UserManager.tsx', ['if (existingUser) {', "await updateDoc(doc(db, 'users', existingUser.id)", '`[更新] ${crmId} 架构已更新`']],
   ['cc roster sync has trilingual copy', 'src/locales/zh.json', ['cc_roster_sync_confirm', 'cc_roster_sync_deleted', 'cc_roster_sync_skip_delete_on_error']],
   ['cc roster sync has english copy', 'src/locales/en.json', ['cc_roster_sync_confirm', 'cc_roster_sync_deleted', 'cc_roster_sync_skip_delete_on_error']],
   ['cc roster sync has arabic copy', 'src/locales/ar.json', ['cc_roster_sync_confirm', 'cc_roster_sync_deleted', 'cc_roster_sync_skip_delete_on_error']],
@@ -295,7 +296,8 @@ addCheck('android native version code advanced', androidVersionCode >= 7, `versi
 
 const forbiddenSourceAssertions = [
   ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']],
-  ['task publish button is not blocked by expired deadline before validation', 'src/pages/TeamTasks.tsx', ['|| isDeadlineInvalid}']]
+  ['task publish button is not blocked by expired deadline before validation', 'src/pages/TeamTasks.tsx', ['|| isDeadlineInvalid}']],
+  ['cc roster import does not repair existing Auth accounts from client batch update', 'src/pages/admin/UserManager.tsx', ['发现 ${crmId} 的登录身份丢失']]
 ];
 
 for (const [name, path, needles] of forbiddenSourceAssertions) {
