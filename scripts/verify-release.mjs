@@ -269,6 +269,10 @@ const sourceAssertions = [
   ['download page reads configurable app links', 'src/pages/DownloadPage.tsx', ['system_config', 'app_versions', 'resolveAppDownloadUrl']],
   ['native update modal has platform fallbacks', 'src/components/AppLayout.tsx', ['resolveAppDownloadUrl']],
   ['hub update card has platform fallbacks', 'src/pages/LearningHub.tsx', ['resolveAppDownloadUrl']],
+  ['recordings manager filters uploaded resources by category', 'src/pages/admin/RecordingsManager.tsx', ['categoryFilter', 'setCategoryFilter', 'rec.categoryId !== categoryFilter', 'rec.categoryName.toLowerCase().includes(normalizedQuery)', 'category_filter_all']],
+  ['recordings manager category filter has trilingual copy', 'src/locales/zh.json', ['category_filter_label', 'category_filter_all']],
+  ['recordings manager category filter has english copy', 'src/locales/en.json', ['category_filter_label', 'category_filter_all']],
+  ['recordings manager category filter has arabic copy', 'src/locales/ar.json', ['category_filter_label', 'category_filter_all']],
   ['app version update gate exists', 'src/utils/appVersion.ts', ['CLIENT_APP_VERSIONS', 'getLatestClientAppVersion', 'isVersionOutdated']],
   ['app release admin route exists', 'src/App.tsx', ['AppReleaseManager', 'app-release']],
   ['app release admin menu exists', 'src/components/AdminLayout.tsx', ['/admin/app-release', 'admin_menu.app_release']],
@@ -308,6 +312,7 @@ addCheck('android native version code advanced', androidVersionCode >= 7, `versi
 const forbiddenSourceAssertions = [
   ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']],
   ['task publish does not use browser string Date parsing for deadline', 'src/pages/TeamTasks.tsx', ['new Date(`${deadlineDate}T${deadlineTime}`)', 'new Date(`${editDeadlineDate}T${editDeadlineTime}`)']],
+  ['recordings manager uploaded resource filter is not SM based', 'src/pages/admin/RecordingsManager.tsx', ['adminSmFilter', 'setAdminSmFilter']],
   ['cc roster import does not repair existing Auth accounts from client batch update', 'src/pages/admin/UserManager.tsx', ['发现 ${crmId} 的登录身份丢失']]
 ];
 

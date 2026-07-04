@@ -425,6 +425,8 @@
         "save_changes": "Save Changes",
         "start_upload": "Start Upload",
         "uploaded_resources": "Uploaded Resources",
+        "category_filter_label": "Filter by category",
+        "category_filter_all": "All Categories",
         "no_resources": "No resources yet, please create a category and upload",
         "delete_confirm": "Are you sure you want to delete the recording \"{{title}}\"? This action cannot be undone.",
         "batch_delete_confirm": "Are you sure you want to delete selected resources? This action cannot be undone.",

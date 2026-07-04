@@ -425,6 +425,8 @@
         "save_changes": "حفظ التغييرات",
         "start_upload": "بدء التحميل",
         "uploaded_resources": "الموارد المحملة",
+        "category_filter_label": "تصفية حسب الفئة",
+        "category_filter_all": "كل الفئات",
         "no_resources": "لا توجد موارد، يرجى إنشاء تصنيف والتحميل",
         "delete_confirm": "هل أنت متأكد من حذف التسجيل \"{{title}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
         "delete_audio_fail": "فشل حذف الملف.",

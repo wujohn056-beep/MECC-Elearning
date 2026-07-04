@@ -425,6 +425,8 @@
         "save_changes": "保存修改",
         "start_upload": "开始上传",
         "uploaded_resources": "已上传的资源",
+        "category_filter_label": "按分类筛选素材",
+        "category_filter_all": "全部分类",
         "no_resources": "暂无资源，请在左侧新建分类并上传",
         "delete_confirm": "确定要删除录音 \"{{title}}\" 吗？此操作不可恢复。",
         "delete_audio_fail": "删除文件失败。",

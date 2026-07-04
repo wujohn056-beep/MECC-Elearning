@@ -128,7 +128,7 @@ export default function RecordingsManager() {
     const [hubScope, setHubScope] = useState<'public' | 'team'>('public');
     const [targetSmId, setTargetSmId] = useState<string>('');
     const [targetHubs, setTargetHubs] = useState<string[]>(['public']);
-    const [adminSmFilter, setAdminSmFilter] = useState<string>('all');
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [promotingRecording, setPromotingRecording] = useState<Recording | null>(null);
     const [promoteCategoryId, setPromoteCategoryId] = useState<string>('');
     
@@ -326,17 +326,12 @@ export default function RecordingsManager() {
             if ((rec as any).hubScope !== 'team' || !isDownlineSm) {
                 return false;
             }
-            if (adminSmFilter !== 'all' && smId !== adminSmFilter) {
-                return false;
-            }
-        } else if (isSuper) {
-            if (adminSmFilter === 'public') {
-                if ((rec as any).hubScope === 'team') return false;
-            } else if (adminSmFilter !== 'all') {
-                if ((rec as any).hubScope !== 'team' || (rec as any).targetSmId !== adminSmFilter) {
-                    return false;
-                }
-            }
+        }
+
+        if (categoryFilter === 'uncategorized') {
+            if (rec.categoryId) return false;
+        } else if (categoryFilter !== 'all') {
+            if (rec.categoryId !== categoryFilter) return false;
         }
 
         if (!isSuper) {
@@ -354,8 +349,10 @@ export default function RecordingsManager() {
                 }
             }
         }
-        return rec.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-            (rec.displayId && rec.displayId.toLowerCase().includes(searchQuery.toLowerCase()));
+        const normalizedQuery = searchQuery.toLowerCase();
+        return rec.title.toLowerCase().includes(normalizedQuery) || 
+            (rec.displayId && rec.displayId.toLowerCase().includes(normalizedQuery)) ||
+            (rec.categoryName && rec.categoryName.toLowerCase().includes(normalizedQuery));
     });
 
     const fetchData = async () => {
@@ -2032,30 +2029,24 @@ export default function RecordingsManager() {
                                         className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none transition-all"
                                     />
                                 </div>
-                                {(profile?.role === 'super_admin' || profile?.role === 'sd') && (
-                                    <select
-                                        value={adminSmFilter}
-                                        onChange={(e) => setAdminSmFilter(e.target.value)}
-                                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/50 focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none transition-all font-semibold"
-                                    >
-                                        {profile?.role === 'super_admin' ? (
-                                            <>
-                                                <option value="all">{t('learning_hub.all_content', '全部可见')}</option>
-                                                <option value="public">{t('recordings_manager.scope_public', '公共公共库')}</option>
-                                            </>
-                                        ) : (
-                                            <option value="all">{t('learning_hub.all_content', '下辖所有团队')}</option>
-                                        )}
-                                        {systemUsers
-                                            .filter(u => u.role === 'sm' && (profile?.role === 'super_admin' || u.sd === profile?.crmId))
-                                            .map(u => (
-                                                <option key={u.crmId} value={u.crmId}>
-                                                    {u.name || u.crmId} ({u.crmId})
-                                                </option>
-                                            ))
-                                        }
-                                    </select>
-                                )}
+                                <select
+                                    value={categoryFilter}
+                                    onChange={(e) => setCategoryFilter(e.target.value)}
+                                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white/50 focus:ring-2 focus:ring-desert-gold focus:border-transparent outline-none transition-all font-semibold"
+                                    title={t('recordings_manager.category_filter_label', 'Filter by category')}
+                                >
+                                    <option value="all">{t('recordings_manager.category_filter_all', 'All Categories')}</option>
+                                    <option value="uncategorized">{t('common.uncategorized', 'Uncategorized')}</option>
+                                    {categories
+                                        .slice()
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(cat => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.name}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
                                 {selectedIds.length > 0 && isWriteAllowed && (
                                     <button
                                         onClick={handleBatchDelete}
