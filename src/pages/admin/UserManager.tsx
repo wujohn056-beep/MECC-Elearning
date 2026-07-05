@@ -1646,15 +1646,15 @@ export default function UserManager() {
 
             {/* Add/Edit Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-arabian-night/60 backdrop-blur-sm">
-                    <div className="bg-warm-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-                        <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-white">
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6 bg-arabian-night/60 backdrop-blur-sm">
+                    <div className="my-4 sm:my-6 bg-warm-white rounded-3xl w-full max-w-md max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-hidden shadow-2xl flex flex-col">
+                        <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
                             <h2 className="text-xl font-bold text-deep-teal">
                                 {editMode ? t('user_manager.edit_modal_title', '编辑账号') : t('user_manager.add_modal_title', '新增账号')}
                             </h2>
                             <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700 font-bold"><X className="w-5 h-5"/></button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
                             <div>
                                 <label className="block text-sm font-bold text-arabian-night/80 mb-1">{t('user_manager.label_crm', 'CRM ID')}</label>
                                 <input 
@@ -2045,7 +2045,7 @@ export default function UserManager() {
                                 </div>
                             )}
                         </div>
-                        <div className="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                        <div className="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 shrink-0">
                             <button onClick={() => setShowModal(false)} className="px-5 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-200">
                                 {t('user_manager.btn_cancel', '取消')}
                             </button>
