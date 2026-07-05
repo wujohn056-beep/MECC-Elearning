@@ -3,6 +3,10 @@ import { spawnSync } from 'node:child_process';
 
 const checks = [];
 const addCheck = (name, pass, detail = '') => checks.push({ name, pass, detail });
+const escapeAnnotation = (value) => String(value)
+  .replace(/%/g, '%25')
+  .replace(/\r/g, '%0D')
+  .replace(/\n/g, '%0A');
 
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
 const flattenKeys = (obj, prefix = '') => Object.entries(obj).flatMap(([key, value]) => {
@@ -339,6 +343,11 @@ for (const check of checks) {
 }
 
 if (failed > 0) {
+  if (process.env.GITHUB_ACTIONS) {
+    for (const check of checks.filter((item) => !item.pass)) {
+      console.error(`::error::${escapeAnnotation(`[fail] ${check.name}${check.detail ? ` (${check.detail})` : ''}`)}`);
+    }
+  }
   console.error(`Release verification failed: ${failed} check(s) failed.`);
   process.exit(1);
 }
