@@ -13,7 +13,8 @@ if (!existsSync(apkPath)) fail(`Missing APK: ${apkPath}`);
 if (!existsSync(distIndexPath)) fail(`Missing build output: ${distIndexPath}`);
 
 const unzipIndex = spawnSync('unzip', ['-p', apkPath, 'assets/public/index.html'], {
-  encoding: 'utf8'
+  encoding: 'utf8',
+  maxBuffer: 20 * 1024 * 1024
 });
 
 if (unzipIndex.status !== 0) {
@@ -21,13 +22,21 @@ if (unzipIndex.status !== 0) {
 }
 
 const distIndex = readFileSync(distIndexPath, 'utf8');
-if (unzipIndex.stdout !== distIndex) {
-  fail('APK web shell is stale: assets/public/index.html does not match current dist/index.html.');
+
+const getEntryAssets = (html) => new Set(
+  [...html.matchAll(/\/assets\/(index-[^"']+\.(?:js|css))/g)].map((match) => match[1])
+);
+const distEntryAssets = getEntryAssets(distIndex);
+const apkEntryAssets = getEntryAssets(unzipIndex.stdout);
+const missingEntryAssets = [...distEntryAssets].filter((name) => !apkEntryAssets.has(name));
+if (missingEntryAssets.length > 0) {
+  fail(`APK web shell is stale. Missing current entry assets in APK index: ${missingEntryAssets.join(', ')}`);
 }
 
 const distAssetFiles = readdirSync('dist/assets').filter(name => /^index-.*\.(js|css)$/.test(name));
 const apkListing = spawnSync('unzip', ['-Z1', apkPath], {
-  encoding: 'utf8'
+  encoding: 'utf8',
+  maxBuffer: 20 * 1024 * 1024
 });
 
 if (apkListing.status !== 0) {
@@ -38,6 +47,17 @@ const apkEntries = new Set(apkListing.stdout.split('\n').filter(Boolean));
 const missingAssets = distAssetFiles.filter(name => !apkEntries.has(`assets/public/assets/${name}`));
 if (missingAssets.length > 0) {
   fail(`APK web assets are stale or incomplete. Missing from APK: ${missingAssets.join(', ')}`);
+}
+
+const changedAssets = distAssetFiles.filter((name) => {
+  const unzipAsset = spawnSync('unzip', ['-p', apkPath, `assets/public/assets/${name}`], {
+    maxBuffer: 20 * 1024 * 1024
+  });
+  if (unzipAsset.status !== 0) return true;
+  return !unzipAsset.stdout.equals(readFileSync(`dist/assets/${name}`));
+});
+if (changedAssets.length > 0) {
+  fail(`APK web assets do not match current build output: ${changedAssets.join(', ')}`);
 }
 
 console.log('APK web assets match current build output.');
