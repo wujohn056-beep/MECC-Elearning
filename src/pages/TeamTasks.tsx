@@ -120,6 +120,157 @@ export default function TeamTasks() {
         return deadlineObj <= new Date();
     }, [editDeadlineDate, editDeadlineTime]);
 
+    const parseDateParts = (value: string) => {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+        return match ? { year: match[1], month: match[2], day: match[3] } : { year: '', month: '', day: '' };
+    };
+
+    const parseTimeParts = (value: string) => {
+        const match = /^(\d{2}):(\d{2})$/.exec(value || '');
+        if (!match) return { hour12: '', minute: '', period: '' };
+        const hour24 = Number(match[1]);
+        const hour12 = hour24 % 12 || 12;
+        return {
+            hour12: String(hour12).padStart(2, '0'),
+            minute: match[2],
+            period: hour24 >= 12 ? 'PM' : 'AM'
+        };
+    };
+
+    const dateSelectYears = React.useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        return Array.from({ length: 4 }, (_, idx) => String(currentYear + idx));
+    }, []);
+    const dateSelectMonths = React.useMemo(() => Array.from({ length: 12 }, (_, idx) => String(idx + 1).padStart(2, '0')), []);
+    const timeSelectHours = React.useMemo(() => Array.from({ length: 12 }, (_, idx) => String(idx + 1).padStart(2, '0')), []);
+
+    const getMinuteOptions = (value: string) => {
+        const currentMinute = parseTimeParts(value).minute;
+        const base = Array.from({ length: 12 }, (_, idx) => String(idx * 5).padStart(2, '0'));
+        if (currentMinute && !base.includes(currentMinute)) {
+            return [...base, currentMinute].sort();
+        }
+        return base;
+    };
+
+    const updateDateSelectValue = (
+        currentValue: string,
+        part: 'year' | 'month' | 'day',
+        nextValue: string,
+        setter: React.Dispatch<React.SetStateAction<string>>
+    ) => {
+        const today = new Date();
+        const current = parseDateParts(currentValue);
+        const nextYear = part === 'year' ? nextValue : (current.year || String(today.getFullYear()));
+        const nextMonth = part === 'month' ? nextValue : (current.month || String(today.getMonth() + 1).padStart(2, '0'));
+        const currentDay = part === 'day' ? nextValue : (current.day || String(today.getDate()).padStart(2, '0'));
+        const maxDay = new Date(Number(nextYear), Number(nextMonth), 0).getDate();
+        const nextDay = String(Math.min(Number(currentDay), maxDay)).padStart(2, '0');
+        setter(`${nextYear}-${nextMonth}-${nextDay}`);
+    };
+
+    const updateTimeSelectValue = (
+        currentValue: string,
+        part: 'hour' | 'minute' | 'period',
+        nextValue: string,
+        setter: React.Dispatch<React.SetStateAction<string>>
+    ) => {
+        const current = parseTimeParts(currentValue);
+        const hour12 = Number(part === 'hour' ? nextValue : (current.hour12 || '12'));
+        const minute = part === 'minute' ? nextValue : (current.minute || '00');
+        const period = part === 'period' ? nextValue : (current.period || 'PM');
+        let hour24 = hour12 % 12;
+        if (period === 'PM') hour24 += 12;
+        setter(`${String(hour24).padStart(2, '0')}:${minute}`);
+    };
+
+    const renderDeadlineDateSelect = (
+        value: string,
+        setter: React.Dispatch<React.SetStateAction<string>>,
+        invalid: boolean
+    ) => {
+        const parts = parseDateParts(value);
+        const selectedYear = parts.year || String(new Date().getFullYear());
+        const selectedMonth = parts.month || String(new Date().getMonth() + 1).padStart(2, '0');
+        const dayCount = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
+        const dayOptions = Array.from({ length: dayCount }, (_, idx) => String(idx + 1).padStart(2, '0'));
+        const selectClass = `w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all bg-white ${invalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`;
+
+        return (
+            <div className="grid grid-cols-3 gap-2">
+                <select
+                    value={parts.year}
+                    onChange={e => updateDateSelectValue(value, 'year', e.target.value, setter)}
+                    className={selectClass}
+                    aria-label={t('common.year', 'Year')}
+                >
+                    <option value="">{t('common.year', 'Year')}</option>
+                    {dateSelectYears.map(year => <option key={year} value={year}>{year}</option>)}
+                </select>
+                <select
+                    value={parts.month}
+                    onChange={e => updateDateSelectValue(value, 'month', e.target.value, setter)}
+                    className={selectClass}
+                    aria-label={t('common.month', 'Month')}
+                >
+                    <option value="">{t('common.month', 'Month')}</option>
+                    {dateSelectMonths.map(month => <option key={month} value={month}>{month}</option>)}
+                </select>
+                <select
+                    value={parts.day}
+                    onChange={e => updateDateSelectValue(value, 'day', e.target.value, setter)}
+                    className={selectClass}
+                    aria-label={t('common.day', 'Day')}
+                >
+                    <option value="">{t('common.day', 'Day')}</option>
+                    {dayOptions.map(day => <option key={day} value={day}>{day}</option>)}
+                </select>
+            </div>
+        );
+    };
+
+    const renderDeadlineTimeSelect = (
+        value: string,
+        setter: React.Dispatch<React.SetStateAction<string>>,
+        invalid: boolean
+    ) => {
+        const parts = parseTimeParts(value);
+        const selectClass = `w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all bg-white ${invalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`;
+
+        return (
+            <div className="grid grid-cols-3 gap-2">
+                <select
+                    value={parts.period}
+                    onChange={e => updateTimeSelectValue(value, 'period', e.target.value, setter)}
+                    className={selectClass}
+                    aria-label={t('common.period', 'AM/PM')}
+                >
+                    <option value="">{t('common.period', 'AM/PM')}</option>
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                </select>
+                <select
+                    value={parts.hour12}
+                    onChange={e => updateTimeSelectValue(value, 'hour', e.target.value, setter)}
+                    className={selectClass}
+                    aria-label={t('common.hour', 'Hour')}
+                >
+                    <option value="">{t('common.hour', 'Hour')}</option>
+                    {timeSelectHours.map(hour => <option key={hour} value={hour}>{hour}</option>)}
+                </select>
+                <select
+                    value={parts.minute}
+                    onChange={e => updateTimeSelectValue(value, 'minute', e.target.value, setter)}
+                    className={selectClass}
+                    aria-label={t('common.minute', 'Minute')}
+                >
+                    <option value="">{t('common.minute', 'Minute')}</option>
+                    {getMinuteOptions(value).map(minute => <option key={minute} value={minute}>{minute}</option>)}
+                </select>
+            </div>
+        );
+    };
+
     const getFcmFailureMessage = (fcmPush: any) => {
         const details = Array.isArray(fcmPush?.failedTokenDetails) ? fcmPush.failedTokenDetails : [];
         const errors = Array.isArray(fcmPush?.errors) ? fcmPush.errors : [];
@@ -1218,21 +1369,11 @@ export default function TeamTasks() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.deadline_date')}</label>
-                                    <input 
-                                        type="date" 
-                                        value={deadlineDate}
-                                        onChange={e => setDeadlineDate(e.target.value)}
-                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
-                                    />
+                                    {renderDeadlineDateSelect(deadlineDate, setDeadlineDate, isDeadlineInvalid)}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.deadline_time')}</label>
-                                    <input 
-                                        type="time" 
-                                        value={deadlineTime}
-                                        onChange={e => setDeadlineTime(e.target.value)}
-                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
-                                    />
+                                    {renderDeadlineTimeSelect(deadlineTime, setDeadlineTime, isDeadlineInvalid)}
                                 </div>
                             </div>
                             {isDeadlineInvalid && (
@@ -1286,21 +1427,11 @@ export default function TeamTasks() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-arabian-night/85 mb-2">{t('team_tasks.new_deadline_date', '新截止日期')}</label>
-                                    <input 
-                                        type="date" 
-                                        value={editDeadlineDate}
-                                        onChange={e => setEditDeadlineDate(e.target.value)}
-                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isEditDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
-                                    />
+                                    {renderDeadlineDateSelect(editDeadlineDate, setEditDeadlineDate, isEditDeadlineInvalid)}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-arabian-night/85 mb-2">{t('team_tasks.new_deadline_time', '新截止时间')}</label>
-                                    <input 
-                                        type="time" 
-                                        value={editDeadlineTime}
-                                        onChange={e => setEditDeadlineTime(e.target.value)}
-                                        className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-desert-gold outline-none text-sm transition-all ${isEditDeadlineInvalid ? 'border-red-300 bg-red-50/20' : 'border-gray-200'}`}
-                                    />
+                                    {renderDeadlineTimeSelect(editDeadlineTime, setEditDeadlineTime, isEditDeadlineInvalid)}
                                 </div>
                             </div>
 

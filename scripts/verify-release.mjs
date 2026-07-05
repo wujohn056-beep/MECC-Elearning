@@ -253,6 +253,7 @@ const sourceAssertions = [
   ['task push payload includes task id', 'src/pages/TeamTasks.tsx', ["action: 'notifyTask'", 'taskId: docRef.id']],
   ['task publish keeps expired deadline visibly blocked before submit', 'src/pages/TeamTasks.tsx', ['if (deadlineObj <= new Date())', "deadline_must_be_future", '|| isDeadlineInvalid}']],
   ['task publish parses deadline without browser string Date parsing', 'src/pages/TeamTasks.tsx', ['parseLocalDateTime(deadlineDate, deadlineTime)', 'parseLocalDateTime(editDeadlineDate, editDeadlineTime)', "deadline_invalid_format"]],
+  ['task deadline picker is safari safe', 'src/pages/TeamTasks.tsx', ['renderDeadlineDateSelect', 'renderDeadlineTimeSelect', 'updateDateSelectValue', 'updateTimeSelectValue']],
   ['safari-safe local date time parser exists', 'src/utils/localDateTime.ts', ['new Date(year, month - 1, day, hour, minute, second)', 'parsed.getFullYear() !== year', 'return null']],
   ['task push function forwards task id', 'netlify/functions/dingtalk.js', ['notifyTask', 'taskId', "type: 'task'", 'buildLearningUrl', 'buildDingTalkLearningLink']],
   ['task push has trilingual DingTalk and FCM copy', 'netlify/functions/dingtalk.js', ['getUserNotificationLanguage', 'recipientsAr', 'markdownAr', 'getTaskFcmNotification', 'مهمة تعلم جديدة']],
@@ -318,6 +319,7 @@ addCheck('android native version code advanced', androidVersionCode >= 7, `versi
 const forbiddenSourceAssertions = [
   ['legacy noop native push action listener removed', 'src/hooks/usePushNotifications.ts', ['pushNotificationActionPerformed']],
   ['task publish does not use browser string Date parsing for deadline', 'src/pages/TeamTasks.tsx', ['new Date(`${deadlineDate}T${deadlineTime}`)', 'new Date(`${editDeadlineDate}T${editDeadlineTime}`)']],
+  ['task deadline picker does not use native browser date time controls', 'src/pages/TeamTasks.tsx', ['type="date"', 'type="time"']],
   ['recordings manager uploaded resource filter is not SM based', 'src/pages/admin/RecordingsManager.tsx', ['adminSmFilter', 'setAdminSmFilter']],
   ['cc roster import does not repair existing Auth accounts from client batch update', 'src/pages/admin/UserManager.tsx', ['发现 ${crmId} 的登录身份丢失']]
 ];
