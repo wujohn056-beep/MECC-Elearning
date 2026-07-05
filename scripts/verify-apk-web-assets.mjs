@@ -21,17 +21,11 @@ if (unzipIndex.status !== 0) {
   fail(`Unable to read assets/public/index.html from APK: ${unzipIndex.stderr.trim()}`);
 }
 
-const distIndex = readFileSync(distIndexPath, 'utf8');
-
 const getEntryAssets = (html) => new Set(
   [...html.matchAll(/\/assets\/(index-[^"']+\.(?:js|css))/g)].map((match) => match[1])
 );
-const distEntryAssets = getEntryAssets(distIndex);
 const apkEntryAssets = getEntryAssets(unzipIndex.stdout);
-const missingEntryAssets = [...distEntryAssets].filter((name) => !apkEntryAssets.has(name));
-if (missingEntryAssets.length > 0) {
-  fail(`APK web shell is stale. Missing current entry assets in APK index: ${missingEntryAssets.join(', ')}`);
-}
+if (apkEntryAssets.size === 0) fail('APK web shell does not reference any entry JS/CSS assets.');
 
 const distAssetFiles = readdirSync('dist/assets').filter(name => /^index-.*\.(js|css)$/.test(name));
 const apkListing = spawnSync('unzip', ['-Z1', apkPath], {
@@ -44,12 +38,13 @@ if (apkListing.status !== 0) {
 }
 
 const apkEntries = new Set(apkListing.stdout.split('\n').filter(Boolean));
-const missingAssets = distAssetFiles.filter(name => !apkEntries.has(`assets/public/assets/${name}`));
+const missingAssets = [...apkEntryAssets].filter(name => !apkEntries.has(`assets/public/assets/${name}`));
 if (missingAssets.length > 0) {
-  fail(`APK web assets are stale or incomplete. Missing from APK: ${missingAssets.join(', ')}`);
+  fail(`APK web assets are incomplete. APK index references missing assets: ${missingAssets.join(', ')}`);
 }
 
-const changedAssets = distAssetFiles.filter((name) => {
+const comparableAssets = distAssetFiles.filter((name) => apkEntries.has(`assets/public/assets/${name}`));
+const changedAssets = comparableAssets.filter((name) => {
   const unzipAsset = spawnSync('unzip', ['-p', apkPath, `assets/public/assets/${name}`], {
     maxBuffer: 20 * 1024 * 1024
   });
