@@ -87,4 +87,38 @@ assert(material.mockPayload?.data?.displayId === 'RD0789', 'Material App push FC
 assert(material.mockPayload?.title?.includes('ME云学堂'), 'Material App push mock payload must include notification title');
 assert(material.mockPayload?.body?.includes('Mock Recording'), 'Material App push mock payload must include recording title');
 
+const policy = await invoke({
+  action: 'notifyPolicy',
+  targetType: 'app',
+  policyId: 'policy-321',
+  title: 'Mock Policy',
+  description: 'Mock policy push verification',
+  type: 'document',
+  targetTeam: 'all',
+  section: 'policy'
+});
+
+assert(policy.success === true, 'Policy App push verification must succeed in mock Firebase mode');
+assert(policy.mockPayload?.tokens?.length === 2, 'Policy App push mock payload must include mock FCM tokens');
+assert(policy.mockPayload?.data?.type === 'policy', 'Policy App push FCM payload must include type=policy');
+assert(policy.mockPayload?.data?.policyId === 'policy-321', 'Policy App push FCM payload must include policyId');
+assert(policy.mockPayload?.title?.includes('新运营政策'), 'Policy App push mock payload must include policy notification title');
+assert(policy.mockPayload?.body?.includes('Mock Policy'), 'Policy App push mock payload must include policy title');
+
+const brand = await invoke({
+  action: 'notifyPolicy',
+  targetType: 'app',
+  policyId: 'brand-654',
+  title: 'Mock Brand Material',
+  description: 'Mock brand push verification',
+  type: 'poster',
+  targetTeam: 'all',
+  section: 'brand'
+});
+
+assert(brand.success === true, 'Brand App push verification must succeed in mock Firebase mode');
+assert(brand.mockPayload?.data?.type === 'brand', 'Brand App push FCM payload must include type=brand');
+assert(brand.mockPayload?.data?.policyId === 'brand-654', 'Brand App push FCM payload must include policyId');
+assert(brand.mockPayload?.title?.includes('新品牌物料'), 'Brand App push mock payload must include brand notification title');
+
 console.log('DingTalk and FCM push payload behavior verified.');

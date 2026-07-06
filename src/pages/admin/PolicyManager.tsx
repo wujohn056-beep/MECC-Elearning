@@ -153,6 +153,8 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
     // DingTalk push states
     const [showPushModal, setShowPushModal] = useState(false);
     const [selectedPolicyForPush, setSelectedPolicyForPush] = useState<PolicyItem | null>(null);
+    const [selectedPoliciesForPush, setSelectedPoliciesForPush] = useState<PolicyItem[]>([]);
+    const [selectedPolicyIdsForBatchPush, setSelectedPolicyIdsForBatchPush] = useState<string[]>([]);
     const [pushTargetType, setPushTargetType] = useState<'group' | 'individuals' | 'app'>('group');
     const [selectedSdsForPush, setSelectedSdsForPush] = useState<string[]>([]);
     const [pushWebhookLang, setPushWebhookLang] = useState<'bilingual' | 'en' | 'zh'>('bilingual');
@@ -293,6 +295,17 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
 
         return items;
     }, [sectionPolicies, adminScope, profile, systemUsers, adminSmFilter]);
+
+    const selectedPoliciesForBatchPush = useMemo(() => {
+        const selectedIds = new Set(selectedPolicyIdsForBatchPush);
+        return filteredPolicies.filter(item => selectedIds.has(item.id));
+    }, [filteredPolicies, selectedPolicyIdsForBatchPush]);
+
+    const allFilteredPoliciesSelected = filteredPolicies.length > 0 && selectedPoliciesForBatchPush.length === filteredPolicies.length;
+
+    useEffect(() => {
+        setSelectedPolicyIdsForBatchPush(prev => prev.filter(id => filteredPolicies.some(item => item.id === id)));
+    }, [filteredPolicies]);
 
     const filteredDirectories = useMemo(() => {
         if (adminScope === 'all') return sectionDirectories;
@@ -562,8 +575,10 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         }));
     };
 
-    const handlePushToDingTalkClick = (item: PolicyItem) => {
-        setSelectedPolicyForPush(item);
+    const openPolicyPushModal = (items: PolicyItem[]) => {
+        if (items.length === 0) return;
+        setSelectedPoliciesForPush(items);
+        setSelectedPolicyForPush(items[0]);
         const targetType = isSuperAdmin ? 'group' : 'individuals';
         setPushTargetType(targetType);
         
@@ -575,8 +590,19 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         setShowPushModal(true);
     };
 
+    const handlePushToDingTalkClick = (item: PolicyItem) => {
+        openPolicyPushModal([item]);
+    };
+
+    const handleBatchPushClick = () => {
+        openPolicyPushModal(selectedPoliciesForBatchPush);
+    };
+
     const handleExecutePush = async () => {
-        if (!selectedPolicyForPush) return;
+        const policiesToPush = selectedPoliciesForPush.length > 0
+            ? selectedPoliciesForPush
+            : selectedPolicyForPush ? [selectedPolicyForPush] : [];
+        if (policiesToPush.length === 0) return;
         
         if (pushTargetType === 'individuals' && selectedSdsForPush.length === 0) {
             alert(t('policy_manager.select_at_least_one_team', '请选择至少一个接收部门或团队！'));
@@ -585,37 +611,45 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
 
         setPushingToDingTalk(true);
         try {
-            const response = await fetch('/.netlify/functions/dingtalk', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'notifyPolicy',
-                    policyId: selectedPolicyForPush.id,
-                    title: selectedPolicyForPush.title,
-                    description: selectedPolicyForPush.description || '',
-                    type: selectedPolicyForPush.type,
-                    targetTeam: selectedPolicyForPush.targetTeam,
-                    targetType: pushTargetType,
-                    selectedSds: selectedSdsForPush,
-                    webhookLang: pushWebhookLang,
-                    section: activeSection
-                })
-            });
+            for (const policyItem of policiesToPush) {
+                const response = await fetch('/.netlify/functions/dingtalk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'notifyPolicy',
+                        policyId: policyItem.id,
+                        title: policyItem.title,
+                        description: policyItem.description || '',
+                        type: policyItem.type,
+                        targetTeam: policyItem.targetTeam,
+                        targetType: pushTargetType,
+                        selectedSds: selectedSdsForPush,
+                        webhookLang: pushWebhookLang,
+                        section: activeSection
+                    })
+                });
 
-            const data = await response.json();
-            if (response.ok && data.success) {
-                const successMsg = pushTargetType === 'app'
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(`${policyItem.title}: ${data.error || t('policy_manager.push_fail', '推送到钉钉失败，请检查通道凭证或网络配置。')}`);
+                }
+            }
+
+            const count = policiesToPush.length;
+            const successMsg = count > 1
+                ? (pushTargetType === 'app'
+                    ? t('policy_manager.batch_push_success_app', '已成功将 {{count}} 个素材推送至 App 锁屏！', { count })
+                    : t('policy_manager.batch_push_success', '已成功将 {{count}} 个素材推送至钉钉！', { count }))
+                : (pushTargetType === 'app'
                     ? (activeSection === 'brand' 
                         ? t('policy_manager.brand_push_success_app', '品牌素材已成功推送至 App 锁屏！') 
                         : t('policy_manager.push_success_app', '政策素材已成功推送至 App 锁屏！'))
                     : (activeSection === 'brand' 
                         ? t('policy_manager.brand_push_success', '品牌素材已成功推送至钉钉！') 
-                        : t('policy_manager.push_success', '政策素材已成功推送至钉钉！'));
-                alert(successMsg);
-                setShowPushModal(false);
-            } else {
-                throw new Error(data.error || t('policy_manager.push_fail', '推送到钉钉失败，请检查通道凭证或网络配置。'));
-            }
+                        : t('policy_manager.push_success', '政策素材已成功推送至钉钉！')));
+            alert(successMsg);
+            setShowPushModal(false);
+            setSelectedPolicyIdsForBatchPush(prev => prev.filter(id => !policiesToPush.some(item => item.id === id)));
         } catch (err: any) {
             console.error('DingTalk policy push error:', err);
             alert(err.message || t('policy_manager.push_fail', '推送到钉钉失败，请检查通道凭证或网络配置。'));
@@ -913,7 +947,6 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         setDirectoryId(item.directoryId || null);
         setSortOrder(item.sortOrder);
         setVisible(item.visible);
-        setUploadFile(null);
         setUploadProgress(null);
         setUploadedFileName(null);
         setHubScope(item.hubScope || 'public');
@@ -1099,6 +1132,30 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         return matched ? matched.name : t('policy_manager.unknown_directory', '未知目录');
     };
 
+    const policyTypeOptions = [
+        {
+            value: 'document' as const,
+            label: t('policy_manager.type_doc_short', '文档'),
+            hint: t('policy_manager.type_doc_hint', 'PDF / 网页 / Office'),
+            icon: FileText,
+            activeClass: 'border-blue-300 bg-blue-50/80 text-blue-700'
+        },
+        {
+            value: 'poster' as const,
+            label: t('policy_manager.type_poster_short', '海报'),
+            hint: t('policy_manager.type_poster_hint', '图片 / 长图 / 宣传图'),
+            icon: ImageIcon,
+            activeClass: 'border-emerald-300 bg-emerald-50/80 text-emerald-700'
+        },
+        {
+            value: 'video' as const,
+            label: t('policy_manager.type_video_short', '视频'),
+            hint: t('policy_manager.type_video_hint', 'MP4 / 宣导视频'),
+            icon: VideoIcon,
+            activeClass: 'border-red-300 bg-red-50/80 text-red-700'
+        }
+    ];
+
     return (
         <div className="animate-in fade-in duration-500 space-y-8 pb-10">
             {/* Section Switcher (if user has both managePolicies and manageBrands) */}
@@ -1244,19 +1301,35 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('policy_manager.form_type', '展示形式')}</label>
-                                            <select
-                                                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white/80 font-medium"
-                                                value={type}
-                                                onChange={(e) => setType(e.target.value as any)}
-                                                disabled={actionLoading}
-                                            >
-                                                <option value="document">📄 {t('policy_manager.type_doc', '文档 (PDF/网页)')}</option>
-                                                <option value="poster">🖼️ {t('policy_manager.type_poster', '海报 (图片)')}</option>
-                                                <option value="video">🎥 {t('policy_manager.type_video', '视频 (MP4)')}</option>
-                                            </select>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                {policyTypeOptions.map(option => {
+                                                    const TypeIcon = option.icon;
+                                                    const isActive = type === option.value;
+                                                    return (
+                                                        <button
+                                                            key={option.value}
+                                                            type="button"
+                                                            aria-pressed={isActive}
+                                                            onClick={() => setType(option.value)}
+                                                            disabled={actionLoading}
+                                                            className={`text-left rounded-xl border px-3 py-3 transition-all cursor-pointer disabled:opacity-60 ${
+                                                                isActive
+                                                                    ? `${option.activeClass} shadow-sm ring-2 ring-desert-gold/20`
+                                                                    : 'border-gray-200 bg-white/70 text-slate-600 hover:border-desert-gold/40 hover:bg-white'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <TypeIcon className="h-4 w-4 shrink-0" />
+                                                                <span className="text-sm font-black">{option.label}</span>
+                                                            </div>
+                                                            <p className="mt-1 text-[10px] leading-tight text-slate-500 font-semibold">{option.hint}</p>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                         
                                         <div>
@@ -1563,6 +1636,47 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-white/70 bg-white/55 px-4 py-3 shadow-sm">
+                                            <label className="flex items-center gap-3 text-sm font-black text-slate-700 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={allFilteredPoliciesSelected}
+                                                    onChange={(e) => {
+                                                        setSelectedPolicyIdsForBatchPush(e.target.checked ? filteredPolicies.map(item => item.id) : []);
+                                                    }}
+                                                    className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal"
+                                                />
+                                                <span>
+                                                    {allFilteredPoliciesSelected
+                                                        ? t('policy_manager.batch_selected_all', '已选择全部素材')
+                                                        : t('policy_manager.batch_select_visible', '选择当前列表素材')}
+                                                </span>
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                {selectedPoliciesForBatchPush.length > 0 && (
+                                                    <span className="text-xs font-bold text-deep-teal bg-deep-teal/10 rounded-full px-3 py-1">
+                                                        {t('policy_manager.batch_selected_count', '已选 {{count}} 个', { count: selectedPoliciesForBatchPush.length })}
+                                                    </span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedPolicyIdsForBatchPush([])}
+                                                    disabled={selectedPoliciesForBatchPush.length === 0}
+                                                    className="px-3 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                                                >
+                                                    {t('policy_manager.clear_selection', '清空')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleBatchPushClick}
+                                                    disabled={selectedPoliciesForBatchPush.length === 0}
+                                                    className="px-4 py-2 rounded-lg text-xs font-black text-white bg-deep-teal hover:bg-deep-teal/90 disabled:bg-gray-300 shadow-sm transition-all flex items-center gap-1.5"
+                                                >
+                                                    <Send className="h-3.5 w-3.5" />
+                                                    {t('policy_manager.batch_push_selected', '批量推送选中')}
+                                                </button>
+                                            </div>
+                                        </div>
                                         {filteredPolicies.map((item, index) => (
                                             <div 
                                                 key={item.id} 
@@ -1573,6 +1687,19 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                                 }`}
                                             >
                                                 <div className="flex gap-3">
+                                                    <label className="pt-3 shrink-0 cursor-pointer" title={t('policy_manager.select_material', '选择素材')}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedPolicyIdsForBatchPush.includes(item.id)}
+                                                            onChange={(e) => {
+                                                                setSelectedPolicyIdsForBatchPush(prev => e.target.checked
+                                                                    ? Array.from(new Set([...prev, item.id]))
+                                                                    : prev.filter(id => id !== item.id)
+                                                                );
+                                                            }}
+                                                            className="h-4 w-4 rounded border-gray-300 text-deep-teal focus:ring-deep-teal"
+                                                        />
+                                                    </label>
                                                     <div className="p-2.5 bg-white rounded-xl shadow-sm border border-gray-100 shrink-0 self-start">
                                                         {getTypeIcon(item.type)}
                                                     </div>
@@ -1914,13 +2041,30 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                             <div className="bg-deep-teal/10 p-2.5 rounded-xl text-deep-teal">
                                 <FileText className="h-5 w-5" />
                             </div>
-                            <div>
+                            <div className="min-w-0 flex-1">
                                 <h4 className="font-bold text-sm text-arabian-night">
-                                    {selectedPolicyForPush.title}
+                                    {selectedPoliciesForPush.length > 1
+                                        ? t('policy_manager.batch_push_materials_title', '批量推送 {{count}} 个素材', { count: selectedPoliciesForPush.length })
+                                        : selectedPolicyForPush.title}
                                 </h4>
-                                <p className="text-xs text-arabian-night/60 mt-1 line-clamp-1">
-                                    {selectedPolicyForPush.description || t('policy_manager.no_description', '无背景介绍')}
-                                </p>
+                                {selectedPoliciesForPush.length > 1 ? (
+                                    <div className="mt-2 max-h-20 overflow-y-auto custom-scrollbar space-y-1 pr-1">
+                                        {selectedPoliciesForPush.slice(0, 8).map(item => (
+                                            <p key={item.id} className="text-xs text-arabian-night/65 truncate font-semibold">
+                                                {item.title}
+                                            </p>
+                                        ))}
+                                        {selectedPoliciesForPush.length > 8 && (
+                                            <p className="text-[11px] text-arabian-night/40 font-bold">
+                                                {t('policy_manager.batch_more_items', '还有 {{count}} 个素材...', { count: selectedPoliciesForPush.length - 8 })}
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-arabian-night/60 mt-1 line-clamp-1">
+                                        {selectedPolicyForPush.description || t('policy_manager.no_description', '无背景介绍')}
+                                    </p>
+                                )}
                             </div>
                         </div>
 

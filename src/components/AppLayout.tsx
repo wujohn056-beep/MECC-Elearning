@@ -325,6 +325,10 @@ export default function AppLayout() {
                         } else if (type === 'campaign' && data.campaignId) {
                             console.log('[Native Push] Navigating to campaign learning:', data.campaignId);
                             navigate(buildLearningRoute({ type: 'campaign', campaignId: data.campaignId }));
+                        } else if ((type === 'policy' || type === 'brand') && data.policyId) {
+                            const targetPath = type === 'brand' ? '/brands' : '/policies';
+                            console.log('[Native Push] Navigating to policy material:', type, data.policyId);
+                            navigate(`${targetPath}?policyId=${encodeURIComponent(data.policyId)}`);
                         } else if (type === 'task') {
                             console.log('[Native Push] Navigating to tasks list');
                             navigate('/account');

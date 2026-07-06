@@ -478,12 +478,22 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                                 {policiesInCurrentLevel.map(policy => {
                                     const isVideo = policy.type === 'video';
                                     const isPoster = policy.type === 'poster';
+                                    const typeBadge = policy.type === 'document'
+                                        ? t('policy_showcase.type_doc_badge', '📄 文档')
+                                        : policy.type === 'poster'
+                                            ? t('policy_showcase.type_poster_badge', '🖼️ 海报')
+                                            : t('policy_showcase.type_video_badge', '🎥 视频');
+                                    const actionLabel = policy.type === 'document'
+                                        ? t('policy_showcase.action_read', '立即阅读')
+                                        : policy.type === 'poster'
+                                            ? t('policy_showcase.action_view_poster', '查看海报')
+                                            : t('policy_showcase.action_play_video', '播放视频');
 
                                     return (
                                         <div 
                                             key={policy.id}
                                             onClick={() => setActivePolicyItem(policy)}
-                                            className="group cursor-pointer glass-panel rounded-2xl border border-white/60 bg-white/60 hover:bg-white hover:border-desert-gold/30 hover:-translate-y-1.5 shadow-sm hover:shadow-lg flex flex-col transition-all duration-500 overflow-hidden"
+                                            className="group cursor-pointer rounded-xl border border-white/70 bg-white/75 hover:bg-white hover:border-desert-gold/40 hover:-translate-y-1 shadow-sm hover:shadow-lg flex flex-col transition-all duration-300 overflow-hidden"
                                         >
                                             {/* Preview Area */}
                                             <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
@@ -513,21 +523,24 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
-                                                        <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-[#0c2240] via-[#12345a] to-blue-900/80 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
+                                                        <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-sm">
                                                             <FileText className="h-5 w-5 text-blue-400" />
                                                         </div>
                                                     </div>
                                                 )}
                                                 
                                                 {/* Format Tag */}
-                                                <span className="absolute top-2.5 right-2.5 bg-black/45 backdrop-blur-md text-white text-[9px] font-black tracking-wide px-2.5 py-0.5 rounded-full border border-white/10 shadow-sm z-20 select-none">
-                                                    {policy.type === 'document' ? t('policy_showcase.type_doc_badge', '📄 文档') : policy.type === 'poster' ? t('policy_showcase.type_poster_badge', '🖼️ 海报') : t('policy_showcase.type_video_badge', '🎥 视频')}
+                                                <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-md text-slate-800 text-[9px] font-black tracking-wide px-2.5 py-1 rounded-full border border-white/60 shadow-sm z-20 select-none">
+                                                    {typeBadge}
+                                                </span>
+                                                <span className="absolute right-2.5 bottom-2.5 bg-deep-teal/95 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-sm translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all z-20">
+                                                    {actionLabel}
                                                 </span>
                                             </div>
 
                                             {/* Text Info */}
-                                            <div className="p-4 flex-1 flex flex-col justify-between bg-white/40">
+                                            <div className="p-4 flex-1 flex flex-col justify-between bg-white/50">
                                                 <div>
                                                     <h4 className="font-black text-sm text-slate-800 line-clamp-1 group-hover:text-desert-gold transition-colors">
                                                         {policy.title}
@@ -544,8 +557,8 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                                                     <span className="text-[10px] font-bold text-slate-400">
                                                         {policy.targetTeam === 'all' ? t('policy_showcase.visible_to_all', '全部可见') : getTeamLabel(policy.targetTeam)}
                                                     </span>
-                                                    <span className="text-[11px] font-bold text-desert-gold hover:underline flex items-center gap-0.5">
-                                                        {policy.type === 'document' ? t('policy_showcase.action_read', '立即阅读') : policy.type === 'poster' ? t('policy_showcase.action_view_poster', '查看海报') : t('policy_showcase.action_play_video', '播放视频')} →
+                                                    <span className="text-[11px] font-black text-deep-teal flex items-center gap-0.5">
+                                                        {actionLabel} →
                                                     </span>
                                                 </div>
                                             </div>
