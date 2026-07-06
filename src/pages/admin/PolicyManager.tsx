@@ -72,6 +72,11 @@ interface NestedDirOption {
     targetTeam: string;
 }
 
+interface UploadedPolicyFile {
+    name: string;
+    url: string;
+}
+
 // Helper to bridge old businessType schemas with new team target segments
 function mapBusinessTypeToTeam(bt: string): 'KCC' | 'GCC' | 'Adult' | 'SS' | 'all' {
     const type = String(bt || '').toLowerCase();
@@ -129,6 +134,7 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
     const [sortOrder, setSortOrder] = useState<number>(0);
     const [visible, setVisible] = useState(true);
     const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedPolicyFile[]>([]);
     const [hubScope, setHubScope] = useState<'public' | 'team'>('public');
     const [targetSmId, setTargetSmId] = useState<string>('');
     const [adminSmFilter, setAdminSmFilter] = useState<string>('all');
@@ -141,7 +147,6 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
     const [dirSortOrder, setDirSortOrder] = useState<number>(0);
 
     // Upload state
-    const [uploadFile, setUploadFile] = useState<File | null>(null);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [uploading, setUploading] = useState(false);
 
@@ -630,7 +635,7 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         setDirectoryId(null);
         setSortOrder(filteredPolicies.length > 0 ? Math.max(...filteredPolicies.map(p => p.sortOrder)) + 1 : 1);
         setVisible(true);
-        setUploadFile(null);
+        setUploadedFiles([]);
         setUploadProgress(null);
         setUploading(false);
         setUploadedFileName(null);
@@ -658,96 +663,28 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         }
     }, [filteredDirectories, editingDirId, activeTab]);
 
-    const uploadSelectedFile = (file: File) => {
-        if (!storage) {
-            setError("Storage is not configured");
-            return;
-        }
-
-        const teamFolder = adminScope === 'all' ? targetTeam : adminScope;
-        setUploading(true);
-        setUploadProgress(0);
-        setError(null);
-        setSuccess(null);
-
-        const storageFolder = activeSection === 'brand' ? 'brands' : 'policies';
-        const fileRef = ref(storage, `${storageFolder}/${teamFolder}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, file);
-
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(Math.round(progress));
-            }, 
-            (error) => {
-                setUploading(false);
-                setError(error.message);
-                setUploadProgress(null);
-                setUploadFile(null);
-            }, 
-            async () => {
-                try {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    setUploading(false);
-                    setUrl(downloadURL);
-                    setUploadProgress(null);
-                    setUploadFile(null);
-                    setUploadedFileName(file.name);
-                    setSuccess(t('policy_manager.upload_success', '文件上传成功！'));
-                } catch (err: any) {
-                    setUploading(false);
-                    setError(err.message);
-                    setUploadProgress(null);
-                    setUploadFile(null);
-                }
-            }
-        );
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setUploadFile(file);
-            setUploadedFileName(null);
-            uploadSelectedFile(file);
-        }
-    };
-
-    const handleUpload = (teamFolder: string): Promise<string> => {
+    const uploadOneFile = (file: File, teamFolder: string, index: number, onProgress: (index: number, progress: number) => void): Promise<UploadedPolicyFile> => {
         return new Promise((resolve, reject) => {
-            if (!uploadFile) {
-                resolve(url);
-                return;
-            }
             if (!storage) {
                 reject(new Error("Storage is not configured"));
                 return;
             }
 
-            setUploading(true);
-            setUploadProgress(0);
             const storageFolder = activeSection === 'brand' ? 'brands' : 'policies';
-            const fileRef = ref(storage, `${storageFolder}/${teamFolder}/${Date.now()}_${uploadFile.name}`);
-            const uploadTask = uploadBytesResumable(fileRef, uploadFile);
+            const fileRef = ref(storage, `${storageFolder}/${teamFolder}/${Date.now()}_${index}_${file.name}`);
+            const uploadTask = uploadBytesResumable(fileRef, file);
 
-            uploadTask.on('state_changed', 
+            uploadTask.on('state_changed',
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    setUploadProgress(Math.round(progress));
-                }, 
-                (error) => {
-                    setUploading(false);
-                    reject(error);
-                }, 
+                    onProgress(index, Math.round(progress));
+                },
+                reject,
                 async () => {
                     try {
                         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        setUploading(false);
-                        setUploadFile(null);
-                        setUploadProgress(null);
-                        resolve(downloadURL);
+                        resolve({ name: file.name, url: downloadURL });
                     } catch (err) {
-                        setUploading(false);
                         reject(err);
                     }
                 }
@@ -755,10 +692,92 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
         });
     };
 
+    const uploadSelectedFiles = async (files: File[]) => {
+        if (!storage) {
+            setError("Storage is not configured");
+            return;
+        }
+        if (files.length === 0) return;
+
+        const teamFolder = adminScope === 'all' ? targetTeam : adminScope;
+        setUploading(true);
+        setUploadProgress(0);
+        setError(null);
+        setSuccess(null);
+
+        const progressByIndex: Record<number, number> = {};
+        const updateAggregateProgress = (index: number, progress: number) => {
+            progressByIndex[index] = progress;
+            const total = files.reduce((sum, _file, idx) => sum + (progressByIndex[idx] || 0), 0);
+            setUploadProgress(Math.round(total / files.length));
+        };
+
+        try {
+            const uploaded = await Promise.all(files.map((file, index) => uploadOneFile(file, teamFolder, index, updateAggregateProgress)));
+            setUrl(uploaded[0]?.url || '');
+            setUploadedFiles(uploaded);
+            setUploadedFileName(uploaded.length === 1 ? uploaded[0].name : t('policy_manager.uploaded_multiple_files', '{{count}} files uploaded', { count: uploaded.length }));
+            setSuccess(uploaded.length === 1
+                ? t('policy_manager.upload_success', '文件上传成功！')
+                : t('policy_manager.upload_multiple_success', '已成功上传 {{count}} 个文件。提交后会按文件分别生成资源。', { count: uploaded.length })
+            );
+        } catch (err: any) {
+            setError(err.message);
+            setUploadedFiles([]);
+            setUploadedFileName(null);
+            setUrl('');
+        } finally {
+            setUploading(false);
+            setUploadProgress(null);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
+        if (selectedFiles.length === 0) return;
+
+        if (editingId && selectedFiles.length > 1) {
+            setError(t('policy_manager.edit_single_file_only', '编辑已有资源时一次只能替换一个文件。新增资源时可多选批量上传。'));
+            e.target.value = '';
+            return;
+        }
+
+        setUploadedFiles([]);
+        setUploadedFileName(null);
+        uploadSelectedFiles(selectedFiles);
+        e.target.value = '';
+    };
+
+    const getTitleForUploadedFile = (uploaded: UploadedPolicyFile, index: number) => {
+        if (index === 0 && title.trim()) {
+            return title.trim();
+        }
+        return uploaded.name.replace(/\.[^/.]+$/, '') || uploaded.name;
+    };
+
+    const createPolicyData = (finalTeam: PolicyItem['targetTeam'], itemUrl: string, itemTitle: string, itemSortOrder: number) => ({
+        title: itemTitle,
+        description: description.trim(),
+        type,
+        url: itemUrl.trim(),
+        thumbnailUrl: thumbnailUrl.trim(),
+        targetTeam: finalTeam,
+        directoryId: directoryId || null,
+        sortOrder: itemSortOrder,
+        visible,
+        section: activeSection,
+        updatedAt: serverTimestamp(),
+        updatedBy: profile?.crmId || 'admin',
+        hubScope,
+        targetSmId,
+        targetSmName: hubScope === 'team' && targetSmId ? (systemUsers.find(u => u.crmId === targetSmId)?.name || targetSmId) : ''
+    });
+
     // Policies form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim()) {
+        const hasUploadedResource = uploadedFiles.some(file => file.url.trim());
+        if ((editingId || !hasUploadedResource) && !title.trim()) {
             setError(t('policy_manager.title_required', '请输入标题'));
             return;
         }
@@ -769,37 +788,34 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
 
         try {
             const finalTeam = adminScope === 'all' ? targetTeam : adminScope;
-            let finalUrl = url;
-            if (uploadFile) {
-                finalUrl = await handleUpload(finalTeam);
-            }
+            const uploadedItems = !editingId ? uploadedFiles.filter(file => file.url.trim()) : uploadedFiles.slice(0, 1).filter(file => file.url.trim());
+            const finalUrl = uploadedItems[0]?.url || url;
 
             if (!finalUrl.trim()) {
                 throw new Error(t('policy_manager.url_required', '请上传文件或输入资源链接'));
             }
 
-            const itemData = {
-                title: title.trim(),
-                description: description.trim(),
-                type,
-                url: finalUrl.trim(),
-                thumbnailUrl: thumbnailUrl.trim(),
-                targetTeam: finalTeam,
-                directoryId: directoryId || null,
-                sortOrder: Number(sortOrder) || 0,
-                visible,
-                section: activeSection,
-                updatedAt: serverTimestamp(),
-                updatedBy: profile?.crmId || 'admin',
-                hubScope,
-                targetSmId,
-                targetSmName: hubScope === 'team' && targetSmId ? (systemUsers.find(u => u.crmId === targetSmId)?.name || targetSmId) : ''
-            };
-
             if (editingId) {
+                const itemData = createPolicyData(finalTeam, finalUrl, title.trim(), Number(sortOrder) || 0);
                 await updateDoc(doc(db, 'policies', editingId), itemData);
                 setSuccess(t('policy_manager.update_success', '保存成功'));
+            } else if (uploadedItems.length > 1) {
+                await Promise.all(uploadedItems.map((uploaded, index) => {
+                    const itemData = createPolicyData(
+                        finalTeam,
+                        uploaded.url,
+                        getTitleForUploadedFile(uploaded, index),
+                        (Number(sortOrder) || 0) + index
+                    );
+                    return addDoc(collection(db, 'policies'), {
+                        ...itemData,
+                        createdAt: serverTimestamp()
+                    });
+                }));
+                setSuccess(t('policy_manager.create_multiple_success', '已创建 {{count}} 个资源', { count: uploadedItems.length }));
             } else {
+                const itemTitle = uploadedItems[0] ? getTitleForUploadedFile(uploadedItems[0], 0) : title.trim();
+                const itemData = createPolicyData(finalTeam, finalUrl, itemTitle, Number(sortOrder) || 0);
                 await addDoc(collection(db, 'policies'), {
                     ...itemData,
                     createdAt: serverTimestamp()
@@ -1294,6 +1310,7 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                                 <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-4 bg-white/40 hover:bg-white/60 transition-all cursor-pointer relative group">
                                                     <input
                                                         type="file"
+                                                        multiple={!editingId}
                                                         accept={type === 'poster' ? 'image/*' : type === 'video' ? 'video/mp4' : 'application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt'}
                                                         onChange={handleFileChange}
                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -1303,15 +1320,18 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                                         <Upload className="mx-auto h-8 w-8 text-desert-gold group-hover:scale-110 transition-transform" />
                                                         <p className="text-xs font-bold text-deep-teal">
                                                             {uploading ? (
-                                                                <span>⏳ {uploadFile?.name}</span>
+                                                                <span>{t('policy_manager.uploading_files', 'Uploading files...')}</span>
                                                             ) : uploadedFileName ? (
                                                                 <span className="text-green-600 flex items-center justify-center gap-1 font-extrabold">✅ {uploadedFileName} ({t('policy_manager.uploaded', '已上传')})</span>
-                                                            ) : uploadFile ? (
-                                                                <span>{uploadFile.name}</span>
                                                             ) : (
                                                                 t('policy_manager.click_to_upload', '点击选择或拖拽文件上传')
                                                             )}
                                                         </p>
+                                                        {uploadedFiles.length > 1 && (
+                                                            <p className="text-[10px] text-arabian-night/50 line-clamp-2">
+                                                                {uploadedFiles.map(file => file.name).join(' / ')}
+                                                            </p>
+                                                        )}
                                                         <p className="text-[10px] text-arabian-night/40">
                                                             {type === 'poster' ? t('policy_manager.format_images', 'Images only (PNG, JPG, etc.)') : type === 'video' ? t('policy_manager.format_video', 'Video only (MP4)') : t('policy_manager.format_doc', 'Documents only (PDF, Word, Excel, PPT, TXT)')}
                                                         </p>
