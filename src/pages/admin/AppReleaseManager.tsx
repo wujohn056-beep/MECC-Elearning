@@ -5,13 +5,16 @@ import { Navigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, ExternalLink, Loader2, RefreshCw, Save, Smartphone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../services/firebase';
-import { CLIENT_APP_VERSIONS, getCurrentClientAppVersion } from '../../utils/appVersion';
+import { CLIENT_APP_BUILDS, CLIENT_APP_VERSIONS, getCurrentClientAppBuild, getCurrentClientAppVersion } from '../../utils/appVersion';
 import { DEFAULT_IOS_TESTFLIGHT_URL, getDefaultAndroidApkUrl } from '../../utils/appDownloadLinks';
 
 interface AppReleaseConfig {
     android_latest: string;
     ios_latest: string;
     web_latest: string;
+    android_latest_build: string;
+    ios_latest_build: string;
+    web_latest_build: string;
     min_required_version: string;
     android_apk_url: string;
     ios_testflight_url: string;
@@ -21,6 +24,9 @@ const DEFAULT_RELEASE_CONFIG: AppReleaseConfig = {
     android_latest: CLIENT_APP_VERSIONS.android,
     ios_latest: CLIENT_APP_VERSIONS.ios,
     web_latest: CLIENT_APP_VERSIONS.web,
+    android_latest_build: String(CLIENT_APP_BUILDS.android),
+    ios_latest_build: String(CLIENT_APP_BUILDS.ios),
+    web_latest_build: String(CLIENT_APP_BUILDS.web),
     min_required_version: '',
     android_apk_url: '',
     ios_testflight_url: DEFAULT_IOS_TESTFLIGHT_URL
@@ -30,6 +36,9 @@ const normalizeReleaseConfig = (data: Partial<AppReleaseConfig> | null): AppRele
     android_latest: data?.android_latest || DEFAULT_RELEASE_CONFIG.android_latest,
     ios_latest: data?.ios_latest || DEFAULT_RELEASE_CONFIG.ios_latest,
     web_latest: data?.web_latest || DEFAULT_RELEASE_CONFIG.web_latest,
+    android_latest_build: String(data?.android_latest_build || DEFAULT_RELEASE_CONFIG.android_latest_build),
+    ios_latest_build: String(data?.ios_latest_build || DEFAULT_RELEASE_CONFIG.ios_latest_build),
+    web_latest_build: String(data?.web_latest_build || DEFAULT_RELEASE_CONFIG.web_latest_build),
     min_required_version: data?.min_required_version || '',
     android_apk_url: data?.android_apk_url || '',
     ios_testflight_url: data?.ios_testflight_url || DEFAULT_RELEASE_CONFIG.ios_testflight_url
@@ -85,13 +94,16 @@ export default function AppReleaseManager() {
                 android_latest: config.android_latest || getCurrentClientAppVersion('android'),
                 ios_latest: config.ios_latest || getCurrentClientAppVersion('ios'),
                 web_latest: config.web_latest || getCurrentClientAppVersion('web'),
+                android_latest_build: config.android_latest_build || String(getCurrentClientAppBuild('android')),
+                ios_latest_build: config.ios_latest_build || String(getCurrentClientAppBuild('ios')),
+                web_latest_build: config.web_latest_build || String(getCurrentClientAppBuild('web')),
                 android_apk_url: config.android_apk_url,
                 ios_testflight_url: config.ios_testflight_url || DEFAULT_IOS_TESTFLIGHT_URL,
                 updatedAt: serverTimestamp(),
                 updatedBy: profile?.crmId || 'super_admin'
             }, { merge: true });
             await loadConfig();
-            setSuccess(t('app_release.save_success', 'App 发布配置已保存，旧版 App 将按最新版本号显示更新提醒。'));
+            setSuccess(t('app_release.save_success', 'App 发布配置已保存，旧版 App 将按最新版本号和 build 号显示更新提醒。'));
         } catch (err) {
             console.error('Error saving app release config:', err);
             setError(t('app_release.save_error', '保存失败，请检查 Firestore 权限或稍后重试。'));
@@ -195,6 +207,48 @@ export default function AppReleaseManager() {
                 </label>
             </div>
 
+            <div className="grid lg:grid-cols-3 gap-4">
+                <label className="space-y-2">
+                    <span className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        {t('app_release.android_latest_build', 'Android 最新 Build')}
+                    </span>
+                    <input
+                        type="number"
+                        min="0"
+                        value={config.android_latest_build}
+                        onChange={event => updateField('android_latest_build', event.target.value)}
+                        className="w-full rounded-lg border border-slate-200 px-4 py-3 font-bold focus:outline-none focus:ring-2 focus:ring-deep-teal/30"
+                        placeholder={String(getCurrentClientAppBuild('android'))}
+                    />
+                </label>
+                <label className="space-y-2">
+                    <span className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        {t('app_release.ios_latest_build', 'iOS 最新 Build')}
+                    </span>
+                    <input
+                        type="number"
+                        min="0"
+                        value={config.ios_latest_build}
+                        onChange={event => updateField('ios_latest_build', event.target.value)}
+                        className="w-full rounded-lg border border-slate-200 px-4 py-3 font-bold focus:outline-none focus:ring-2 focus:ring-deep-teal/30"
+                        placeholder={String(getCurrentClientAppBuild('ios'))}
+                    />
+                </label>
+                <label className="space-y-2">
+                    <span className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        {t('app_release.web_latest_build', 'Web 最新 Build')}
+                    </span>
+                    <input
+                        type="number"
+                        min="0"
+                        value={config.web_latest_build}
+                        onChange={event => updateField('web_latest_build', event.target.value)}
+                        className="w-full rounded-lg border border-slate-200 px-4 py-3 font-bold focus:outline-none focus:ring-2 focus:ring-deep-teal/30"
+                        placeholder={String(getCurrentClientAppBuild('web'))}
+                    />
+                </label>
+            </div>
+
             <label className="block space-y-2">
                 <span className="text-xs font-black text-slate-500 uppercase tracking-wide">
                     {t('app_release.min_required_version', '最低可用版本')}
@@ -206,7 +260,7 @@ export default function AppReleaseManager() {
                     placeholder={t('app_release.min_required_placeholder', '留空表示不强制更新')}
                 />
                 <p className="text-xs text-slate-500">
-                    {t('app_release.min_required_hint', '只有确实需要拦截旧版本时再填写；普通发版只更新最新版本号即可。')}
+                    {t('app_release.min_required_hint', '只有确实需要拦截旧版本时再填写；普通发版只更新最新版本号和 build 号即可。')}
                 </p>
             </label>
 
@@ -237,7 +291,7 @@ export default function AppReleaseManager() {
 
             <div className="rounded-lg border border-desert-gold/30 bg-desert-gold/10 px-4 py-4 text-sm text-slate-700 leading-relaxed">
                 <p className="font-bold text-deep-teal mb-1">{t('app_release.checklist_title', '发布后确认')}</p>
-                <p>{t('app_release.checklist_body', '确认 APK 已部署到下载链接，Android 最新版本等于本次 APK versionName，并用旧版 App 打开一次学习中心验证更新提醒。')}</p>
+                <p>{t('app_release.checklist_body', '确认 APK 已部署到下载链接，版本号和 build 号都等于本次安装包，并用旧版 App 打开一次学习中心验证更新提醒。')}</p>
                 <a
                     href="/download"
                     target="_blank"

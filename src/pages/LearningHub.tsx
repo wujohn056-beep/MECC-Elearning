@@ -6,7 +6,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users, BarChart3 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
-import { getCurrentClientAppVersion, getLatestClientAppVersion, isVersionOutdated } from '../utils/appVersion';
+import {
+    formatClientRelease,
+    getCurrentClientAppBuild,
+    getCurrentClientAppVersion,
+    getLatestClientAppBuild,
+    getLatestClientAppVersion,
+    isClientAppOutdated
+} from '../utils/appVersion';
 import { getEffectiveUserId } from '../utils/userIdentity';
 import { calculateCampaignProgress, getCampaignRequiredRecordings as resolveCampaignRequiredRecordings } from '../utils/campaignProgress';
 import { getTaskRecordingGroups } from '../utils/taskRecordingGroups';
@@ -3887,10 +3894,11 @@ export default function LearningHub() {
                     if (isNative || hasDownloaded) {
                         const platform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
                         const currentNativeVersion = getCurrentClientAppVersion(platform);
+                        const currentNativeBuild = getCurrentClientAppBuild(platform);
                         const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
-                        const latestVersion = getLatestClientAppVersion(platform, data);
+                        const currentBuildToCheck = isNative ? currentNativeBuild : ((profile as any)?.appBuild ?? currentNativeBuild);
                         
-                        if (isVersionOutdated(currentVersionToCheck, latestVersion)) {
+                        if (isClientAppOutdated(platform, currentVersionToCheck, data, currentBuildToCheck)) {
                             setIsAppOutdated(true);
                         } else {
                             setIsAppOutdated(false);
@@ -4896,9 +4904,18 @@ export default function LearningHub() {
         const isAppUser = isNative || hasDownloaded;
         const userPlatform = isNative ? Capacitor.getPlatform() : (profile?.platform === 'ios' || profile?.platform === 'android' ? profile.platform : 'ios');
         const currentNativeVersion = getCurrentClientAppVersion(userPlatform);
+        const currentNativeBuild = getCurrentClientAppBuild(userPlatform);
         const currentVersionToCheck = isNative ? currentNativeVersion : (profile?.appVersion || currentNativeVersion);
+        const currentBuildToCheck = isNative ? currentNativeBuild : ((profile as any)?.appBuild ?? currentNativeBuild);
         const latestVersionToCheck = appUpdateConfig
             ? getLatestClientAppVersion(userPlatform, appUpdateConfig)
+            : '';
+        const latestBuildToCheck = appUpdateConfig
+            ? getLatestClientAppBuild(userPlatform, appUpdateConfig)
+            : 0;
+        const currentReleaseToCheck = formatClientRelease(userPlatform, currentVersionToCheck, currentBuildToCheck);
+        const latestReleaseToCheck = latestVersionToCheck
+            ? formatClientRelease(userPlatform, latestVersionToCheck, latestBuildToCheck)
             : '';
         
         return (
@@ -4933,9 +4950,9 @@ export default function LearningHub() {
                                 {t('update_modal.outdated_tip', '系统发现更流畅的全新版本，建议您立即升级以保证功能正常。')}
                             </p>
                             <div className="text-[11px] font-bold text-slate-500 dark:text-slate-300 flex flex-wrap gap-x-2 gap-y-1">
-                                <span>{t('update_modal.current_version', '当前版本: {{version}}', { version: currentVersionToCheck })}</span>
-                                {latestVersionToCheck && (
-                                    <span className="text-red-500">{t('update_modal.latest_version', '最新版本: {{version}}', { version: latestVersionToCheck })}</span>
+                                <span>{t('update_modal.current_version', '当前版本: {{version}}', { version: currentReleaseToCheck })}</span>
+                                {latestReleaseToCheck && (
+                                    <span className="text-red-500">{t('update_modal.latest_version', '最新版本: {{version}}', { version: latestReleaseToCheck })}</span>
                                 )}
                             </div>
                             <a
@@ -4962,7 +4979,7 @@ export default function LearningHub() {
                                     <h3 className={`text-sm sm:text-base font-extrabold ${
                                         businessType === 'leader' ? 'text-white' : 'text-slate-900'
                                     }`}>
-                                        {t('update_modal.version', '版本: {{version}}', { version: currentVersionToCheck })}
+                                        {t('update_modal.version', '版本: {{version}}', { version: currentReleaseToCheck })}
                                     </h3>
                                 </div>
                             </div>
@@ -4970,7 +4987,7 @@ export default function LearningHub() {
                                 {t('update_modal.latest_tip', '您当前正在使用最新版 MECC 移动端，体验流畅高效的移动学习！')}
                             </p>
                             <div className="text-[11px] font-bold text-slate-500 dark:text-slate-300">
-                                {latestVersionToCheck && t('update_modal.latest_version', '最新版本: {{version}}', { version: latestVersionToCheck })}
+                                {latestReleaseToCheck && t('update_modal.latest_version', '最新版本: {{version}}', { version: latestReleaseToCheck })}
                             </div>
                         </div>
                     )

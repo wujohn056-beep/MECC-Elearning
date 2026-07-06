@@ -9,7 +9,15 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Capacitor } from '@capacitor/core';
 import UserGuideModal from './UserGuideModal';
-import { getCurrentClientAppVersion, getLatestClientAppVersion, isVersionOutdated } from '../utils/appVersion';
+import {
+    formatClientRelease,
+    getCurrentClientAppBuild,
+    getCurrentClientAppVersion,
+    getLatestClientAppBuild,
+    getLatestClientAppVersion,
+    isClientAppOutdated,
+    isVersionOutdated
+} from '../utils/appVersion';
 import { getEffectiveUserId } from '../utils/userIdentity';
 import { buildLearningRoute } from '../utils/learningRoutes';
 import { resolveAppDownloadUrl } from '../utils/appDownloadLinks';
@@ -168,11 +176,10 @@ export default function AppLayout() {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     const platform = Capacitor.getPlatform(); // 'ios' or 'android'
-                    const latestVersion = getLatestClientAppVersion(platform, data);
-
                     const currentAppVersion = getCurrentClientAppVersion(platform);
+                    const currentAppBuild = getCurrentClientAppBuild(platform);
 
-                    if (isVersionOutdated(currentAppVersion, latestVersion)) {
+                    if (isClientAppOutdated(platform, currentAppVersion, data, currentAppBuild)) {
                         const forceUpdate = data.min_required_version && isVersionOutdated(currentAppVersion, data.min_required_version);
                         setUpdateConfig(data);
                         setIsForceUpdate(!!forceUpdate);
@@ -357,6 +364,7 @@ export default function AppLayout() {
                     const today = new Date().toISOString().split('T')[0];
                     const currentPlatform = Capacitor.getPlatform();
                     const currentAppVersion = getCurrentClientAppVersion(currentPlatform);
+                    const currentAppBuild = getCurrentClientAppBuild(currentPlatform);
                     const profileUid = getEffectiveUserId(user, profile);
                     
                     // Update user profile document with version telemetry
@@ -364,6 +372,7 @@ export default function AppLayout() {
                     await setDoc(userRef, {
                         lastActiveAt: serverTimestamp(),
                         appVersion: currentAppVersion,
+                        appBuild: currentAppBuild,
                         platform: currentPlatform
                     }, { merge: true });
 
@@ -382,6 +391,7 @@ export default function AppLayout() {
                         date: today,
                         lastLoginAt: serverTimestamp(),
                         appVersion: currentAppVersion,
+                        appBuild: currentAppBuild,
                         platform: currentPlatform
                     }, { merge: true });
                 } catch (error) {
@@ -409,8 +419,16 @@ export default function AppLayout() {
 
     const updatePlatform = Capacitor.getPlatform();
     const updateCurrentVersion = getCurrentClientAppVersion(updatePlatform);
+    const updateCurrentBuild = getCurrentClientAppBuild(updatePlatform);
     const updateLatestVersion = updateConfig
         ? getLatestClientAppVersion(updatePlatform, updateConfig)
+        : '';
+    const updateLatestBuild = updateConfig
+        ? getLatestClientAppBuild(updatePlatform, updateConfig)
+        : 0;
+    const updateCurrentRelease = formatClientRelease(updatePlatform, updateCurrentVersion, updateCurrentBuild);
+    const updateLatestRelease = updateLatestVersion
+        ? formatClientRelease(updatePlatform, updateLatestVersion, updateLatestBuild)
         : '';
 
     return (
@@ -759,11 +777,11 @@ export default function AppLayout() {
                                     {t('update_modal.subtitle', '为了保证功能正常使用，请及时更新到最新版。')}
                                 </p>
                                 <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-slate-300">
-                                    <span>{t('update_modal.current_version', '当前版本: {{version}}', { version: updateCurrentVersion })}</span>
-                                    {updateLatestVersion && (
+                                    <span>{t('update_modal.current_version', '当前版本: {{version}}', { version: updateCurrentRelease })}</span>
+                                    {updateLatestRelease && (
                                         <>
                                             <span className="text-slate-600">→</span>
-                                            <span className="text-desert-gold">{t('update_modal.latest_version', '最新版本: {{version}}', { version: updateLatestVersion })}</span>
+                                            <span className="text-desert-gold">{t('update_modal.latest_version', '最新版本: {{version}}', { version: updateLatestRelease })}</span>
                                         </>
                                     )}
                                 </div>

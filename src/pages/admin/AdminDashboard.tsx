@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Download, Calendar, Users, Clock, CheckCircle, BarChart3, UserX, UserMinus } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { startOfDay, endOfDay, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { formatClientRelease, getCurrentClientAppBuild, getCurrentClientAppVersion, isClientReleaseOutdated } from '../../utils/appVersion';
 
 interface UserRecord {
     id: string;
@@ -335,11 +336,20 @@ export default function AdminDashboard() {
             
             const version = (u as any).appVersion;
             const platform = (u as any).platform;
+            const build = (u as any).appBuild ?? getCurrentClientAppBuild(platform);
 
-            if (platform === 'web' || version === '1.0.5') {
+            if (platform === 'web') {
                 latest.push(u);
-            } else {
+            } else if (!version || isClientReleaseOutdated(
+                platform,
+                version,
+                getCurrentClientAppVersion(platform),
+                build,
+                getCurrentClientAppBuild(platform)
+            )) {
                 outdated.push(u);
+            } else {
+                latest.push(u);
             }
         });
 
@@ -607,13 +617,23 @@ export default function AdminDashboard() {
                         <div className="flex items-center justify-between text-[10px]">
                             <span className="text-slate-400">{localT('dashboard.version', '版本', i18n)}:</span>
                             <span className={`font-extrabold ${
-                                member.platform === 'web' || member.appVersion === '1.0.5' 
+                                member.platform === 'web' || (member.appVersion && !isClientReleaseOutdated(
+                                    member.platform,
+                                    member.appVersion,
+                                    getCurrentClientAppVersion(member.platform),
+                                    (member as any).appBuild ?? getCurrentClientAppBuild(member.platform),
+                                    getCurrentClientAppBuild(member.platform)
+                                ))
                                     ? 'text-emerald-600' 
                                     : member.appVersion 
                                         ? 'text-amber-600' 
                                         : 'text-red-500'
                             }`}>
-                                {member.platform === 'web' ? 'Latest' : member.appVersion ? `v${member.appVersion}` : 'Never Installed'}
+                                {member.platform === 'web'
+                                    ? 'Latest'
+                                    : member.appVersion
+                                        ? `v${formatClientRelease(member.platform, member.appVersion, (member as any).appBuild ?? 0)}`
+                                        : 'Never Installed'}
                             </span>
                         </div>
                         {member.lastActiveAt && (
