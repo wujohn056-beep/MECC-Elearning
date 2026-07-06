@@ -50,6 +50,15 @@ interface Recording {
     businessType?: 'kid' | 'adult' | 'ss';
 }
 
+const normalizeOrgKey = (value?: string) => (value || '').trim().toUpperCase();
+
+const getSmAggregationKey = (user: Pick<UserRecord, 'role' | 'crmId' | 'sm'>) => {
+    if (user.role === 'sm' && user.crmId) {
+        return normalizeOrgKey(user.crmId);
+    }
+    return normalizeOrgKey(user.sm);
+};
+
 export default function AdminDashboard() {
     const { t, i18n } = useTranslation();
     const { profile, hasPermission } = useAuth();
@@ -187,32 +196,32 @@ export default function AdminDashboard() {
     
     const availableSms = useMemo(() => {
         let pool = scopeUsers;
-        if (filterSd !== 'all') pool = pool.filter(u => u.sd?.toUpperCase() === filterSd.toUpperCase());
-        return Array.from(new Set(pool.map(u => u.sm?.toUpperCase()).filter(Boolean))).sort();
+        if (filterSd !== 'all') pool = pool.filter(u => normalizeOrgKey(u.sd) === normalizeOrgKey(filterSd));
+        return Array.from(new Set(pool.map(u => getSmAggregationKey(u)).filter(Boolean))).sort();
     }, [scopeUsers, filterSd]);
 
     const availableTeams = useMemo(() => {
         let pool = scopeUsers;
-        if (filterSd !== 'all') pool = pool.filter(u => u.sd?.toUpperCase() === filterSd.toUpperCase());
-        if (filterSm !== 'all') pool = pool.filter(u => u.sm?.toUpperCase() === filterSm.toUpperCase());
-        return Array.from(new Set(pool.map(u => u.team?.toUpperCase()).filter(Boolean))).sort();
+        if (filterSd !== 'all') pool = pool.filter(u => normalizeOrgKey(u.sd) === normalizeOrgKey(filterSd));
+        if (filterSm !== 'all') pool = pool.filter(u => getSmAggregationKey(u) === normalizeOrgKey(filterSm));
+        return Array.from(new Set(pool.map(u => normalizeOrgKey(u.team)).filter(Boolean))).sort();
     }, [scopeUsers, filterSd, filterSm]);
 
     const availableCcs = useMemo(() => {
         let pool = scopeUsers;
-        if (filterSd !== 'all') pool = pool.filter(u => u.sd?.toUpperCase() === filterSd.toUpperCase());
-        if (filterSm !== 'all') pool = pool.filter(u => u.sm?.toUpperCase() === filterSm.toUpperCase());
-        if (filterTeam !== 'all') pool = pool.filter(u => u.team?.toUpperCase() === filterTeam.toUpperCase());
-        return Array.from(new Set(pool.map(u => u.crmId?.toUpperCase()).filter(Boolean))).sort();
+        if (filterSd !== 'all') pool = pool.filter(u => normalizeOrgKey(u.sd) === normalizeOrgKey(filterSd));
+        if (filterSm !== 'all') pool = pool.filter(u => getSmAggregationKey(u) === normalizeOrgKey(filterSm));
+        if (filterTeam !== 'all') pool = pool.filter(u => normalizeOrgKey(u.team) === normalizeOrgKey(filterTeam));
+        return Array.from(new Set(pool.map(u => normalizeOrgKey(u.crmId)).filter(Boolean))).sort();
     }, [scopeUsers, filterSd, filterSm, filterTeam]);
 
     // Apply all filters to get the final displayed users
     const displayedUsers = useMemo(() => {
         return scopeUsers.filter(u => {
-            if (filterSd !== 'all' && u.sd?.toUpperCase() !== filterSd.toUpperCase()) return false;
-            if (filterSm !== 'all' && u.sm?.toUpperCase() !== filterSm.toUpperCase()) return false;
-            if (filterTeam !== 'all' && u.team?.toUpperCase() !== filterTeam.toUpperCase()) return false;
-            if (filterCc !== 'all' && u.crmId?.toUpperCase() !== filterCc.toUpperCase()) return false;
+            if (filterSd !== 'all' && normalizeOrgKey(u.sd) !== normalizeOrgKey(filterSd)) return false;
+            if (filterSm !== 'all' && getSmAggregationKey(u) !== normalizeOrgKey(filterSm)) return false;
+            if (filterTeam !== 'all' && normalizeOrgKey(u.team) !== normalizeOrgKey(filterTeam)) return false;
+            if (filterCc !== 'all' && normalizeOrgKey(u.crmId) !== normalizeOrgKey(filterCc)) return false;
             return true;
         });
     }, [scopeUsers, filterSd, filterSm, filterTeam, filterCc]);
@@ -470,9 +479,8 @@ export default function AdminDashboard() {
     const aggregateByField = (field: 'team' | 'sm' | 'sd') => {
         const groups: Record<string, { count: number; duration: number; assigned: number; completed: number; published: number }> = {};
         userRankings.forEach(u => {
-            let key = u[field];
+            let key = field === 'sm' ? getSmAggregationKey(u) : normalizeOrgKey(u[field]);
             if (!key) return;
-            key = key.toUpperCase(); // Normalize keys for aggregation
             if (!groups[key]) groups[key] = { count: 0, duration: 0, assigned: 0, completed: 0, published: 0 };
             groups[key].count += 1;
             groups[key].duration += u.duration;
@@ -520,7 +528,8 @@ export default function AdminDashboard() {
             // Org Ranking
             if (user) {
                 if (user.team) teamCounts[user.team] = (teamCounts[user.team] || 0) + 1;
-                if (user.sm) smCounts[user.sm] = (smCounts[user.sm] || 0) + 1;
+                const smKey = getSmAggregationKey(user);
+                if (smKey) smCounts[smKey] = (smCounts[smKey] || 0) + 1;
                 if (user.sd) sdCounts[user.sd] = (sdCounts[user.sd] || 0) + 1;
             }
         });
