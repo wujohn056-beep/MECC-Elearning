@@ -15,6 +15,8 @@ import {
     ArrowLeft,
     Folder,
     ChevronRight,
+    CalendarDays,
+    Layers,
     Search
 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
@@ -309,6 +311,17 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
         return visiblePolicies.filter(p => p.directoryId === currentFolderId);
     }, [visiblePolicies, currentFolderId]);
 
+    const currentLevelStats = useMemo(() => {
+        const files = policiesInCurrentLevel;
+        return {
+            folders: foldersInCurrentLevel.length,
+            files: files.length,
+            documents: files.filter(p => p.type === 'document').length,
+            posters: files.filter(p => p.type === 'poster').length,
+            videos: files.filter(p => p.type === 'video').length
+        };
+    }, [foldersInCurrentLevel, policiesInCurrentLevel]);
+
     // Breadcrumbs pathway logic
     const breadcrumbs = useMemo(() => {
         const trail: { id: string | null; name: string }[] = [{ id: null, name: t('policy_showcase.root_directory', '根目录') }];
@@ -332,6 +345,17 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
             case 'Adult': return t('common.team_adult_clean', 'ACC 成人');
             case 'SS': return t('common.team_ss_clean', 'SS 团队');
             default: return team;
+        }
+    };
+
+    const formatDate = (value: any) => {
+        if (!value) return '';
+        try {
+            const date = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toLocaleDateString();
+        } catch {
+            return '';
         }
     };
 
@@ -411,6 +435,44 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                 ))}
             </div>
 
+            {!loading && (
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-4">
+                    <div className="rounded-2xl border border-white/70 bg-white/60 backdrop-blur-md p-5 shadow-sm">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-deep-teal text-white flex items-center justify-center shadow-md shrink-0">
+                                <Layers className="w-6 h-6" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-desert-gold">
+                                    {t('policy_showcase.current_view', '当前目录视图')}
+                                </p>
+                                <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 leading-tight">
+                                    {breadcrumbs[breadcrumbs.length - 1]?.name || t('policy_showcase.root_directory', '根目录')}
+                                </h2>
+                                <p className="text-sm text-slate-500 mt-1">
+                                    {t('policy_showcase.visual_hint', '按文件夹和素材类型分层展示，打开前即可判断内容形式。')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-2 rounded-2xl border border-white/70 bg-white/55 backdrop-blur-md p-3 shadow-sm">
+                        {[
+                            { label: t('policy_showcase.stat_folders', '文件夹'), value: currentLevelStats.folders, tone: 'bg-amber-50 text-amber-700' },
+                            { label: t('policy_showcase.stat_files', '素材'), value: currentLevelStats.files, tone: 'bg-teal-50 text-deep-teal' },
+                            { label: t('policy_showcase.stat_docs', '文档'), value: currentLevelStats.documents, tone: 'bg-blue-50 text-blue-700' },
+                            { label: t('policy_showcase.stat_posters', '海报'), value: currentLevelStats.posters, tone: 'bg-rose-50 text-rose-700' },
+                            { label: t('policy_showcase.stat_videos', '视频'), value: currentLevelStats.videos, tone: 'bg-slate-100 text-slate-700' }
+                        ].map(item => (
+                            <div key={item.label} className={`rounded-xl px-3 py-3 text-center ${item.tone}`}>
+                                <div className="text-lg font-black leading-none">{item.value}</div>
+                                <div className="text-[10px] font-black mt-1 whitespace-nowrap">{item.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Directory explorer area */}
             {loading ? (
                 <div className="flex justify-center py-24">
@@ -446,19 +508,19 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                     {foldersInCurrentLevel.length > 0 && (
                         <div className="space-y-3">
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 select-none">{t('policy_showcase.directories_title', '文件夹目录 ({{count}})', { count: foldersInCurrentLevel.length })}</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                                 {foldersInCurrentLevel.map(folder => (
                                     <div 
                                         key={folder.id}
                                         onClick={() => setCurrentFolderId(folder.id)}
-                                        className="group cursor-pointer p-4 rounded-2xl border border-white/70 bg-white/50 hover:bg-white hover:border-desert-gold/30 hover:-translate-y-1 hover:shadow-md flex items-center gap-3.5 transition-all duration-300"
+                                        className="group cursor-pointer p-5 rounded-2xl border border-white/70 bg-white/65 hover:bg-white hover:border-desert-gold/40 hover:-translate-y-1 hover:shadow-lg flex items-center gap-4 transition-all duration-300"
                                     >
-                                        <div className="p-3 bg-amber-500/10 rounded-xl group-hover:bg-amber-500/20 transition-all shrink-0">
-                                            <Folder className="w-6 h-6 text-amber-500 fill-amber-500/20 group-hover:scale-110 transition-transform" />
+                                        <div className="p-4 bg-amber-500/10 rounded-2xl group-hover:bg-amber-500/20 transition-all shrink-0">
+                                            <Folder className="w-7 h-7 text-amber-500 fill-amber-500/20 group-hover:scale-110 transition-transform" />
                                         </div>
                                         <div className="min-w-0">
-                                            <h4 className="font-black text-sm text-slate-800 truncate group-hover:text-desert-gold transition-colors">{folder.name}</h4>
-                                            <span className="text-[10px] text-slate-400 font-semibold">{t('policy_showcase.open_folder', '打开文件夹')} →</span>
+                                            <h4 className="font-black text-base text-slate-800 truncate group-hover:text-desert-gold transition-colors">{folder.name}</h4>
+                                            <span className="text-[11px] text-slate-400 font-bold">{t('policy_showcase.open_folder', '打开文件夹')} →</span>
                                         </div>
                                     </div>
                                 ))}
@@ -474,10 +536,11 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                                     ? t('policy_showcase.brand_files_title', '品牌物料文件 ({{count}})', { count: policiesInCurrentLevel.length })
                                     : t('policy_showcase.files_title', '政策文件与激励 ({{count}})', { count: policiesInCurrentLevel.length })}
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                                 {policiesInCurrentLevel.map(policy => {
                                     const isVideo = policy.type === 'video';
                                     const isPoster = policy.type === 'poster';
+                                    const createdDate = formatDate(policy.createdAt || policy.updatedAt);
                                     const typeBadge = policy.type === 'document'
                                         ? t('policy_showcase.type_doc_badge', '📄 文档')
                                         : policy.type === 'poster'
@@ -493,10 +556,10 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                                         <div 
                                             key={policy.id}
                                             onClick={() => setActivePolicyItem(policy)}
-                                            className="group cursor-pointer rounded-xl border border-white/70 bg-white/75 hover:bg-white hover:border-desert-gold/40 hover:-translate-y-1 shadow-sm hover:shadow-lg flex flex-col transition-all duration-300 overflow-hidden"
+                                            className="group cursor-pointer rounded-2xl border border-white/70 bg-white/80 hover:bg-white hover:border-desert-gold/45 hover:-translate-y-1 shadow-sm hover:shadow-xl grid grid-cols-1 sm:grid-cols-[260px_minmax(0,1fr)] transition-all duration-300 overflow-hidden"
                                         >
                                             {/* Preview Area */}
-                                            <div className="relative aspect-video w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b border-white/10 shrink-0">
+                                            <div className="relative aspect-video sm:aspect-auto sm:min-h-[190px] w-full bg-slate-900 overflow-hidden flex items-center justify-center border-b sm:border-b-0 sm:border-r border-white/10 shrink-0">
                                                 {isPoster ? (
                                                     <img 
                                                         src={policy.url} 
@@ -540,24 +603,35 @@ export default function PoliciesShowcase({ section = 'policy' }: { section?: 'po
                                             </div>
 
                                             {/* Text Info */}
-                                            <div className="p-4 flex-1 flex flex-col justify-between bg-white/50">
+                                            <div className="p-5 flex-1 flex flex-col justify-between bg-white/55">
                                                 <div>
-                                                    <h4 className="font-black text-sm text-slate-800 line-clamp-1 group-hover:text-desert-gold transition-colors">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-deep-teal/10 text-deep-teal">
+                                                            {policy.targetTeam === 'all' ? t('policy_showcase.visible_to_all', '全部可见') : getTeamLabel(policy.targetTeam)}
+                                                        </span>
+                                                        {createdDate && (
+                                                            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 inline-flex items-center gap-1">
+                                                                <CalendarDays className="w-3 h-3" />
+                                                                {createdDate}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <h4 className="font-black text-lg text-slate-900 line-clamp-2 group-hover:text-desert-gold transition-colors leading-snug">
                                                         {policy.title}
                                                     </h4>
                                                     {policy.description && (
-                                                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed font-medium">
+                                                        <p className="text-sm text-slate-500 mt-2 line-clamp-3 leading-relaxed font-medium">
                                                             {policy.description}
                                                         </p>
                                                     )}
                                                 </div>
                                                 
                                                 {/* Action footer */}
-                                                <div className="flex items-center justify-between mt-3.5 pt-2.5 border-t border-slate-100">
-                                                    <span className="text-[10px] font-bold text-slate-400">
-                                                        {policy.targetTeam === 'all' ? t('policy_showcase.visible_to_all', '全部可见') : getTeamLabel(policy.targetTeam)}
+                                                <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
+                                                    <span className="text-[11px] font-black uppercase tracking-wide text-slate-400">
+                                                        {typeBadge}
                                                     </span>
-                                                    <span className="text-[11px] font-black text-deep-teal flex items-center gap-0.5">
+                                                    <span className="text-sm font-black text-deep-teal flex items-center gap-0.5">
                                                         {actionLabel} →
                                                     </span>
                                                 </div>
