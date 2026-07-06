@@ -53,6 +53,10 @@ calling the release fully verified.
 | Android push tap opens the correct recording/task/campaign page | Pass / Fail | Device screenshot |
 | Material App push notification is received | Pass / Fail | Device screenshot |
 | Material App push opens the recording detail page | Pass / Fail | URL/screenshot showing `recordingId` |
+| Policy App push notification is received | Pass / Fail | Device screenshot |
+| Policy App push opens the policy detail page | Pass / Fail | URL/screenshot showing `/policies?policyId=` |
+| Brand App push notification is received | Pass / Fail | Device screenshot |
+| Brand App push opens the brand detail page | Pass / Fail | URL/screenshot showing `/brands?policyId=` |
 | Arabic Android push notification renders in Arabic | Pass / Fail | Device screenshot showing Arabic push text |
 | FCM failure fallback still leaves task accessible | Pass / Fail / Not applicable | Task list screenshot |
 

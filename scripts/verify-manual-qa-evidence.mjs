@@ -42,6 +42,10 @@ try {
   assert(content.includes('| DingTalk challenge message opens the challenge learning page | Pass / Fail |'), 'Generated evidence must include DingTalk challenge deep-link row');
   assert(content.includes('| Material App push notification is received | Pass / Fail |'), 'Generated evidence must include material App push receive row');
   assert(content.includes('| Material App push opens the recording detail page | Pass / Fail |'), 'Generated evidence must include material App push recording route row');
+  assert(content.includes('| Policy App push notification is received | Pass / Fail |'), 'Generated evidence must include policy App push receive row');
+  assert(content.includes('| Policy App push opens the policy detail page | Pass / Fail |'), 'Generated evidence must include policy App push route row');
+  assert(content.includes('| Brand App push notification is received | Pass / Fail |'), 'Generated evidence must include brand App push receive row');
+  assert(content.includes('| Brand App push opens the brand detail page | Pass / Fail |'), 'Generated evidence must include brand App push route row');
   assert(content.includes('| Arabic Android push notification renders in Arabic | Pass / Fail |'), 'Generated evidence must include Arabic Android push row');
   assert(!content.includes('Pass / Fail / Not configured'), 'Generated evidence must not allow Not configured push placeholders');
   assert(!content.includes('if configured'), 'Generated evidence must not use optional push language');
