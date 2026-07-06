@@ -46,6 +46,8 @@ interface Category {
     name: string;
     businessType?: string;
     scope?: string;
+    hubScope?: 'public' | 'team';
+    targetSmId?: string;
     sortOrder?: number;
     createdAt?: any;
 }
@@ -4120,6 +4122,8 @@ export default function LearningHub() {
                         name: docData.name,
                         businessType: docData.businessType || 'kid',
                         scope: docData.scope || 'public',
+                        hubScope: docData.hubScope || 'public',
+                        targetSmId: docData.targetSmId || '',
                         sortOrder: docData.sortOrder !== undefined ? docData.sortOrder : undefined,
                         createdAt: docData.createdAt
                     });
@@ -4355,6 +4359,34 @@ export default function LearningHub() {
             }
         }
     }, [hubScope, activeSmId, searchParams, setSearchParams]);
+
+    const visibleCategories = React.useMemo(() => {
+        return categories.filter(cat => {
+            if ((cat.businessType || 'kid') !== businessType) return false;
+
+            const catHubScope = cat.hubScope || 'public';
+            if (hubScope === 'team') {
+                if (activeSmId === 'all') {
+                    return catHubScope === 'public' || catHubScope === 'team';
+                }
+                return catHubScope === 'public' || (catHubScope === 'team' && cat.targetSmId === activeSmId);
+            }
+
+            if (catHubScope === 'team') return false;
+            if (publicHubTab === 'new_cc') {
+                return cat.scope === 'new_cc';
+            }
+            return cat.scope !== 'new_cc';
+        });
+    }, [categories, businessType, hubScope, activeSmId, publicHubTab]);
+
+    useEffect(() => {
+        if (activeTab === 'all') return;
+        if (!visibleCategories.some(cat => cat.id === activeTab)) {
+            setActiveTab('all');
+            setSelectedLecturer('');
+        }
+    }, [activeTab, visibleCategories]);
 
     // Autoplay sliding banner effect
     useEffect(() => {
@@ -7386,14 +7418,7 @@ export default function LearningHub() {
                                 >
                                     {t('learning_hub.all_content')}
                                 </button>
-                                {categories.filter(cat => {
-                                    if ((cat.businessType || 'kid') !== businessType) return false;
-                                    if (hubScope === 'public' && publicHubTab === 'new_cc') {
-                                        return cat.scope === 'new_cc';
-                                    } else {
-                                        return cat.scope !== 'new_cc';
-                                    }
-                                }).map(cat => (
+                                {visibleCategories.map(cat => (
                                     <button
                                         key={cat.id}
                                         onClick={() => { setActiveTab(cat.id); setSelectedLecturer(''); if (sortType === 'leaderboard') setSortType('latest'); }}
