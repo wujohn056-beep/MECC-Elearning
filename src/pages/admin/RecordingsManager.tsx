@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
-import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight, BookOpen, Pin, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, User, Pencil, Trash2, X, Download, Search, Users, Send, RefreshCw, ChevronDown, ChevronRight, BookOpen, Pin, Sparkles, Calendar } from 'lucide-react';
 
 interface Attachment {
     id: string;
@@ -42,7 +42,7 @@ interface Category {
 }
 
 export default function RecordingsManager() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [recordings, setRecordings] = useState<Recording[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const { hasPermission, profile, isLeader, user, isSuperAdmin } = useAuth();
@@ -151,6 +151,24 @@ export default function RecordingsManager() {
     // Attachment States
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [uploadingAttachments, setUploadingAttachments] = useState<Record<string, number>>({});
+
+    const formatUploadDate = (value: any) => {
+        if (!value) return '';
+        const date = value?.toDate?.() instanceof Date
+            ? value.toDate()
+            : value?.seconds
+                ? new Date(value.seconds * 1000)
+                : value instanceof Date
+                    ? value
+                    : new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const locale = i18n.language === 'zh' ? 'zh-CN' : i18n.language === 'ar' ? 'ar' : 'en';
+        return date.toLocaleDateString(locale, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
 
     const [pageError, setPageError] = useState<string | null>(null);
 
@@ -2163,6 +2181,7 @@ export default function RecordingsManager() {
                                     const cleanUrl = url.split('?')[0];
                                     const isVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.m4v') || cleanUrl.endsWith('.avi') || cleanUrl.endsWith('.mkv');
                                     const recCanManage = canManageRecording(rec);
+                                    const uploadDateLabel = formatUploadDate(rec.createdAt);
 
                                     return (
                                         <div key={rec.id} className={`bg-white/60 p-4 rounded-xl flex items-center justify-between hover:bg-white transition-colors border ${editingId === rec.id ? 'border-desert-gold shadow-md' : 'border-transparent hover:border-desert-gold/30'} group`}>
@@ -2263,10 +2282,20 @@ export default function RecordingsManager() {
                                                         </h3>
                                                     </div>
                                                     <p className="text-sm text-arabian-night/60 mt-1 line-clamp-1">{rec.description}</p>
-                                                    {rec.lecturerName && (
-                                                        <p className="text-xs text-desert-gold mt-1 font-medium flex items-center gap-1">
-                                                            <User className="h-3 w-3" /> {rec.lecturerName}
-                                                        </p>
+                                                    {(rec.lecturerName || uploadDateLabel) && (
+                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs font-medium">
+                                                            {rec.lecturerName && (
+                                                                <span className="text-desert-gold flex items-center gap-1">
+                                                                    <User className="h-3 w-3" /> {rec.lecturerName}
+                                                                </span>
+                                                            )}
+                                                            {uploadDateLabel && (
+                                                                <span className="text-slate-500 flex items-center gap-1">
+                                                                    <Calendar className="h-3 w-3" />
+                                                                    {t('recordings_manager.upload_date', '上传日期')}: {uploadDateLabel}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     )}
                                                     {rec.attachments && rec.attachments.length > 0 && (
                                                         <div className="flex flex-wrap gap-1.5 mt-2 select-none">

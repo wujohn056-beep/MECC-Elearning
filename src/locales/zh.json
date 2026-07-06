@@ -432,6 +432,7 @@
         "save_changes": "保存修改",
         "start_upload": "开始上传",
         "uploaded_resources": "已上传的资源",
+        "upload_date": "上传日期",
         "category_filter_label": "按分类筛选素材",
         "category_filter_all": "全部分类",
         "no_resources": "暂无资源，请在左侧新建分类并上传",

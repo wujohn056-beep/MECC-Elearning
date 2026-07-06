@@ -432,6 +432,7 @@
         "save_changes": "Save Changes",
         "start_upload": "Start Upload",
         "uploaded_resources": "Uploaded Resources",
+        "upload_date": "Upload Date",
         "category_filter_label": "Filter by category",
         "category_filter_all": "All Categories",
         "no_resources": "No resources yet, please create a category and upload",
