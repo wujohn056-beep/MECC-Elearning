@@ -32,6 +32,9 @@ interface ActivityLog {
     team: string;
     date: string;
     lastLoginAt: any;
+    platform?: string;
+    appVersion?: string;
+    appBuild?: string | number;
 }
 
 interface LearningTask {
@@ -227,6 +230,14 @@ export default function AdminDashboard() {
     }, [scopeUsers, filterSd, filterSm, filterTeam, filterCc]);
 
     const displayedUserIds = useMemo(() => new Set(displayedUsers.map(u => u.id)), [displayedUsers]);
+    const usersById = useMemo(() => {
+        const map = new Map<string, UserRecord>();
+        users.forEach(u => {
+            map.set(u.id, u);
+            if (u.crmId) map.set(u.crmId, u);
+        });
+        return map;
+    }, [users]);
 
     // 2. Filter Dates
     const { startDate, endDate } = useMemo(() => {
@@ -268,6 +279,20 @@ export default function AdminDashboard() {
             return isWithinInterval(d, { start: startOfDay(startDate), end: endOfDay(endDate) }) && displayedUserIds.has(log.userId);
         }).sort((a, b) => b.lastLoginAt?.toDate?.()?.getTime() - a.lastLoginAt?.toDate?.()?.getTime());
     }, [activityLogs, startDate, endDate, displayedUserIds]);
+
+    const getLoginPlatform = (act: ActivityLog) => {
+        const userRecord = usersById.get(act.userId) || usersById.get(act.crmId);
+        return String(act.platform || (userRecord as any)?.platform || '').toLowerCase();
+    };
+
+    const formatLoginPlatform = (act: ActivityLog) => {
+        const platform = getLoginPlatform(act);
+        if (platform === 'web') return '🌐 Web';
+        if (platform === 'ios') return '🍏 iOS App';
+        if (platform === 'android') return '🤖 Android App';
+        if (platform) return `📱 ${platform}`;
+        return '-';
+    };
 
     const loginAnalysis = useMemo(() => {
         const now = new Date().getTime();
@@ -1387,6 +1412,7 @@ export default function AdminDashboard() {
                                     <th className="py-3 px-4 rounded-tl-xl bg-white/95 backdrop-blur-sm">CRM ID</th>
                                     <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('common.name', '姓名')}</th>
                                     <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">Team</th>
+                                    <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{localT('dashboard.platform', '端/平台', i18n)}</th>
                                     <th className="py-3 px-4 bg-white/95 backdrop-blur-sm">{t('dashboard.date', '日期')}</th>
                                     <th className="py-3 px-4 rounded-tr-xl bg-white/95 backdrop-blur-sm">{t('dashboard.last_login_time', '最后登录时间')}</th>
                                 </tr>
@@ -1401,6 +1427,17 @@ export default function AdminDashboard() {
                                                 {act.team || '-'}
                                             </span>
                                         </td>
+                                        <td className="py-3 px-4">
+                                            <span className={`px-2 py-0.5 rounded text-xs font-extrabold ${
+                                                getLoginPlatform(act) === 'web'
+                                                    ? 'bg-blue-50 text-blue-700'
+                                                    : getLoginPlatform(act) === 'ios' || getLoginPlatform(act) === 'android'
+                                                        ? 'bg-emerald-50 text-emerald-700'
+                                                        : 'bg-gray-100 text-arabian-night/60'
+                                            }`}>
+                                                {formatLoginPlatform(act)}
+                                            </span>
+                                        </td>
                                         <td className="py-3 px-4 font-bold text-deep-teal">{act.date}</td>
                                         <td className="py-3 px-4 text-arabian-night/70">
                                             {act.lastLoginAt ? (act.lastLoginAt.toDate ? act.lastLoginAt.toDate().toLocaleString() : new Date(act.lastLoginAt).toLocaleString()) : '-'}
@@ -1409,7 +1446,7 @@ export default function AdminDashboard() {
                                 ))}
                                 {filteredActivities.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="py-8 text-center text-gray-400">
+                                        <td colSpan={6} className="py-8 text-center text-gray-400">
                                             {t('common.no_data', '暂无数据')}
                                         </td>
                                     </tr>
