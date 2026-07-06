@@ -817,6 +817,8 @@
         "upload_success": "文件上传成功！",
         "uploaded": "已上传",
         "target_team": "所属业务团队",
+        "target_team_hint": "这是业务线可见范围：All / KCC / GCC / Adult / SS，不是 SM/TL 小组。SM/TL 团队范围请使用下面的发布范围。",
+        "target_team_locked_hint": "当前账号的运营范围被锁定为 {{scope}}，因此不能更改。需要调整时请由超级管理员在用户管理中修改 Manage Policy Scope / Brand Scope。",
         "page_title": "运营政策与目录管理",
         "page_subtitle": "分团队维护销售激励方案与学习政策。您可以设置树形子目录，将不同激励和政策按文件夹分门别类展示。",
         "scope_isolated": "🔒 运营隔离",

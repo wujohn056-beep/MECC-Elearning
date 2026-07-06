@@ -1257,6 +1257,14 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                                 <option value="Adult">{t('common.team_adult_option', '👨 ACC 团队 (Alan / Chase)')}</option>
                                                 <option value="SS">{t('common.team_ss_option', '🎓 SS 团队 (Lily)')}</option>
                                             </select>
+                                            <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                                                {t('policy_manager.target_team_hint', '这是业务线可见范围：All / KCC / GCC / Adult / SS，不是 SM/TL 小组。SM/TL 团队范围请使用下面的发布范围。')}
+                                            </p>
+                                            {adminScope !== 'all' && (
+                                                <p className="mt-1 text-[11px] leading-relaxed text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1">
+                                                    {t('policy_manager.target_team_locked_hint', '当前账号的运营范围被锁定为 {{scope}}，因此不能更改。需要调整时请由超级管理员在用户管理中修改 Manage Policy Scope / Brand Scope。', { scope: getTeamLabel(adminScope) })}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1736,6 +1744,14 @@ export default function PolicyManager({ initialSection }: PolicyManagerProps = {
                                             <option value="Adult">{t('common.team_adult_option', '👨 ACC 团队 (Alan / Chase)')}</option>
                                             <option value="SS">{t('common.team_ss_option', '🎓 SS 团队 (Lily)')}</option>
                                         </select>
+                                        <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                                            {t('policy_manager.target_team_hint', '这是业务线可见范围：All / KCC / GCC / Adult / SS，不是 SM/TL 小组。SM/TL 团队范围请使用下面的发布范围。')}
+                                        </p>
+                                        {adminScope !== 'all' && (
+                                            <p className="mt-1 text-[11px] leading-relaxed text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1">
+                                                {t('policy_manager.target_team_locked_hint', '当前账号的运营范围被锁定为 {{scope}}，因此不能更改。需要调整时请由超级管理员在用户管理中修改 Manage Policy Scope / Brand Scope。', { scope: getTeamLabel(adminScope) })}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>

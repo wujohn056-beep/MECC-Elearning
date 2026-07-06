@@ -817,6 +817,8 @@
         "upload_success": "File uploaded successfully!",
         "uploaded": "Uploaded",
         "target_team": "Target Business Team",
+        "target_team_hint": "This is business-line visibility: All / KCC / GCC / Adult / SS. It is not the SM/TL team. Use Publish Scope below for SM/TL team targeting.",
+        "target_team_locked_hint": "Your account scope is locked to {{scope}}, so this field is read-only. Ask a super admin to update Manage Policy Scope / Brand Scope in User Management.",
         "page_title": "Operations Policies & Directory Management",
         "page_subtitle": "Maintain sales incentives and learning policies by team. Set up folder structures to organize resources.",
         "scope_isolated": "🔒 Scope Boundary",
