@@ -259,6 +259,7 @@ const sourceAssertions = [
   ['task publish keeps expired deadline visibly blocked before submit', 'src/pages/TeamTasks.tsx', ['if (deadlineObj <= new Date())', "deadline_must_be_future", '|| isDeadlineInvalid}']],
   ['task publish parses deadline without browser string Date parsing', 'src/pages/TeamTasks.tsx', ['parseLocalDateTime(deadlineDate, deadlineTime)', 'parseLocalDateTime(editDeadlineDate, editDeadlineTime)', "deadline_invalid_format"]],
   ['task deadline picker is safari safe', 'src/pages/TeamTasks.tsx', ['renderDeadlineDateSelect', 'renderDeadlineTimeSelect', 'updateDateSelectValue', 'updateTimeSelectValue']],
+  ['task publish has independent start and deadline date time selectors', 'src/pages/TeamTasks.tsx', ['const [startDate, setStartDate]', 'const [startTime, setStartTime]', 'openCreateTaskModal', 'getDefaultTaskTiming', 'parseLocalDateTime(startDate, startTime)', 'deadlineObj <= startObj', 'startAt: Timestamp.fromDate(startObj)', "t('team_tasks.start_date'"]],
   ['safari-safe local date time parser exists', 'src/utils/localDateTime.ts', ['new Date(year, month - 1, day, hour, minute, second)', 'parsed.getFullYear() !== year', 'return null']],
   ['task push function forwards task id', 'netlify/functions/dingtalk.js', ['notifyTask', 'taskId', "type: 'task'", 'buildLearningUrl', 'buildDingTalkLearningLink']],
   ['task push has trilingual DingTalk and FCM copy', 'netlify/functions/dingtalk.js', ['getUserNotificationLanguage', 'recipientsAr', 'markdownAr', 'getTaskFcmNotification', 'مهمة تعلم جديدة']],

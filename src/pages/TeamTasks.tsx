@@ -100,6 +100,8 @@ export default function TeamTasks() {
     const [recordingSelectionMode, setRecordingSelectionMode] = useState<'all' | 'custom'>('all');
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
     const [selectedRecordingIds, setSelectedRecordingIds] = useState<string[]>([]);
+    const [startDate, setStartDate] = useState('');
+    const [startTime, setStartTime] = useState('');
     const [deadlineDate, setDeadlineDate] = useState('');
     const [deadlineTime, setDeadlineTime] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -110,8 +112,9 @@ export default function TeamTasks() {
         if (!deadlineDate || !deadlineTime) return false;
         const deadlineObj = parseLocalDateTime(deadlineDate, deadlineTime);
         if (!deadlineObj) return true;
-        return deadlineObj <= new Date();
-    }, [deadlineDate, deadlineTime]);
+        const startObj = startDate && startTime ? parseLocalDateTime(startDate, startTime) : null;
+        return deadlineObj <= new Date() || (!!startObj && deadlineObj <= startObj);
+    }, [deadlineDate, deadlineTime, startDate, startTime]);
 
     const isEditDeadlineInvalid = React.useMemo(() => {
         if (!editDeadlineDate || !editDeadlineTime) return false;
@@ -135,6 +138,45 @@ export default function TeamTasks() {
             minute: match[2],
             period: hour24 >= 12 ? 'PM' : 'AM'
         };
+    };
+
+    const formatLocalDateValue = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const formatLocalTimeValue = (date: Date) => {
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return `${hour}:${minute}`;
+    };
+
+    const getDefaultTaskTiming = () => {
+        const now = new Date();
+        const start = new Date(now);
+        const deadline = new Date(now);
+        deadline.setHours(23, 55, 0, 0);
+        if (deadline <= now) {
+            deadline.setDate(deadline.getDate() + 1);
+            deadline.setHours(23, 55, 0, 0);
+        }
+        return {
+            startDate: formatLocalDateValue(start),
+            startTime: formatLocalTimeValue(start),
+            deadlineDate: formatLocalDateValue(deadline),
+            deadlineTime: formatLocalTimeValue(deadline)
+        };
+    };
+
+    const openCreateTaskModal = () => {
+        const defaults = getDefaultTaskTiming();
+        setStartDate(defaults.startDate);
+        setStartTime(defaults.startTime);
+        setDeadlineDate(defaults.deadlineDate);
+        setDeadlineTime(defaults.deadlineTime);
+        setShowCreateModal(true);
     };
 
     const dateSelectYears = React.useMemo(() => {
@@ -464,19 +506,20 @@ export default function TeamTasks() {
 
     const handleCreateTask = async (e?: React.SyntheticEvent) => {
         e?.preventDefault();
-        if (!user || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime) return;
+        if (!user || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !startDate || !startTime || !deadlineDate || !deadlineTime) return;
 
         setSubmitting(true);
         setPublishNotice(null);
         try {
+            const startObj = parseLocalDateTime(startDate, startTime);
             const deadlineObj = parseLocalDateTime(deadlineDate, deadlineTime);
-            if (!deadlineObj) {
+            if (!startObj || !deadlineObj) {
                 alert(t('team_tasks.deadline_invalid_format', 'Please enter a valid deadline date and time.'));
                 setSubmitting(false);
                 return;
             }
             
-            if (deadlineObj <= new Date()) {
+            if (deadlineObj <= new Date() || deadlineObj <= startObj) {
                 alert(t('team_tasks.deadline_must_be_future', '截止时间必须晚于当前时间！'));
                 setSubmitting(false);
                 return;
@@ -504,6 +547,7 @@ export default function TeamTasks() {
                 assigneeIds: selectedUserIds,
                 assignees: assigneesMap,
                 recordingIds: selectedRecordingIds,
+                startAt: Timestamp.fromDate(startObj),
                 deadline: Timestamp.fromDate(deadlineObj),
                 createdAt: serverTimestamp(),
                 categoryIds: newTaskType === 'new_cc' ? [selectedCategory] : []
@@ -521,7 +565,7 @@ export default function TeamTasks() {
                         assigneeIds: selectedUserIds,
                         recordingIds: selectedRecordingIds,
                         deadline: deadlineObj.toLocaleString(),
-                        startTime: new Date().toLocaleString(),
+                        startTime: startObj.toLocaleString(),
                         taskId: docRef.id
                     })
                 });
@@ -573,8 +617,11 @@ export default function TeamTasks() {
             setRecordingSelectionMode('all');
             setSelectedUserIds([]);
             setSelectedRecordingIds([]);
-            setDeadlineDate('');
-            setDeadlineTime('');
+            const defaults = getDefaultTaskTiming();
+            setStartDate(defaults.startDate);
+            setStartTime(defaults.startTime);
+            setDeadlineDate(defaults.deadlineDate);
+            setDeadlineTime(defaults.deadlineTime);
             setRecordingSearchQuery('');
             
             fetchTasks();
@@ -782,7 +829,7 @@ export default function TeamTasks() {
                                 if (activeTab === 'campaigns') {
                                     setTriggerCampaignCreate(true);
                                 } else {
-                                    setShowCreateModal(true);
+                                    openCreateTaskModal();
                                 }
                             }}
                             className="bg-desert-gold text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm active:scale-95 transition-all shrink-0"
@@ -815,7 +862,7 @@ export default function TeamTasks() {
                                     if (activeTab === 'campaigns') {
                                         setTriggerCampaignCreate(true);
                                     } else {
-                                        setShowCreateModal(true);
+                                        openCreateTaskModal();
                                     }
                                 }}
                                 className="bg-desert-gold text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-yellow-600 transition-colors"
@@ -1366,14 +1413,26 @@ export default function TeamTasks() {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.deadline_date')}</label>
-                                    {renderDeadlineDateSelect(deadlineDate, setDeadlineDate, isDeadlineInvalid)}
+                            <div className="space-y-4 rounded-2xl border border-gray-100 bg-white/50 p-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.start_date', '开始日期')}</label>
+                                        {renderDeadlineDateSelect(startDate, setStartDate, false)}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.start_time')}</label>
+                                        {renderDeadlineTimeSelect(startTime, setStartTime, false)}
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.deadline_time')}</label>
-                                    {renderDeadlineTimeSelect(deadlineTime, setDeadlineTime, isDeadlineInvalid)}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.deadline_date')}</label>
+                                        {renderDeadlineDateSelect(deadlineDate, setDeadlineDate, isDeadlineInvalid)}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-arabian-night/80 mb-2">{t('team_tasks.deadline_time')}</label>
+                                        {renderDeadlineTimeSelect(deadlineTime, setDeadlineTime, isDeadlineInvalid)}
+                                    </div>
                                 </div>
                             </div>
                             {isDeadlineInvalid && (
@@ -1395,7 +1454,7 @@ export default function TeamTasks() {
                             <button 
                                 type="button"
                                 onClick={handleCreateTask}
-                                disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !deadlineDate || !deadlineTime || isDeadlineInvalid}
+                                disabled={submitting || selectedUserIds.length === 0 || selectedRecordingIds.length === 0 || !startDate || !startTime || !deadlineDate || !deadlineTime || isDeadlineInvalid}
                                 className="px-6 py-2 bg-deep-teal text-white rounded-lg font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {submitting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
