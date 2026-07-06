@@ -36,6 +36,9 @@ interface Category {
     id: string;
     name: string;
     businessType?: 'kid' | 'adult' | 'ss' | 'leader';
+    hubScope?: 'public' | 'team';
+    targetSmId?: string;
+    scope?: 'public' | 'new_cc';
 }
 
 export default function RecordingsManager() {
@@ -44,6 +47,14 @@ export default function RecordingsManager() {
     const [categories, setCategories] = useState<Category[]>([]);
     const { hasPermission, profile, isLeader, user, isSuperAdmin } = useAuth();
     const isWriteAllowed = isSuperAdmin;
+    const userRole = String(profile?.role || '').toLowerCase();
+    const isSmAdmin = userRole === 'sm';
+    const canManageTeamHubMaterials = isSuperAdmin || isSmAdmin;
+    const canManageRecording = React.useCallback((rec?: Recording | null) => {
+        if (!rec) return false;
+        if (isSuperAdmin) return true;
+        return isSmAdmin && (rec as any).hubScope === 'team' && (rec as any).targetSmId === profile?.crmId;
+    }, [isSuperAdmin, isSmAdmin, profile?.crmId]);
     const [transcribingIds, setTranscribingIds] = useState<Record<string, boolean>>({});
     
     // DingTalk Multi-Target Push States
@@ -787,6 +798,10 @@ export default function RecordingsManager() {
     };
 
     const handleEdit = (rec: Recording) => {
+        if (!canManageRecording(rec)) {
+            alert(t('recordings_manager.team_hub_no_permission', '您只能维护自己团队 Hub 内的素材。'));
+            return;
+        }
         setEditingId(rec.id);
         setTitle(rec.title);
         setDescription(rec.description);
@@ -818,6 +833,10 @@ export default function RecordingsManager() {
     };
 
     const handleDelete = async (rec: Recording) => {
+        if (!canManageRecording(rec)) {
+            alert(t('recordings_manager.team_hub_no_permission', '您只能维护自己团队 Hub 内的素材。'));
+            return;
+        }
         const confirmMsg = t('recordings_manager.delete_confirm').replace('{{title}}', rec.title);
         if (!window.confirm(confirmMsg)) {
             return;
@@ -863,6 +882,10 @@ export default function RecordingsManager() {
     };
 
     const handleTogglePin = async (rec: Recording) => {
+        if (!canManageRecording(rec)) {
+            alert(t('recordings_manager.team_hub_no_permission', '您只能维护自己团队 Hub 内的素材。'));
+            return;
+        }
         try {
             setUploading(true);
             setPageError(null);
@@ -879,14 +902,17 @@ export default function RecordingsManager() {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === filteredRecordings.length && filteredRecordings.length > 0) {
+        const manageableIds = filteredRecordings.filter(rec => canManageRecording(rec)).map(r => r.id);
+        if (selectedIds.length === manageableIds.length && manageableIds.length > 0) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filteredRecordings.map(r => r.id));
+            setSelectedIds(manageableIds);
         }
     };
 
     const toggleSelect = (id: string) => {
+        const rec = recordings.find(r => r.id === id);
+        if (!canManageRecording(rec)) return;
         if (selectedIds.includes(id)) {
             setSelectedIds(selectedIds.filter(i => i !== id));
         } else {
@@ -896,12 +922,17 @@ export default function RecordingsManager() {
 
     const handleBatchDelete = async () => {
         if (selectedIds.length === 0) return;
+        const manageableIds = selectedIds.filter(id => canManageRecording(recordings.find(r => r.id === id)));
+        if (manageableIds.length === 0) {
+            alert(t('recordings_manager.team_hub_no_permission', '您只能维护自己团队 Hub 内的素材。'));
+            return;
+        }
         if (!window.confirm(t('recordings_manager.batch_delete_confirm', '确定要删除选中的这些文件吗？此操作不可恢复。'))) return;
         
         setUploading(true);
         setPageError(null);
         try {
-            const deletePromises = selectedIds.map(async (id) => {
+            const deletePromises = manageableIds.map(async (id) => {
                 const rec = recordings.find(r => r.id === id);
                 if (!rec) return;
 
@@ -937,6 +968,7 @@ export default function RecordingsManager() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!canManageTeamHubMaterials) return;
         
         if (uploading) return;
         
@@ -949,6 +981,14 @@ export default function RecordingsManager() {
         // Require file only if creating new and no attachments exist
         if (!editingId && !file && attachments.length === 0) return;
         if (!title) return;
+
+        if (editingId) {
+            const currentRec = recordings.find(r => r.id === editingId);
+            if (!canManageRecording(currentRec)) {
+                alert(t('recordings_manager.team_hub_no_permission', '您只能维护自己团队 Hub 内的素材。'));
+                return;
+            }
+        }
 
         setUploading(true);
         setPageError(null);
@@ -988,6 +1028,18 @@ export default function RecordingsManager() {
 
             const category = categories.find(c => c.id === selectedCategoryId);
             const resolvedBusinessType = category?.businessType || businessType;
+            const effectiveHubScope: 'public' | 'team' = isSmAdmin ? 'team' : hubScope;
+            const effectiveTargetSmId = isSmAdmin ? (profile?.crmId || '') : targetSmId;
+            const effectiveTargetHubs = effectiveHubScope === 'team'
+                ? ['team']
+                : (targetHubs.length > 0 ? targetHubs : ['public']);
+
+            if (effectiveHubScope === 'team' && !effectiveTargetSmId) {
+                alert(t('recordings_manager.select_sm_required', '请选择一个 SM 团队后再提交。'));
+                setUploading(false);
+                return;
+            }
+
             const shouldAutoTranscribe = !!file && !!audioUrl && (
                 file.type.startsWith('audio/') || file.type.startsWith('video/')
             );
@@ -1003,10 +1055,10 @@ export default function RecordingsManager() {
                 uploaderId: user?.uid || '',
                 uploaderCrmId: profile?.crmId || '',
                 attachments: attachments || [],
-                hubScope,
-                targetSmId,
-                targetSmName: hubScope === 'team' && targetSmId ? (systemUsers.find(u => u.crmId === targetSmId)?.name || targetSmId) : '',
-                targetHubs: targetHubs.length > 0 ? targetHubs : ['public']
+                hubScope: effectiveHubScope,
+                targetSmId: effectiveTargetSmId,
+                targetSmName: effectiveHubScope === 'team' && effectiveTargetSmId ? (systemUsers.find(u => u.crmId === effectiveTargetSmId)?.name || effectiveTargetSmId) : '',
+                targetHubs: effectiveTargetHubs
             };
 
             let savedRecordingId = editingId || '';
@@ -1347,9 +1399,9 @@ export default function RecordingsManager() {
                 </div>
             )}
 
-            <div className={isWriteAllowed ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : "w-full"}>
+            <div className={canManageTeamHubMaterials ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : "w-full"}>
                 {/* Left Column: Category & Upload Form */}
-                {isWriteAllowed && (
+                {canManageTeamHubMaterials && (
                     <div className="lg:col-span-1 space-y-6">
                         {/* Upload Form */}
                         <div className="glass-panel rounded-2xl p-6 border border-desert-gold/20">
@@ -1488,6 +1540,11 @@ export default function RecordingsManager() {
                             )}
 
                             {/* Distribution Channels Selector */}
+                            {isSmAdmin ? (
+                                <div className="bg-teal-50/80 border border-teal-100 rounded-xl p-3 text-xs font-semibold text-deep-teal">
+                                    {t('recordings_manager.sm_team_hub_locked', 'SM 上传的素材默认只进入自己的 Team Hub，不会发布到公共库或新 CC 专区。')}
+                                </div>
+                            ) : (
                             <div>
                                 <label className="block text-sm font-semibold text-deep-teal mb-1">
                                     {t('recordings_manager.distribution_channels', '分发渠道')}
@@ -1537,6 +1594,7 @@ export default function RecordingsManager() {
                                     </label>
                                 </div>
                             </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-semibold text-deep-teal mb-1">{t('common.business_type', '业务线')}</label>
@@ -2031,7 +2089,7 @@ export default function RecordingsManager() {
                 )}
 
                 {/* Right Column: Recordings List */}
-                <div className={isWriteAllowed ? "lg:col-span-2" : "w-full"}>
+                <div className={canManageTeamHubMaterials ? "lg:col-span-2" : "w-full"}>
                     <div className="glass-panel rounded-2xl p-6 border border-white/40 min-h-[500px]">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                             <h2 className="text-xl font-bold text-deep-teal flex items-center gap-2">
@@ -2068,7 +2126,7 @@ export default function RecordingsManager() {
                                         ))
                                     }
                                 </select>
-                                {selectedIds.length > 0 && isWriteAllowed && (
+                                {selectedIds.length > 0 && canManageTeamHubMaterials && (
                                     <button
                                         onClick={handleBatchDelete}
                                         disabled={uploading}
@@ -2081,7 +2139,7 @@ export default function RecordingsManager() {
                             </div>
                         </div>
 
-                        {filteredRecordings.length > 0 && isWriteAllowed && (
+                        {filteredRecordings.length > 0 && canManageTeamHubMaterials && (
                             <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gray-50 rounded-lg border border-gray-100">
                                 <input
                                     type="checkbox"
@@ -2104,11 +2162,12 @@ export default function RecordingsManager() {
                                     const url = rec.audioUrl?.toLowerCase() || '';
                                     const cleanUrl = url.split('?')[0];
                                     const isVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.m4v') || cleanUrl.endsWith('.avi') || cleanUrl.endsWith('.mkv');
+                                    const recCanManage = canManageRecording(rec);
 
                                     return (
                                         <div key={rec.id} className={`bg-white/60 p-4 rounded-xl flex items-center justify-between hover:bg-white transition-colors border ${editingId === rec.id ? 'border-desert-gold shadow-md' : 'border-transparent hover:border-desert-gold/30'} group`}>
                                             <div className="flex items-start gap-4">
-                                                {isWriteAllowed && (
+                                                {recCanManage && (
                                                     <input
                                                         type="checkbox"
                                                         checked={selectedIds.includes(rec.id)}
@@ -2159,14 +2218,16 @@ export default function RecordingsManager() {
                                                             }
                                                         </span>
                                                         {(() => {
-                                                            const hubs = (rec as any).targetHubs || ['public'];
+                                                            const hubs = (rec as any).hubScope === 'team' ? ['team'] : ((rec as any).targetHubs || ['public']);
                                                             return hubs.map((h: string) => (
                                                                 <span key={h} className={`text-[9px] px-2 py-0.5 rounded-full font-bold border select-none ${
-                                                                    h === 'new_cc' 
+                                                                    h === 'team'
+                                                                        ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                                                        : h === 'new_cc' 
                                                                         ? 'bg-rose-50 text-rose-700 border-rose-200' 
                                                                         : 'bg-teal-50 text-teal-700 border-teal-200'
                                                                 }`}>
-                                                                    {h === 'new_cc' ? 'New CC' : 'Public'}
+                                                                    {h === 'team' ? 'Team Hub' : h === 'new_cc' ? 'New CC' : 'Public'}
                                                                 </span>
                                                             ));
                                                         })()}
@@ -2228,16 +2289,16 @@ export default function RecordingsManager() {
                                             </div>
                                             <div className="flex flex-col items-end gap-2 ml-4">
                                                 <div className="flex gap-2">
-                                                    {(isWriteAllowed || (rec as any).transcript) && (
+                                                    {(recCanManage || (rec as any).transcript) && (
                                                         <button 
                                                             onClick={() => {
                                                                 if ((rec as any).transcript) {
                                                                     setViewingTranscriptRecording(rec);
-                                                                } else if (isWriteAllowed) {
+                                                                } else if (recCanManage) {
                                                                     handleTranscribe(rec);
                                                                 }
                                                             }} 
-                                                            disabled={isWriteAllowed && (transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading)}
+                                                            disabled={recCanManage && (transcribingIds[rec.id] || (rec as any).transcriptStatus === 'transcribing' || uploading)}
                                                             className={`p-1.5 bg-white rounded-md transition-colors shadow-sm border border-gray-100 disabled:opacity-50 ${
                                                                 (rec as any).transcript 
                                                                     ? 'text-green-600 hover:bg-green-50' 
@@ -2252,7 +2313,7 @@ export default function RecordingsManager() {
                                                             )}
                                                         </button>
                                                     )}
-                                                    {isWriteAllowed && (
+                                                    {recCanManage && (
                                                         <button 
                                                             onClick={() => handleTogglePin(rec)} 
                                                             disabled={uploading} 
@@ -2284,12 +2345,12 @@ export default function RecordingsManager() {
                                                     <button onClick={() => handlePushToDingTalkClick(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-teal-600 hover:bg-teal-50 transition-colors shadow-sm border border-gray-100" title={t('recordings_manager.push_dingtalk', '推送至钉钉')}>
                                                         <Send className="h-4 w-4" />
                                                     </button>
-                                                    {isWriteAllowed && (
+                                                    {recCanManage && (
                                                         <button onClick={() => handleEdit(rec)} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-deep-teal hover:bg-gray-100 transition-colors shadow-sm border border-gray-100" title="编辑">
                                                             <Pencil className="h-4 w-4" />
                                                         </button>
                                                     )}
-                                                    {isWriteAllowed && (
+                                                    {recCanManage && (
                                                         <button onClick={() => handleDelete(rec)} disabled={uploading} className="p-1.5 bg-white rounded-md text-arabian-night/40 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm border border-gray-100 disabled:opacity-50" title="删除">
                                                             <Trash2 className="h-4 w-4" />
                                                         </button>

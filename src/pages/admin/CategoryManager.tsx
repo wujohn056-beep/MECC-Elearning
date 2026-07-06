@@ -23,6 +23,8 @@ export default function CategoryManager() {
     const [loading, setLoading] = useState(true);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryScope, setNewCategoryScope] = useState<'public' | 'new_cc'>('public');
+    const [newCategoryHubScope, setNewCategoryHubScope] = useState<'public' | 'team'>('public');
+    const [newCategoryTargetSmId, setNewCategoryTargetSmId] = useState('');
     const [activeScopeFilter, setActiveScopeFilter] = useState<'public' | 'new_cc'>('public');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
@@ -30,7 +32,12 @@ export default function CategoryManager() {
     const [actionLoading, setActionLoading] = useState(false);
     const [businessType, setBusinessType] = useState<'kid' | 'adult' | 'ss' | 'leader'>('kid');
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [systemUsers, setSystemUsers] = useState<any[]>([]);
     const { hasPermission, profile, isLeader } = useAuth();
+
+    const smOptions = systemUsers
+        .filter(u => u.role === 'sm' && u.crmId)
+        .sort((a, b) => String(a.crmId || '').localeCompare(String(b.crmId || '')));
 
     const fetchCategories = async () => {
         setLoading(true);
@@ -65,6 +72,17 @@ export default function CategoryManager() {
                 return bTime - aTime;
             });
             setCategories(data);
+
+            if (profile?.role === 'super_admin') {
+                const usersSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'sm')));
+                const usersData: any[] = [];
+                usersSnapshot.forEach((doc: any) => usersData.push({ id: doc.id, ...doc.data() }));
+                setSystemUsers(usersData);
+                if (!newCategoryTargetSmId && usersData.length > 0) {
+                    const sorted = [...usersData].sort((a, b) => String(a.crmId || '').localeCompare(String(b.crmId || '')));
+                    setNewCategoryTargetSmId(sorted[0]?.crmId || '');
+                }
+            }
             setPageError(null);
         } catch (error: any) {
             setPageError(`${t('common.load_fail')} ${error.message}`);
@@ -186,20 +204,26 @@ export default function CategoryManager() {
 
     const handleCreate = async () => {
         if (!newCategoryName.trim()) return;
+        const isSuper = profile?.role === 'super_admin';
+        const catScope = isSuper ? newCategoryHubScope : 'team';
+        const catSmId = catScope === 'team' ? (isSuper ? newCategoryTargetSmId : (profile?.crmId || '')) : '';
+        const channelScope = catScope === 'team' ? 'public' : newCategoryScope;
+
+        if (catScope === 'team' && !catSmId) {
+            alert(t('recordings_manager.select_sm_required', '请选择一个 SM 团队后再提交。'));
+            return;
+        }
+
         setActionLoading(true);
         setPageError(null);
         try {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error(t('common.timeout'))), 10000));
-            const isSuper = profile?.role === 'super_admin';
-            const catScope = isSuper ? 'public' : 'team';
-            const catSmId = isSuper ? '' : (profile?.crmId || '');
-
             const addPromise = addDoc(collection(db, 'categories'), {
                 name: newCategoryName.trim(),
                 businessType: businessType,
                 hubScope: catScope,
                 targetSmId: catSmId,
-                scope: newCategoryScope,
+                scope: channelScope,
                 createdAt: serverTimestamp()
             });
             await Promise.race([addPromise, timeoutPromise]);
@@ -540,6 +564,60 @@ export default function CategoryManager() {
                             
                             {profile?.role === 'super_admin' && (
                                 <div>
+                                    <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('category_manager.hub_scope_label', 'Hub 归属')}</label>
+                                    <div className="flex flex-wrap gap-2.5 mt-1">
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryHubScope"
+                                                value="public"
+                                                checked={newCategoryHubScope === 'public'}
+                                                onChange={() => setNewCategoryHubScope('public')}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('recordings_manager.scope_public', '公共库')}</span>
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="categoryHubScope"
+                                                value="team"
+                                                checked={newCategoryHubScope === 'team'}
+                                                onChange={() => {
+                                                    setNewCategoryHubScope('team');
+                                                    setNewCategoryScope('public');
+                                                    if (!newCategoryTargetSmId && smOptions.length > 0) {
+                                                        setNewCategoryTargetSmId(smOptions[0].crmId || '');
+                                                    }
+                                                }}
+                                                className="w-3.5 h-3.5 text-desert-gold focus:ring-desert-gold"
+                                            />
+                                            <span className="text-xs font-semibold text-arabian-night">{t('recordings_manager.scope_team', '团队专属库')}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
+                            {profile?.role === 'super_admin' && newCategoryHubScope === 'team' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('learning_hub.select_sm_team', '选择SM团队')}</label>
+                                    <select
+                                        value={newCategoryTargetSmId}
+                                        onChange={(e) => setNewCategoryTargetSmId(e.target.value)}
+                                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-desert-gold focus:border-transparent bg-white"
+                                    >
+                                        <option value="">{t('recordings_manager.select_placeholder', '请选择团队...')}</option>
+                                        {smOptions.map(sm => (
+                                            <option key={sm.crmId} value={sm.crmId}>
+                                                {sm.name || sm.crmId} ({sm.crmId})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                            
+                            {profile?.role === 'super_admin' && newCategoryHubScope === 'public' && (
+                                <div>
                                     <label className="block text-xs font-bold text-deep-teal mb-1.5">{t('category_manager.scope_label', '所属专区')}</label>
                                     <div className="flex flex-wrap gap-2.5 mt-1">
                                         <label className="flex items-center gap-1.5 cursor-pointer">
@@ -682,6 +760,11 @@ export default function CategoryManager() {
                                                         {cat.scope === 'new_cc' && (
                                                             <span className="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/25 px-2 py-0.5 rounded-full select-none transform scale-90 origin-left">
                                                                 New CC
+                                                            </span>
+                                                        )}
+                                                        {cat.hubScope === 'team' && (
+                                                            <span className="text-[10px] bg-purple-500/10 text-purple-700 border border-purple-500/20 px-2 py-0.5 rounded-full select-none transform scale-90 origin-left">
+                                                                Team: {cat.targetSmId}
                                                             </span>
                                                         )}
                                                     </div>
