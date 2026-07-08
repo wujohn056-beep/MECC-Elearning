@@ -2422,21 +2422,21 @@ export default function RecordingsManager() {
 
             {/* Direct Transcript View Modal for Admin */}
             {viewingTranscriptRecording && (
-                <div className="fixed inset-0 bg-arabian-night/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
-                    <div className="bg-white/95 rounded-3xl shadow-2xl border border-white/60 p-6 md:p-8 max-w-2xl w-full mx-4 transform transition-all animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh] text-arabian-night relative">
+                <div className="fixed inset-0 bg-arabian-night/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300 p-3 md:p-6">
+                    <div className="bg-white/95 rounded-3xl shadow-2xl border border-white/60 p-5 md:p-7 w-full max-w-[min(96vw,1280px)] transform transition-all animate-in zoom-in-95 duration-300 flex flex-col h-[94vh] max-h-[94vh] text-arabian-night relative">
                         {/* Gold header accent line */}
                         <div className="h-1.5 w-full bg-gradient-to-r from-deep-teal via-desert-gold to-deep-teal absolute top-0 left-0 right-0 rounded-t-3xl" />
                         
                         {/* Header */}
-                        <div className="flex items-start justify-between border-b border-gray-100 pb-4 mt-1">
-                            <div className="space-y-1">
+                        <div className="flex items-start justify-between border-b border-gray-100 pb-4 mt-1 shrink-0">
+                            <div className="space-y-1 min-w-0 pr-4">
                                 <div className="flex items-center gap-2 text-deep-teal">
                                     <FileText className="w-5 h-5 text-desert-gold shrink-0 animate-pulse" />
                                     <span className="text-xs font-black tracking-widest uppercase bg-desert-gold/10 px-2 py-0.5 rounded border border-desert-gold/25 select-none">
                                         {adminActiveTab === 'chinese' ? t('learning_hub.chinese_transcript', '中文翻译') : t('learning_hub.arabic_transcript', '阿语逐字稿')}
                                     </span>
                                 </div>
-                                <h3 className="text-lg font-black text-slate-800 line-clamp-1 leading-snug">
+                                <h3 className="text-xl md:text-2xl font-black text-slate-800 line-clamp-2 leading-snug">
                                     {viewingTranscriptRecording.title}
                                 </h3>
                                 {viewingTranscriptRecording.lecturerName && (
@@ -2456,7 +2456,7 @@ export default function RecordingsManager() {
                         </div>
                         
                         {/* Control Toolbar */}
-                        <div className="bg-slate-50/80 px-4 py-3 rounded-xl border border-gray-100 flex flex-wrap justify-between items-center gap-4 select-none my-3">
+                        <div className="bg-slate-50/80 px-4 py-3 rounded-xl border border-gray-100 flex flex-wrap justify-between items-center gap-3 select-none my-3 shrink-0">
                             {/* Actions */}
                             {isWriteAllowed && (
                                 <div className="flex items-center gap-2">
@@ -2538,7 +2538,7 @@ export default function RecordingsManager() {
                         </div>
                         
                         {/* Transcript Body */}
-                        <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30 rounded-2xl border border-gray-100 max-h-[40vh] my-1 flex flex-col">
+                        <div className="flex-1 min-h-0 overflow-y-auto p-3 md:p-5 bg-slate-50/30 rounded-2xl border border-gray-100 my-1 flex flex-col">
                             {adminActiveTab === 'chinese' && loadingAdminTranslation ? (
                                 <div className="flex-1 flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
                                     <RefreshCw className="w-6 h-6 animate-spin text-desert-gold" />
@@ -2546,7 +2546,7 @@ export default function RecordingsManager() {
                                 </div>
                             ) : (
                                 <div 
-                                    className={`bg-white border border-slate-100 rounded-xl p-5 md:p-6 shadow-sm text-sm leading-relaxed whitespace-pre-line ${
+                                    className={`bg-white border border-slate-100 rounded-xl p-5 md:p-8 shadow-sm text-base md:text-lg leading-8 md:leading-9 whitespace-pre-line min-h-full ${
                                         adminActiveTab === 'chinese' ? 'text-left font-sans' : 'text-right font-medium'
                                     } text-slate-800`}
                                     dir={adminActiveTab === 'chinese' ? 'ltr' : 'rtl'}
@@ -2562,7 +2562,7 @@ export default function RecordingsManager() {
                         </div>
                         
                         {/* Footer */}
-                        <div className="pt-4 border-t border-gray-100 text-center select-none mt-4">
+                        <div className="pt-3 border-t border-gray-100 text-center select-none mt-3 shrink-0">
                             {canManageTranscript && (
                                 <p className="text-[10px] text-slate-400 font-bold mb-2">
                                     🔒 {t('learning_hub.sd_translation_notice', '🔒 SD 总监层级以上特权：中文对照翻译通道已激活')}
