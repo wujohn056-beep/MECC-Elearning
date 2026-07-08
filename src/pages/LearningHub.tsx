@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, doc, updateDoc, arrayUnion, arrayR
 import { useTranslation } from 'react-i18next';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users, BarChart3 } from 'lucide-react';
+import { PlayCircle, Clock, User, Search, Moon, Heart, Headphones, Trophy, Award, Play, X, ChevronDown, ChevronUp, Share2, FileText, BookOpen, Lock, LockOpen, Send, MessageSquare, ThumbsUp, Flag, Pin, Check, ChevronLeft, ChevronRight, Download, RefreshCw, Sparkles, Video as VideoIcon, Image as ImageIcon, ExternalLink, Eye, HelpCircle, Calendar, Smartphone, ArrowDownToLine, Users, BarChart3, Wrench } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import {
@@ -6920,6 +6920,30 @@ export default function LearningHub() {
                             
                             {/* Actions Right Side */}
                             <div className="flex flex-col gap-4 w-full md:w-auto items-end">
+                                <button
+                                    onClick={() => navigate('/tools')}
+                                    className={`group relative overflow-hidden self-start md:self-end rounded-2xl px-5 py-3 min-w-[220px] border shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                                        businessType === 'leader'
+                                            ? 'bg-desert-gold text-teal-950 border-desert-gold/40 shadow-desert-gold/20'
+                                            : 'bg-gradient-to-r from-deep-teal to-teal-700 text-white border-white/40 shadow-teal-900/10'
+                                    }`}
+                                >
+                                    <div className="absolute inset-0 bg-white/10 translate-x-[-120%] group-hover:translate-x-[120%] transition-transform duration-700" />
+                                    <div className="relative flex items-center justify-between gap-4">
+                                        <div className="text-left">
+                                            <div className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">
+                                                {t('daily_tools.badge', '日常工具')}
+                                            </div>
+                                            <div className="text-base font-black leading-tight">
+                                                {t('daily_tools.hub_button', '日常工具')}
+                                            </div>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-xl bg-white/18 flex items-center justify-center border border-white/20">
+                                            <Wrench className="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                </button>
+
                                 {allowedTabs.length > 1 ? (
                                     <div className="p-1 rounded-full flex items-center w-full md:w-auto self-start md:self-end overflow-x-auto whitespace-nowrap scrollbar-none bg-white/70 backdrop-blur-md border border-white/50 shadow-sm">
                                         {allowedTabs.map(tab => (

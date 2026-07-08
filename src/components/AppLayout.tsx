@@ -505,6 +505,7 @@ export default function AppLayout() {
                             <div className="hidden md:flex gap-4 sm:gap-6 items-center">
                                 <Link to="/hub" className={getNavLinkClass('/hub')}>{t('navbar.learning_hub')}</Link>
                                 <Link to="/policies" className={getNavLinkClass('/policies')}>{t('navbar.operations_policies')}</Link>
+                                <Link to="/tools" className={getNavLinkClass('/tools')}>{t('navbar.daily_tools', 'Daily Tools')}</Link>
                                 {canAccessTasks && (
                                     <Link to="/team-tasks" className={getNavLinkClass('/team-tasks')}>{t('navbar.team_tasks')}</Link>
                                 )}

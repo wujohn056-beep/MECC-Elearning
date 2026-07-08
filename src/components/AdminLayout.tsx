@@ -122,6 +122,9 @@ export default function AdminLayout() {
                     {hasPermission('managePolicies') && (
                         <Link to="/admin/policies" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/policies')}>{t('admin_menu.policies', '运营政策')}</Link>
                     )}
+                    {hasPermission('managePolicies') && (
+                        <Link to="/admin/tools" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/tools')}>{t('admin_menu.daily_tools', '日常工具')}</Link>
+                    )}
                     {hasPermission('manageReferrals') && (
                         <Link to="/admin/referrals" onClick={() => setIsDrawerOpen(false)} className={getLinkClass('/admin/referrals')}>{t('admin_menu.referrals', '推荐素材管理')}</Link>
                     )}

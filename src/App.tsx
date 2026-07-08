@@ -13,6 +13,7 @@ import Account from './pages/Account';
 import TeamTasks from './pages/TeamTasks';
 import PoliciesShowcase from './pages/PoliciesShowcase';
 import ReferralShowcase from './pages/ReferralShowcase';
+import DailyToolsPage from './pages/DailyToolsPage';
 
 import UserManager from './pages/admin/UserManager';
 import CategoryManager from './pages/admin/CategoryManager';
@@ -22,6 +23,7 @@ import PolicyManager from './pages/admin/PolicyManager';
 import ReferralManager from './pages/admin/ReferralManager';
 import BannerManager from './pages/admin/BannerManager';
 import AppReleaseManager from './pages/admin/AppReleaseManager';
+import DailyToolsManager from './pages/admin/DailyToolsManager';
 
 import DownloadPage from './pages/DownloadPage';
 
@@ -44,6 +46,7 @@ function App() {
             <Route path="/" element={<Navigate to="/hub" replace />} />
             <Route path="/hub" element={<LearningHub />} />
             <Route path="/policies" element={<PoliciesShowcase section="policy" />} />
+            <Route path="/tools" element={<DailyToolsPage />} />
             <Route path="/brands" element={<PoliciesShowcase section="brand" />} />
             <Route path="/referrals" element={<ReferralShowcase />} />
             <Route path="/account" element={<Account />} />
@@ -75,6 +78,7 @@ function App() {
             <Route path="users" element={<UserManager />} />
             <Route path="comments" element={<CommentManager />} />
             <Route path="policies" element={<PolicyManager initialSection="policy" />} />
+            <Route path="tools" element={<DailyToolsManager />} />
             <Route path="brands" element={<PolicyManager initialSection="brand" />} />
             <Route path="referrals" element={<ReferralManager />} />
             <Route path="banners" element={<BannerManager />} />
