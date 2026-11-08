@@ -36,3 +36,8 @@ docs/qa-evidence/*.md
 
 # Local Netlify folder
 .netlify
+
+# Local environment files may contain credentials. Never commit them.
+.env
+.env.*
+!.env.example
